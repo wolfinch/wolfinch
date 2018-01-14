@@ -97,6 +97,7 @@ def process_market (market):
     processing routine for one exchange
     """
     log.info ("processing Market: exchange (%s) product: %s"%( market.exchange_name, market.name))
+    update_market_states(market)
     signal = generate_trade_signal (market)
     consume_trade_signal (market, signal)
 

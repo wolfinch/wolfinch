@@ -35,12 +35,12 @@ def market_init (exchange, product):
         return None
     #Setup the initial params
     market = Market(product=product, exchange=exchange)    
-    market.fund.set_initial_value(usd_acc['available'])
-    market.fund.set_hold_value(usd_acc['hold'])
+    market.fund.set_initial_value(float(usd_acc['available']))
+    market.fund.set_hold_value(float(usd_acc['hold']))
     market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%
     market.fund.set_max_per_buy_fund_value(100)
-    market.crypto.set_initial_size( crypto_acc['available'])
-    market.crypto.set_hold_size( crypto_acc['hold'])
+    market.crypto.set_initial_size(float( crypto_acc['available']))
+    market.crypto.set_hold_size( float(crypto_acc['hold']))
     return market
 
 def init():
@@ -129,18 +129,18 @@ def get_accounts ():
     return gdax_accounts    
 def buy (trade_req) :
     log.debug ("BUY - Placing Order on exchange --" )    
-    order_id = auth_client.buy(price=trade_req['price'], #USD
-                    size=trade_req['size'], #BTC
-                    product_id=trade_req['product'],
+    order_id = auth_client.buy(price=trade_req.price, #USD
+                    size=trade_req.size, #BTC
+                    product_id=trade_req.product,
                     type='limit',
                     post_only='True'                    
                     )
     return normalized_order (order_id);
 def sell (trade_req) :
     log.debug ("SELL - Placing Order on exchange --" )    
-    order_id = auth_client.buy(price=trade_req['price'], #USD
-                    size=trade_req['size'], #BTC
-                    product_id=trade_req['product'],
+    order_id = auth_client.buy(price=trade_req.price, #USD
+                    size=trade_req.size, #BTC
+                    product_id=trade_req.product,
                     type='limit',
                     post_only='True'
                     )
