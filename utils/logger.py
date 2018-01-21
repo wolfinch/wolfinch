@@ -6,15 +6,23 @@
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
 # 
 # class SkateBotLogger (logging):
 #     
-
-
+# class Logger():
+#     def __init__(self, name=None):
+#         self.getLogger (name)
+#             
 def getLogger (name):
-    return logging.getLogger(name)
 
-def __init__():
-    'do nothing'
+    logging.basicConfig(level=logging.DEBUG)     
+    log = logging.getLogger(name)
+    log.CRITICAL =  logging.CRITICAL
+    log.ERROR    =  logging.ERROR
+    log.WARNING  =  logging.WARNING
+    log.INFO     =  logging.INFO
+    log.DEBUG    =  logging.DEBUG
+    log.NOTSET   =  logging.NOTSET
+    return log
 
+#EOF

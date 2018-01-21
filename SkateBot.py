@@ -10,11 +10,12 @@ import time
 import pkgutil
 import pprint
 
-from utils import logger
+from utils import *
 import exchanges
 from market import *
 
-log = logger.getLogger ('SkateBot')
+log = getLogger ('SkateBot')
+log.setLevel(log.WARNING)
 
 # Global Variables
 exchange_list = []
@@ -81,7 +82,7 @@ def process_market (market):
     
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
-    log.info("Starting SkateBot..")
+    print("Starting SkateBot..")
     try:
         SkateBot_init()
         log.debug ("Starting Main Loop")
@@ -89,7 +90,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         SkateBot_end()
     #'''Not supposed to reach here'''
-    log.info("SkateBot end")
+    print("SkateBot end")
     
 
 #EOF

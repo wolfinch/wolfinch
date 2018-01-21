@@ -7,6 +7,7 @@
 import requests
 import json
 import pprint
+from decimal import Decimal
 
 import gdax as GDAX #Official version seems to be old, doesn't support auth websocket client
 #import third_party.gdax_python.gdax as GDAX
@@ -17,6 +18,7 @@ from market import *
 __name__ = "gdax"
 
 log = getLogger ('GDAX')
+log.setLevel(log.DEBUG)
 
 # Globals
 gdax_conf = {}
@@ -46,7 +48,7 @@ def market_init (exchange, product):
     market.crypto.set_hold_size( float(crypto_acc['hold']))
     
     ## Feed Cb
-    market.feed_callback = gdax_process_feed
+    market.consume_feed = gdax_consume_feed
     return market
 
 def close ():
@@ -144,13 +146,15 @@ class gdaxWebsocketClient (GDAX.WebsocketClient):
             print("Let's count the messages!")
 
         def on_message(self, msg):
-            self.feed_process_msg (msg)
+            self.feed_enQ_msg (msg)
             #print(json.dumps(msg, indent=4, sort_keys=True))
             self.message_count += 1
 
         def on_close(self):
             print("-- Goodbye! --")
-        def feed_process_msg (self, msg):
+        def feed_enQ_msg (self, msg):
+            #print("Feed MSG: %s"%(json.dumps(msg, indent=4, sort_keys=True)))      
+            
             if (msg['type'] == 'ticker'):
                 market = get_market_by_product (msg["product_id"])
                 feed_enQ(market, msg)
@@ -173,7 +177,8 @@ def register_feed (api_key="", api_secret="", api_passphrase="", url=""):
     channels = [
             "level2",
             "heartbeat",
-            "ticker"
+            "ticker",
+            "user"         #Receive details about our orders only
         ]
     message_type = "subscribe"
     websocket_client = gdaxWebsocketClient (url, products=products, message_type=message_type,
@@ -188,23 +193,100 @@ def register_feed (api_key="", api_secret="", api_passphrase="", url=""):
         return websocket_client
 
 
-def gdax_process_feed (market, msg):
+def gdax_consume_feed (market, msg):
     ''' 
     Feed Call back for Gdax    
     This is where we do all the useful stuff with Feed
     '''
+    log.debug ("Feed received: msg:\n %s"%(json.dumps(msg, indent=4, sort_keys=True)))
     if (msg['type'] == 'ticker'):
-        print ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
-    elif (msg['type'] == 'snapshot'):
-        pass
+        gdax_consume_ticker_feed (market, msg)
     elif (msg['type'] == 'l2update'):      
         pass
     elif (msg['type'] == 'heartbeat'):
         log.debug ("Feed: Heartbeat")
+    elif (msg['type'] == 'snapshot'):
+        gdax_consume_l2_book_snapshot (market, msg)
+    elif (msg['type'] == 'l2update'):
+        gdax_consume_l2_book_update (market, msg)        
+    elif ((msg['type'] == 'received' or msg['type'] == 'open' or
+           msg['type'] == 'done' or msg['type'] == 'match' or msg['type'] or 'change' )):
+        gdax_consume_order_update_feed (market, msg)
     elif (msg['type'] == 'error'):
         log.error ("Feed: Error Msg received on Feed msg: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
     else:
-        log.error ("Feed: Unknown Feed Msg Type (%s)"%(msg['type']))
+        log.error ("Feed: Unknown Feed Msg Type (%s) msg: %s"%(msg['type'], json.dumps(msg, indent=4, sort_keys=True)))
+
+def gdax_consume_order_update_feed (market, msg):
+    ''' 
+    Process the order status update feed msg 
+    '''
+    log.debug ("Order Status Update ")        
+
+    
+def gdax_consume_l2_book_snapshot (market, msg):
+    '''
+     Consume the OrderBook Snapshot and build orderbook
+    '''    
+    bids = msg ['bids'] or []
+    asks = msg ['asks'] or []
+    log.debug ("Building orderbook from snapshot for (%s): num_bids(%d) num_asks (%d) "%(
+        market.name, len(bids), len(asks)))
+    market.order_book.add_order_list (bids, asks)
+    
+def gdax_consume_l2_book_update (market, msg):    
+    '''
+    {
+        "type": "l2update",
+        "product_id": "BTC-EUR",
+        "changes": [
+            ['side', 'price', 'size']
+            ["buy", "1", "3"],
+            ["sell", "3", "1"],
+            ["sell", "2", "2"],
+            ["sell", "4", "0"]
+        ]
+    }
+    '''
+    log.debug ("Updating L2 order book")
+    changes = msg['changes'] or []
+    for change in changes:
+        side = change[0]
+        price = Decimal(change [1])
+        size = Decimal(change[2]) 
+        if (side == 'buy'):
+            market.order_book.set_bids(price, size)
+        elif (size == 'sell'):
+            market.order_book.set_asks(price, size)            
+        
+    
+def gdax_consume_ticker_feed (market, msg):
+    '''
+{
+    "best_ask": "11367.87", 
+    "best_bid": "11366.44", 
+    "high_24h": "12019.44000000", 
+    "last_size": "0.01000000", 
+    "low_24h": "11367.87000000", 
+    "open_24h": "10896.04000000", 
+    "price": "11367.87000000", 
+    "product_id": "BTC-USD", 
+    "sequence": 3000902, 
+    "side": "buy", 
+    "time": "2018-01-19T09:53:02.816000Z", 
+    "trade_id": 566669, 
+    "type": "ticker", 
+    "volume_24h": "264992.94231824", 
+    "volume_30d": "364800.84143217"
+}
+    '''
+    log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
+    
+    #update ticker
+    #TODO: FIXME: jork: might need to rate-limit the logic here after
+    market.set_market_price (float(msg['price']))
+    market.handle_pending_trades()
+    
     
     
 ############ ************** Public APIs for Exchange *********** ###########    

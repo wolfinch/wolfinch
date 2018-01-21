@@ -11,11 +11,11 @@ import uuid
 import Queue
 import pprint
 
-from utils import logger
+from utils import *
 import db
 from itertools import product
 from docutils.nodes import sidebar
-log = logger.getLogger ('TRADE')
+log = getLogger ('TRADE')
 
 SkateBot_market_list = []
 
@@ -39,7 +39,7 @@ def feed_deQ (timeout):
 def feed_Q_process_msg (msg):
     log.debug ("-------feed msg -------")
     if (msg["market"]!= None):
-        msg["market"].process_feed(msg['msg'])
+        msg["market"].market_consume_feed(msg['msg'])
 
 def get_market_list ():
     return SkateBot_market_list
@@ -247,27 +247,37 @@ class Market:
         self.exchange_name = None if exchange == None else exchange.__name__
         self.exchange = exchange       #exchange module
         self.current_market_rate = 0.0   
-        self.feed_callback = None
+        self.consume_feed = None
         self.fund = Fund ()
         self.crypto = Crypto ()
         self.orders = Orders ()
-    
-    def process_feed(self, msg):
-        if (self.feed_callback != None):
-            self.feed_callback(self, msg)
+        self.order_book = OrderBook()
+        
+    def set_market_price (self, price):
+        self.current_market_rate = price
+        
+    def get_market_price (self):
+        return self.current_market_rate       
+        
+    def market_consume_feed(self, msg):
+        if (self.consume_feed != None):
+            self.consume_feed(self, msg)
             
     def handle_pending_trades (self):
         #TODO: FIXME:jork: Might need to extend
         log.debug("(%d) Pending Trade Reqs "%(len(self.orders.pending_trade_req)))
+        if 0 == len(self.orders.pending_trade_req):
+            return 
+        market_price = self.get_market_price()
         for trade_req in self.orders.pending_trade_req[:]:
             if (trade_req.side == 'BUY'):
-                if (trade_req.stop >= self.current_market_rate):
+                if (trade_req.stop >= market_price):
                     self.buy_order_create(trade_req)
                     self.orders.remove_pending_trade_req(trade_req)
                 else:
                     log.debug("STOP BUY: market(%g) higher than STOP (%g)"%(self.current_market_rate, trade_req.stop))
             elif (trade_req.side <= 'SELL'):
-                if (trade_req.stop <= self.current_market_rate):
+                if (trade_req.stop <= market_price):
                     self.sell_order_create(trade_req)
                     self.orders.remove_pending_trade_req(trade_req)     
                 else:
