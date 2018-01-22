@@ -15,7 +15,7 @@ import exchanges
 from market import *
 
 log = getLogger ('SkateBot')
-log.setLevel(log.WARNING)
+log.setLevel(log.CRITICAL)
 
 # Global Variables
 exchange_list = []
@@ -54,21 +54,21 @@ def skatebot_main ():
     """
     Main Function for Skatebot
     """
+    sleep_time = TICK_DELAY
     while (True) : 
         cur_time = time.time()
+        log.debug("Current Sleep time left:"+str(sleep_time))          
+        #time.sleep(sleep_time)             
+        # check for the msg in the feed Q and process, with timeout
+        msg = feed_deQ(sleep_time) 
+        while (msg != None):
+            feed_Q_process_msg (msg)
+            msg = feed_deQ(0)        
         for market in get_market_list():
             process_market (market)
         '''Make sure each iteration take exactly LOOP_DELAY time'''
         sleep_time = (TICK_DELAY - (time.time() - cur_time))
-        sleep_time  = 0 if (sleep_time < 0) else sleep_time
-        log.debug("Current Sleep time left:"+str(sleep_time))          
-        #time.sleep(sleep_time)          
-        # check for the msg in the feed Q and process, with timeout
-        
-        msg = feed_deQ(sleep_time) 
-        while (msg != None):
-            feed_Q_process_msg (msg)
-            msg = feed_deQ(None)
+        sleep_time  = 0 if (sleep_time < 0) else sleep_time     
     #end While(true)
     
 def process_market (market):

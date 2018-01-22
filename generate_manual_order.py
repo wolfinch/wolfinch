@@ -10,6 +10,7 @@ import json
 import argparse
 import os
 import pprint
+from decimal import Decimal
 
 parser = argparse.ArgumentParser(description='Generate manual trading signal')
 # parser.add_argument('integers', metavar='N', type=int, nargs='+',
@@ -52,15 +53,15 @@ if (args.type == 'BUY' ):
     if (args.size[-1] != '$'):
         print ("ERROR: Please Specify Buy size in USD. (eg. 2000$)")
         exit()
-    size = float (args.size[:-1])
-    size = round(float(size)/args.limit, 8)
+    size = Decimal (args.size[:-1])
+    size = round(Decimal(size)/Decimal(args.limit), 8)
     json_data['size'] = size
     if (args.stop and args.limit > args.stop):
         print ("ERROR: 'stop' price has to be higher than 'limit' for BUY")
         exit()
 else:
     json_data["side"] = 'SELL'
-    json_data['size'] = float(args.size)
+    json_data['size'] = Decimal(args.size)
     if (args.stop and args.limit < args.stop):
         print ("ERROR: 'stop' price has to be lower than 'limit' for SELL")
         exit()    
