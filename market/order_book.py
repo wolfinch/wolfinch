@@ -60,9 +60,9 @@ class OrderBook():
         '''
         if (not order):
             return False
-        order_id = uuid.UUID(order.get('id') or order.get('order_id'))
-        order_status = order.get('status') or order.get('type')
-        order_side   = order['side'] 
+        order_id = uuid.UUID(order.id)
+        order_status = order.status_type
+        order_side   = order.side 
         if (order_side == 'buy'):
             if (order_status == 'done'):
                 #a previously placed order is completed, remove from open order, add to completed orderlist
@@ -87,7 +87,7 @@ class OrderBook():
         elif (order_side == 'sell'):
             if (order_status == 'done'):
                 #a previously placed order is completed, remove from open order, add to completed orderlist
-                log.info ("Sell order Done: id(%s)"%(str(order_id)))                
+                log.info ("Sell order Done: id(%s)"%(str(order_id)))               
                 if (self.open_sell_orders_db.get(order_id)):
                     del (self.open_sell_orders_db[order_id])
                     self.total_open_order_count -=1                    

@@ -134,6 +134,10 @@ def normalized_order (order):
     Desc:
      Error Handle and Normalize the order json returned by gdax
       to return the normalized order detail back to callers
+      Handles -
+      1. Initial Order Creation/Order Query
+      2. Order Update Feed Messages
+      Ref: https://docs.gdax.com/#the-code-classprettyprintfullcode-channel
     Sample order:
             {u'created_at': u'2018-01-10T09:49:02.639681Z',
              u'executed_value': u'0.0000000000000000',
@@ -156,7 +160,7 @@ def normalized_order (order):
       3. {'status' : 'rejected', 'reject_reason': 'post-only'}
     '''
     error_status_codes = ['rejected']
-    log.debug ("Order Response:\n%s"%(pprint.pformat(order, 4)))
+    log.debug ("Order msg:\n%s"%(pprint.pformat(order, 4)))
     
     msg = order.get('message')
     status = order.get('status')
@@ -164,8 +168,29 @@ def normalized_order (order):
         log.error("FAILED Order: error msg: %s status: %s"%(msg, status))
         return None
 
-    # Success    //TODO: FIXME: jork: Do actual normalization as required
-    return order
+    # Valid Order
+    product_id = order.get('product_id')
+    order_id   = order.get('id') or order.get('order_id')
+    order_type = order.get('type')
+    status_reason = order.get('reason')
+    status_type = order.get('status') 
+    if order_type in ['received', 'open', 'done', 'match', 'change', 'margin_profile_update', 'activate' ]:
+        # order status update message
+        status_type = order_type
+        order_type = order.get('order_type') #could be None
+    else:
+        pass
+    create_time = order.get('created_at') or None
+    modify_time  = order.get('time') or None
+    side = order.get('side') or None
+    price =   Decimal(order.get('price') or -1)
+    size  = Decimal(order.get('size') or -1)
+    remainig_size  = Decimal(order.get('remaining_size') or -1)
+    funds = Decimal(order.get('funds') or -1)
+    
+    norm_order = Order (order_id, product_id, status_type, order_type=order_type, status_reason=status_reason,
+                        side=side, size=size, remainig_size=remainig_size, price=price, funds=funds, create_time=create_time, modify_time=modify_time)
+    return norm_order
 
 ######### WebSocket Client implementation #########
 
@@ -274,7 +299,8 @@ def gdax_consume_order_update_feed (market, msg):
     Process the order status update feed msg 
     '''
     log.debug ("Order Status Update id:%s"%(msg.get('order_id')))
-    market.order_status_update (msg)
+    order = normalized_order(msg)
+    market.order_status_update (order)
 
     
 def gdax_consume_l2_book_snapshot (market, msg):
