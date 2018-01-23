@@ -56,59 +56,84 @@ class OrderBook():
         
     def add_or_update_my_order (self, order):
         '''
-        Handle a new order updae msg
+        Handle a new order update msg
+        return : order
         '''
         if (not order):
-            return False
+            return None
         order_id = uuid.UUID(order.id)
         order_status = order.status_type
-        order_side   = order.side 
+        order_side   = order.side
+        if (not order_id):
+            log.critical ("Invalid order_id: status:%s side: %s"%(order_status, order_side))
+            return None
+        current_order = None
         if (order_side == 'buy'):
+            current_order = self.open_buy_orders_db.get (order_id)
+        else:
+            current_order = self.open_sell_orders_db.get (order_id)
+            
+        if current_order != None:
+            # Copy whatever available, new gets precedence
+            # money, asset
+            order.size = order.size or current_order.size
+            order.price = order.price or current_order.price
+            order.funds = order.funds or current_order.funds
+            order.remaining_size = order.remaining_size or current_order.remaining_size   #FIXME: jork: bug alert, handle this differently
+            #other data
+            order.create_time = order.create_time or current_order.create_time
+            order.update_time = order.update_time or current_order.update_time
+            order.order_type = order.order_type or current_order.order_type
+            order.product_id = order.product_id or current_order.product_id
+        else:
+            # this is a new order for us (not necessary placed by us, hence need this logic here)
+            self.total_open_order_count +=1
+            self.total_order_count +=1
+            log.debug ("New Order Entry Inserted: total_order_count: %d "
+                       "total_open_order_count: %d "%(self.total_order_count, self.total_open_order_count))
+            
+        if (order_side == 'buy'):
+            #insert/replace the order
+            self.open_buy_orders_db[order_id] = order
             if (order_status == 'done'):
                 #a previously placed order is completed, remove from open order, add to completed orderlist
-                log.info ("Buy order Done: id(%s)"%(str(order_id)))                
-                if (self.open_buy_orders_db.get(order_id)):
-                    del (self.open_buy_orders_db[order_id])
-                    self.total_open_order_count -=1
+                del (self.open_buy_orders_db[order_id])
+                self.total_open_order_count -=1
                 self.traded_buy_orders_db.append(order)
-            elif (order_status ==  'pending') or (order_status ==  'open'): ####### TODO: FIXME: Add more conditions
-                pass
-            elif (order_status == 'match'):
-                log.info ("Buy order match: id(%s)"%(str(order_id)))
-            elif (order_status == 'received'):
-                # this is a new order
-                log.info ("Buy order received: id(%s)"%(str(order_id)))                
-                self.open_buy_orders_db[order_id] = order
-                self.total_open_order_count +=1
-                self.total_order_count +=1
+                log.debug ("Buy order Done: total_order_count: %d "
+                       "total_open_order_count: %d "
+                       "traded_buy_orders_count: %d"%(self.total_order_count,
+                                                       self.total_open_order_count,
+                                                       len(self.traded_buy_orders_db)))
+            elif (order_status in ['pending', 'open', 'received', 'match']):
+                # Nothing much to do for us here
+                log.info ("Buy order_id(%s) Status: %s"%(str(order_id), order_status))                
             else:
                 log.critical("UNKNOWN buy order status: %s"%(order_status ))
-                return False
+                return None
         elif (order_side == 'sell'):
+            #insert/replace the order
+            self.open_sell_orders_db[order_id] = order
             if (order_status == 'done'):
-                #a previously placed order is completed, remove from open order, add to completed orderlist
-                log.info ("Sell order Done: id(%s)"%(str(order_id)))               
-                if (self.open_sell_orders_db.get(order_id)):
-                    del (self.open_sell_orders_db[order_id])
-                    self.total_open_order_count -=1                    
+                #a previously placed order is completed, remove from open order, add to completed orderlist      
+                del (self.open_sell_orders_db[order_id])
+                self.total_open_order_count -=1
                 self.traded_sell_orders_db.append(order)
-            elif (order_status ==  'pending') or (order_status ==  'open'): ####### TODO: FIXME: Add more conditions
-                pass
-            elif (order_status == 'match'):
-                log.info ("Sell order match: id(%s)"%(str(order_id)))                
-            elif (order_status == 'received'): 
-                # this is a new order
-                log.info ("Sell order received: id(%s)"%(str(order_id)))                                
-                self.open_sell_orders_db[order_id] = order
-                self.total_open_order_count +=1
-                self.total_order_count +=1
+                log.debug ("Sell order Done: total_order_count: %d "
+                       "total_open_order_count: %d "
+                       "traded_sell_orders_count: %d"%(self.total_order_count,
+                                                       self.total_open_order_count,
+                                                       len(self.traded_sell_orders_db)))                
+            elif (order_status in ['pending', 'open', 'received', 'match']):
+                # Nothing much to do for us here
+                log.info ("Sell order_id(%s) Status: %s"%(str(order_id), order_status))              
             else:
                 log.critical("UNKNOWN sell order status: %s"%(order_status ))
-                return False
+                return None
         else:
-            log.error("Invalid order :%s"%(order))
-            return False
-        return True
+            log.critical("Invalid order :%s"%(order))
+            return None
+        return order
     
     ######### L2 Order book for Exchange, product ########
     def new_book (self, bids, asks):

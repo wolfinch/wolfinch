@@ -108,7 +108,7 @@ class Order:
     }
     '''
     def __init__(self, order_id, product_id, status_type, order_type=None, status_reason=None,
-                 side=None, size=-1, remainig_size=-1, price=-1, funds=-1, create_time=None, modify_time=None
+                 side=None, size=0, remaining_size=0, price=0, funds=0, create_time=None, update_time=None
                  ):
         self.id = order_id
         self.product_id = product_id
@@ -116,13 +116,13 @@ class Order:
         self.status_type =  status_type
         self.status_reason  = status_reason
         self.side = side
-        self.size = size
-        self.remainig_size = remainig_size
-        self.price = price
-        self.funds = funds
+        self.size = Decimal (size)
+        self.remaining_size = Decimal(remaining_size)
+        self.price = Decimal(price)
+        self.funds = Decimal(funds)
         self.create_time  = create_time
-        self.modified_time = modify_time
-    
+        self.update_time = update_time
+        
     def __str__ (self):
         return "{OrderStatus.__str__: Not implemented}"
         
@@ -297,14 +297,15 @@ class Market:
             log.error ("Unknown order Side (%s)"%(side))
                     
     def buy_order_received (self, order):
-        if(True == self.order_book.add_or_update_my_order(order)): #successful order
+        market_order  =  self.order_book.add_or_update_my_order(order)
+        if(market_order): #successful order
             #update fund 
-            order_type = order.order_type
+            order_type = market_order.order_type
             order_cost = 0
             if order_type == 'market':
-                order_cost = Decimal(order.funds) 
+                order_cost = Decimal(market_order.funds) 
             elif order_type == 'limit':
-                order_cost = Decimal (order.price) * Decimal (order.size)
+                order_cost = Decimal (market_order.price) * Decimal (market_order.size)
             else:
                 log.error ("BUY: unknown order_type: %s"%(order_type))
                 return
@@ -313,48 +314,53 @@ class Market:
                                         
     def buy_order_create (self, trade_req):
         order = self.exchange.buy (trade_req)
-        if(True == self.order_book.add_or_update_my_order(order)): #successful order
-            pass        
+        market_order  =  self.order_book.add_or_update_my_order(order)
+        if(market_order): #successful order
+            log.debug ("Order Sent to exchange. ")        
             
     def buy_order_filled (self, order):
-        if(True == self.order_book.add_or_update_my_order(order)): #Valid order
-            order_cost = (order.size*order.price)
+        market_order  =  self.order_book.add_or_update_my_order(order)
+        if(market_order): #Valid order
+            order_cost = (market_order.size*market_order.price)
             #fund
             self.fund.current_hold_value -= order_cost
-            self.fund.latest_buy_price = order.price
+            self.fund.latest_buy_price = market_order.price
             self.fund.total_traded_value += order_cost
             #avg cost
             curr_total_crypto_size = (self.crypto.current_hold_size + self.crypto.current_size)
             self.fund.current_avg_buy_price = (((self.fund.current_avg_buy_price *
                                                   curr_total_crypto_size) + (order_cost))/
-                                                        (curr_total_crypto_size + order.size))
+                                                        (curr_total_crypto_size + market_order.size))
             #crypto
-            self.crypto.current_size += order.size
-            self.crypto.latest_traded_size = order.size
-            self.crypto.total_traded_size += order.size
+            self.crypto.current_size += market_order.size
+            self.crypto.latest_traded_size = market_order.size
+            self.crypto.total_traded_size += market_order.size
             
     def buy_order_cancelled(self, order):
-        if(True == self.order_book.add_or_update_my_order(order)): #Valid order
-            order_cost = (order.size*order.price)
+        market_order  =  self.order_book.add_or_update_my_order(order)
+        if(market_order): #Valid order
+            order_cost = (market_order.size*market_order.price)
             self.fund.current_hold_value -= order_cost
             self.fund.current_value += order_cost        
             
     def sell_order_create (self, trade_req):
         order = self.exchange.sell (trade_req)
         #update fund 
-        if(True == self.order_book.add_or_update_my_order(order)): #successful order
+        market_order  =  self.order_book.add_or_update_my_order(order)
+        if(market_order): #successful order
             pass
 
     def sell_order_received (self, order):
         #log.debug ("SELL RECV: %s"%(json.dumps(order, indent=4, sort_keys=True)))
-        if(True == self.order_book.add_or_update_my_order(order)): #successful order
+        market_order  =  self.order_book.add_or_update_my_order(order)
+        if(market_order): #successful order
             #update fund 
-            order_type = order.order_type
+            order_type = market_order.order_type
             size = 0
             if order_type == 'market':
-                size = Decimal(order.size) 
+                size = Decimal(market_order.size) 
             elif order_type == 'limit':
-                size = Decimal (order.size)
+                size = Decimal (market_order.size)
             else:
                 log.error ("BUY: unknown order_type: %s"%(order_type))
                 return
@@ -362,20 +368,22 @@ class Market:
             self.crypto.current_size -= size            
                         
     def sell_order_filled (self, order):
-        if(True == self.order_book.add_or_update_my_order(order)): #Valid order
-            order_cost = (order.size*order.price)        
+        market_order  =  self.order_book.add_or_update_my_order(order)
+        if(market_order): #Valid order
+            order_cost = (market_order.size*market_order.price)        
             #fund
             self.fund.current_value += order_cost
             #crypto
-            self.crypto.current_hold_size -= order.size
+            self.crypto.current_hold_size -= market_order.size
             #profit
-            profit = (order.price - self.fund.current_avg_buy_price )*order.size
+            profit = (market_order.price - self.fund.current_avg_buy_price )*market_order.size
             self.fund.current_realized_profit += profit
             
     def sell_order_cancelled(self, order):
-        if(True == self.order_book.add_or_update_my_order(order)): #Valid order
-            self.crypto.current_hold_size -= order.size
-            self.crypto.current_size += order.size
+        market_order  =  self.order_book.add_or_update_my_order(order)
+        if(market_order): #Valid order
+            self.crypto.current_hold_size -= market_order.size
+            self.crypto.current_size += market_order.size
             
     def set_current_market_rate(self, value):
         self.current_market_rate = Decimal(value)

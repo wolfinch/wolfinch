@@ -181,15 +181,15 @@ def normalized_order (order):
     else:
         pass
     create_time = order.get('created_at') or None
-    modify_time  = order.get('time') or None
+    update_time  = order.get('time') or None
     side = order.get('side') or None
-    price =   Decimal(order.get('price') or -1)
-    size  = Decimal(order.get('size') or -1)
-    remainig_size  = Decimal(order.get('remaining_size') or -1)
-    funds = Decimal(order.get('funds') or -1)
+    price =   Decimal(order.get('price') or 0)
+    size  = Decimal(order.get('size') or 0)
+    remaining_size  = Decimal(order.get('remaining_size') or 0)
+    funds = Decimal(order.get('funds') or 0)
     
     norm_order = Order (order_id, product_id, status_type, order_type=order_type, status_reason=status_reason,
-                        side=side, size=size, remainig_size=remainig_size, price=price, funds=funds, create_time=create_time, modify_time=modify_time)
+                        side=side, size=size, remaining_size=remaining_size, price=price, funds=funds, create_time=create_time, update_time=update_time)
     return norm_order
 
 ######### WebSocket Client implementation #########
