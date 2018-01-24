@@ -4,6 +4,12 @@
  Desc: Market/trading routines
  (c) Joshith Rayaroth Koderi
 '''
+##############################################
+###### Bugs/Caveats, TODOs, AIs###############
+### 1. Account Remaining_size for fund calculations
+
+
+##############################################
 
 import json
 import os
@@ -16,10 +22,11 @@ from decimal import Decimal
 
 from utils import *
 from order_book import OrderBook
+from order import Order, TradeRequest
 import db
 
-log = getLogger ('TRADE')
-log.setLevel(log.DEBUG)
+log = getLogger ('MARKET')
+log.setLevel(log.INFO)
 
 SkateBot_market_list = []
 
@@ -67,65 +74,6 @@ def market_init (exchange_list):
             else:
                 SkateBot_market_list.append(market)
 
-#simple class to have the trade request (FIXME: add proper shape)
-
-class TradeRequest:
-#    ''' 
-#        Desc: Common exchange neutral Trade Request
-#            class {
-#            product: <name>
-#            side: <BUY|SELL>
-#            type: <limit|market>
-#            size: <SIZE crypto>
-#            price: <limit/market-price>
-#            }
-#    '''   
-    def __init__(self, Product, Side, Size, Type, Price, Stop):
-        self.product = Product
-        self.side = Side
-        self.size = Size
-        self.type = Type
-        self.price = Price
-        self.stop = Stop
-    def __str__(self):
-        return "{'product':%s, 'side':%s, 'size':%g 'type':%s, 'price':%g, 'stop':%g}"%(
-            self.product, self.side, self.size, self.type, self.price, self.stop)
-
-class Order:
-    '''
-    Desc: Common/exchange neutral OrderStatus strucutre
-    {
-    id         : <order_id>
-    product_id : <product-id>
-    order_type : <limit|market>
-    status_type: <pending|open|done|match|received|change|>
-    status_reason: <filled|cancelled|rejected..>
-    side         : <buy|sell>
-    size         : <asset size>
-    price        : <price>
-    funds        : <total funds>
-    time         : <order status time>
-    }
-    '''
-    def __init__(self, order_id, product_id, status_type, order_type=None, status_reason=None,
-                 side=None, size=0, remaining_size=0, price=0, funds=0, create_time=None, update_time=None
-                 ):
-        self.id = order_id
-        self.product_id = product_id
-        self.order_type = order_type
-        self.status_type =  status_type
-        self.status_reason  = status_reason
-        self.side = side
-        self.size = Decimal (size)
-        self.remaining_size = Decimal(remaining_size)
-        self.price = Decimal(price)
-        self.funds = Decimal(funds)
-        self.create_time  = create_time
-        self.update_time = update_time
-        
-    def __str__ (self):
-        return "{OrderStatus.__str__: Not implemented}"
-        
 class Fund:
     def __init__(self):
         self.initial_value = Decimal(0.0)
@@ -275,21 +223,29 @@ class Market:
         reason = order.status_reason
         if side == 'buy':
             if msg_type == 'done':
+                #for an order done, get the order details
+                order_det = self.exchange.get_order(order.id)
+                if (order_det):
+                    order = order_det
                 if reason == 'filled':
                     self.buy_order_filled ( order)
                 elif reason == 'canceled':
-                    self.buy_order_cancelled (order)
-            if msg_type == 'received':
+                    self.buy_order_canceled (order)
+            elif msg_type == 'received':
                 self.buy_order_received(order)
             else:
                 log.debug ("Ignored/Unknown buy order status: %s"%(msg_type))
         elif side == 'sell':
             if msg_type == 'done':
+                #for an order done, get the order details
+                order_det = self.exchange.get_order(order.id)
+                if (order_det):
+                    order = order_det                
                 if reason == 'filled':
                     self.sell_order_filled ( order)
                 elif reason == 'canceled':
-                    self.sell_order_cancelled (order)
-            if msg_type == 'received':
+                    self.sell_order_canceled (order)
+            elif msg_type == 'received':
                 self.sell_order_received(order)
             else:
                 log.debug ("Ignored/Unknown sell order status: %s"%(msg_type))     
@@ -320,7 +276,7 @@ class Market:
             
     def buy_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
-        if(market_order): #Valid order
+        if(market_order): #Valid order          
             order_cost = (market_order.size*market_order.price)
             #fund
             self.fund.current_hold_value -= order_cost
@@ -336,7 +292,7 @@ class Market:
             self.crypto.latest_traded_size = market_order.size
             self.crypto.total_traded_size += market_order.size
             
-    def buy_order_cancelled(self, order):
+    def buy_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
             order_cost = (market_order.size*market_order.price)
@@ -369,7 +325,7 @@ class Market:
                         
     def sell_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
-        if(market_order): #Valid order
+        if(market_order): #Valid order       
             order_cost = (market_order.size*market_order.price)        
             #fund
             self.fund.current_value += order_cost
@@ -379,7 +335,7 @@ class Market:
             profit = (market_order.price - self.fund.current_avg_buy_price )*market_order.size
             self.fund.current_realized_profit += profit
             
-    def sell_order_cancelled(self, order):
+    def sell_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
             self.crypto.current_hold_size -= market_order.size

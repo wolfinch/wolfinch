@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from utils import *
 
-log = getLogger('OrderBook')
+log = getLogger('ORDER-BOOK')
 log.setLevel(log.INFO)
 
 class OrderBook():
@@ -79,6 +79,7 @@ class OrderBook():
             order.size = order.size or current_order.size
             order.price = order.price or current_order.price
             order.funds = order.funds or current_order.funds
+            order.fees = order.fees or current_order.fees
             order.remaining_size = order.remaining_size or current_order.remaining_size   #FIXME: jork: bug alert, handle this differently
             #other data
             order.create_time = order.create_time or current_order.create_time
@@ -87,14 +88,14 @@ class OrderBook():
             order.product_id = order.product_id or current_order.product_id
         else:
             # this is a new order for us (not necessary placed by us, hence need this logic here)
-            self.total_open_order_count +=1
-            self.total_order_count +=1
-            log.debug ("New Order Entry Inserted: total_order_count: %d "
+            log.debug ("New Order Entry To be Inserted: total_order_count: %d "
                        "total_open_order_count: %d "%(self.total_order_count, self.total_open_order_count))
             
         if (order_side == 'buy'):
             #insert/replace the order
             self.open_buy_orders_db[order_id] = order
+            self.total_open_order_count +=1
+            self.total_order_count +=1            
             if (order_status == 'done'):
                 #a previously placed order is completed, remove from open order, add to completed orderlist
                 del (self.open_buy_orders_db[order_id])
@@ -114,6 +115,8 @@ class OrderBook():
         elif (order_side == 'sell'):
             #insert/replace the order
             self.open_sell_orders_db[order_id] = order
+            self.total_open_order_count +=1
+            self.total_order_count +=1            
             if (order_status == 'done'):
                 #a previously placed order is completed, remove from open order, add to completed orderlist      
                 del (self.open_sell_orders_db[order_id])

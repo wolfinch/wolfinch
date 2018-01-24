@@ -172,7 +172,7 @@ def normalized_order (order):
     product_id = order.get('product_id')
     order_id   = order.get('id') or order.get('order_id')
     order_type = order.get('type')
-    status_reason = order.get('reason')
+    status_reason = order.get('reason') or order.get('done_reason')
     status_type = order.get('status') 
     if order_type in ['received', 'open', 'done', 'match', 'change', 'margin_profile_update', 'activate' ]:
         # order status update message
@@ -181,15 +181,21 @@ def normalized_order (order):
     else:
         pass
     create_time = order.get('created_at') or None
-    update_time  = order.get('time') or None
+    update_time  = order.get('time') or order.get('done_at') or None
     side = order.get('side') or None
     price =   Decimal(order.get('price') or 0)
-    size  = Decimal(order.get('size') or 0)
+    size  = Decimal(order.get('filled_size') or order.get('size') or  0)
     remaining_size  = Decimal(order.get('remaining_size') or 0)
     funds = Decimal(order.get('funds') or 0)
-    
+    fees = Decimal(order.get('fees') or order.get('filled_fees') or 0)
+    if order.get('settled') == True:
+        total_val = Decimal(order.get('executed_value') or 0)
+        if total_val and size and not price:
+            price = total_val/size
+            log.debug ("calculated fill price: %g size: %g"%(price, size))
+                    
     norm_order = Order (order_id, product_id, status_type, order_type=order_type, status_reason=status_reason,
-                        side=side, size=size, remaining_size=remaining_size, price=price, funds=funds, create_time=create_time, update_time=update_time)
+                        side=side, size=size, remaining_size=remaining_size, price=price, funds=funds, fees=fees, create_time=create_time, update_time=update_time)
     return norm_order
 
 ######### WebSocket Client implementation #########
@@ -231,8 +237,7 @@ class gdaxWebsocketClient (GDAX.WebsocketClient):
                     log.error ("Feed Thread: Unknown market: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
                     return                
                 feed_enQ(market, msg)
-            elif (msg_type == 'received' or msg_type == 'open' or
-                  msg_type == 'done' or msg_type == 'match' or msg_type == 'change' ):    
+            elif (msg_type in [ 'received','open' ,'done', 'change']):    
                 if (product_id == None):
                     log.error ("Feed Thread: Invalid Product-id: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
                     return
@@ -240,11 +245,13 @@ class gdaxWebsocketClient (GDAX.WebsocketClient):
                 if (market == None):
                     log.error ("Feed Thread: Unknown market: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
                     return                  
-                feed_enQ(market, msg)           
+                feed_enQ(market, msg)
+            elif (msg_type == 'match'):
+                log.debug ("Feed Thread: Match msg : IGNORED")
             elif (msg_type == 'heartbeat'):
-                log.debug ("Feed Thread: Heartbeat")
+                log.debug ("Feed Thread: Heartbeat: IGNORED")
             elif (msg_type == 'subscriptions'):          
-                log.info ("Feed: Subscribed to WS feed %s"%(json.dumps(msg, indent=4, sort_keys=True)))
+                log.debug ("Feed: Subscribed to WS feed %s"%(json.dumps(msg, indent=4, sort_keys=True)))
             elif (msg_type == 'error'):
                 log.error ("Feed Thread: Error Msg received on Feed msg: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
             else:
@@ -286,8 +293,7 @@ def gdax_consume_feed (market, msg):
         gdax_consume_l2_book_snapshot (market, msg)
     elif (msg_type == 'l2update'):
         gdax_consume_l2_book_update (market, msg)        
-    elif (msg_type == 'received' or msg_type == 'open' or
-           msg_type == 'done' or msg_type == 'match' or msg_type == 'change' ):
+    elif (msg_type in ['pending', 'received' , 'open' , 'done' , 'change'] ):
         gdax_consume_order_update_feed (market, msg)
     elif (msg_type == 'error'):
         log.error ("Feed: Error Msg received on Feed msg: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
@@ -398,21 +404,26 @@ def get_accounts ():
     return gdax_accounts    
 def buy (trade_req) :
     log.debug ("BUY - Placing Order on exchange --" )    
-    order_id = auth_client.buy(price=trade_req.price, #USD
+    order = auth_client.buy(price=trade_req.price, #USD
                     size=trade_req.size, #BTC
                     product_id=trade_req.product,
                     type='limit',
                     post_only='True'                    
                     )
-    return normalized_order (order_id);
+    return normalized_order (order);
 def sell (trade_req) :
     log.debug ("SELL - Placing Order on exchange --" )    
-    order_id = auth_client.buy(price=trade_req.price, #USD
+    order = auth_client.buy(price=trade_req.price, #USD
                     size=trade_req.size, #BTC
                     product_id=trade_req.product,
                     type='limit',
                     post_only='True'
                     )
-    return normalized_order (order_id);
+    return normalized_order (order);
 
+def get_order (order_id):
+    log.debug ("GET - order (%s) "%(order_id))
+    order = auth_client.get_order(order_id)
+    return normalized_order (order);
+    
 #EOF    

@@ -1,2 +1,2 @@
 from market import *
-#from order_book import OrderBook
+from order import Order, TradeRequest
