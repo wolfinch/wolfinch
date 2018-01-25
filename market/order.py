@@ -24,7 +24,7 @@ class TradeRequest:
         self.size = Size
         self.type = Type
         self.price = Price
-        self.stop = Stop
+        self.stop = Decimal(Stop or 0)
     def __str__(self):
         return "{'product':%s, 'side':%s, 'size':%g 'type':%s, 'price':%g, 'stop':%g}"%(
             self.product, self.side, self.size, self.type, self.price, self.stop)
@@ -46,7 +46,7 @@ class Order:
     }
     '''
     def __init__(self, order_id, product_id, status_type, order_type=None, status_reason=None,
-                 side=None, size=0, remaining_size=0, price=0, funds=0, fees=0, create_time=None, update_time=None
+                 side=None, request_size=0, filled_size=0, remaining_size=0, price=0, funds=0, fees=0, create_time=None, update_time=None
                  ):
         self.id = order_id
         self.product_id = product_id
@@ -54,7 +54,8 @@ class Order:
         self.status_type =  status_type
         self.status_reason  = status_reason
         self.side = side
-        self.size = Decimal (size)
+        self.request_size = Decimal (request_size)
+        self.filled_size = Decimal(filled_size)
         self.remaining_size = Decimal(remaining_size)
         self.price = Decimal(price)
         self.funds = Decimal(funds)

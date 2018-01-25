@@ -10,7 +10,9 @@ import json
 import argparse
 import os
 import pprint
-from decimal import Decimal
+from decimal import *
+
+getcontext().prec = 8 #decimal precision
 
 parser = argparse.ArgumentParser(description='Generate manual trading signal')
 # parser.add_argument('integers', metavar='N', type=int, nargs='+',

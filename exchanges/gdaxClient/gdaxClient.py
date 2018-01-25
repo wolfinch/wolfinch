@@ -183,23 +183,34 @@ def normalized_order (order):
     create_time = order.get('created_at') or None
     update_time  = order.get('time') or order.get('done_at') or None
     side = order.get('side') or None
+    # Money matters
     price =   Decimal(order.get('price') or 0)
-    size  = Decimal(order.get('filled_size') or order.get('size') or  0)
+    request_size  = Decimal(order.get('size') or  0)    
+    filled_size = Decimal(order.get('filled_size') or 0)
     remaining_size  = Decimal(order.get('remaining_size') or 0)
-    funds = Decimal(order.get('funds') or 0)
-    fees = Decimal(order.get('fees') or order.get('filled_fees') or 0)
+    funds = Decimal(order.get('funds') or order.get('specified_funds') or 0)
+    fees = Decimal(order.get('fees') or order.get('fill_fees') or 0)
     if order.get('settled') == True:
         total_val = Decimal(order.get('executed_value') or 0)
-        if total_val and size and not price:
-            price = total_val/size
-            log.debug ("calculated fill price: %g size: %g"%(price, size))
+        if total_val and filled_size and not price:
+            price = total_val/filled_size
+        if (funds == 0):
+            funds = total_val + fees
+            #log.debug ("calculated fill price: %g size: %g"%(price, filled_size))
+#         if filled_size and remaining_size:
+#             request_size = filled_size + remaining_size
                     
+    if (request_size == 0):
+        request_size = remaining_size + filled_size
+        
+    log.debug ("price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g"%(
+        price, funds, request_size, filled_size, remaining_size, fees))
     norm_order = Order (order_id, product_id, status_type, order_type=order_type, status_reason=status_reason,
-                        side=side, size=size, remaining_size=remaining_size, price=price, funds=funds, fees=fees, create_time=create_time, update_time=update_time)
+                        side=side, request_size=request_size, filled_size=filled_size, remaining_size=remaining_size,
+                         price=price, funds=funds, fees=fees, create_time=create_time, update_time=update_time)
     return norm_order
 
 ######### WebSocket Client implementation #########
-
 class gdaxWebsocketClient (GDAX.WebsocketClient):
 #     __init__(self, url="wss://ws-feed.gdax.com", products=None, message_type="subscribe", mongo_collection=None,
 #                  should_print=True, auth=False, api_key="", api_secret="", api_passphrase="", channels=None):
@@ -425,5 +436,9 @@ def get_order (order_id):
     log.debug ("GET - order (%s) "%(order_id))
     order = auth_client.get_order(order_id)
     return normalized_order (order);
+
+def cancel_order (order_id):
+    log.debug ("CANCEL - order (%s) "%(order_id))
+    auth_client.cancel_order(order_id)
     
 #EOF    

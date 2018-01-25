@@ -9,6 +9,7 @@
 import time
 import pkgutil
 import pprint
+from decimal import *
 
 from utils import *
 import exchanges
@@ -82,6 +83,7 @@ def process_market (market):
     
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
+    getcontext().prec = 8 #decimal precision
     print("Starting SkateBot..")
     try:
         SkateBot_init()
