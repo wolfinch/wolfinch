@@ -26,7 +26,7 @@ from order import Order, TradeRequest
 import db
 
 log = getLogger ('MARKET')
-log.setLevel(log.INFO)
+log.setLevel(log.DEBUG)
 
 SkateBot_market_list = []
 
@@ -233,8 +233,10 @@ class Market:
                     self.buy_order_canceled (order)
             elif msg_type == 'received':
                 self.buy_order_received(order)
+            elif (msg_type in ['open', 'match', 'change', 'margin_profile_update', 'activate' ]):
+                log.debug ("Ignored buy order status: %s"%(msg_type))
             else:
-                log.debug ("Ignored/Unknown buy order status: %s"%(msg_type))
+                log.error ("Unknown buy order status: %s"%(msg_type))
         elif side == 'sell':
             if msg_type == 'done':
                 #for an order done, get the order details
@@ -247,8 +249,10 @@ class Market:
                     self.sell_order_canceled (order)
             elif msg_type == 'received':
                 self.sell_order_received(order)
+            elif (msg_type in ['open', 'match', 'change', 'margin_profile_update', 'activate']):
+                log.debug ("Ignored sell order status: %s"%(msg_type))
             else:
-                log.debug ("Ignored/Unknown sell order status: %s"%(msg_type))     
+                log.error ("Unknown sell order status: %s"%(msg_type))
         else:
             log.error ("Unknown order Side (%s)"%(side))
                     
@@ -272,7 +276,8 @@ class Market:
         order = self.exchange.buy (trade_req)
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
-            log.debug ("Order Sent to exchange. ")        
+            log.debug ("BUY Order Sent to exchange. ")      
+            return market_order  
             
     def buy_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
@@ -304,7 +309,8 @@ class Market:
         #update fund 
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
-            pass
+            log.debug ("SELL Order Sent to exchange. ")      
+            return market_order 
 
     def sell_order_received (self, order):
         #log.debug ("SELL RECV: %s"%(json.dumps(order, indent=4, sort_keys=True)))
@@ -379,7 +385,6 @@ def execute_market_trade(market, trade_req_list):
 def save_order (market, trade_req, order):
     db.db_add_or_update_order (market, trade_req.product, order)
     #TODO: FIXME: jork: implement
-    
     
 def get_manual_trade_req (market):
     exchange_name = market.exchange.__name__

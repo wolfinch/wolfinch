@@ -46,7 +46,8 @@ class Order:
     }
     '''
     def __init__(self, order_id, product_id, status_type, order_type=None, status_reason=None,
-                 side=None, request_size=0, filled_size=0, remaining_size=0, price=0, funds=0, fees=0, create_time=None, update_time=None
+                 side=None, request_size=0, filled_size=0, remaining_size=0, price=0, funds=0,
+                 fees=0, create_time=None, update_time=None
                  ):
         self.id = order_id
         self.product_id = product_id
@@ -64,7 +65,13 @@ class Order:
         self.update_time = update_time
         
     def __str__ (self):
-        return "{OrderStatus.__str__: Not implemented}"
+        return ("{'id':%s, 'product_id':%s, 'side':%s, 'order_type':%s, "
+            "'status_type':%s, 'status_reason':%s, 'request_size':%s, "
+            "'filled_size':%s, 'remaining_size':%s, 'price':%s, 'funds':%s, "
+            "'fees':%s, 'create_time':%s, 'update_time':%s}")%(
+            self.id, self.product_id, self.side, self.order_type, self.status_type,
+             self.status_reason, self.request_size, self.filled_size, self.remaining_size,
+             self.price, self.funds, self.fees, self.create_time, self.update_time)
     
 #EOF
         

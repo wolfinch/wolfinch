@@ -11,7 +11,7 @@ from decimal import Decimal
 from utils import *
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.INFO)
+log.setLevel(log.DEBUG)
 
 
 class OrderBook():
