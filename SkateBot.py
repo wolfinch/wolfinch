@@ -11,12 +11,16 @@ import pkgutil
 import pprint
 from decimal import *
 
-from utils import *
+import market
 import exchanges
+from utils import *
 from market import *
+import sims
 
 log = getLogger ('SkateBot')
 log.setLevel(log.CRITICAL)
+
+print ("%s"%(dir(market)))
 
 # Global Variables
 exchange_list = []
@@ -48,7 +52,7 @@ def close_exchanges():
     global exchange_list
     #init exchanges 
     for exchange in exchange_list:
-            log.debug ("Closing exchange (%s)"%(exchange.__name__))
+            log.info ("Closing exchange (%s)"%(exchange.__name__))
             exchange.close()    
 
 def skatebot_main ():
@@ -80,6 +84,8 @@ def process_market (market):
     update_market_states(market)
     signal = generate_trade_signal (market)
     consume_trade_signal (market, signal)
+    if (sims.simulator_on):
+        sims.market_simulator_run (market)
     
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':

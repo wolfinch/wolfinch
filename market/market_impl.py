@@ -24,55 +24,12 @@ from utils import *
 from order_book import OrderBook
 from order import Order, TradeRequest
 import db
+import sims
 
 log = getLogger ('MARKET')
 log.setLevel(log.DEBUG)
 
 SkateBot_market_list = []
-
-# Feed Q routines
-feedQ = Queue.Queue()
-def feed_enQ (market, msg):
-    obj = {"market":market, "msg":msg}
-    feedQ.put(obj)
-    
-def feed_deQ (timeout):
-    try:
-        if (timeout == 0):
-            msg = feedQ.get(False)
-        else:
-            msg = feedQ.get(block=True, timeout=timeout)
-    except Queue.Empty:
-        return None
-    else:
-        return msg
-
-def feed_Q_process_msg (msg):
-    log.debug ("-------feed msg -------")
-    if (msg["market"]!= None):
-        msg["market"].market_consume_feed(msg['msg'])
-
-def get_market_list ():
-    return SkateBot_market_list
-
-def get_market_by_product (product_id):
-    for market in SkateBot_market_list:
-        if market.product_id == product_id:
-            return market
-        
-def market_init (exchange_list):
-    '''
-    Initialize per exchange, per product data.
-    This is where we want to keep all the run stats
-    '''
-    global SkateBot_market_list
-    for exchange in exchange_list:
-        for product in exchange.get_products():
-            market = exchange.market_init (exchange, product)
-            if (market == None):
-                log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.__name__, product['id']))
-            else:
-                SkateBot_market_list.append(market)
 
 class Fund:
     def __init__(self):
@@ -273,7 +230,10 @@ class Market:
             self.fund.current_value -= order_cost
                                         
     def buy_order_create (self, trade_req):
-        order = self.exchange.buy (trade_req)
+        if (sims.simulator_on):
+            order = sims.buy (trade_req)
+        else:
+            order = self.exchange.buy (trade_req)
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
             log.debug ("BUY Order Sent to exchange. ")      
@@ -305,7 +265,10 @@ class Market:
             self.fund.current_value += order_cost
             
     def sell_order_create (self, trade_req):
-        order = self.exchange.sell (trade_req)
+        if (sims.simulator_on):
+            order = sims.sell (trade_req)
+        else:
+            order = self.exchange.sell (trade_req)
         #update fund 
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
@@ -492,5 +455,50 @@ def consume_trade_signal (market, signal):
         # Execute the trade request and retrieve the order # and store it
         trade_req_list.append(trade_req)
     if (len(trade_req_list)):
-        execute_market_trade(market, trade_req_list)         
+        execute_market_trade(market, trade_req_list)
+        
+# Feed Q routines
+feedQ = Queue.Queue()
+def feed_enQ (market, msg):
+    obj = {"market":market, "msg":msg}
+    feedQ.put(obj)
+    
+def feed_deQ (timeout):
+    try:
+        if (timeout == 0):
+            msg = feedQ.get(False)
+        else:
+            msg = feedQ.get(block=True, timeout=timeout)
+    except Queue.Empty:
+        return None
+    else:
+        return msg
+
+def feed_Q_process_msg (msg):
+    log.debug ("-------feed msg -------")
+    if (msg["market"]!= None):
+        msg["market"].market_consume_feed(msg['msg'])
+
+def get_market_list ():
+    return SkateBot_market_list
+
+def get_market_by_product (product_id):
+    for market in SkateBot_market_list:
+        if market.product_id == product_id:
+            return market
+        
+def market_init (exchange_list):
+    '''
+    Initialize per exchange, per product data.
+    This is where we want to keep all the run stats
+    '''
+    global SkateBot_market_list
+    for exchange in exchange_list:
+        for product in exchange.get_products():
+            market = exchange.market_init (exchange, product)
+            if (market == None):
+                log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.__name__, product['id']))
+            else:
+                SkateBot_market_list.append(market)
+                 
 #EOF
