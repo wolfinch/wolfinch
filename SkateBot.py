@@ -11,16 +11,13 @@ import pkgutil
 import pprint
 from decimal import *
 
-import market
-import exchanges
-from utils import *
-from market import *
 import sims
+import exchanges
+from market import *
+from utils import *
 
 log = getLogger ('SkateBot')
 log.setLevel(log.CRITICAL)
-
-print ("%s"%(dir(market)))
 
 # Global Variables
 exchange_list = []

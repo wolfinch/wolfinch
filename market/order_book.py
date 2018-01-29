@@ -193,6 +193,8 @@ class OrderBook():
         self._asks.remove(price)
 
     def set_asks(self, price, asks):
+        price = round(price, 8)
+        asks = round (asks, 8)
         log.debug ("set_asks: price: %g size: %g" % (price, asks))        
         self._asks.insert(price, asks)
 
@@ -219,6 +221,8 @@ class OrderBook():
         self._bids.remove(price)
 
     def set_bids(self, price, bids):
+        price = round(price, 8)
+        bids = round (bids, 8)
         log.debug ("set_bid: price: %g size: %g" % (price, bids))
         self._bids.insert(price, bids)  # insert on RBtree is a replace for existing keys
                                                             

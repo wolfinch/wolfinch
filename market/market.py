@@ -22,7 +22,7 @@ from decimal import Decimal
 
 from utils import *
 from order_book import OrderBook
-from order import Order, TradeRequest
+from order import TradeRequest
 import db
 import sims
 
@@ -237,7 +237,10 @@ class Market:
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
             log.debug ("BUY Order Sent to exchange. ")      
-            return market_order  
+            return market_order
+        else:
+            log.debug ("BUY Order Failed to place")
+            return None
             
     def buy_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
@@ -274,6 +277,9 @@ class Market:
         if(market_order): #successful order
             log.debug ("SELL Order Sent to exchange. ")      
             return market_order 
+        else:
+            log.debug ("SELL Order Failed to place")
+            return None        
 
     def sell_order_received (self, order):
         #log.debug ("SELL RECV: %s"%(json.dumps(order, indent=4, sort_keys=True)))
@@ -321,30 +327,7 @@ class Market:
         
         
 ############# Market Class Def - end ############# 
-def execute_market_trade(market, trade_req_list):
-#    print ("Market: %s"%(str(market)))
-    '''
-    Desc: Execute a trade request on the market. 
-          This API calls the sell/buy APIs of the corresponding exchanges 
-          and expects the order in uniform format
-    '''
-    for trade_req in trade_req_list:
-        log.debug ("Executing Trade Request:"+str(trade_req))
-        if (trade_req.type == 'limit'):
-            if (trade_req.side == 'BUY'):
-                order = market.buy_order_create (trade_req)
-            elif (trade_req.side == 'SELL'):
-                order = market.sell_order_create (trade_req)
-            if (order == None):
-                log.error ("Placing Order Failed!")
-                return
-            #Add the successful order to the db
-            save_order (market, trade_req, order)
-        elif (trade_req.type == 'stop'):
-            #  Stop order, add to pending list
-            log.debug("pending(stop) trade_req %s"%(str(trade_req)))
-            market.order_book.add_pending_trade_req(trade_req)
-            
+
 def save_order (market, trade_req, order):
     db.db_add_or_update_order (market, trade_req.product, order)
     #TODO: FIXME: jork: implement

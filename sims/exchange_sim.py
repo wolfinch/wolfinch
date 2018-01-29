@@ -9,18 +9,16 @@ import json
 import pprint
 import uuid
 import time
+from decimal import *
 
-from pstats import add_callers
 from utils import *
-#from market import *
-import market
+from market import *
+#from market.order import Order, TradeRequest
+#from market import feed_enQ
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
 log.setLevel (log.DEBUG)
-
-print ("%s"%(dir(market)))
-#Order()
 
 ###### SIMULATOR Global switch ######
 simulator_on = True
@@ -56,7 +54,10 @@ order_struct = {u'created_at': u'2018-01-10T09:49:02.639681Z',
 ####### Private #########
 def do_trade (market):
     open_orders_pvt = open_orders.get(market.product_id) or []
-    traded_orders_pvt = traded_orders.get(market.product_id) or []
+    traded_orders_pvt = traded_orders.get(market.product_id) 
+    if traded_orders_pvt == None:
+        traded_orders_pvt = []
+        traded_orders[market.product_id] = traded_orders_pvt
     price = market.get_market_price()
     log.debug ("SIM EXH stats: open_orders : %d traded_orders: %d price: %s"%(
         len(open_orders_pvt), len(traded_orders_pvt), price))
@@ -67,9 +68,9 @@ def do_trade (market):
         this_order['reason'] = 'filled'    
         this_order['settled'] = True
         this_order['side'] = order.side
-        if order.type == 'limit':
+        if order.order_type == 'limit':
             this_order['price'] = order.price
-            this_order['size'] = order.size            
+            this_order['size'] = order.request_size            
             if order.side == 'buy':
                 if order.price >= price:
                     feed_enQ(market, this_order)
@@ -82,7 +83,7 @@ def do_trade (market):
                     traded_orders_pvt.append (order)
                     open_orders_pvt.remove (order)
                     log.info ("Traded sell order: %s"%(str(order)))
-        elif order.type == 'market':
+        elif order.order_type == 'market':
             this_order['filled_size'] = order.funds/price 
             this_order['executed_value'] = order.funds
             feed_enQ(market, this_order)
@@ -97,7 +98,7 @@ def market_simulator_run (market):
     do_trade (market)
     
 def buy (trade_req) :
-    if not isinstance(TradeRequest, trade_req):
+    if not isinstance( trade_req, TradeRequest):
         return None
     log.debug ("BUY - Placing Order on SIM exchange --" ) 
     
@@ -115,8 +116,8 @@ def buy (trade_req) :
     return buy_order
     
 def sell (trade_req) :
-#     if not isinstance(TradeRequest, trade_req):
-#         return None    
+    if not isinstance(trade_req, TradeRequest):
+        return None    
     log.debug ("SELL - Placing Order on SIM exchange --" )
     sell_order = Order(str(uuid.uuid1()), trade_req.product, "pending", order_type=trade_req.type, 
                       status_reason=None, side='buy', request_size=trade_req.size,
