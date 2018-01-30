@@ -21,7 +21,7 @@ log = getLogger (__name__)
 log.setLevel (log.DEBUG)
 
 ###### SIMULATOR Global switch ######
-simulator_on = True
+simulator_on = False
 
 '''
 Description: Exchange Simulation for papertrade. 
@@ -58,7 +58,7 @@ def do_trade (market):
     if traded_orders_pvt == None:
         traded_orders_pvt = []
         traded_orders[market.product_id] = traded_orders_pvt
-    price = market.get_market_price()
+    price = market.get_market_rate()
     log.debug ("SIM EXH stats: open_orders : %d traded_orders: %d price: %s"%(
         len(open_orders_pvt), len(traded_orders_pvt), price))
     for order in open_orders_pvt[:]:

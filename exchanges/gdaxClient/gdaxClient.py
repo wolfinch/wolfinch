@@ -379,8 +379,8 @@ def gdax_consume_ticker_feed (market, msg):
     
     #update ticker
     #TODO: FIXME: jork: might need to rate-limit the logic here after
-    market.set_market_price (Decimal(msg['price']))
-    market.handle_pending_trades()
+    market.set_market_rate (Decimal(msg['price']))
+    market.update_market_states()
     
     
     
