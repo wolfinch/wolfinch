@@ -21,7 +21,7 @@ log = getLogger (__name__)
 log.setLevel (log.DEBUG)
 
 ###### SIMULATOR Global switch ######
-simulator_on = False
+simulator_on = True
 
 '''
 Description: Exchange Simulation for papertrade. 

@@ -31,7 +31,7 @@ class TradeRequest:
 
 class Order:
     '''
-    Desc: Common/exchange neutral OrderStatus strucutre
+    Desc: Common/exchange neutral OrderStatus structure
     {
     id         : <order_id>
     product_id : <product-id>

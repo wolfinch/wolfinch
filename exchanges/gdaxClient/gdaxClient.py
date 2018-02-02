@@ -8,6 +8,8 @@ import requests
 import json
 import pprint
 from decimal import Decimal
+from datetime import tzinfo, datetime, timedelta
+from time import sleep
 
 import gdax as GDAX #Official version seems to be old, doesn't support auth websocket client
 #import third_party.gdax_python.gdax as GDAX
@@ -46,6 +48,11 @@ def market_init (exchange, product):
     market.fund.set_max_per_buy_fund_value(100)
     market.crypto.set_initial_size(Decimal( crypto_acc['available']))
     market.crypto.set_hold_size( Decimal(crypto_acc['hold']))
+    
+    # import Historic Data 
+    hist_rates = get_historic_rates(product['id'])
+    if hist_rates:
+        market.import_historic_rates(hist_rates)
     
     ## Feed Cb
     market.consume_feed = gdax_consume_feed
@@ -382,10 +389,11 @@ def gdax_consume_ticker_feed (market, msg):
     market.set_market_rate (Decimal(msg['price']))
     market.update_market_states()
     
-    
+###################### WebSocket Impl : end #############################
     
 ############ ************** Public APIs for Exchange *********** ###########    
-    # def products():
+
+# def products():
 #     api_base = gdax_conf['apiBase']
 #     response = requests.get(api_base + '/products')
 #     # check for invalid api response
@@ -409,10 +417,95 @@ def get_product_order_book (product, level = 1):
     #log.debug(v)
     return v
 
-
 def get_accounts ():
 #     log.debug (pprint.pformat(gdax_accounts))
     return gdax_accounts    
+
+
+def get_historic_rates (product_id, start=None, end=None):
+    '''
+        Args:
+    product_id (str): Product
+    start (Optional[str]): Start time in ISO 8601
+    end (Optional[str]): End time in ISO 8601
+    granularity (Optional[str]): Desired time slice in 
+     seconds
+     '''
+    #Max Candles in one call
+    
+    max_candles = 200
+    candles_list = []
+    period = 0
+    granularity = 0
+    #get config
+    backfill = gdax_conf.get('backfill')
+    if not backfill:
+        return None
+
+    for entry in backfill:
+        if entry.get('enabled'):
+            enabled = entry['enabled'] 
+        if entry.get('period'):
+            period = int(entry['period'])
+        if entry.get('granularity'):
+            granularity = int(entry['granularity'])            
+    
+    if not enabled:
+        log.debug ("Historical data retrieval not enabled")
+        return None
+
+    if not end:
+        # if no end, use current time
+        end = datetime.now()
+         
+    if not start:
+        # if no start given, use the config
+        real_start = start = end - timedelta(days = period)
+    
+    log.debug ("Retrieving Historic candles for period: %s to %s"%(
+                real_start.isoformat(), end.isoformat()))
+    
+    td = max_candles*granularity
+    tmp_end = start + timedelta(seconds = td)
+    if tmp_end > end:
+        tmp_end = end
+    count = 0
+    while (start < end):
+        ## looks like there is a rate=limiting in force on gdax, we will have to slow down
+        count += 1
+        if (count > 4):
+            #rate-limiting
+            count = 0
+            sleep (2)
+        
+        start_str = start.isoformat()
+        end_str = tmp_end.isoformat()
+        candles = public_client.get_product_historic_rates (product_id, start_str, end_str, granularity)
+        if candles:
+            if isinstance(candles, dict):
+                ## Error Case
+                err_msg = candles.get('message')
+                if (err_msg):
+                    log.error ("Error while retrieving Historic rates: msg: %s\n will retry.."%(err_msg))
+            else:
+                candles_list += candles
+                log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
+                    start_str, end_str, (0 if not candles else len(candles))))
+                # new period
+                start = tmp_end
+                tmp_end = start + timedelta(seconds = td)
+                if tmp_end > end:
+                    tmp_end = end
+        else:
+            log.error ("Error While Retrieving Historic candles for period: %s to %s num: %d"%(
+                start_str, end_str, (0 if not candles else len(candles))))
+            return None
+    
+    log.debug ("Retrieved Historic candles for period: %s to %s num: %d"%(
+                real_start.isoformat(), end.isoformat(), (0 if not candles_list else len(candles_list))))
+    return candles_list
+    
+
 def buy (trade_req) :
     log.debug ("BUY - Placing Order on exchange --" )    
     order = auth_client.buy(price=trade_req.price, #USD
@@ -422,6 +515,7 @@ def buy (trade_req) :
                     post_only='True'                    
                     )
     return normalized_order (order);
+
 def sell (trade_req) :
     log.debug ("SELL - Placing Order on exchange --" )    
     order = auth_client.buy(price=trade_req.price, #USD

@@ -158,12 +158,12 @@ class OrderBook():
         for bid in res['bids']:
             new_size = Decimal(bid[1]) 
             price = Decimal(bid[0])
-            new_size += (self.get_bids(price) or 0)
+            new_size += Decimal((self.get_bids(price) or 0))
             self.set_bids(price, new_size)
         for ask in res['asks']:
             new_size = Decimal(ask[1]) 
             price = Decimal(ask[0])
-            new_size += (self.get_asks(price) or 0)
+            new_size += Decimal((self.get_asks(price) or 0))
             self.set_asks(price, new_size)
         self._sequence = Decimal(res['sequence'])
         self.book_valid = True

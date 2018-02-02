@@ -140,6 +140,9 @@ class Market:
         self.crypto = Crypto ()
         #self.order_book = Orders ()
         self.order_book = OrderBook(market=self)
+        # Market Strategy related Data
+        self.historic_rates = None
+        self.indicators     = {}
         
     def set_market_rate (self, price):
         self.current_market_rate = price
@@ -151,7 +154,7 @@ class Market:
         if (self.consume_feed != None):
             self.consume_feed(self, msg)
             
-    def __handle_pending_trades (self):
+    def _handle_pending_trades (self):
         #TODO: FIXME:jork: Might need to extend
         log.debug("(%d) Pending Trade Reqs "%(len(self.order_book.pending_trade_req)))
 
@@ -185,11 +188,11 @@ class Market:
                 if (order_det):
                     order = order_det
                 if reason == 'filled':
-                    self.__buy_order_filled ( order)
+                    self._buy_order_filled ( order)
                 elif reason == 'canceled':
-                    self.__buy_order_canceled (order)
+                    self._buy_order_canceled (order)
             elif msg_type == 'received':
-                self.__buy_order_received(order)
+                self._buy_order_received(order)
             elif (msg_type in ['open', 'match', 'change', 'margin_profile_update', 'activate' ]):
                 log.debug ("Ignored buy order status: %s"%(msg_type))
             else:
@@ -201,11 +204,11 @@ class Market:
                 if (order_det):
                     order = order_det                
                 if reason == 'filled':
-                    self.__sell_order_filled ( order)
+                    self._sell_order_filled ( order)
                 elif reason == 'canceled':
-                    self.__sell_order_canceled (order)
+                    self._sell_order_canceled (order)
             elif msg_type == 'received':
-                self.__sell_order_received(order)
+                self._sell_order_received(order)
             elif (msg_type in ['open', 'match', 'change', 'margin_profile_update', 'activate']):
                 log.debug ("Ignored sell order status: %s"%(msg_type))
             else:
@@ -213,7 +216,7 @@ class Market:
         else:
             log.error ("Unknown order Side (%s)"%(side))
                     
-    def __buy_order_received (self, order):
+    def _buy_order_received (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
             #update fund 
@@ -229,7 +232,7 @@ class Market:
             self.fund.current_hold_value += order_cost
             self.fund.current_value -= order_cost
                                         
-    def __buy_order_create (self, trade_req):
+    def _buy_order_create (self, trade_req):
         if (sims.simulator_on):
             order = sims.buy (trade_req)
         else:
@@ -242,7 +245,7 @@ class Market:
             log.debug ("BUY Order Failed to place")
             return None
             
-    def __buy_order_filled (self, order):
+    def _buy_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order          
             order_cost = (market_order.filled_size*market_order.price)
@@ -260,14 +263,14 @@ class Market:
             self.crypto.latest_traded_size = market_order.filled_size
             self.crypto.total_traded_size += market_order.filled_size
             
-    def __buy_order_canceled(self, order):
+    def _buy_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
             order_cost = (market_order.remaining_size*market_order.price)
             self.fund.current_hold_value -= order_cost
             self.fund.current_value += order_cost
             
-    def __sell_order_create (self, trade_req):
+    def _sell_order_create (self, trade_req):
         if (sims.simulator_on):
             order = sims.sell (trade_req)
         else:
@@ -281,7 +284,7 @@ class Market:
             log.debug ("SELL Order Failed to place")
             return None        
 
-    def __sell_order_received (self, order):
+    def _sell_order_received (self, order):
         #log.debug ("SELL RECV: %s"%(json.dumps(order, indent=4, sort_keys=True)))
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
@@ -298,7 +301,7 @@ class Market:
             self.crypto.current_hold_size += size
             self.crypto.current_size -= size            
                         
-    def __sell_order_filled (self, order):
+    def _sell_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order       
             order_cost = (market_order.filled_size*market_order.price)        
@@ -311,17 +314,17 @@ class Market:
             profit = (market_order.price - self.fund.current_avg_buy_price )*market_order.filled_size
             self.fund.current_realized_profit += profit
             
-    def __sell_order_canceled(self, order):
+    def _sell_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
             self.crypto.current_hold_size -= market_order.remaining_size
             self.crypto.current_size += market_order.remaining_size
 
-    def __save_order (self, trade_req, order):
+    def _save_order (self, trade_req, order):
         db.db_add_or_update_order (self, trade_req.product, order)
         #TODO: FIXME: jork: implement
         
-    def __get_manual_trade_req (self):
+    def _get_manual_trade_req (self):
         exchange_name = self.exchange.__name__
         trade_req_list = []
         manual_file_name = "override/TRADE_%s.%s"%(exchange_name, self.product_id)
@@ -343,7 +346,7 @@ class Market:
                     trade_req_list.append(trade_req)
         return trade_req_list       
     
-    def __generate_trade_request (self, signal):
+    def _generate_trade_request (self, signal):
         '''
         Desc: Consider various parameters and generate a trade request
         Algo: 
@@ -352,7 +355,7 @@ class Market:
             #TODO: jork: implement
         return None
 
-    def __execute_market_trade(self, trade_req_list):
+    def _execute_market_trade(self, trade_req_list):
         '''
         Desc: Execute a trade request on the market. 
               This API calls the sell/buy APIs of the corresponding exchanges 
@@ -362,14 +365,14 @@ class Market:
             log.debug ("Executing Trade Request:"+str(trade_req))
             if (trade_req.type == 'limit'):
                 if (trade_req.side == 'BUY'):
-                    order = self.__buy_order_create (trade_req)
+                    order = self._buy_order_create (trade_req)
                 elif (trade_req.side == 'SELL'):
-                    order = self.__sell_order_create (trade_req)
+                    order = self._sell_order_create (trade_req)
                 if (order == None):
                     log.error ("Placing Order Failed!")
                     return
                 #Add the successful order to the db
-                self.__save_order (trade_req, order)
+                self._save_order (trade_req, order)
             elif (trade_req.type == 'stop'):
                 #  Stop order, add to pending list
                 log.debug("pending(stop) trade_req %s"%(str(trade_req)))
@@ -389,7 +392,7 @@ class Market:
             log.debug ("Re-Construct the Order Book")
             self.order_book.reset_book()     
         #2.pending trades
-        self.__handle_pending_trades ()
+        self._handle_pending_trades ()
         
     def generate_trade_signal (self):
         """ 
@@ -419,7 +422,6 @@ class Market:
              1.  See if there is any manual override, if there is one, that takes priority (skip other steps?)
              2.  el
              
-             
             -- Manual Override file: "override/TRADE_<exchange_name>.<product>"
                 Json format:
                 {
@@ -439,18 +441,21 @@ class Market:
             log.info("Ignore file present for product. Skip processing! "+ignore_file)
             return
         #get manual trade reqs if any
-        trade_req_list = self.__get_manual_trade_req ()
+        trade_req_list = self._get_manual_trade_req ()
         # Now generate auto trade req list
         log.info ("Trade Signal strength:"+str(signal))         ## TODO: FIXME: IMPLEMENT:
-        trade_req = self.__generate_trade_request( signal)
+        trade_req = self._generate_trade_request( signal)
         #validate the trade Req
         if (trade_req != None and trade_req.size > 0 and trade_req.price > 0):
             ## Now we have a valid trader request
             # Execute the trade request and retrieve the order # and store it
             trade_req_list.append(trade_req)
         if (len(trade_req_list)):
-            self.__execute_market_trade(trade_req_list)
+            self._execute_market_trade(trade_req_list)
             
+    def import_historic_rates (self, hist_rates):
+        log.debug ("Importing Historic rates #num Candles (%d)", len(hist_rates))
+        self.historic_rates = hist_rates         # TODO: FIXME: jork: Implement properly, find best method
         
     def __str__(self):
         return "{'product_id':%s,'name':%s,'exchange_name':%s,'fund':%s,'crypto':%s,'orders':%s}"%(
