@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 '''
- SkateBot Auto trading Bot
+ OldMonk Auto trading Bot
  Desc: Generate manual trading signal
  (c) Joshith Rayaroth Koderi
 '''

@@ -1,5 +1,5 @@
 '''
- SkateBot Auto trading Bot
+ OldMonk Auto trading Bot
  Desc: Market Strategy Abstract Class Implementation
  (c) Joshith Rayaroth Koderi
 '''

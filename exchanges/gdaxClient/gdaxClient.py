@@ -1,5 +1,5 @@
 # '''
-#  SkateBot Auto trading Bot
+#  OldMonk Auto trading Bot
 #  Desc: Gdax exchange interactions
 #  (c) Joshith
 # '''

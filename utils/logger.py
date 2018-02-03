@@ -1,5 +1,5 @@
 '''
- SkateBot Auto trading Bot
+ OldMonk Auto trading Bot
  Desc: Generic Logging routines
  (c) Joshith
 '''
@@ -7,7 +7,7 @@
 import logging
 
 # 
-# class SkateBotLogger (logging):
+# class OldMonkLogger (logging):
 #     
 # class Logger():
 #     def __init__(self, name=None):

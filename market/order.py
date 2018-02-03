@@ -1,6 +1,6 @@
 
 '''
- SkateBot Auto trading Bot
+ OldMonk Auto trading Bot
  Desc: Order Class and TradeRequest class - implementation
  (c) Joshith Rayaroth Koderi
 '''

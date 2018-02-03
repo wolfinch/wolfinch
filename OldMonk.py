@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 # '''
-#  SkateBot Auto trading Bot
+#  OldMonk Auto trading Bot
 #  Desc: Main File implements Bot
 #  (c) Joshith Rayaroth Koderi
 # '''
@@ -16,20 +16,20 @@ import exchanges
 from market import *
 from utils import *
 
-log = getLogger ('SkateBot')
+log = getLogger ('OldMonk')
 log.setLevel(log.CRITICAL)
 
 # Global Variables
 exchange_list = []
 TICK_DELAY    = 10        # 20 Sec
 
-def SkateBot_init():
-    global SkateBot_market_list, exchange_list
+def OldMonk_init():
+    global OldMonk_market_list, exchange_list
     init_exchanges()
     market_init (exchange_list)    
     
-def SkateBot_end():
-    log.info ("Finalizing SkateBot")
+def OldMonk_end():
+    log.info ("Finalizing OldMonk")
     close_exchanges ()
     
 def init_exchanges ():
@@ -54,7 +54,7 @@ def close_exchanges():
 
 def skatebot_main ():
     """
-    Main Function for Skatebot
+    Main Function for OldMonk
     """
     sleep_time = TICK_DELAY
     while (True) : 
@@ -87,15 +87,15 @@ def process_market (market):
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     getcontext().prec = 8 #decimal precision
-    print("Starting SkateBot..")
+    print("Starting OldMonk..")
     try:
-        SkateBot_init()
+        OldMonk_init()
         log.debug ("Starting Main Loop")
         skatebot_main ()
     except KeyboardInterrupt:
-        SkateBot_end()
+        OldMonk_end()
     #'''Not supposed to reach here'''
-    print("SkateBot end")
+    print("OldMonk end")
     
 
 #EOF

@@ -1,5 +1,5 @@
 # '''
-#  SkateBot Auto trading Bot
+#  OldMonk Auto trading Bot
 #  Desc:  exchange interactions Simulation
 #  (c) Joshith
 # '''

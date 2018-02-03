@@ -1,6 +1,6 @@
 
 '''
- SkateBot Auto trading Bot
+ OldMonk Auto trading Bot
  Desc: Market/trading routines
  (c) Joshith Rayaroth Koderi
 '''
@@ -29,7 +29,7 @@ import sims
 log = getLogger ('MARKET')
 log.setLevel(log.DEBUG)
 
-SkateBot_market_list = []
+OldMonk_market_list = []
 
 class Fund:
     def __init__(self):
@@ -489,10 +489,10 @@ def feed_Q_process_msg (msg):
         market.market_consume_feed(msg['msg'])
 
 def get_market_list ():
-    return SkateBot_market_list
+    return OldMonk_market_list
 
 def get_market_by_product (product_id):
-    for market in SkateBot_market_list:
+    for market in OldMonk_market_list:
         if market.product_id == product_id:
             return market
         
@@ -501,13 +501,13 @@ def market_init (exchange_list):
     Initialize per exchange, per product data.
     This is where we want to keep all the run stats
     '''
-    global SkateBot_market_list
+    global OldMonk_market_list
     for exchange in exchange_list:
         for product in exchange.get_products():
             market = exchange.market_init (exchange, product)
             if (market == None):
                 log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.__name__, product['id']))
             else:
-                SkateBot_market_list.append(market)
+                OldMonk_market_list.append(market)
                  
 #EOF
