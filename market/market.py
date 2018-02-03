@@ -7,6 +7,7 @@
 ##############################################
 ###### Bugs/Caveats, TODOs, AIs###############
 ### 1. Account Remaining_size for fund calculations
+### 2. Use Fee and enhance to maker/taker fees
 
 
 ##############################################
@@ -17,7 +18,6 @@ import uuid
 import Queue
 import pprint
 from itertools import product
-from docutils.nodes import sidebar
 from decimal import Decimal
 
 from utils import *
