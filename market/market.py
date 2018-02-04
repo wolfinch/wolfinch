@@ -25,6 +25,8 @@ from order_book import OrderBook
 from order import TradeRequest
 import db
 import sims
+import indicators
+import strategy
 
 log = getLogger ('MARKET')
 log.setLevel(log.DEBUG)
@@ -142,7 +144,9 @@ class Market:
         self.order_book = OrderBook(market=self)
         # Market Strategy related Data
         # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema', val, name:val...}]
-        self.market_indicators     = []
+        self.market_indicators_data     = [] 
+        self.market_indicators     = indicators.market_indicators
+        self.market_strategies     = strategy.market_strategies
         
     def set_market_rate (self, price):
         self.current_market_rate = price
@@ -389,13 +393,13 @@ class Market:
             log.debug ("Importing Historic rates #num Candles")            
             candle_list = self.exchange.get_historic_rates(self.product_id)
             if candle_list:        
-                self.market_indicators = []
+                self.market_indicators_data = []
                 for candle in candle_list:
-                    self.market_indicators.append({'ohlc': candle})
+                    self.market_indicators_data.append({'ohlc': candle})
                 #log.debug ("Imported Historic rates #num Candles (%s)", str(self.market_indicators))
 
     def _calculate_historic_indicators (self):
-        hist_len  = 0 if not self.market_indicators else len(self.market_indicators)
+        hist_len  = 0 if not self.market_indicators_data else len(self.market_indicators_data)
         if not hist_len:
             return
         
@@ -404,7 +408,9 @@ class Market:
             self._calculate_all_indicators (idx)
                     
     def _calculate_all_indicators (self, candle_idx):
-        pass
+        
+        for indicator in self.market_indicators:
+            indicator.calculate(candle_idx)
         
         
     ##########################################
