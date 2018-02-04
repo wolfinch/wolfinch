@@ -377,7 +377,36 @@ class Market:
                 #  Stop order, add to pending list
                 log.debug("pending(stop) trade_req %s"%(str(trade_req)))
                 self.order_book.add_pending_trade_req(trade_req)
-               
+    
+    def _import_historic_candles (self):
+        ### TODO: FIXME: jork: db implementations for historic data
+        # import Historic Data 
+        try:
+            self.exchange.get_historic_rates
+        except NameError:
+            log.critical("method 'get_historic_rates()' not defined for exchange!!")
+        else:
+            log.debug ("Importing Historic rates #num Candles")            
+            candle_list = self.exchange.get_historic_rates(self.product_id)
+            if candle_list:        
+                self.market_indicators = []
+                for candle in candle_list:
+                    self.market_indicators.append({'ohlc': candle})
+                #log.debug ("Imported Historic rates #num Candles (%s)", str(self.market_indicators))
+
+    def _calculate_historic_indicators (self):
+        hist_len  = 0 if not self.market_indicators else len(self.market_indicators)
+        if not hist_len:
+            return
+        
+        log.debug ("re-Calculating all indicators for historic data #candles (%d)"%(hist_len))
+        for idx in range (hist_len):
+            self._calculate_all_indicators (idx)
+                    
+    def _calculate_all_indicators (self, candle_idx):
+        pass
+        
+        
     ##########################################
     ############## Public APIs ###############    
     def market_setup (self):
@@ -385,8 +414,11 @@ class Market:
         Restore the market states for our work
         WHenver possible, restore from the local db
         1. Get historic rates
+        2. Calculate the indicators based on configured strategies 
         '''
-        self._import_historic_candles()        
+        self._import_historic_candles()
+        self._calculate_historic_indicators()
+        
         
     def update_market_states (self):
         '''
@@ -460,23 +492,7 @@ class Market:
             trade_req_list.append(trade_req)
         if (len(trade_req_list)):
             self._execute_market_trade(trade_req_list)
-            
-    def _import_historic_candles (self):
-        ### TODO: FIXME: jork: db implementations for historic data
-        # import Historic Data 
-        try:
-            self.exchange.get_historic_rates
-        except NameError:
-            log.critical("method 'get_historic_rates()' not defined for exchange!!")
-        else:
-            candle_list = self.exchange.get_historic_rates(self.product_id)
-            if candle_list:        
-                log.debug ("Importing Historic rates #num Candles (%d)", len(candle_list))
-                self.market_indicators = []
-                for candle in candle_list:
-                    self.market_indicators += [{'ohlc': candle}]
-                #log.debug ("Imported Historic rates #num Candles (%s)", str(self.market_indicators))
-                    
+
     def __str__(self):
         return "{'product_id':%s,'name':%s,'exchange_name':%s,'fund':%s,'crypto':%s,'orders':%s}"%(
                 self.product_id,self.name,self.exchange_name, 

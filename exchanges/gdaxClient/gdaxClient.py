@@ -275,6 +275,7 @@ def register_feed (api_key="", api_secret="", api_passphrase="", url=""):
     products = []
     for p in gdax_conf['products']: #["BTC-USD", "ETH-USD"]
         products += p.keys()
+        
     channels = [
             "level2",
             "heartbeat",
@@ -487,8 +488,8 @@ def get_historic_rates (product_id, start=None, end=None):
                     log.error ("Error while retrieving Historic rates: msg: %s\n will retry.."%(err_msg))
             else:
                 #candles are of struct [[time, o, h, l,c, V]]
-                for candle in candles:
-                    candles_list.append((candle[0], candle[1], candle[2], candle[3], candle[4], candle[5]))
+                candles_list += map(
+                    lambda candle: (candle[0], candle[1], candle[2], candle[3], candle[4], candle[5]), candles)
                 
                 log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
                     start_str, end_str, (0 if not candles else len(candles))))
