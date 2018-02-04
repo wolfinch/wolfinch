@@ -19,10 +19,10 @@ exchange:
        - currency:
           - 'BTC'
           - 'USD'
-    - 'ETH-USD':
-       - currency:
-          - 'ETH'
-          - 'USD'
+#    - 'ETH-USD':
+#       - currency:
+#          - 'ETH'
+#          - 'USD'
     
   ##### sandbox api base ######
   apiBase      : 'https://api-public.sandbox.gdax.com'

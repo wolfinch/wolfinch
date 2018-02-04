@@ -52,7 +52,7 @@ def market_init (exchange, product):
     # import Historic Data 
     hist_rates = get_historic_rates(product['id'])
     if hist_rates:
-        market.import_historic_rates(hist_rates)
+        market.import_historic_candles(hist_rates)
     
     ## Feed Cb
     market.consume_feed = gdax_consume_feed
@@ -276,7 +276,9 @@ class gdaxWebsocketClient (GDAX.WebsocketClient):
                 log.error ("Feed Thread: Unknown Feed Msg Type (%s)"%(msg['type']))
     
 def register_feed (api_key="", api_secret="", api_passphrase="", url=""):
-    products = ["BTC-USD", "ETH-USD"]
+    products = []
+    for p in gdax_conf['products']: #["BTC-USD", "ETH-USD"]
+        products += p.keys()
     channels = [
             "level2",
             "heartbeat",
@@ -292,7 +294,7 @@ def register_feed (api_key="", api_secret="", api_passphrase="", url=""):
         log.error ("Unable to register websocket client")
         return None
     else:
-        log.debug ("Initialized websocket client")        
+        log.debug ("Initialized websocket client for products: %s"%(products))        
         return websocket_client
 
 ######## Feed Consume #######
@@ -488,7 +490,10 @@ def get_historic_rates (product_id, start=None, end=None):
                 if (err_msg):
                     log.error ("Error while retrieving Historic rates: msg: %s\n will retry.."%(err_msg))
             else:
-                candles_list += candles
+                #candles are of struct [[time, o, h, l,c, V]]
+                for candle in candles:
+                    candles_list.append((candle[0], candle[1], candle[2], candle[3], candle[4], candle[5]))
+                
                 log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
                     start_str, end_str, (0 if not candles else len(candles))))
                 # new period

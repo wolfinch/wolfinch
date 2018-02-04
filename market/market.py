@@ -103,7 +103,7 @@ class Market:
 #      current_realized_profit:
 #      current_unrealized_profit
 #      total_profit:
-#      fund_liquidity_percent: <% of total initial fund allowed to use>     
+#      fund_liquidity_percent: <% of total initial fund allowed to use>
 #      max_per_buy_fund_value:
 #      }
 #      crypto {
@@ -141,8 +141,8 @@ class Market:
         #self.order_book = Orders ()
         self.order_book = OrderBook(market=self)
         # Market Strategy related Data
-        self.historic_rates = None
-        self.indicators     = {}
+        # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema', val, name:val...}]
+        self.market_indicators     = []
         
     def set_market_rate (self, price):
         self.current_market_rate = price
@@ -453,10 +453,13 @@ class Market:
         if (len(trade_req_list)):
             self._execute_market_trade(trade_req_list)
             
-    def import_historic_rates (self, hist_rates):
-        log.debug ("Importing Historic rates #num Candles (%d)", len(hist_rates))
-        self.historic_rates = hist_rates         # TODO: FIXME: jork: Implement properly, find best method
-        
+    def import_historic_candles (self, candle_list):
+        log.debug ("Importing Historic rates #num Candles (%d)", len(candle_list))
+        self.market_indicators = []
+        for candle in candle_list:
+            self.market_indicators += [{'ohlc': candle}]
+                    
+    
     def __str__(self):
         return "{'product_id':%s,'name':%s,'exchange_name':%s,'fund':%s,'crypto':%s,'orders':%s}"%(
                 self.product_id,self.name,self.exchange_name, 
