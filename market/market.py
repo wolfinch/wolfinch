@@ -380,6 +380,14 @@ class Market:
                
     ##########################################
     ############## Public APIs ###############    
+    def market_setup (self):
+        ''' 
+        Restore the market states for our work
+        WHenver possible, restore from the local db
+        1. Get historic rates
+        '''
+        self._import_historic_candles()        
+        
     def update_market_states (self):
         '''
         Desc: 1. Update/refresh the various market states (rate, etc.)
@@ -453,13 +461,22 @@ class Market:
         if (len(trade_req_list)):
             self._execute_market_trade(trade_req_list)
             
-    def import_historic_candles (self, candle_list):
-        log.debug ("Importing Historic rates #num Candles (%d)", len(candle_list))
-        self.market_indicators = []
-        for candle in candle_list:
-            self.market_indicators += [{'ohlc': candle}]
+    def _import_historic_candles (self):
+        ### TODO: FIXME: jork: db implementations for historic data
+        # import Historic Data 
+        try:
+            self.exchange.get_historic_rates
+        except NameError:
+            log.critical("method 'get_historic_rates()' not defined for exchange!!")
+        else:
+            candle_list = self.exchange.get_historic_rates(self.product_id)
+            if candle_list:        
+                log.debug ("Importing Historic rates #num Candles (%d)", len(candle_list))
+                self.market_indicators = []
+                for candle in candle_list:
+                    self.market_indicators += [{'ohlc': candle}]
+                #log.debug ("Imported Historic rates #num Candles (%s)", str(self.market_indicators))
                     
-    
     def __str__(self):
         return "{'product_id':%s,'name':%s,'exchange_name':%s,'fund':%s,'crypto':%s,'orders':%s}"%(
                 self.product_id,self.name,self.exchange_name, 
@@ -513,4 +530,16 @@ def market_init (exchange_list):
             else:
                 OldMonk_market_list.append(market)
                  
+def market_setup ():         
+    '''
+    Setup market states.
+    This is where we want to keep all the run stats
+    '''
+    global OldMonk_market_list
+    for market in OldMonk_market_list:
+            status = market.market_setup ()
+            if (status == False):
+                log.critical ("Market Init Failed for market: %s"%(market.name))
+            else:
+                log.info ("Market setup completed for market: %s"%(market.name))
 #EOF

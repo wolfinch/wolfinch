@@ -24,9 +24,10 @@ exchange_list = []
 TICK_DELAY    = 10        # 20 Sec
 
 def OldMonk_init():
-    global OldMonk_market_list, exchange_list
+    global exchange_list
     init_exchanges()
-    market_init (exchange_list)    
+    market_init (exchange_list)
+    market_setup()
     
 def OldMonk_end():
     log.info ("Finalizing OldMonk")

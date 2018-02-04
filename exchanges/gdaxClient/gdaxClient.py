@@ -48,16 +48,12 @@ def market_init (exchange, product):
     market.fund.set_max_per_buy_fund_value(100)
     market.crypto.set_initial_size(Decimal( crypto_acc['available']))
     market.crypto.set_hold_size( Decimal(crypto_acc['hold']))
-    
-    # import Historic Data 
-    hist_rates = get_historic_rates(product['id'])
-    if hist_rates:
-        market.import_historic_candles(hist_rates)
+
     
     ## Feed Cb
     market.consume_feed = gdax_consume_feed
     return market
-
+    
 def close ():
     log.debug("Closing exchange...")    
     global ws_client
