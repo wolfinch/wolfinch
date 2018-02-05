@@ -489,12 +489,13 @@ def get_historic_rates (product_id, start=None, end=None):
             else:
                 #candles are of struct [[time, o, h, l,c, V]]
                 candles_list += map(
-                    lambda candle: (candle[0], candle[1], candle[2], candle[3], candle[4], candle[5]), candles)
-                
+                    lambda candle: (candle[0], candle[1], candle[2], candle[3], candle[4], candle[5]), reversed(candles))
+#                 log.debug ("%s"%(candles))
                 log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
                     start_str, end_str, (0 if not candles else len(candles))))
-                # new period
-                start = tmp_end
+                
+                # new period, start from the (last +1)th position
+                start = tmp_end + timedelta(seconds = granularity)
                 tmp_end = start + timedelta(seconds = td)
                 if tmp_end > end:
                     tmp_end = end
@@ -505,6 +506,7 @@ def get_historic_rates (product_id, start=None, end=None):
     
     log.debug ("Retrieved Historic candles for period: %s to %s num: %d"%(
                 real_start.isoformat(), end.isoformat(), (0 if not candles_list else len(candles_list))))
+#     log.debug ("%s"%(candles_list))
     return candles_list
     
 

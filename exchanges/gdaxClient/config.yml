@@ -40,6 +40,6 @@ exchange:
   
   backfill:
     - enabled  : Yes  
-    - period   : 2  #in Days
+    - period   : 1  #in Days
     - granularity: 300  #in Sec    
 

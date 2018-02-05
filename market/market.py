@@ -19,6 +19,7 @@ import Queue
 import pprint
 from itertools import product
 from decimal import Decimal
+import itertools
 
 from utils import *
 from order_book import OrderBook
@@ -411,7 +412,7 @@ class Market:
         log.debug ("setting up all indicators for periods indx: %d"%(candle_idx))
         for indicator in self.indicator_calculators:
             start = candle_idx - indicator.period
-            period_data = self.market_indicators_data [(0 if start < 0 else start):indicator.period]
+            period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
             new_ind = indicator.calculate(period_data)
             self.market_indicators_data [candle_idx][indicator.name] = new_ind
             log.debug ("indicator (%s) val (%d)"%(indicator.name, new_ind))
