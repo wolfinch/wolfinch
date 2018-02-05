@@ -3,7 +3,7 @@
  (c) Joshith Rayaroth Koderi
 '''
 
-from indicators.indicator import Indicator
+from indicator import Indicator
 
 class SMA (Indicator):
     '''
@@ -14,5 +14,9 @@ class SMA (Indicator):
         self.name = name
         self.period = period
                 
-    def calculate(self):
-        pass
+    def calculate(self, data):
+        if len(data) < self.period:
+            return 0
+        #(time, o, h,l,c, vol)
+        return  (reduce (lambda x,y: x+y, map (lambda x: x['ohlc'][4], data), 0))/self.period
+        
