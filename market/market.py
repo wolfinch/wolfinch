@@ -34,6 +34,19 @@ log.setLevel(log.DEBUG)
 
 OldMonk_market_list = []
 
+class OHLC(object): 
+    __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']
+    def __init__ (self, time=0, open=0, high=0, low=0, close =0, volume =0):
+        self.time = time
+        self.open = open
+        self.high = high
+        self.low  = low
+        self.close = close
+        self.volume = volume
+    def __str__ (self):
+        return "{time: %s, open: %g, high: %g, low: %g, close: %g, volume: %g}"%(
+            str(self.time), self.open, self.high, self.low, self.close, self.volume)
+    
 class Fund:
     def __init__(self):
         self.initial_value = Decimal(0.0)
@@ -397,7 +410,8 @@ class Market:
                 self.market_indicators_data = []
                 for candle in candle_list:
                     self.market_indicators_data.append({'ohlc': candle})
-                #log.debug ("Imported Historic rates #num Candles (%s)", str(self.market_indicators))
+                    #log.debug('ohlc: %s'%(candle))
+                #log.debug ("Imported Historic rates #num Candles (%s)", str(self.market_indicators_data))
 
     def _calculate_historic_indicators (self):
         hist_len  = 0 if not self.market_indicators_data else len(self.market_indicators_data)
@@ -411,11 +425,11 @@ class Market:
     def _calculate_all_indicators (self, candle_idx):
         log.debug ("setting up all indicators for periods indx: %d"%(candle_idx))
         for indicator in self.indicator_calculators:
-            start = candle_idx - indicator.period
+            start = candle_idx+1 - indicator.period
             period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
             new_ind = indicator.calculate(period_data)
             self.market_indicators_data [candle_idx][indicator.name] = new_ind
-            log.debug ("indicator (%s) val (%d)"%(indicator.name, new_ind))
+            #log.debug ("indicator (%s) val (%d)"%(indicator.name, new_ind))
         
         
     ##########################################

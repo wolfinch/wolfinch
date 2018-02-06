@@ -15,8 +15,9 @@ class SMA (Indicator):
         self.period = period
                 
     def calculate(self, data):
-        if len(data) < self.period:
+        if len(data) is not self.period:
             return 0
+#        print ("len sma: "+str(len(data)))
         #(time, o, h,l,c, vol)
-        return  (reduce (lambda x,y: x+y, map (lambda x: x['ohlc'][4], data), 0))/self.period
+        return  (reduce (lambda x,y: x+y, map (lambda x: x['ohlc'].close, data), 0))/self.period
         

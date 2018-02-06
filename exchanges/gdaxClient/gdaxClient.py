@@ -489,7 +489,9 @@ def get_historic_rates (product_id, start=None, end=None):
             else:
                 #candles are of struct [[time, o, h, l,c, V]]
                 candles_list += map(
-                    lambda candle: (candle[0], candle[1], candle[2], candle[3], candle[4], candle[5]), reversed(candles))
+                    lambda candle: OHLC(time=candle[0], 
+                                        low=candle[1], high=candle[2], open=candle[3], 
+                                        close=candle[4], volume=candle[5]), reversed(candles))
 #                 log.debug ("%s"%(candles))
                 log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
                     start_str, end_str, (0 if not candles else len(candles))))
