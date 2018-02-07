@@ -1,8 +1,9 @@
-'''
- Desc: Market Simple Moving Average (SMA) implementation 
- (c) Joshith Rayaroth Koderi
-'''
+# '''
+#  Desc: Market Simple Moving Average (SMA) implementation 
+#  (c) Joshith Rayaroth Koderi
+# '''
 
+from decimal import Decimal
 from indicator import Indicator
 
 class SMA (Indicator):
@@ -19,5 +20,6 @@ class SMA (Indicator):
             return 0
 #        print ("len sma: "+str(len(data)))
         #(time, o, h,l,c, vol)
-        return  (reduce (lambda x,y: x+y, map (lambda x: x['ohlc'].close, data), 0))/self.period
+        #return  (reduce (lambda x,y: x+y, map (lambda x: x['ohlc'].close, data), 0))/self.period
+        return  Decimal(sum( map (lambda x: x['ohlc'].close, data)))/self.period
         

@@ -9,6 +9,7 @@
 '''
 
 from indicators.sma import SMA
+from indicators.ema import EMA
 
 market_indicators = []
 init_done = False
@@ -24,11 +25,17 @@ def Configure ():
     sma15 = SMA ('sma15', 15)
     sma50 = SMA ('sma50', 50)
     
+    #EMA12, EMA26
+    ema12 = EMA ('ema12', 12)
+    ema26 = EMA ('ema26', 26)
+        
     # List of all the available strategies
     global market_indicators
     market_indicators = [
             sma15,
-            sma50
+            sma50,
+            ema12,
+            ema26
         ]
     
     #### Configure the Strategies - end ######

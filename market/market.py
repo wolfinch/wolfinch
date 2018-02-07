@@ -38,11 +38,11 @@ class OHLC(object):
     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']
     def __init__ (self, time=0, open=0, high=0, low=0, close =0, volume =0):
         self.time = time
-        self.open = open
-        self.high = high
-        self.low  = low
-        self.close = close
-        self.volume = volume
+        self.open = Decimal(open)
+        self.high = Decimal(high)
+        self.low  = Decimal(low)
+        self.close = Decimal(close)
+        self.volume = Decimal(volume)
     def __str__ (self):
         return "{time: %s, open: %g, high: %g, low: %g, close: %g, volume: %g}"%(
             str(self.time), self.open, self.high, self.low, self.close, self.volume)
@@ -427,9 +427,9 @@ class Market:
         for indicator in self.indicator_calculators:
             start = candle_idx+1 - indicator.period
             period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
-            new_ind = indicator.calculate(period_data)
+            new_ind = Decimal(indicator.calculate(period_data))
             self.market_indicators_data [candle_idx][indicator.name] = new_ind
-            #log.debug ("indicator (%s) val (%d)"%(indicator.name, new_ind))
+            log.debug ("indicator (%s) val (%d)"%(indicator.name, new_ind))
         
         
     ##########################################
