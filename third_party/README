@@ -1,0 +1,9 @@
+Third-party dependencies.
+
+1. gdax python implementation.
+	
+	
+2. ta-lib
+	http://mrjbq7.github.io/ta-lib
+	https://github.com/joshith/ta-lib
+	pip install TA-Lib
