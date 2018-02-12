@@ -20,6 +20,7 @@ import pprint
 from itertools import product
 from decimal import Decimal
 import itertools
+import talib
 
 from utils import *
 from order_book import OrderBook
