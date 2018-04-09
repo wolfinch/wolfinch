@@ -53,14 +53,14 @@ def close_exchanges():
             log.info ("Closing exchange (%s)"%(exchange.__name__))
             exchange.close()    
 
-def skatebot_main ():
+def oldmonk_main ():
     """
     Main Function for OldMonk
     """
     sleep_time = TICK_DELAY
     while (True) : 
         cur_time = time.time()
-        log.debug("Current Sleep time left:"+str(sleep_time))          
+        log.debug("Current Sleep time left:"+str(sleep_time))         
         #time.sleep(sleep_time)             
         # check for the msg in the feed Q and process, with timeout
         msg = feed_deQ(sleep_time) 
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     try:
         OldMonk_init()
         log.debug ("Starting Main Loop")
-        skatebot_main ()
+        oldmonk_main ()
     except KeyboardInterrupt:
         OldMonk_end()
     #'''Not supposed to reach here'''
