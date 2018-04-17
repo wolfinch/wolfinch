@@ -1,5 +1,5 @@
 # '''
-#  Desc: Market Simple Moving Average (SMA) implementation 
+#  Desc: Market Exponential Moving Average (EMA) implementation 
 #  (c) Joshith Rayaroth Koderi
 # '''
 
@@ -23,7 +23,7 @@ class EMA (Indicator):
         # Multiplier: (2 / (Time periods + 1) ) = (2 / (10 + 1) ) = 0.1818 (18.18%)
         # EMA: {Close - EMA(previous day)} x multiplier + EMA(previous day). 
         
-        candles_len = len(candles) 
+        candles_len = len(candles)
         if candles_len < self.period:
             return Decimal(0)
         
