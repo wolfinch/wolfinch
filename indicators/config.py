@@ -12,7 +12,11 @@ from indicators.sma import SMA
 from indicators.ema import EMA
 from indicators.ta_ema import TA_EMA
 from indicators.bollinger import BBANDS
-
+from indicators.adx import ADX
+from indicators.cci import CCI
+from indicators.rsi import RSI
+from indicators.sar import SAR
+from indicators.macd import MACD
 
 market_indicators = []
 init_done = False
@@ -36,18 +40,28 @@ def Configure ():
     ta_ema12 = TA_EMA ('ta_ema12', 12)
     ta_ema26 = TA_EMA ('ta_ema26', 26)
             
-    bbands = BBANDS ('bbands') # default timeperiod 20
+    bbands = BBANDS ('bbands') # Bollinger Bands
+    adx = ADX('adx') #Average Directional Movement Index (Momentum Indicators)
+    cci = CCI('cci')
+    rsi = RSI('rsi')
+    sar = SAR('sar')
+    macd = MACD('macd')
             
     # List of all the available strategies
     global market_indicators
     market_indicators = [
             sma15,
             sma50,
-            ema12,
-            ema26,
+            #ema12,
+            #ema26,
             ta_ema12,
             ta_ema26,
-            bbands
+            bbands,
+            adx,        # FIXME: bug
+            cci,
+            rsi,
+            sar,
+            macd
         ]
     
     #### Configure the Strategies - end ######
