@@ -15,6 +15,7 @@ def Configure ():
     market_strategies = []
     
     #### Configure the Strategies - end ######
+    return market_strategies
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':

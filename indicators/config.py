@@ -10,6 +10,9 @@
 
 from indicators.sma import SMA
 from indicators.ema import EMA
+from indicators.ta_ema import TA_EMA
+from indicators.bollinger import BBANDS
+
 
 market_indicators = []
 init_done = False
@@ -29,13 +32,22 @@ def Configure ():
     ema12 = EMA ('ema12', 12)
     ema26 = EMA ('ema26', 26)
         
+    #TA_EMA12, TA_EMA26
+    ta_ema12 = TA_EMA ('ta_ema12', 12)
+    ta_ema26 = TA_EMA ('ta_ema26', 26)
+            
+    bbands = BBANDS ('bbands') # default timeperiod 20
+            
     # List of all the available strategies
     global market_indicators
     market_indicators = [
             sma15,
             sma50,
             ema12,
-            ema26
+            ema26,
+            ta_ema12,
+            ta_ema26,
+            bbands
         ]
     
     #### Configure the Strategies - end ######

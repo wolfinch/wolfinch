@@ -9,6 +9,7 @@
 import time
 import pkgutil
 import pprint
+import sys
 from decimal import *
 
 import sims
@@ -93,8 +94,13 @@ if __name__ == '__main__':
         OldMonk_init()
         log.debug ("Starting Main Loop")
         oldmonk_main ()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         OldMonk_end()
+        sys.exit()
+    except:
+        print "Unexpected error:", sys.exc_info()
+        OldMonk_end()
+        raise        
     #'''Not supposed to reach here'''
     print("OldMonk end")
     

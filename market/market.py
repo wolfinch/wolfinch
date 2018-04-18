@@ -161,7 +161,7 @@ class Market:
         # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema', val, name:val...}]
         self.market_indicators_data     = [] 
         self.indicator_calculators     = indicators.Configure()
-        self.market_strategies     = strategy.market_strategies
+        self.market_strategies     = strategy.Configure()
         
     def set_market_rate (self, price):
         self.current_market_rate = price
@@ -428,9 +428,9 @@ class Market:
         for indicator in self.indicator_calculators:
             start = candle_idx+1 - indicator.period
             period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
-            new_ind = Decimal(indicator.calculate(period_data))
+            new_ind = indicator.calculate(period_data)
             self.market_indicators_data [candle_idx][indicator.name] = new_ind
-            log.debug ("indicator (%s) val (%d)"%(indicator.name, new_ind))
+            log.debug ("indicator (%s) val (%s)"%(indicator.name, str(new_ind)))
         
         
     ##########################################
