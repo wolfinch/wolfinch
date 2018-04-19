@@ -8,6 +8,7 @@
  (c) Joshith Rayaroth Koderi
 '''
 
+from indicators.noop import NOOP
 from indicators.sma import SMA
 from indicators.ema import EMA
 from indicators.ta_ema import TA_EMA
@@ -27,6 +28,9 @@ def Configure ():
     
     if init_done:
         return market_indicators
+    
+    # No-Op. To get Close price
+    noop = NOOP ('closing')
     
     # SMA15, SMA50
     sma15 = SMA ('sma15', 15)
@@ -50,6 +54,7 @@ def Configure ():
     # List of all the available strategies
     global market_indicators
     market_indicators = [
+            noop,
             sma15,
             sma50,
             #ema12,
