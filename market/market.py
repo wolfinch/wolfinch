@@ -426,7 +426,7 @@ class Market:
     def _calculate_all_indicators (self, candle_idx):
         log.debug ("setting up all indicators for periods indx: %d"%(candle_idx))
         for indicator in self.indicator_calculators:
-            start = candle_idx+1 - indicator.period
+            start = candle_idx+1 - (indicator.period + 50) #TBD: give few more candles(for ta-lib)
             period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
             new_ind = indicator.calculate(period_data)
             self.market_indicators_data [candle_idx][indicator.name] = new_ind

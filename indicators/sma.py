@@ -15,11 +15,10 @@ class SMA (Indicator):
         self.name = name
         self.period = period
                 
-    def calculate(self, data):
-        if len(data) is not self.period:
+    def calculate(self, candles):
+        if len(candles) < self.period:
             return 0
 #        print ("len sma: "+str(len(data)))
         #(time, o, h,l,c, vol)
-        #return  (reduce (lambda x,y: x+y, map (lambda x: x['ohlc'].close, data), 0))/self.period
-        return  Decimal(sum( map (lambda x: x['ohlc'].close, data)))/self.period
+        return  Decimal(sum( map (lambda x: x['ohlc'].close, candles[-self.period:])))/self.period
         

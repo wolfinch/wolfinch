@@ -19,12 +19,12 @@ class ADX (Indicator):
                 
     def calculate(self, candles):        
         candles_len = len(candles)
-        if candles_len < self.period:
+        if candles_len < self.period+20: #make sure 20 more candles are available to work with
             return 0
         
-        close_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-self.period:]))
-        high_array = np.array(map(lambda x: float(x['ohlc'].high), candles[-self.period:]))
-        low_array = np.array(map(lambda x: float(x['ohlc'].low), candles[-self.period:]))
+        close_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-(self.period+20):]))
+        high_array = np.array(map(lambda x: float(x['ohlc'].high), candles[-(self.period+20):]))
+        low_array = np.array(map(lambda x: float(x['ohlc'].low), candles[-(self.period+20):]))
         
         #calculate 
         adx = talib.ADX (high_array, low_array, close_array, timeperiod=self.period)
