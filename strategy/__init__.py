@@ -1,2 +1,2 @@
-from config import Configure, market_strategies
-Configure()
+from config import Configure
+# Configure()

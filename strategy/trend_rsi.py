@@ -15,26 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import ABCMeta, abstractmethod
+from decimal import Decimal
+from strategy import Strategy
 
-class Strategy:
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def __init__ (self):
+class TREND_RSI(Strategy):
+    def __init__ (self, name, period=20):
         ''' 
-        Init for the strategy class
+        Init for the strategy
         '''
-        pass
+        self.name = name
+        self.period = period
     
-    def __str__ (self):
-        return "{Message: TODO: FIXME: jork: implement}"
-
-    def configure (self):
-        pass
-    
-    @abstractmethod
-    def generate_signal (self):
+    def generate_signal (self, candles):
         '''
         Trade Signale in range(-5..0..5), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
         '''

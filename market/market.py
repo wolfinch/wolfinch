@@ -442,9 +442,27 @@ class Market:
             self.market_indicators_data [candle_idx][indicator.name] = new_ind
             log.debug ("indicator (%s) val (%s)"%(indicator.name, str(new_ind)))
         
+    def _process_historic_strategies(self):
+        hist_len  = 0 if not self.market_indicators_data else len(self.market_indicators_data)
+        if not hist_len:
+            return
+        
+        log.debug ("re-proessing all strategies for historic data #candles (%d)"%(hist_len))
+        for idx in range (hist_len):
+            self._process_all_strategies (idx)
+                    
+    def _process_all_strategies (self, candle_idx):
+        log.debug ("Processing all strategies for periods indx: %d"%(candle_idx))
+        for strategy in self.market_strategies:
+            start = candle_idx+1 - (strategy.period + 50) #TBD: give few more candles(for ta-lib)
+            period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
+            new_result = strategy.generate_signal(period_data)
+            self.market_indicators_data [candle_idx][strategy.name] = new_result
+            log.debug ("strategy (%s) val (%s)"%(strategy.name, str(new_result)))
+        
         
     ##########################################
-    ############## Public APIs ###############    
+    ############## Public APIs ###############
     def market_setup (self):
         ''' 
         Restore the market states for our work
@@ -454,6 +472,7 @@ class Market:
         '''
         self._import_historic_candles()
         self._calculate_historic_indicators()
+        self._process_historic_strategies()
         
         
     def update_market_states (self):
