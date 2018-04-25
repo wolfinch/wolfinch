@@ -1,8 +1,8 @@
 #
 # OldMonk Auto trading Bot
 # Desc:  Market Strategy Abstract Class Implementation
-# Copyright 2018, Joshith Rayaroth Koderi. All Rights Reserved.
 #
+# Copyright 2018, Joshith Rayaroth Koderi. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -58,7 +58,7 @@ class TREND_RSI(Strategy):
         if len_candles < self.period:
             return 0
         
-        rsi = np.array(map(lambda c: c['RSI'], candles[:]))
+        rsi = np.array(map(lambda c: c['RSI14'], candles[:]))
         cur_rsi = rsi[-1]
         
         if cur_rsi == np.NaN:
@@ -71,12 +71,12 @@ class TREND_RSI(Strategy):
             if (cur_rsi >= self.rsi_low + self.rsi_recover):
                 self.rsi_high = cur_rsi                
                 self.trend = 'long'
-                signal = 5  #'strong buy'
+                signal = 3  #'strong buy'
         if (self.trend == 'long'):
             self.rsi_high = max (self.rsi_high, cur_rsi)
             if (cur_rsi <= self.rsi_high / self.rsi_divisor):
                 self.trend = 'short'
-                signal = -5 #sell
+                signal = -3 #sell
         if (self.trend == 'long' and cur_rsi >= self.overbought_rsi):
             self.rsi_high = cur_rsi
             self.trend = 'overbought'
@@ -84,7 +84,7 @@ class TREND_RSI(Strategy):
             self.rsi_high = max(self.rsi_high, cur_rsi)
             if (cur_rsi <= self.rsi_high - self.rsi_drop):
                 self.trend = 'short'
-                signal = -5 #sell
+                signal = -3 #sell
         
         return signal
     

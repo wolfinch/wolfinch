@@ -52,13 +52,17 @@ def Configure ():
     #ema26 = EMA ('EMA26', 26)
         
     #TA_EMA12, TA_EMA26
-    ta_ema12 = TA_EMA ('EMA12', 12)
-    ta_ema26 = TA_EMA ('EMA26', 26)
+    ta_ema5 = TA_EMA ('EMA5', 5)
+    ta_ema13 = TA_EMA ('EMA13', 13)    
+    ta_ema21 = TA_EMA ('EMA21', 21)
+    ta_ema80 = TA_EMA ('EMA80', 80)
+    
             
     bbands = BBANDS ('BBANDS') # Bollinger Bands
     adx = ADX('ADX') #Average Directional Movement Index (Momentum Indicators)
     cci = CCI('CCI')
-    rsi = RSI('RSI')
+    rsi14 = RSI('RSI14', 14)
+    rsi21 = RSI('RSI21', 21)    
     sar = SAR('SAR')
     macd = MACD('MACD')
             
@@ -70,12 +74,15 @@ def Configure ():
             sma50,
             #ema12,
             #ema26,
-            ta_ema12,
-            ta_ema26,
+            ta_ema5,
+            ta_ema13,
+            ta_ema21,
+            ta_ema80,            
             bbands,
             adx,        # FIXME: bug
             cci,
-            rsi,
+            rsi14,
+            rsi21,
             sar,
             macd
         ]

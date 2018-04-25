@@ -19,6 +19,7 @@
 # limitations under the License.
 
 from trend_rsi import TREND_RSI
+from ema_rsi import EMA_RSI
 
 init_done = False
 market_strategies = []
@@ -28,8 +29,10 @@ def Configure ():
         return market_strategies
     #### Configure the Strategies below ######
     trend_rsi = TREND_RSI ('TREND_RSI')
+    ema_rsi   = EMA_RSI ('EMA_RSI')
     market_strategies = [
-        trend_rsi
+        trend_rsi,
+        ema_rsi
         ]
     
     #### Configure the Strategies - end ######

@@ -458,7 +458,8 @@ class Market:
             period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
             new_result = strategy.generate_signal(period_data)
             self.market_indicators_data [candle_idx][strategy.name] = new_result
-            log.debug ("strategy (%s) val (%s)"%(strategy.name, str(new_result)))
+            if new_result != 0: #signal generated
+                log.debug ("strategy (%s) val (%s)"%(strategy.name, str(new_result)))
         
         
     ##########################################
