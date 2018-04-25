@@ -41,7 +41,6 @@ class EMA_RSI(Strategy):
 #         rsi = np.array(map(lambda c: c['RSI21'], candles[:]))
 #         cur_rsi = rsi[-1]
         rsi21 = candles[-1]['RSI21']
-        
         ema5 = candles[-1]['EMA5']
         ema13 = candles[-1]['EMA13']
         ema21 = candles[-1]['EMA21']
@@ -51,6 +50,11 @@ class EMA_RSI(Strategy):
             if self.position == 'sell': #trend reversal, cancel position #TODO: FIXME: implement closing position
                 self.position = '' 
                 self.signal = 0
+                return self.signal
+            if self.position == 'buy' and ema5 < ema13 and ema5 < ema21: #close buy position
+                self.position = '' 
+                self.signal = 0
+                return self.signal
             if ema5 > ema13 and ema5 > ema21 and ema21 > ema80 and ema13 > ema80:
                 if self.position == 'buy': #if trend continues, increase signal strength
                     self.signal += 1
@@ -62,7 +66,11 @@ class EMA_RSI(Strategy):
         else: # bearish market
             if self.position == 'buy': #trend reversal, cancel position #TODO: FIXME: implement closing position
                 self.position = '' 
-                self.signal = 0            
+                self.signal = 0
+            if self.position == 'sell' and ema5 > ema13 and ema5 > ema21: #close sell position (short)
+                self.position = '' 
+                self.signal = 0
+                return self.signal
             if ema5 < ema13 and ema5 < ema21 and ema21 < ema80 and ema13 < ema80:
                 if self.position == 'sell': #if trend continues, increase signal strength
                     self.signal -= 1
@@ -72,5 +80,5 @@ class EMA_RSI(Strategy):
                     self.position = 'sell'
                     self.signal = -3 # sell
         
-        return signal
+        return self.signal
     
