@@ -27,7 +27,7 @@ def Configure ():
     if init_done:
         return market_strategies
     #### Configure the Strategies below ######
-    trend_rsi = TREND_RSI ('trend_rsi')
+    trend_rsi = TREND_RSI ('TREND_RSI')
     market_strategies = [
         trend_rsi
         ]

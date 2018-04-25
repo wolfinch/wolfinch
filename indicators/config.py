@@ -44,23 +44,23 @@ def Configure ():
     noop = NOOP ('closing')
     
     # SMA15, SMA50
-    sma15 = SMA ('sma15', 15)
-    sma50 = SMA ('sma50', 50)
+    sma15 = SMA ('SMA15', 15)
+    sma50 = SMA ('SMA50', 50)
     
     #EMA12, EMA26
-    ema12 = EMA ('ema12', 12)
-    ema26 = EMA ('ema26', 26)
+    #ema12 = EMA ('EMA12', 12)
+    #ema26 = EMA ('EMA26', 26)
         
     #TA_EMA12, TA_EMA26
-    ta_ema12 = TA_EMA ('ta_ema12', 12)
-    ta_ema26 = TA_EMA ('ta_ema26', 26)
+    ta_ema12 = TA_EMA ('EMA12', 12)
+    ta_ema26 = TA_EMA ('EMA26', 26)
             
-    bbands = BBANDS ('bbands') # Bollinger Bands
-    adx = ADX('adx') #Average Directional Movement Index (Momentum Indicators)
-    cci = CCI('cci')
-    rsi = RSI('rsi')
-    sar = SAR('sar')
-    macd = MACD('macd')
+    bbands = BBANDS ('BBANDS') # Bollinger Bands
+    adx = ADX('ADX') #Average Directional Movement Index (Momentum Indicators)
+    cci = CCI('CCI')
+    rsi = RSI('RSI')
+    sar = SAR('SAR')
+    macd = MACD('MACD')
             
     # List of all the available strategies
     global market_indicators

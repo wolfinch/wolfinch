@@ -44,43 +44,46 @@ class TREND_RSI(Strategy):
         self.rsi_drop = rsi_drop
         self.rsi_divisor = rsi_divisor
     
+        #internal states
+        self.trend = ''
+        self.rsi_low = 0
+        self.rsi_high = 0
     def generate_signal (self, candles):
         '''
         Trade Signale in range(-5..0..5), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
         '''
-        rsi_high = rsi_low = signal = 0
-        trend = ''
+        signal = 0
         len_candles = len (candles)
 
         if len_candles < self.period:
             return 0
         
-        rsi = np.array(map(lambda c: c['rsi'], candles[:]))
+        rsi = np.array(map(lambda c: c['RSI'], candles[:]))
         cur_rsi = rsi[-1]
         
         if cur_rsi == np.NaN:
             return 0
         if cur_rsi <= self.oversold_rsi:
-            rsi_low = cur_rsi
-            trend = 'oversold'
-        if (trend == 'oversold') :
-            rsi_low = min(rsi_low, cur_rsi)
-            if (cur_rsi >= rsi_low + self.rsi_recover):
-                rsi_high = cur_rsi                
-                trend = 'long'
+            self.rsi_low = cur_rsi
+            self.trend = 'oversold'
+        if (self.trend == 'oversold') :
+            self.rsi_low = min(self.rsi_low, cur_rsi)
+            if (cur_rsi >= self.rsi_low + self.rsi_recover):
+                self.rsi_high = cur_rsi                
+                self.trend = 'long'
                 signal = 5  #'strong buy'
-        if (trend == 'long'):
-            rsi_high = max (rsi_high, cur_rsi)
-            if (cur_rsi <= rsi_high / self.rsi_divisor):
-                trend = 'short'
+        if (self.trend == 'long'):
+            self.rsi_high = max (self.rsi_high, cur_rsi)
+            if (cur_rsi <= self.rsi_high / self.rsi_divisor):
+                self.trend = 'short'
                 signal = -5 #sell
-        if (trend == 'long' and cur_rsi >= self.overbought_rsi):
-            rsi_high = cur_rsi
-            trend = 'overbought'
-        if (trend == 'overbought'):
-            rsi_high = max(rsi_high, cur_rsi)
-            if (cur_rsi <= rsi_high - self.rsi_drop):
-                trend = 'short'
+        if (self.trend == 'long' and cur_rsi >= self.overbought_rsi):
+            self.rsi_high = cur_rsi
+            self.trend = 'overbought'
+        if (self.trend == 'overbought'):
+            self.rsi_high = max(self.rsi_high, cur_rsi)
+            if (cur_rsi <= self.rsi_high - self.rsi_drop):
+                self.trend = 'short'
                 signal = -5 #sell
         
         return signal
