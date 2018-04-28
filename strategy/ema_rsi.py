@@ -46,6 +46,11 @@ class EMA_RSI(Strategy):
         ema21 = candles[-1]['EMA21']
         ema80 = candles[-1]['EMA80']
         
+        if ema13 > ema21:
+            self.trend = 'bullish'
+        else:
+            self.trend = 'bearish'
+            
         if rsi21 > 50: #bullish market
             if self.position == 'sell': #trend reversal, cancel position #TODO: FIXME: implement closing position
                 self.position = '' 
@@ -55,7 +60,7 @@ class EMA_RSI(Strategy):
                 self.position = '' 
                 self.signal = 0
                 return self.signal
-            if ema5 > ema13 and ema5 > ema21 and ema21 > ema80 and ema13 > ema80:
+            if self.trend == 'bullish' and ema5 > ema13 and ema5 > ema21 and ema21 > ema80 and ema13 > ema80:
                 if self.position == 'buy': #if trend continues, increase signal strength
                     self.signal += 1
                     if self.signal > 5:
@@ -71,7 +76,7 @@ class EMA_RSI(Strategy):
                 self.position = '' 
                 self.signal = 0
                 return self.signal
-            if ema5 < ema13 and ema5 < ema21 and ema21 < ema80 and ema13 < ema80:
+            if self.trend == 'bearish' and ema5 < ema13 and ema5 < ema21 and ema21 < ema80 and ema13 < ema80:
                 if self.position == 'sell': #if trend continues, increase signal strength
                     self.signal -= 1
                     if self.signal < -5:
