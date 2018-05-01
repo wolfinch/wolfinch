@@ -31,6 +31,7 @@ from itertools import product
 from decimal import Decimal
 import itertools
 import talib
+from datetime import datetime
 
 from utils import *
 from order_book import OrderBook
@@ -170,6 +171,8 @@ class Market:
         # Market Strategy related Data
         # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema', val, name:val...}]
         self.market_indicators_data     = [] 
+        self.cur_candle_time = 0
+        self.num_candles        = 0
         self.indicator_calculators     = indicators.Configure()
         self.market_strategies     = strategy.Configure()
         
@@ -406,7 +409,7 @@ class Market:
                 #  Stop order, add to pending list
                 log.debug("pending(stop) trade_req %s"%(str(trade_req)))
                 self.order_book.add_pending_trade_req(trade_req)
-    
+        
     def _import_historic_candles (self):
         ### TODO: FIXME: jork: db implementations for historic data
         # import Historic Data 
@@ -474,6 +477,9 @@ class Market:
         self._import_historic_candles()
         self._calculate_historic_indicators()
         self._process_historic_strategies()
+        num_candles = len(self.market_indicators_data)
+        self.cur_candle_time = datetime.now() if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
+        self.num_candles = num_candles
         
         
     def update_market_states (self):
@@ -490,6 +496,19 @@ class Market:
         #2.pending trades
         self._handle_pending_trades ()
         
+    def add_new_candle (self, candle):
+        """
+            Desc: Identify a new candle and add to the market data
+                    This will result in calculating and indicators and
+                    strategies and may result in generating trade signals
+        """
+        self.market_indicators_data.append({'ohlc': candle})
+#         self.cur_candle_time = candle.time
+        self._calculate_all_indicators(self.num_candles)
+        self._process_all_strategies(self.num_candles)
+        self.num_candles += 1
+        
+                
     def generate_trade_signal (self):
         """ 
         Do all the magic to generate the trade signal
@@ -501,7 +520,6 @@ class Market:
         #TODO: jork: implement
         
         log.info ("Generate Trade Signal for product: "+self.product_id)
-        
         signal = 0 
         
         ################# TODO: FIXME: jork: Implementation ###################

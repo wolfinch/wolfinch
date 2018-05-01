@@ -10,6 +10,7 @@ import pprint
 from decimal import Decimal
 from datetime import tzinfo, datetime, timedelta
 from time import sleep
+import time
 
 import gdax as GDAX #Official version seems to be old, doesn't support auth websocket client
 #import third_party.gdax_python.gdax as GDAX
@@ -52,6 +53,9 @@ def market_init (exchange, product):
     
     ## Feed Cb
     market.consume_feed = gdax_consume_feed
+    
+    ## Init Exchange specific private state variables
+    market.O = market.H = market.L = market.C = market.V = 0
     return market
     
 def close ():
@@ -71,6 +75,20 @@ def init():
         gdax_conf = conf['exchange']
     else:
         return False
+    
+    #get config
+    backfill = gdax_conf.get('backfill')
+    if not backfill:
+        return None
+
+    for entry in backfill:
+        if entry.get('enabled'):
+            gdax_conf['backfill_enabled'] = entry['enabled']
+        if entry.get('period'):
+            gdax_conf['backfill_period'] = int(entry['period'])
+        if entry.get('granularity'):
+            gdax_conf['backfill_granularity'] = int(entry['granularity'])            
+        
     
     public_client = GDAX.PublicClient()
     if (public_client) == None :
@@ -280,7 +298,7 @@ def register_feed (api_key="", api_secret="", api_passphrase="", url=""):
             "level2",
             "heartbeat",
             "ticker",
-            "user"         #Receive details about our orders only
+#             "user"         #Receive details about our orders only
         ]
     message_type = "subscribe"
     websocket_client = gdaxWebsocketClient (url, products=products, message_type=message_type,
@@ -381,11 +399,46 @@ def gdax_consume_ticker_feed (market, msg):
         "volume_30d": "364800.84143217"
     }
     '''
+    global gdax_conf
     log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
     
+    granularity = int(gdax_conf.get('backfill_granularity'))   
+    
+    price = Decimal(msg.get('price'))
+    last_size = msg.get('last_size')
+    if (price == 0 or not last_size):
+        log.error ("Invalid price or 'last_size' in ticker feed")
+        return
+    last_size = Decimal(last_size)
+    o = market.O
+    h = market.H
+    l = market.L
+    v = market.V
+    
     #update ticker
+    if o == 0:
+        market.O = market.H = market.L = price
+    else:
+        if price < l:
+            market.L = price
+        if price > h:
+            market.H = price
+    v += last_size
+    market.V = v
+    
+    now = time.time()
+    if now >= market.cur_candle_time + granularity:
+        # close the current candle period and start a new candle period
+        c = price
+        candle = OHLC(market.cur_candle_time, market.O, market.H, market.L, c, market.V)
+        log.debug ("New candle identified %s"%(candle))        
+        market.O = market.V = market.H = market.L = 0
+        market.cur_candle_time = now
+        market.add_new_candle (candle)
+        
+        
     #TODO: FIXME: jork: might need to rate-limit the logic here after
-    market.set_market_rate (Decimal(msg['price']))
+    market.set_market_rate (price)
     market.update_market_states()
     
 ###################### WebSocket Impl : end #############################
@@ -434,20 +487,11 @@ def get_historic_rates (product_id, start=None, end=None):
     
     max_candles = 200
     candles_list = []
-    period = 0
-    granularity = 0
+    
     #get config
-    backfill = gdax_conf.get('backfill')
-    if not backfill:
-        return None
-
-    for entry in backfill:
-        if entry.get('enabled'):
-            enabled = entry['enabled'] 
-        if entry.get('period'):
-            period = int(entry['period'])
-        if entry.get('granularity'):
-            granularity = int(entry['granularity'])            
+    enabled = gdax_conf.get('backfill_enabled')
+    period = int(gdax_conf.get('backfill_period'))
+    granularity = int(gdax_conf.get('backfill_granularity'))   
     
     if not enabled:
         log.debug ("Historical data retrieval not enabled")
