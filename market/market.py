@@ -85,6 +85,18 @@ class Fund:
     def set_max_per_buy_fund_value (self, value):
         self.max_per_buy_fund_value = Decimal(value)  
 
+    def get_fund_to_trade (self, strength): ## TODO: FIXME: jork: Check hold value
+        slice = self.max_per_buy_fund_value / 5.0 #max strength
+        liquid_fund = self.initial_value *  self.fund_liquidity_percent / 100.0
+        rock_bottom = self.initial_value - liquid_fund
+        
+        fund = slice * strength
+        
+        if self.current_value - fund <= rock_bottom:
+            return 0
+        else:
+            return fund
+        
     def __str__(self):
         return ("{'initial_value':%g,'current_value':%g,'current_hold_value':%g,"
                 "'total_traded_value':%g,'current_realized_profit':%g,'current_unrealized_profit':%g"
@@ -102,12 +114,25 @@ class Crypto:
         self.latest_traded_size = Decimal(0.0)
         self.current_hold_size = Decimal(0.0)
         self.total_traded_size = Decimal(0.0)
+        self.max_per_trade_size = 0.001 #FIXME: jork
+    
+    def set_max_per_trade_size (self, size):
+        self.max_per_trade_size = size
             
     def set_initial_size (self, size):
         self.initial_size = self.current_size = size
         
     def set_hold_size (self, size):
         self.current_hold_size = size
+        
+    def get_crypto_to_trade (self, strength):       ### FIXME: jork: Check the hold value
+        slice = float(self.max_per_trade_size)/5.0
+        
+        cur_size = slice * strength
+        if self.current_size >= cur_size:
+            return cur_size
+        else:
+            return 0
 
     def __str__(self):
         return ("{'initial_size':%g, 'current_size':%g, 'latest_traded_size':%g,"
@@ -381,11 +406,44 @@ class Market:
     def _generate_trade_request (self, signal):
         '''
         Desc: Consider various parameters and generate a trade request
-        Algo: 
+        param : Trade signal (-5-0-5) (strong-sell - hold - strong-buy)
+        return: Trade request
+        Algo: 1. Trade signal 
         '''
+        #TODO: FIXME: jork: impl. limit, stop etc
         log.debug ('Calculate trade Req')
-            #TODO: jork: implement
-        return None
+        if signal > 0 :
+            #BUY
+            fund = self.fund.get_fund_to_trade(signal)
+            if fund > 0:
+                log.debug ("Generating BUY trade_req with fund: %d for signal"%(fund, signal))
+                return TradeRequest(Product=self.product_id,
+                                  Side="BUY",
+                                   Size=round(Decimal(fund), 8),
+                                   Type="market",
+                                   Price=round(Decimal(0), 8),
+                                   Stop=0)            
+            else:
+                log.debug ("Unable to generate BUY request for signal (%d). Too low fund"%(signal))
+                return None            
+        elif signal < 0:
+            # SELL
+            crypto_size = self.crypto.get_crypto_to_trade (signal * -1)
+            if crypto_size > 0:
+                log.debug ("Generating SELL trade_req with crypto size: %d"%(crypto_size))       
+                return TradeRequest(Product=self.product_id,
+                                  Side="SELL",
+                                   Size=round(Decimal(crypto_size),8),
+                                   Type="market",
+                                   Price=round(Decimal(0), 8),
+                                   Stop=0)
+            else:
+                log.debug ("Unable to generate SELL request for signal (%d). Too low crypto size"%(signal))
+                return None
+
+        else:
+            #signal 0 - hold signal
+            return None
 
     def _execute_market_trade(self, trade_req_list):
         '''
