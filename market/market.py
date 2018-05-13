@@ -618,7 +618,7 @@ class Market:
         log.info ("Trade Signal strength:"+str(signal))         ## TODO: FIXME: IMPLEMENT:
         trade_req = self._generate_trade_request( signal)
         #validate the trade Req
-        if (trade_req != None and trade_req.size > 0 and trade_req.price > 0):
+        if (trade_req != None):
             ## Now we have a valid trader request
             # Execute the trade request and retrieve the order # and store it
             trade_req_list.append(trade_req)
