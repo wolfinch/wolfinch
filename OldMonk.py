@@ -21,6 +21,7 @@ import pkgutil
 import pprint
 import sys
 from decimal import *
+import argparse
 
 import sims
 import exchanges
@@ -96,10 +97,30 @@ def process_market (market):
     if (sims.simulator_on):
         sims.market_simulator_run (market)
     
+def clean_states ():
+    log.info ("Clean Start")
+        
+def arg_parse ():
+    parser = argparse.ArgumentParser(description='OldMonk Auto Trading Bot')
+
+    parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
+    parser.add_argument("--clean", help='Start Clean. Clear all the existing states', action='store_true')
+    
+    args = parser.parse_args()
+    
+    if (args.clean):
+        clean_states ()
+        exit ()
+    
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
+    
+    arg_parse()
+    
     getcontext().prec = 8 #decimal precision
+    
     print("Starting OldMonk..")
+    
     try:
         OldMonk_init()
         log.debug ("Starting Main Loop")

@@ -8,3 +8,8 @@ Third-party dependencies.
 	https://github.com/joshith/ta-lib
 	brew install ta-lib       [on mac] 
 	pip install TA-Lib
+	
+3. MongoDb
+	brew install mongodb
+	mongodb/brew services start mongodb [for startup]
+	pip install pymongo
