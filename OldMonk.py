@@ -129,9 +129,9 @@ if __name__ == '__main__':
         OldMonk_end()
         sys.exit()
     except:
-        print "Unexpected error:", sys.exc_info()
+        print ("Unexpected error: ",sys.exc_info())
         OldMonk_end()
-        raise        
+        raise
     #'''Not supposed to reach here'''
     print("OldMonk end")
     

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 #
 # OldMonk Auto trading Bot
 # Desc: Generate manual trading signal
