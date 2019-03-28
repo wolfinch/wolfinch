@@ -1,0 +1,16 @@
+backports.ssl-match-hostname==3.7.0.1
+bintrees==2.0.7
+cbpro==1.1.4
+certifi==2019.3.9
+chardet==3.0.4
+gdax==1.0.6
+idna==2.8
+numpy==1.16.2
+pymongo==3.5.1
+PyYAML==5.1
+requests==2.13.0
+six==1.10.0
+sortedcontainers==2.1.0
+TA-Lib==0.4.17
+urllib3==1.24.1
+websocket-client==0.40.0

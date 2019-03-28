@@ -15,3 +15,7 @@ Not based on priority.
 7. integrate news source
 8. better testing/simulation infra
 
+
+
+NOTE:
+Read third_party/README
