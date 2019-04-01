@@ -12,7 +12,9 @@ from datetime import tzinfo, datetime, timedelta
 from time import sleep
 import time
 
-import gdax as GDAX #Official version seems to be old, doesn't support auth websocket client
+# import gdax as GDAX #Official version seems to be old, doesn't support auth websocket client
+import cbpro as GDAX 
+
 #import third_party.gdax_python.gdax as GDAX
 from utils import *
 from pstats import add_callers
