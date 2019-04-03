@@ -1,5 +1,5 @@
 from utils import *
-from sqllite import *
+from sqlite import SqliteDb
 
 import uuid
 
