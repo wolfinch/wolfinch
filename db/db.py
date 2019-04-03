@@ -6,7 +6,9 @@
 
 from abc import ABCMeta, abstractmethod
 
-class DB:
+DB = None
+
+class DbBase:
     __metaclass__ = ABCMeta
 
     @abstractmethod
