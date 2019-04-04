@@ -1,3 +1,4 @@
 *.pyc
 *.yml
+data/*
 #third_party/*

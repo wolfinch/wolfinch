@@ -32,7 +32,7 @@ class SqliteDb (DbBase):
         
         if self.engine == None :
             log.error ("sqlite or sqlalchemy init failed")
-            return False
+            return None
         else:
             log.info ("Sqlite Init Done")
             
@@ -41,10 +41,8 @@ class SqliteDb (DbBase):
             self.session = sessionmaker(bind=self.engine)  
             if self.connection == None or self.metadata == None:
                 log.error ("db connection or metadata init failed")
-                return False
-                
-            return True
-        
+                return None
+                        
     def clear_db (self):
         global client, db    
         if (not db):
