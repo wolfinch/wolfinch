@@ -17,7 +17,6 @@
 
 from utils import getLogger
 from db import getDb
-from market import Order
 
 import uuid
 
@@ -25,7 +24,7 @@ log = getLogger ('ORDER-DB')
 
 # Order db is currently a dictionary, keyed with order.id (UUID)
 ORDER_DB = {} 
-
+Db = None
 
 def db_add_or_update_order (market, product_id, order):
     log.debug ("Adding order to db")
@@ -38,12 +37,12 @@ def db_del_order (market, product_id, order):
     del(ORDER_DB[uuid.UUID(order.id)])
     
     
-def db_get_order (market, product_id, order_id):
+def db_get_order (OrderCls, market, product_id, order_id):
     log.debug ("Get order from db")    
     order = ORDER_DB.get(uuid.UUID(order_id))  
     if order == None:
         log.info ("order_id:%s not in cache"%(order_id))
-        order = Order.DbGet(order_id)
+        order = OrderCls.DbGet(order_id)
         if order != None:
             ORDER_DB [uuid.UUID(order.id)] = order
         else:
@@ -51,13 +50,13 @@ def db_get_order (market, product_id, order_id):
     return order
     
 #Get all orders from Db (Should be called part of startup)
-def db_get_all_orders():
+def db_get_all_orders(OrderCls):
     global Db
     if not Db:
         Db = getDb()        
         
     try:
-        results = Db.session.query(Order).all()
+        results = Db.session.query(OrderCls).all()
         log.info ("retrieving %d order entries"%(len(results)))
         if results:
             for order in results:

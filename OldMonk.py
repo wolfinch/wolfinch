@@ -40,7 +40,7 @@ def OldMonk_init():
     global exchange_list
     
     #1. Retrieve states back from Db
-    db.db_get_all_orders()
+    db.db_get_all_orders(Order)
     
     #2. Init Exchanges
     init_exchanges()
