@@ -27,6 +27,7 @@ import sims
 import exchanges
 from market import *
 from utils import *
+import db
 
 log = getLogger ('OldMonk')
 log.setLevel(log.CRITICAL)
@@ -37,8 +38,17 @@ TICK_DELAY    = 10        # 20 Sec
 
 def OldMonk_init():
     global exchange_list
+    
+    #1. Retrieve states back from Db
+    db.db_get_all_orders()
+    
+    #2. Init Exchanges
     init_exchanges()
+    
+    #3. Init markets
     market_init (exchange_list)
+    
+    #4. Setup markets
     market_setup()
     
 def OldMonk_end():

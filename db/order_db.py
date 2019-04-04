@@ -17,18 +17,20 @@
 
 from utils import getLogger
 from db import getDb
+from market import Order
 
 import uuid
 
 log = getLogger ('ORDER-DB')
 
 # Order db is currently a dictionary, keyed with order.id (UUID)
-class ORDER_DB = {} 
+ORDER_DB = {} 
 
 
 def db_add_or_update_order (market, product_id, order):
     log.debug ("Adding order to db")
     ORDER_DB [uuid.UUID(order.id)] = order
+    order.DbSave()
     
     
 def db_del_order (market, product_id, order):
@@ -38,6 +40,32 @@ def db_del_order (market, product_id, order):
     
 def db_get_order (market, product_id, order_id):
     log.debug ("Get order from db")    
-    ORDER_DB.get(uuid.UUID(order_id))  
+    order = ORDER_DB.get(uuid.UUID(order_id))  
+    if order == None:
+        log.info ("order_id:%s not in cache"%(order_id))
+        order = Order.DbGet(order_id)
+        if order != None:
+            ORDER_DB [uuid.UUID(order.id)] = order
+        else:
+            log.error ("order_id:%s not in Db"%(order_id))
+    return order
     
+#Get all orders from Db (Should be called part of startup)
+def db_get_all_orders():
+    global Db
+    if not Db:
+        Db = getDb()        
+        
+    try:
+        results = Db.session.query(Order).all()
+        log.info ("retrieving %d order entries"%(len(results)))
+        if results:
+            for order in results:
+                log.info ("inserting order: %s in cache"%(order.id))
+                ORDER_DB[uuid.UUID(order.id)] = order            
+            return results
+    except Exception, e:
+        print(e.message)
+    return None
+       
 # EOF

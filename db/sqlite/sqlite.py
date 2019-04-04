@@ -18,6 +18,7 @@
 from utils import getLogger
 from db import DbBase
 import sqlalchemy as db
+from sqlalchemy.orm import sessionmaker
 
 log = getLogger ('SQLLITE')
 
@@ -36,7 +37,8 @@ class SqliteDb (DbBase):
             log.info ("Sqlite Init Done")
             
             self.connection = self.engine.connect()
-            self.metadata = db.MetaData()             
+            self.metadata = db.MetaData()           
+            self.session = sessionmaker(bind=self.engine)  
             if self.connection == None or self.metadata == None:
                 log.error ("db connection or metadata init failed")
                 return False
