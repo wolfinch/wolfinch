@@ -41,13 +41,30 @@ import sims
 import indicators
 import strategy
 
+from sqlalchemy import *
+from sqlalchemy.ext.declarative import declarative_base
+
+from decimal import Decimal
+import db
+
+Base = declarative_base()
+
 log = getLogger ('MARKET')
 log.setLevel(log.DEBUG)
 
 OldMonk_market_list = []
 
+#TODO: FIMXE: Do proper slotting here
 class OHLC(object): 
-    __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']
+#     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']
+    __tablename__ = 'candle_table' #TODO: FIXME: extend with market_product_id
+
+    time = Column(Interval, default=0)
+    open = Column(Numeric, default=0)
+    high = Column(Numeric, default=0)
+    low  = Column(Numeric, default=0)
+    close = Column(Numeric, default=0)
+    volume = Column(Numeric, default=0)    
     def __init__ (self, time=0, open=0, high=0, low=0, close =0, volume =0):
         self.time = time
         self.open = Decimal(open)
@@ -58,7 +75,22 @@ class OHLC(object):
     def __str__ (self):
         return "{time: %s, open: %g, high: %g, low: %g, close: %g, volume: %g}"%(
             str(self.time), self.open, self.high, self.low, self.close, self.volume)
-    
+    def 
+
+# class OHLC(object): 
+#     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']   
+#     def __init__ (self, time=0, open=0, high=0, low=0, close =0, volume =0):
+#         self.time = time
+#         self.open = Decimal(open)
+#         self.high = Decimal(high)
+#         self.low  = Decimal(low)
+#         self.close = Decimal(close)
+#         self.volume = Decimal(volume)
+#     def __str__ (self):
+#         return "{time: %s, open: %g, high: %g, low: %g, close: %g, volume: %g}"%(
+#             str(self.time), self.open, self.high, self.low, self.close, self.volume)
+#     
+
 class Fund:
     def __init__(self):
         self.initial_value = Decimal(0.0)
