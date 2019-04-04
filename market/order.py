@@ -56,23 +56,23 @@ class Order (Base):
     time         : <order status time>
     }
     '''
-         __tablename__ = 'order_table' #TODO: FIXME: extend with market_product_id
+    __tablename__ = 'order_table' #TODO: FIXME: extend with market_product_id
 
-        prim_id = Column(Integer, primary_key=True)
-        id = Column(String(64), index=True, nullable=False)
-        product_id = Column(String(64), index=True, nullable=False)
-        order_type = Column(String(64), index=True, nullable=False)
-        status_type = Column(String(64), index=True, nullable=False)
-        status_reason = Column(String(64), index=True, nullable=False)
-        side = Column(String(64), index=True, nullable=False)
-        request_size = Column(Decimal, default=0)
-        filled_size = Column(Decimal, default=0)
-        remaining_size = Column(Decimal, default=0)
-        price = Column(Decimal, default=0)
-        funds = Column(Decimal, default=0)
-        fees = Column(Decimal, default=0)
-        create_time = Column(String(64))
-        update_time = Column(String(64))    
+    prim_id = Column(Integer, primary_key=True)
+    id = Column(String(64), index=True, nullable=False)
+    product_id = Column(String(64), index=True, nullable=False)
+    order_type = Column(String(64), index=True, nullable=False)
+    status_type = Column(String(64), index=True, nullable=False)
+    status_reason = Column(String(64), index=True, nullable=False)
+    side = Column(String(64), index=True, nullable=False)
+    request_size = Column(Numeric, default=0)
+    filled_size = Column(Numeric, default=0)
+    remaining_size = Column(Numeric, default=0)
+    price = Column(Numeric, default=0)
+    funds = Column(Numeric, default=0)
+    fees = Column(Numeric, default=0)
+    create_time = Column(String(64))
+    update_time = Column(String(64))    
         
     def __init__(self, order_id, product_id, status_type, order_type=None, status_reason=None,
                  side=None, request_size=0, filled_size=0, remaining_size=0, price=0, funds=0,
