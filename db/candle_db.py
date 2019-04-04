@@ -18,12 +18,8 @@
 from utils import getLogger
 from db import getDb
 
-import uuid
+log = getLogger ('CANDLE-DB')
 
-log = getLogger ('ORDER-DB')
-
-# Order db is currently a dictionary, keyed with order.id (UUID)
-ORDER_DB = {}
 Db = None
 
 def db_add_or_update_order (market, product_id, order):
