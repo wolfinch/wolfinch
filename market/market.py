@@ -75,7 +75,7 @@ class OHLC(object):
     def __str__ (self):
         return "{time: %s, open: %g, high: %g, low: %g, close: %g, volume: %g}"%(
             str(self.time), self.open, self.high, self.low, self.close, self.volume)
-    def 
+
 
 # class OHLC(object): 
 #     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']   
