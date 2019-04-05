@@ -19,6 +19,7 @@ from utils import getLogger
 from db import DbBase
 import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker
+# from sqlalchemy.ext.declarative import declarative_base
 
 log = getLogger ('SQLLITE')
 
@@ -29,7 +30,7 @@ class SqliteDb (DbBase):
             Db Init
         '''
         self.engine = db.create_engine('sqlite:///data/OldMonk.sqlite.db')       
-        
+#         self.base = declarative_base()
         if self.engine == None :
             log.error ("sqlite or sqlalchemy init failed")
             return None

@@ -9,7 +9,7 @@ from sqlite import SqliteDb
 
 DB = None
 
-def getDb ():
+def init_db ():
     global DB
     if DB == None:
         #use sqlite now
