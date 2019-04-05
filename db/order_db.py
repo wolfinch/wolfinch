@@ -53,9 +53,12 @@ def db_get_order (OrderCls, market, product_id, order_id):
 def db_get_all_orders(OrderCls):
     global Db
     if not Db:
-        Db = getDb()        
-        
+        Db = getDb()
+        if not Db:
+            log.critical ("Unable to get Db instance")
+            return None
     try:
+        log.debug ("retrieve order list from db")
         results = Db.session.query(OrderCls).all()
         log.info ("retrieving %d order entries"%(len(results)))
         if results:
