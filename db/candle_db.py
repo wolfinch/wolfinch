@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from utils import getLogger
-from db import getDb
+from db import init_db
 from sqlalchemy import *
 
 log = getLogger ('CANDLE-DB')
@@ -24,12 +24,12 @@ log = getLogger ('CANDLE-DB')
 
 class CandlesDb(object):
     def __init__ (self, exchange_name, product_id):
-        self.db = getDb()
+        self.db = init_db()
         log.info ("init candlesdb")
         self.table_name = "candle_%s_%s"%(exchange_name, product_id)
         if not self.db.engine.dialect.has_table(self.db.engine, self.table_name):  # If table don't exist, Create.
             # Create a table with the appropriate Columns
-            log.info ("create table: %s"%(self.table_name))            
+            log.info ("creating table: %s"%(self.table_name))            
             self.table = Table(self.table_name, self.db.metadata,
 #                 Column('Id', Integer, primary_key=True, nullable=False), 
                 Column('time', Interval, primary_key=True, nullable=False),
@@ -39,8 +39,9 @@ class CandlesDb(object):
                 Column('close', Numeric, default=0),
                 Column('volume', Numeric, default=0))
             # Implement the creation
-            self.db.metadata.create_all()        
+            self.db.metadata.create_all(self.db.engine, checkfirst=True)        
         else:
+            log.info ("table %s exists already"%self.table_name)
             self.table = self.db.metadata.tables[self.table_name]
                     
     def __str__ (self):

@@ -6,13 +6,14 @@
 '''
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
-
+from utils import getLogger
 from decimal import Decimal
 import db
 
-Base = declarative_base()
-Db = None
+Db = None #db.init_db()
+log = getLogger ('ORDER')
 
+Base = declarative_base()
 
 # simple class to have the trade request (FIXME: add proper shape)
 class TradeRequest:
@@ -105,7 +106,8 @@ class Order (Base):
     def DbSave (self):
         global Db
         if not Db:
-            Db = db.getDb()
+            Db = db.init_db()
+        log.info ("save order to db")
         Db.session.add(self)
         Db.session.commit()
         
@@ -113,13 +115,29 @@ class Order (Base):
     def DbGet (cls, order_id):
         global Db
         if not Db:
-            Db = db.getDb()        
+            Db = db.init_db()        
         try:
             result = Db.session.query(cls).filter_by(id=order_id)
             if result:
+                log.info ("get order from db")                
                 return result.first()
         except Exception, e:
             print(e.message)
         return None 
-        
+    
+    @classmethod
+    def DbCreateTable (cls):
+        global Db
+        if not Db:
+            Db = db.init_db()        
+        try:
+            if not Db.engine.dialect.has_table(Db.engine, cls.__tablename__):  # If table don't exist, Create.
+                log.info ("table: %s does not exist, creating: %s"%(cls.__tablename__, cls.__table__ ))                
+                Base.metadata.create_all(Db.engine, checkfirst=True)
+            else:
+                log.info ("table: %s exists, reflecting table: %s"%(cls.__tablename__, cls.__table__ ))                                
+                Base.metadata.tables[cls.__tablename__]
+        except Exception, e:
+            print(e.message)
+        return None         
 # EOF

@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from utils import getLogger
-from db import getDb
+from db import init_db
 
 import uuid
 
@@ -50,13 +50,15 @@ def db_get_order (OrderCls, market, product_id, order_id):
     return order
     
 #Get all orders from Db (Should be called part of startup)
-def db_get_all_orders(OrderCls):
+def init_order_db(OrderCls):
     global Db
     if not Db:
-        Db = getDb()
+        Db = init_db()
         if not Db:
             log.critical ("Unable to get Db instance")
             return None
+        log.info ("init order_db table")
+        OrderCls.DbCreateTable()
     try:
         log.debug ("retrieve order list from db")
         results = Db.session.query(OrderCls).all()
