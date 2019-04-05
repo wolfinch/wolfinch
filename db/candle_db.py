@@ -17,50 +17,54 @@
 
 from utils import getLogger
 from db import getDb
+from sqlalchemy import *
 
 log = getLogger ('CANDLE-DB')
 
-Db = None
 
-def db_add_or_update_order (market, product_id, order):
-    log.debug ("Adding order to db")
-    ORDER_DB [uuid.UUID(order.id)] = order
-    order.DbSave()
-    
-    
-def db_del_order (market, product_id, order):
-    log.debug ("Del order from db")    
-    del(ORDER_DB[uuid.UUID(order.id)])
-    
-    
-def db_get_order (OrderCls, market, product_id, order_id):
-    log.debug ("Get order from db")    
-    order = ORDER_DB.get(uuid.UUID(order_id))  
-    if order == None:
-        log.info ("order_id:%s not in cache"%(order_id))
-        order = OrderCls.DbGet(order_id)
-        if order != None:
-            ORDER_DB [uuid.UUID(order.id)] = order
+class CandlesDb(object):
+    def __init__ (self, exchange_name, product_id):
+        self.db = getDb()
+        log.info ("init candlesdb")
+        self.table_name = "candle_%s_%s"%(exchange_name, product_id)
+        if not self.db.engine.dialect.has_table(self.db.engine, self.table_name):  # If table don't exist, Create.
+            # Create a table with the appropriate Columns
+            log.info ("create table: %s"%(self.table_name))            
+            self.table = Table(self.table_name, self.db.metadata,
+#                 Column('Id', Integer, primary_key=True, nullable=False), 
+                Column('time', Interval, primary_key=True, nullable=False),
+                Column('open', Numeric, default=0),
+                Column('high', Numeric, default=0),
+                Column('low', Numeric, default=0),
+                Column('close', Numeric, default=0),
+                Column('volume', Numeric, default=0))
+            # Implement the creation
+            self.db.metadata.create_all()        
         else:
-            log.error ("order_id:%s not in Db"%(order_id))
-    return order
-    
-#Get all orders from Db (Should be called part of startup)
-def db_get_all_orders(OrderCls):
-    global Db
-    if not Db:
-        Db = getDb()        
+            self.table = self.db.metadata.tables[self.table_name]
+                    
+    def __str__ (self):
+        return "{time: %s, open: %g, high: %g, low: %g, close: %g, volume: %g}"%(
+            str(self.time), self.open, self.high, self.low, self.close, self.volume)
+
+
+    def db_save_candle (self, candle):
+        log.debug ("Adding candle to db")
+        self.db.connection.execute(self.table.insert(), candle)
         
-    try:
-        results = Db.session.query(OrderCls).all()
-        log.info ("retrieving %d order entries"%(len(results)))
-        if results:
-            for order in results:
-                log.info ("inserting order: %s in cache"%(order.id))
-                ORDER_DB[uuid.UUID(order.id)] = order            
-            return results
-    except Exception, e:
-        print(e.message)
-    return None
-       
+    def db_save_candles (self, candles):
+        log.debug ("Adding candle list to db")
+        self.db.connection.execute(self.table.insert(), candles)
+        
+    def db_get_all_candles (self):
+        log.debug ("retrieving candles from db")
+        try:
+            query = self.db.select([self.table])
+            ResultProxy = self.db.connection.execute(query)
+            ResultSet = ResultProxy.fetchall()
+            log.info ("Retrieved %d candles for table: %s"%(len(ResultSet, self.table_name)))
+            return ResultSet
+        except Exception, e:
+            print(e.message)        
+   
 # EOF
