@@ -480,20 +480,30 @@ class Market:
         
     def _import_historic_candles (self):
         ### TODO: FIXME: jork: db implementations for historic data
-        # import Historic Data 
+        candle_list = self.candlesDb.db_get_all_candles()
+        if candle_list:
+            for candle in candle_list:
+                log.debug ("retrieving candle:%s "%candle)
+        
+        # import Historic Data from excg
         try:
             self.exchange.get_historic_rates
         except NameError:
             log.critical("method 'get_historic_rates()' not defined for exchange!!")
         else:
-            log.debug ("Importing Historic rates #num Candles")            
-            candle_list = self.exchange.get_historic_rates(self.product_id)
+            log.debug ("Importing Historic rates #num Candles")
+            start = candle_list[-1].time if (candle_list and candle_list[-1]) else 0    
+            #candle_list = self.exchange.get_historic_rates(self.product_id, start=start)
+            candle_list = [OHLC(time=10, open=10, high=20, low=10, close=3, volume=3)]
             if candle_list:        
                 self.market_indicators_data = []
                 for candle in candle_list:
                     self.market_indicators_data.append({'ohlc': candle})
                     #log.debug('ohlc: %s'%(candle))
                 #log.debug ("Imported Historic rates #num Candles (%s)", str(self.market_indicators_data))
+            #save candles in Db for future
+                log.debug ("candle: %s"%candle_list)
+                self.candlesDb.db_save_candle(candle_list[0])
 
     def _calculate_historic_indicators (self):
         hist_len  = 0 if not self.market_indicators_data else len(self.market_indicators_data)
