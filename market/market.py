@@ -389,7 +389,6 @@ class Market:
 
     def _save_order (self, trade_req, order):
         db.db_add_or_update_order (self, trade_req.product, order)
-        #TODO: FIXME: jork: implement
         
     def _get_manual_trade_req (self):
         exchange_name = self.exchange.__name__

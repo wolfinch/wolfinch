@@ -16,4 +16,11 @@ def init_db ():
         DB = SqliteDb()
     return DB
     
+def clear_db ():
+    global DB
+    if DB == None:
+        #use sqlite now
+        DB = SqliteDb()    
+    if DB is not None:
+        DB.clear_db()
 #EOF

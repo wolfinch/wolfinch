@@ -108,7 +108,9 @@ def process_market (market):
         sims.market_simulator_run (market)
     
 def clean_states ():
-    log.info ("Clean Start")
+    log.info ("Clearing Db")
+    db.clear_db()
+    
         
 def arg_parse ():
     parser = argparse.ArgumentParser(description='OldMonk Auto Trading Bot')
