@@ -432,7 +432,7 @@ def gdax_consume_ticker_feed (market, msg):
     if now >= market.cur_candle_time + granularity:
         # close the current candle period and start a new candle period
         c = price
-        candle = OHLC(market.cur_candle_time, market.O, market.H, market.L, c, market.V)
+        candle = OHLC(long(market.cur_candle_time), market.O, market.H, market.L, c, market.V)
         log.debug ("New candle identified %s"%(candle))        
         market.O = market.V = market.H = market.L = 0
         market.cur_candle_time = now
