@@ -506,6 +506,8 @@ def get_historic_rates (product_id, start=None, end=None):
     if not start:
         # if no start given, use the config
         real_start = start = end - timedelta(days = period)
+    else:
+        real_start = start
     
     log.debug ("Retrieving Historic candles for period: %s to %s"%(
                 real_start.isoformat(), end.isoformat()))
