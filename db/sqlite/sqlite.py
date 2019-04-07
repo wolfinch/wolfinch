@@ -46,17 +46,25 @@ class SqliteDb (DbBase):
                 
                         
     def clear_db (self):
+        
+        log.info ("Clear db")
         if (not db):
             return True
         
+        log.info ("Clearing all tables")        
         #clear db entries
-        client.drop_database("OldMonkDb")
+        self.metadata.drop_all(self.engine)
+        self.session.commit()                
         
-    def clear_table (self, table):
+    def clear_table (self, table_name):
         global client, db    
         if (not db):
             return True    
-        db.drop_collection (table)
+        log.info ("Clear table: %s"%table_name)                
+        table = self.metadata.tables[table_name]
+        if table is not None:
+            log.info ("Clearing table: %s"%table_name)                            
+            table.drop(self.engine)
         
     
     def insert_one (self, entry, table):

@@ -71,5 +71,19 @@ def init_order_db(OrderCls):
     except Exception, e:
         print(e.message)
     return None
+
+def clear_order_db (OrderCls):
+    global Db
+    if not Db:
+        Db = init_db()
+        if not Db:
+            log.critical ("Unable to get Db instance")
+            return None
+    try:
+        log.info ("clear order_db table")
+        OrderCls.DbDropTable()
+    except Exception, e:
+        print(e.message)
+    return None    
        
 # EOF

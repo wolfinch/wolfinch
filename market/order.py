@@ -108,8 +108,16 @@ class Order (Base):
         if not Db:
             Db = db.init_db()
         log.info ("save order to db")
-        Db.session.add(self)
+        Db.session.merge(self)
         Db.session.commit()
+        
+    def DbDelete (self):
+        global Db
+        if not Db:
+            Db = db.init_db()
+        log.info ("save order to db")
+        Db.session.delete(self)
+        Db.session.commit()        
         
     @classmethod        
     def DbGet (cls, order_id):
@@ -139,5 +147,17 @@ class Order (Base):
                 Base.metadata.tables[cls.__tablename__]
         except Exception, e:
             print(e.message)
-        return None         
+        return None
+    
+    @classmethod
+    def DbDropTable(cls):
+        global Db
+        if not Db:
+            Db = db.init_db()        
+        try:
+            log.info ("Dropping table %s"%cls.__tablename__)
+            cls.__table__.drop(Db.engine)
+        except Exception, e:
+            print(e.message)
+        return None                    
 # EOF
