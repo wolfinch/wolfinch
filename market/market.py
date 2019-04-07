@@ -55,7 +55,7 @@ log.setLevel(log.DEBUG)
 OldMonk_market_list = []
 
 class OHLC(object): 
-    __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']   
+#     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']    #sqlqlchemy mapper doesn't work with __slots__
     def __init__ (self, time=0, open=0, high=0, low=0, close =0, volume =0):
         self.time = time
         self.open = Decimal(open)
@@ -207,7 +207,7 @@ class Market:
         self.market_indicators_data     = [] 
         self.cur_candle_time = 0
         self.num_candles        = 0
-        self.candlesDb = db.CandlesDb (self.exchange_name, self.product_id)
+        self.candlesDb = db.CandlesDb (OHLC, self.exchange_name, self.product_id)
         self.indicator_calculators     = indicators.Configure()
         self.market_strategies     = strategy.Configure()
         
@@ -478,32 +478,49 @@ class Market:
                 log.debug("pending(stop) trade_req %s"%(str(trade_req)))
                 self.order_book.add_pending_trade_req(trade_req)
         
-    def _import_historic_candles (self):
-        ### TODO: FIXME: jork: db implementations for historic data
-        candle_list = self.candlesDb.db_get_all_candles()
-        if candle_list:
-            for candle in candle_list:
-                log.debug ("retrieving candle:%s "%candle)
+    def _normalize_candle_list_helper (self, cdl_list_db, cdl_list_exch):
+        # we can optimize this based on list order
+        i = 0
+        for cdl_exch in cdl_list_exch:
+            if cdl_exch.time >= cdl_list_db[-1].time:
+                break
+            i += 1            
+        log.info ("new normalized len: %d"%(len(cdl_list_exch) - i))
+        return cdl_list_exch[i:]
         
-        # import Historic Data from excg
+    def _import_historic_candles (self):
+        self.market_indicators_data = []        
+        db_candle_list = self.candlesDb.db_get_all_candles()
+        if db_candle_list:        
+            for candle in db_candle_list:
+                self.market_indicators_data.append({'ohlc': candle})
+                #log.debug('ohlc: %s'%(candle))
+                log.debug ("retrieving candle:%s "%str(candle))
+        log.debug ("Imported Historic rates #num Candles (%s)", len(self.market_indicators_data))
+        
+        # import Historic Data from exchange
         try:
             self.exchange.get_historic_rates
         except NameError:
             log.critical("method 'get_historic_rates()' not defined for exchange!!")
         else:
-            log.debug ("Importing Historic rates #num Candles")
-            start = candle_list[-1].time if (candle_list and candle_list[-1]) else 0    
-            #candle_list = self.exchange.get_historic_rates(self.product_id, start=start)
-            candle_list = [OHLC(time=10, open=10, high=20, low=10, close=3, volume=3)]
-            if candle_list:        
-                self.market_indicators_data = []
-                for candle in candle_list:
+            start = db_candle_list[-1].time if (db_candle_list and db_candle_list[-1]) else 0            
+            log.debug ("Importing Historic rates #num Candles from exchange starting from time: %s to now"%(start))
+            candle_list = self.exchange.get_historic_rates(self.product_id, start= datetime.fromtimestamp(start))
+#             candle_list = [OHLC(time=10, open=10, high=20, low=10, close=3, volume=3)]
+            if candle_list:
+                log.debug ("%d candles found from exch"%len(candle_list))
+                norm_candle_list = self._normalize_candle_list_helper (db_candle_list, candle_list)
+                
+                #remove the last entry from db (as the last cdl could be incorrect candle)
+                self.market_indicators_data.remove(self.market_indicators_data[-1])
+                for candle in norm_candle_list:
                     self.market_indicators_data.append({'ohlc': candle})
-                    #log.debug('ohlc: %s'%(candle))
+                    log.debug('ohlc: %s'%str(candle))
                 #log.debug ("Imported Historic rates #num Candles (%s)", str(self.market_indicators_data))
-            #save candles in Db for future
-                log.debug ("candle: %s"%candle_list)
-                self.candlesDb.db_save_candle(candle_list[0])
+                #save candles in Db for future
+                self.candlesDb.db_save_candles(norm_candle_list)
+                log.debug ("imported %d candles from exchange and saved to db"%len(norm_candle_list))                
 
     def _calculate_historic_indicators (self):
         hist_len  = 0 if not self.market_indicators_data else len(self.market_indicators_data)
@@ -521,7 +538,7 @@ class Market:
             period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
             new_ind = indicator.calculate(period_data)
             self.market_indicators_data [candle_idx][indicator.name] = new_ind
-            log.debug ("indicator (%s) val (%s)"%(indicator.name, str(new_ind)))
+#             log.debug ("indicator (%s) val (%s)"%(indicator.name, str(new_ind)))
         
     def _process_historic_strategies(self):
         hist_len  = 0 if not self.market_indicators_data else len(self.market_indicators_data)
@@ -581,6 +598,8 @@ class Market:
                     strategies and may result in generating trade signals
         """
         self.market_indicators_data.append({'ohlc': candle})
+        #save to db
+        self.candlesDb.db_save_candle(candle)
 #         self.cur_candle_time = candle.time
         self._calculate_all_indicators(self.num_candles)
         self._process_all_strategies(self.num_candles)

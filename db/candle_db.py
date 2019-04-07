@@ -18,12 +18,14 @@
 from utils import getLogger
 from db import init_db
 from sqlalchemy import *
+from sqlalchemy.orm import mapper 
 
 log = getLogger ('CANDLE-DB')
 
 
 class CandlesDb(object):
-    def __init__ (self, exchange_name, product_id):
+    def __init__ (self, ohlcCls, exchange_name, product_id):
+        self.ohlcCls = ohlcCls
         self.db = init_db()
         log.info ("init candlesdb")
         self.table_name = "candle_%s_%s"%(exchange_name, product_id)
@@ -31,8 +33,7 @@ class CandlesDb(object):
             # Create a table with the appropriate Columns
             log.info ("creating table: %s"%(self.table_name))            
             self.table = Table(self.table_name, self.db.metadata,
-#                 Column('Id', Integer, primary_key=True, nullable=False), 
-                Column('time', Interval, primary_key=True, nullable=False),
+                Column('time', Integer, primary_key=True, nullable=False),
                 Column('open', Numeric, default=0),
                 Column('high', Numeric, default=0),
                 Column('low', Numeric, default=0),
@@ -43,6 +44,7 @@ class CandlesDb(object):
         else:
             log.info ("table %s exists already"%self.table_name)
             self.table = self.db.metadata.tables[self.table_name]
+        mapper(ohlcCls, self.table)
                     
     def __str__ (self):
         return "{time: %s, open: %g, high: %g, low: %g, close: %g, volume: %g}"%(
@@ -51,19 +53,35 @@ class CandlesDb(object):
 
     def db_save_candle (self, candle):
         log.debug ("Adding candle to db")
-        self.db.connection.execute(self.table.insert(), candle)
+#         self.db.connection.execute(self.table.insert(), {'close':candle.close, 'high':candle.high,
+#                                                               'low':candle.low, 'open':candle.open, 
+#                                                               'time':candle.time, 'volume':candle.volume})
+        self.db.session.merge (candle)
+        self.db.session.commit()
         
     def db_save_candles (self, candles):
         log.debug ("Adding candle list to db")
-        self.db.connection.execute(self.table.insert(), candles)
+#         self.db.connection.execute(self.table.insert(), map(lambda cdl: 
+#                                                             {'close':cdl.close, 'high':cdl.high,
+#                                                               'low':cdl.low, 'open':cdl.open, 
+#                                                               'time':cdl.time, 'volume':cdl.volume}, candles))
+#         cdl_list = map(lambda cdl: 
+#                                         {'close':cdl.close, 'high':cdl.high,
+#                                             'low':cdl.low, 'open':cdl.open, 
+#                                             'time':cdl.time, 'volume':cdl.volume}, candles)
+        for cdl in candles:
+            self.db.session.merge (cdl)
+        self.db.session.commit()
         
     def db_get_all_candles (self):
         log.debug ("retrieving candles from db")
         try:
-            query = self.db.select([self.table])
-            ResultProxy = self.db.connection.execute(query)
-            ResultSet = ResultProxy.fetchall()
-            log.info ("Retrieved %d candles for table: %s"%(len(ResultSet, self.table_name)))
+#             query = select([self.table])
+#             ResultProxy = self.db.connection.execute(query)
+#             ResultSet = ResultProxy.fetchall()
+            ResultSet = self.db.session.query(self.ohlcCls).order_by(self.ohlcCls.time).all()
+            log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
+#             log.debug ("Res: %s"%str(ResultSet))
             return ResultSet
         except Exception, e:
             print(e.message)        
