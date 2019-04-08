@@ -59,12 +59,12 @@ class Order (Base):
     '''
     __tablename__ = 'order_table' #TODO: FIXME: extend with market_product_id
 
-    prim_id = Column(Integer, primary_key=True)
-    id = Column(String(64), index=True, nullable=False)
+#     prim_id = Column(Integer, primary_key=True)
+    id = Column(String(64), index=True, nullable=False, primary_key=True)
     product_id = Column(String(64), index=True, nullable=False)
     order_type = Column(String(64), index=True, nullable=False)
     status_type = Column(String(64), index=True, nullable=False)
-    status_reason = Column(String(64), index=True, nullable=False)
+    status_reason = Column(String(64), index=True, nullable=True)
     side = Column(String(64), index=True, nullable=False)
     request_size = Column(Numeric, default=0)
     filled_size = Column(Numeric, default=0)
