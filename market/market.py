@@ -32,6 +32,7 @@ from decimal import Decimal
 import itertools
 import talib
 from datetime import datetime
+import time
 
 from utils import *
 from order_book import OrderBook
@@ -204,7 +205,8 @@ class Market:
         self.order_book = OrderBook(market=self)
         # Market Strategy related Data
         # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema', val, name:val...}]
-        self.market_indicators_data     = [] 
+        self.market_indicators_data     = []
+        self.market_strategies_data     = []
         self.cur_candle_time = 0
         self.num_candles        = 0
         self.candlesDb = db.CandlesDb (OHLC, self.exchange_name, self.product_id)
@@ -479,6 +481,8 @@ class Market:
         
     def _normalize_candle_list_helper (self, cdl_list_db, cdl_list_exch):
         # we can optimize this based on list order
+        if (cdl_list_db == None or (len(cdl_list_db) <= 0)):
+            return cdl_list_exch
         i = 0
         for cdl_exch in cdl_list_exch:
             if cdl_exch.time >= cdl_list_db[-1].time:
@@ -488,7 +492,7 @@ class Market:
         return cdl_list_exch[i:]
         
     def _import_historic_candles (self):
-        self.market_indicators_data = []        
+#         self.market_indicators_data = []        
         db_candle_list = self.candlesDb.db_get_all_candles()
         if db_candle_list:        
             for candle in db_candle_list:
@@ -505,14 +509,16 @@ class Market:
         else:
             start = db_candle_list[-1].time if (db_candle_list and db_candle_list[-1]) else 0            
             log.debug ("Importing Historic rates #num Candles from exchange starting from time: %s to now"%(start))
-            candle_list = self.exchange.get_historic_rates(self.product_id, start= datetime.fromtimestamp(start))
+            candle_list = self.exchange.get_historic_rates(self.product_id, start= (datetime.fromtimestamp(start)
+                                                                                     if start > 0 else 0))
 #             candle_list = [OHLC(time=10, open=10, high=20, low=10, close=3, volume=3)]
             if candle_list:
                 log.debug ("%d candles found from exch"%len(candle_list))
                 norm_candle_list = self._normalize_candle_list_helper (db_candle_list, candle_list)
                 
                 #remove the last entry from db (as the last cdl could be incorrect candle)
-                self.market_indicators_data.remove(self.market_indicators_data[-1])
+                if (len(self.market_indicators_data) > 0):
+                    self.market_indicators_data.remove(self.market_indicators_data[-1])
                 for candle in norm_candle_list:
                     self.market_indicators_data.append({'ohlc': candle})
                     log.debug('ohlc: %s'%str(candle))
@@ -529,9 +535,10 @@ class Market:
         log.debug ("re-Calculating all indicators for historic data #candles (%d)"%(hist_len))
         for idx in range (hist_len):
             self._calculate_all_indicators (idx)
+        log.debug ("re-Calculated all indicators for historic data #candles (%d)"%(hist_len))            
                     
     def _calculate_all_indicators (self, candle_idx):
-        log.debug ("setting up all indicators for periods indx: %d"%(candle_idx))
+#         log.debug ("setting up all indicators for periods indx: %d"%(candle_idx))
         for indicator in self.indicator_calculators:
             start = candle_idx+1 - (indicator.period + 50) #TBD: give few more candles(for ta-lib)
             period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
@@ -547,9 +554,10 @@ class Market:
         log.debug ("re-proessing all strategies for historic data #candles (%d)"%(hist_len))
         for idx in range (hist_len):
             self._process_all_strategies (idx)
+        log.debug ("re-proessed all strategies for historic data #candles (%d)"%(hist_len))            
                     
     def _process_all_strategies (self, candle_idx):
-        log.debug ("Processing all strategies for periods indx: %d"%(candle_idx))
+#         log.debug ("Processing all strategies for periods indx: %d"%(candle_idx))
         for strategy in self.market_strategies:
             start = candle_idx+1 - (strategy.period + 50) #TBD: give few more candles(for ta-lib)
             period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
@@ -572,7 +580,7 @@ class Market:
         self._calculate_historic_indicators()
         self._process_historic_strategies()
         num_candles = len(self.market_indicators_data)
-        self.cur_candle_time = datetime.now() if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
+        self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
         self.num_candles = num_candles
         
         

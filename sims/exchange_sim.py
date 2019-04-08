@@ -70,7 +70,7 @@ def do_trade (market):
         this_order['side'] = order.side
         if order.order_type == 'limit':
             this_order['price'] = order.price
-            this_order['size'] = order.request_size            
+            this_order['size'] = order.request_size
             if order.side == 'buy':
                 if order.price >= price:
                     feed_enQ(market, this_order)
@@ -89,7 +89,7 @@ def do_trade (market):
             feed_enQ(market, this_order)
             traded_orders_pvt.append (order)
             open_orders_pvt.remove (order)
-            log.info ("Traded market order: %s"%(str(order)))         
+            log.info ("Traded market order: %s"%(str(order)))   
         
 
 ############# Public APIs ######################
