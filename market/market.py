@@ -491,7 +491,7 @@ class Market:
         log.info ("new normalized len: %d"%(len(cdl_list_exch) - i))
         return cdl_list_exch[i:]
         
-    def _import_historic_candles (self):
+    def _import_historic_candles (self, local_only=False):
 #         self.market_indicators_data = []        
         db_candle_list = self.candlesDb.db_get_all_candles()
         if db_candle_list:        
@@ -500,6 +500,10 @@ class Market:
                 #log.debug('ohlc: %s'%(candle))
                 log.debug ("retrieving candle:%s "%str(candle))
         log.debug ("Imported Historic rates #num Candles (%s)", len(self.market_indicators_data))
+        
+        if local_only:
+            log.info ("import local only, skipping history import from exchange.")
+            return
         
         # import Historic Data from exchange
         try:
