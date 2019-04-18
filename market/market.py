@@ -216,6 +216,9 @@ class Market:
     def get_candle_list (self):
         return map(lambda x: x["ohlc"], self.market_indicators_data)
     
+    def get_indicator_list (self):
+        return self.market_indicators_data    
+    
     def set_market_rate (self, price):
         self.current_market_rate = price
         

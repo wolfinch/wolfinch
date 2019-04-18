@@ -25,7 +25,8 @@ from sklearn.preprocessing import MinMaxScaler
 class Model ():
     def __init__(self, X_shape):
         # init preprocessor/scaler
-        self.sc = MinMaxScaler(feature_range = (0, 1))
+        self.scX = MinMaxScaler(feature_range = (0, 1))
+        self.scY = MinMaxScaler(feature_range = (0, 1))
         
         # Init Keras
         self.regressor = Sequential()
@@ -46,22 +47,24 @@ class Model ():
         
         self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error')
         
-    def train(self, X, Y):
-        X_train, Y_train = self.sc.tranform(X),  self.sc.tranform(X)
+    def scaleX(self, X):
+        return self.scX.fit_transform(X)
+    def scaleY(self, Y):
+        return self.scY.fit_transform(Y)
+            
+    def train(self, X_train, Y_train):
         self.regressor.fit(X_train, Y_train, epochs = 100, batch_size = 32)
         
 
-    def test(self, X):
-        X_test = self.sc.tranform(X)
+    def test(self, X):        
+        Y_pred = self.regressor.predict(X)
         
-        Y_pred = self.regressor.predict(X_test)
-        
-        return self.sc.inverse_transform(Y_pred)   
+        return self.scY.inverse_transform(Y_pred.reshape(-1, 1))   
     
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     import market
-    from keras.utils import plot_model
+#     from keras.utils import plot_model
     import  numpy as np
     import matplotlib.pyplot as plt
         
@@ -74,28 +77,31 @@ if __name__ == '__main__':
         plt.legend()
         plt.show()
         
-    def normalize_input(cdl_list):
+    def normalize_input(model, cdl_list):
         x_list = map (lambda x: x['ohlc'].close, cdl_list)
         
         x_train = []
         y_train = []
         for i in range (60, len(x_list)):
             x_train.append(x_list[i-60:i])
-            if i < len(x_list):
-                if x_train[i] < x_train[i+1]:
+            if i < len(x_list)-1:
+                if x_list[i] < x_list[i+1]:
                     y_train.append(5)
-                elif x_train[i] > x_train[i+1]:
+                elif x_list[i] > x_list[i+1]:
                     y_train.append(-5)
                 else:
                     y_train.append(0)
             else:
                 y_train.append(0)
         
-        x_arr, y_arr = np.array(x_train), np.array(y_train)
+        x_arr, y_arr = np.array(x_train), np.array(y_train).reshape(-1, 1)
         print ("x_arr shape: %s y_arr shape: %s"%(x_arr.shape, y_arr.shape))
         
-        #reshape, tranform
-        X_train, Y_train = np.reshape(x_arr, (x_arr.shape[0], x_arr.shape[1], 1)), y_arr
+        # tranform
+        x, y = model.scaleX(x_arr), model.scaleY(y_arr)
+        
+        #reshape, 
+        X_train, Y_train = np.reshape(x, (x.shape[0], x.shape[1], 1)), y
         print ("X_train shape: %s Y_train shape: %s"%(X_train.shape, Y_train.shape))
         
         
@@ -121,7 +127,7 @@ if __name__ == '__main__':
     m._process_historic_strategies()
     
     print ("Model init complete, training starts.. \n")
-    X_train, Y_train = normalize_input(model, m.get_candle_list())
+    X_train, Y_train = normalize_input(model, m.get_indicator_list())
     
     model.train(X_train, Y_train)
     print ("Training done")
