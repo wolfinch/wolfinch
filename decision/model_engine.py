@@ -20,9 +20,14 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
 from keras.layers import Dropout
+from sklearn.preprocessing import MinMaxScaler
 
 class Model ():
     def __init__(self, X_shape):
+        # init preprocessor/scaler
+        self.sc = MinMaxScaler(feature_range = (0, 1))
+        
+        # Init Keras
         self.regressor = Sequential()
         
         self.regressor.add(LSTM(units = 50, return_sequences = True, input_shape = (X_shape, 1)))
@@ -41,28 +46,70 @@ class Model ():
         
         self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error')
         
-    def train(self, X_train, Y_train):
+    def train(self, X, Y):
+        X_train, Y_train = self.sc.tranform(X),  self.sc.tranform(X)
         self.regressor.fit(X_train, Y_train, epochs = 100, batch_size = 32)
         
 
-    def test(self):
-        dataset_total = pd.concat((dataset_train['Open'], dataset_test['Open']), axis = 0)
-        inputs = dataset_total[len(dataset_total) - len(dataset_test) - 60:].values
-        inputs = inputs.reshape(-1,1)
-        inputs = sc.transform(inputs)
-        X_test = []
-        for i in range(60, 76):
-            X_test.append(inputs[i-60:i, 0])
-        X_test = np.array(X_test)
-        X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
-        predicted_stock_price = regressor.predict(X_test)
-        predicted_stock_price = sc.inverse_transform(predicted_stock_price)        
+    def test(self, X):
+        X_test = self.sc.tranform(X)
+        
+        Y_pred = self.regressor.predict(X_test)
+        
+        return self.sc.inverse_transform(Y_pred)   
     
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     import market
+    from keras.utils import plot_model
+    import  numpy as np
+    import matplotlib.pyplot as plt
+        
+    def plot_res (Y_orig, Y_Pred):
+        plt.plot(Y_orig, color = 'black', label = 'Real Y')
+        plt.plot(Y_Pred, color = 'green', label = 'Pred Y')
+        plt.title('Prediction')
+        plt.xlabel('Time')
+        plt.ylabel('Y Prediction')
+        plt.legend()
+        plt.show()
+        
+    def normalize_input(cdl_list):
+        x_list = map (lambda x: x['ohlc'].close, cdl_list)
+        
+        x_train = []
+        y_train = []
+        for i in range (60, len(x_list)):
+            x_train.append(x_list[i-60:i])
+            if i < len(x_list):
+                if x_train[i] < x_train[i+1]:
+                    y_train.append(5)
+                elif x_train[i] > x_train[i+1]:
+                    y_train.append(-5)
+                else:
+                    y_train.append(0)
+            else:
+                y_train.append(0)
+        
+        x_arr, y_arr = np.array(x_train), np.array(y_train)
+        print ("x_arr shape: %s y_arr shape: %s"%(x_arr.shape, y_arr.shape))
+        
+        #reshape, tranform
+        X_train, Y_train = np.reshape(x_arr, (x_arr.shape[0], x_arr.shape[1], 1)), y_arr
+        print ("X_train shape: %s Y_train shape: %s"%(X_train.shape, Y_train.shape))
+        
+        
+        return X_train, Y_train
+    
+#         predicted_stock_price = regressor.predict(X_test)
+#         predicted_stock_price = sc.inverse_transform(predicted_stock_price)        
     
     print ("Model engine init, importing historic data\n")
+    
+    print ("Model Engine Start\n")
+    model = Model (60)
+#     plot_model(model.regressor, to_file='model.png')
+#     exit()
     
     prod = {"id" : "BTC-USD", "display_name" : "BTC-USD"}
     class gdax:
@@ -73,10 +120,17 @@ if __name__ == '__main__':
     m._calculate_historic_indicators()
     m._process_historic_strategies()
     
-    print ("Model Engine Start\n")
-    model = Model (10)
-    
     print ("Model init complete, training starts.. \n")
+    X_train, Y_train = normalize_input(model, m.get_candle_list())
+    
+    model.train(X_train, Y_train)
+    print ("Training done")
+    
+    print ("Testing .. ")
+    Y_pred = model.test(X_train)
+    print ("Testing done..\n ploting..")
+    
+    plot_res(Y_train, Y_pred)
 
     print ("All done, bye!")
 #EOF

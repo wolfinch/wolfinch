@@ -213,6 +213,9 @@ class Market:
         self.indicator_calculators     = indicators.Configure()
         self.market_strategies     = strategy.Configure()
         
+    def get_candle_list (self):
+        return map(lambda x: x["ohlc"], self.market_indicators_data)
+    
     def set_market_rate (self, price):
         self.current_market_rate = price
         
