@@ -53,7 +53,7 @@ class Model ():
         return self.scY.fit_transform(Y)
             
     def train(self, X_train, Y_train):
-        self.regressor.fit(X_train, Y_train, epochs = 100, batch_size = 32)
+        self.regressor.fit(X_train, Y_train, epochs = 2, batch_size = 64)
         
 
     def test(self, X):        
@@ -68,7 +68,8 @@ if __name__ == '__main__':
     import  numpy as np
     import matplotlib.pyplot as plt
         
-    def plot_res (Y_orig, Y_Pred):
+    def plot_res (X_train, Y_orig, Y_Pred):
+#         plt.plot(X_train, color = 'blue', label = 'Real X')    
         plt.plot(Y_orig, color = 'black', label = 'Real Y')
         plt.plot(Y_Pred, color = 'green', label = 'Pred Y')
         plt.title('Prediction')
@@ -77,9 +78,7 @@ if __name__ == '__main__':
         plt.legend()
         plt.show()
         
-    def normalize_input(model, cdl_list):
-        x_list = map (lambda x: x['ohlc'].close, cdl_list)
-        
+    def normalize_input(model, x_list):
         x_train = []
         y_train = []
         for i in range (60, len(x_list)):
@@ -99,13 +98,15 @@ if __name__ == '__main__':
         
         # tranform
         x, y = model.scaleX(x_arr), model.scaleY(y_arr)
-        
-        #reshape, 
+#         print ("X_train: \n%s"%x)
+#         print ("Y_train: \n%s"%y)
+                
+        #reshape
         X_train, Y_train = np.reshape(x, (x.shape[0], x.shape[1], 1)), y
         print ("X_train shape: %s Y_train shape: %s"%(X_train.shape, Y_train.shape))
         
         
-        return X_train, Y_train
+        return x, y, X_train, Y_train
     
 #         predicted_stock_price = regressor.predict(X_test)
 #         predicted_stock_price = sc.inverse_transform(predicted_stock_price)        
@@ -127,16 +128,21 @@ if __name__ == '__main__':
     m._process_historic_strategies()
     
     print ("Model init complete, training starts.. \n")
-    X_train, Y_train = normalize_input(model, m.get_indicator_list())
+    indicator_list = m.get_indicator_list()
+    x_list = map (lambda x: x['ohlc'].close, indicator_list)
+    x_arr = np.array(x_list)
+
+    X, Y, X_train, Y_train = normalize_input(model, x_list)
     
     model.train(X_train, Y_train)
     print ("Training done")
     
     print ("Testing .. ")
     Y_pred = model.test(X_train)
-    print ("Testing done..\n ploting..")
+    print ("Testing done.. summary:\n \n ploting..")
+    model.regressor.summary()
     
-    plot_res(Y_train, Y_pred)
+    plot_res(x_arr, Y, Y_pred)
 
     print ("All done, bye!")
 #EOF
