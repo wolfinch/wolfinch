@@ -80,7 +80,7 @@ if __name__ == '__main__':
         
     def create_y_list(x_list):
         y_train = []
-        
+         
         for i in range (60, len(x_list)):
             d = 0
             p = x_list[i-1]
@@ -89,9 +89,17 @@ if __name__ == '__main__':
                     d -= 1
                 elif s > p:
                     d += 1
-            
+                p = s
             y_train.append(d)
         return y_train        
+
+#     def create_y_list(x_list):
+#         y_train = []
+#         
+#         for i in range (60, len(x_list)-2):
+#             y_train.append(x_list[i+1])
+#         y_train.append(x_list[-2])
+#         return y_train  
         
     def normalize_input(model, x_list):
         x_train = []
@@ -107,7 +115,7 @@ if __name__ == '__main__':
         # tranform
         x, y = model.scaleX(x_arr), model.scaleY(y_arr)
 #         print ("X_train: \n%s"%x)
-#         print ("Y_train: \n%s"%y)
+        print ("Y_train: \n%s"%y_train)
                 
         #reshape
         X_train, Y_train = np.reshape(x, (x.shape[0], x.shape[1], 1)), y
@@ -118,7 +126,26 @@ if __name__ == '__main__':
     
 #         predicted_stock_price = regressor.predict(X_test)
 #         predicted_stock_price = sc.inverse_transform(predicted_stock_price)        
-    
+#     def create_x_list(indi_list):
+#         def form_x_from_ind (ind):
+#             x = []
+#             print ("indicator matrix ",ind)
+#             for k,v in ind.iteritems():
+#                 if k == 'ohlc':
+#                     x += [v.open, v.high, v.low, v.close, v.volume]
+#                 elif k == 'MACD':
+#                     pass
+#                 else:
+#                     x += [v]
+#             return x
+#         return map (form_x_from_ind, indi_list)
+    def create_x_list(indi_list, strat_list):
+        def form_x_from_ind (ind, strat):
+            x = [ind['ohlc'].close]
+            map(lambda s: x.append(s), strat.itervalues())
+            return x
+        return map (form_x_from_ind, indi_list, strat_list)
+        
     print ("Model engine init, importing historic data\n")
     
     print ("Model Engine Start\n")
@@ -137,7 +164,8 @@ if __name__ == '__main__':
     
     print ("Model init complete, training starts.. \n")
     indicator_list = m.get_indicator_list()
-    x_list = map (lambda x: x['ohlc'].close, indicator_list)
+    strategies_list = m.get_strategies_list()
+    x_list = create_x_list(indicator_list, strategies_list)
     x_arr = np.array(x_list)
 
     X, Y, X_train, Y_train = normalize_input(model, x_list)

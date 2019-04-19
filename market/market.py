@@ -204,7 +204,7 @@ class Market:
         #self.order_book = Orders ()
         self.order_book = OrderBook(market=self)
         # Market Strategy related Data
-        # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema', val, name:val...}]
+        # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema': val, name:val...}]
         self.market_indicators_data     = []
         self.market_strategies_data     = []
         self.cur_candle_time = 0
@@ -218,6 +218,9 @@ class Market:
     
     def get_indicator_list (self):
         return self.market_indicators_data    
+    
+    def get_strategies_list (self):
+        return self.market_strategies_data        
     
     def set_market_rate (self, price):
         self.current_market_rate = price
@@ -503,6 +506,7 @@ class Market:
         if db_candle_list:        
             for candle in db_candle_list:
                 self.market_indicators_data.append({'ohlc': candle})
+                self.market_strategies_data.append({})
                 #log.debug('ohlc: %s'%(candle))
                 log.debug ("retrieving candle:%s "%str(candle))
         log.debug ("Imported Historic rates #num Candles (%s)", len(self.market_indicators_data))
@@ -531,6 +535,7 @@ class Market:
                     self.market_indicators_data.remove(self.market_indicators_data[-1])
                 for candle in norm_candle_list:
                     self.market_indicators_data.append({'ohlc': candle})
+                    self.market_strategies_data.append({})
                     log.debug('ohlc: %s'%str(candle))
                 #log.debug ("Imported Historic rates #num Candles (%s)", str(self.market_indicators_data))
                 #save candles in Db for future
@@ -572,7 +577,7 @@ class Market:
             start = candle_idx+1 - (strategy.period + 50) #TBD: give few more candles(for ta-lib)
             period_data = self.market_indicators_data [(0 if start < 0 else start):candle_idx+1]
             new_result = strategy.generate_signal(period_data)
-            self.market_indicators_data [candle_idx][strategy.name] = new_result
+            self.market_strategies_data [candle_idx][strategy.name] = new_result
             if new_result != 0: #signal generated
                 log.debug ("strategy (%s) val (%s)"%(strategy.name, str(new_result)))
         
