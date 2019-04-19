@@ -78,20 +78,28 @@ if __name__ == '__main__':
         plt.legend()
         plt.show()
         
+    def create_y_list(x_list):
+        y_train = []
+        
+        for i in range (60, len(x_list)):
+            d = 0
+            p = x_list[i-1]
+            for s in x_list[i: (i+5 if i+5 < len(x_list) else len(x_list))]:
+                if s < p:
+                    d -= 1
+                elif s > p:
+                    d += 1
+            
+            y_train.append(d)
+        return y_train        
+        
     def normalize_input(model, x_list):
         x_train = []
-        y_train = []
+        
+        y_train = create_y_list(x_list)
+        
         for i in range (60, len(x_list)):
-            x_train.append(x_list[i-60:i])
-            if i < len(x_list)-1:
-                if x_list[i] < x_list[i+1]:
-                    y_train.append(5)
-                elif x_list[i] > x_list[i+1]:
-                    y_train.append(-5)
-                else:
-                    y_train.append(0)
-            else:
-                y_train.append(0)
+            x_train.append(x_list[i-60:i])        
         
         x_arr, y_arr = np.array(x_train), np.array(y_train).reshape(-1, 1)
         print ("x_arr shape: %s y_arr shape: %s"%(x_arr.shape, y_arr.shape))
@@ -106,7 +114,7 @@ if __name__ == '__main__':
         print ("X_train shape: %s Y_train shape: %s"%(X_train.shape, Y_train.shape))
         
         
-        return x, y, X_train, Y_train
+        return x, y_arr, X_train, Y_train
     
 #         predicted_stock_price = regressor.predict(X_test)
 #         predicted_stock_price = sc.inverse_transform(predicted_stock_price)        
