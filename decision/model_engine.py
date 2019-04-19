@@ -21,17 +21,23 @@ from keras.layers import Dense
 from keras.layers import LSTM
 from keras.layers import Dropout
 from sklearn.preprocessing import MinMaxScaler
+from utils import *
+
+log = getLogger ('MARKET')
+log.setLevel(log.DEBUG)
 
 class Model ():
     def __init__(self, X_shape):
-        # init preprocessor/scaler
-        self.scX = MinMaxScaler(feature_range = (0, 1))
+        # init preprocessor/scaler as the number of feature layers and o/p layer
+        self.scX = []
+        for _ in range (X_shape[1]):
+            self.scX += [MinMaxScaler(feature_range = (0, 1))]            
         self.scY = MinMaxScaler(feature_range = (0, 1))
         
         # Init Keras
         self.regressor = Sequential()
         
-        self.regressor.add(LSTM(units = 50, return_sequences = True, input_shape = (X_shape, 1)))
+        self.regressor.add(LSTM(units = 50, return_sequences = True, input_shape = X_shape))
         self.regressor.add(Dropout(0.2))
         
         self.regressor.add(LSTM(units = 50, return_sequences = True))
@@ -48,12 +54,16 @@ class Model ():
         self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error')
         
     def scaleX(self, X):
-        return self.scX.fit_transform(X)
+        log.debug("X.Shape: %s"%str(X.shape))
+        for i in range(len(self.scX)):
+            log.debug ("X%d shape; %s: %s"%(i, str(X[:,:,i].shape), X[:,:,i]))
+            X[:,:,i] = self.scX[i].fit_transform(X[:,:,i])
+        return X
     def scaleY(self, Y):
         return self.scY.fit_transform(Y)
             
     def train(self, X_train, Y_train):
-        self.regressor.fit(X_train, Y_train, epochs = 2, batch_size = 64)
+        self.regressor.fit(X_train, Y_train, epochs = 5, batch_size = 64)
         
 
     def test(self, X):        
@@ -78,6 +88,18 @@ if __name__ == '__main__':
         plt.legend()
         plt.show()
         
+    def create_x_list(indi_list, strat_list):
+        def form_x_from_ind (ind, strat):
+            x = [ind['ohlc'].close]
+            map(lambda s: x.append(s), strat.itervalues())
+#             print ("x: %s"%x)
+#             print ("ind %s"%ind['ohlc'].close)
+#             print ("strat %s"%strat)
+            return x
+        x_list =  map (form_x_from_ind, indi_list, strat_list)
+#         print ("x_list: %s"%x_list)
+        return x_list
+            
     def create_y_list(x_list):
         y_train = []
          
@@ -118,7 +140,7 @@ if __name__ == '__main__':
         print ("Y_train: \n%s"%y_train)
                 
         #reshape
-        X_train, Y_train = np.reshape(x, (x.shape[0], x.shape[1], 1)), y
+        X_train, Y_train = np.reshape(x, (x.shape[0], x.shape[1], -1)), y
         print ("X_train shape: %s Y_train shape: %s"%(X_train.shape, Y_train.shape))
         
         
@@ -139,17 +161,8 @@ if __name__ == '__main__':
 #                     x += [v]
 #             return x
 #         return map (form_x_from_ind, indi_list)
-    def create_x_list(indi_list, strat_list):
-        def form_x_from_ind (ind, strat):
-            x = [ind['ohlc'].close]
-            map(lambda s: x.append(s), strat.itervalues())
-            return x
-        return map (form_x_from_ind, indi_list, strat_list)
+
         
-    print ("Model engine init, importing historic data\n")
-    
-    print ("Model Engine Start\n")
-    model = Model (60)
 #     plot_model(model.regressor, to_file='model.png')
 #     exit()
     
@@ -167,6 +180,11 @@ if __name__ == '__main__':
     strategies_list = m.get_strategies_list()
     x_list = create_x_list(indicator_list, strategies_list)
     x_arr = np.array(x_list)
+
+    print ("Model engine init, importing historic data\n")
+    
+    print ("Model Engine Start.. X.shape:%s\n"%(str(x_arr.shape)))
+    model = Model ((60, x_arr.shape[1]))
 
     X, Y, X_train, Y_train = normalize_input(model, x_list)
     
