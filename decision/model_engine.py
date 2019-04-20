@@ -26,6 +26,9 @@ from utils import *
 log = getLogger ('MARKET')
 log.setLevel(log.DEBUG)
 
+EPOCH = 100
+BATCH_SIZE = 64
+X_RANGE = 60
 class Model ():
     def __init__(self, X_shape):
         # init preprocessor/scaler as the number of feature layers and o/p layer
@@ -52,6 +55,8 @@ class Model ():
         self.regressor.add(Dense(units = 1))
         
         self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error')
+#         self.regressor.compile(optimizer='rmsprop', loss='mean_squared_error', metrics=['accuracy'])
+
         
     def scaleX(self, X):
         log.debug("X.Shape: %s"%str(X.shape))
@@ -63,7 +68,7 @@ class Model ():
         return self.scY.fit_transform(Y)
             
     def train(self, X_train, Y_train):
-        self.regressor.fit(X_train, Y_train, epochs = 5, batch_size = 64)
+        self.regressor.fit(X_train, Y_train, epochs = EPOCH, batch_size = BATCH_SIZE)
         
 
     def test(self, X):        
@@ -90,7 +95,7 @@ if __name__ == '__main__':
         
     def create_x_list(indi_list, strat_list):
         def form_x_from_ind (ind, strat):
-            x = [ind['ohlc'].close]
+            x = [ind['ohlc'].close, ind['ohlc'].open , ind['ohlc'].high, ind['ohlc'].low, ind['ohlc'].volume]
             map(lambda s: x.append(s), strat.itervalues())
 #             print ("x: %s"%x)
 #             print ("ind %s"%ind['ohlc'].close)
@@ -103,7 +108,7 @@ if __name__ == '__main__':
     def create_y_list(x_list):
         y_train = []
          
-        for i in range (60, len(x_list)):
+        for i in range (X_RANGE, len(x_list)):
             d = 0
             p = x_list[i-1]
             for s in x_list[i: (i+5 if i+5 < len(x_list) else len(x_list))]:
@@ -118,7 +123,7 @@ if __name__ == '__main__':
 #     def create_y_list(x_list):
 #         y_train = []
 #         
-#         for i in range (60, len(x_list)-2):
+#         for i in range (X_RANGE, len(x_list)-2):
 #             y_train.append(x_list[i+1])
 #         y_train.append(x_list[-2])
 #         return y_train  
@@ -128,8 +133,8 @@ if __name__ == '__main__':
         
         y_train = create_y_list(x_list)
         
-        for i in range (60, len(x_list)):
-            x_train.append(x_list[i-60:i])        
+        for i in range (X_RANGE, len(x_list)):
+            x_train.append(x_list[i-X_RANGE:i])        
         
         x_arr, y_arr = np.array(x_train), np.array(y_train).reshape(-1, 1)
         print ("x_arr shape: %s y_arr shape: %s"%(x_arr.shape, y_arr.shape))
@@ -184,7 +189,7 @@ if __name__ == '__main__':
     print ("Model engine init, importing historic data\n")
     
     print ("Model Engine Start.. X.shape:%s\n"%(str(x_arr.shape)))
-    model = Model ((60, x_arr.shape[1]))
+    model = Model ((X_RANGE, x_arr.shape[1]))
 
     X, Y, X_train, Y_train = normalize_input(model, x_list)
     
