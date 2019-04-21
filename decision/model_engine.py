@@ -52,9 +52,12 @@ class Model ():
         self.regressor.add(LSTM(units = 50))
         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(Dense(units = 1))
+#         self.regressor.add(Dense(units = 1, activation="softmax"))
+        self.regressor.add(Dense(units = 1, activation="tanh"))
         
-        self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error')
+
+        self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics=['accuracy'])
+#         self.regressor.compile(optimizer = 'rmsprop', loss = 'mean_squared_error', metrics=['accuracy'])
 #         self.regressor.compile(optimizer='rmsprop', loss='mean_squared_error', metrics=['accuracy'])
 
         
@@ -71,8 +74,8 @@ class Model ():
         self.regressor.fit(X_train, Y_train, epochs = EPOCH, batch_size = BATCH_SIZE)
         
 
-    def test(self, X):        
-        Y_pred = self.regressor.predict(X)
+    def predict(self, X):        
+        Y_pred = self.regressor.predict_classes(X)
         
         return self.scY.inverse_transform(Y_pred.reshape(-1, 1))   
     
@@ -197,7 +200,7 @@ if __name__ == '__main__':
     print ("Training done")
     
     print ("Testing .. ")
-    Y_pred = model.test(X_train)
+    Y_pred = model.predict(X_train)
     print ("Testing done.. summary:\n \n ploting..")
     model.regressor.summary()
     
