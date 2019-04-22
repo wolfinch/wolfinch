@@ -12,17 +12,17 @@ from datetime import tzinfo, datetime, timedelta
 from time import sleep
 import time
 
-# import gdax as GDAX #Official version seems to be old, doesn't support auth websocket client
-import cbpro as GDAX 
+# import gdax as CBPRO #Official version seems to be old, doesn't support auth websocket client
+import cbpro as CBPRO 
 
-#import third_party.gdax_python.gdax as GDAX
+#import third_party.gdax_python.gdax as CBPRO
 from utils import *
 from pstats import add_callers
 from market import *
 
-__name__ = "gdax"
+__name__ = "CBPRO"
 
-log = getLogger ('GDAX')
+log = getLogger ('CBPRO')
 log.setLevel(log.DEBUG)
 
 # Globals
@@ -33,8 +33,8 @@ public_client = None
 auth_client   = None
 ws_client = None
 
-#GDAX CONFIG FILE
-GDAX_CONF = 'exchanges/gdaxClient/config.yml'
+#CBPRO CONFIG FILE
+CBPRO_CONF = 'exchanges/gdaxClient/config.yml'
 
 def market_init (exchange, product):
     global ws_client
@@ -69,10 +69,10 @@ def close ():
 
 def init():
     global ws_client
-    log.info('init GDAX params')
+    log.info('init CBPRO params')
     global gdax_conf, public_client, auth_client
     
-    conf = readConf (GDAX_CONF)
+    conf = readConf (CBPRO_CONF)
     if (conf != None and len(conf)):
         gdax_conf = conf['exchange']
     else:
@@ -92,7 +92,7 @@ def init():
             gdax_conf['backfill_granularity'] = int(entry['granularity'])            
         
     
-    public_client = GDAX.PublicClient()
+    public_client = CBPRO.PublicClient()
     if (public_client) == None :
         log.critical("gdax public client init failed")
         return False
@@ -104,14 +104,14 @@ def init():
     feed_base = gdax_conf.get ('wsFeed')
     
     if ((key and b64secret and passphrase and api_base ) == False):
-        log.critical ("Invalid API Credentials in GDAX Config!! ")
+        log.critical ("Invalid API Credentials in CBPRO Config!! ")
         return False
     
-    auth_client = GDAX.AuthenticatedClient(key, b64secret, passphrase,
+    auth_client = CBPRO.AuthenticatedClient(key, b64secret, passphrase,
                                   api_url=api_base)
     
     if auth_client == None:
-        log.critical("Unable to Authenticate with GDAX exchange. Abort!!")
+        log.critical("Unable to Authenticate with CBPRO exchange. Abort!!")
         return False
         
     global gdax_products
@@ -148,7 +148,7 @@ def init():
         log.debug ("Starting Websocket Feed... ")
         ws_client.start()    
             
-    log.info( "**GDAX init success**\n Products: %s\n Accounts: %s"%(
+    log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
                     pprint.pformat(gdax_products, 4), pprint.pformat(gdax_accounts, 4)))
     return True
 
@@ -234,7 +234,7 @@ def normalized_order (order):
     return norm_order
 
 ######### WebSocket Client implementation #########
-class gdaxWebsocketClient (GDAX.WebsocketClient):
+class cbproWebsocketClient (CBPRO.WebsocketClient):
 #     __init__(self, url="wss://ws-feed.gdax.com", products=None, message_type="subscribe", mongo_collection=None,
 #                  should_print=True, auth=False, api_key="", api_secret="", api_passphrase="", channels=None):
         def on_open(self):
@@ -303,7 +303,7 @@ def register_feed (api_key="", api_secret="", api_passphrase="", url=""):
 #             "user"         #Receive details about our orders only
         ]
     message_type = "subscribe"
-    websocket_client = gdaxWebsocketClient (url, products=products, message_type=message_type,
+    websocket_client = cbproWebsocketClient (url, products=products, message_type=message_type,
                                             should_print=False, auth=True,
                                             api_key=api_key, api_secret=api_secret,
                                              api_passphrase=api_passphrase, channels=channels)
@@ -452,7 +452,7 @@ def gdax_consume_ticker_feed (market, msg):
 #     response = requests.get(api_base + '/products')
 #     # check for invalid api response
 #     if response.status_code is not 200:
-#         raise Exception('Invalid GDAX Status Code: %d' % response.status_code)
+#         raise Exception('Invalid CBPRO Status Code: %d' % response.status_code)
 #     #log.debug(response.json())
 #     return response.json()
 
