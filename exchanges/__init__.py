@@ -1,1 +1,1 @@
-from gdaxClient import gdaxClient
+from cbpro import cbpro
