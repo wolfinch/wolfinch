@@ -16,32 +16,116 @@ import time
 import cbpro as CBPRO 
 
 #import third_party.gdax_python.gdax as CBPRO
-from utils import getLogger
+from utils import getLogger, readConf
 from pstats import add_callers
 from market import *
 from exchanges import Exchange
 
-__name__ = "CBPRO"
-
 log = getLogger ('CBPRO')
 log.setLevel(log.DEBUG)
 
-# Globals
-gdax_conf = {}
-gdax_products = []
-gdax_accounts = {}
-public_client = None
-auth_client   = None
-ws_client = None
 
 #CBPRO CONFIG FILE
 CBPRO_CONF = 'exchanges/gdaxClient/config.yml'
 
 class CBPRO (Exchange):
+
+    public_client = None
+    auth_client   = None
+    ws_client = None
+    gdax_conf = {}
+    gdax_products = []
+    gdax_accounts = {}    
+    def __init__(self):
+#         global self.ws_client
+        log.info('init CBPRO params')
+#         global gdax_conf, public_client, auth_client
+        
+        
+        conf = readConf (CBPRO_CONF)
+        if (conf != None and len(conf)):
+            self.gdax_conf = conf['exchange']
+        else:
+            return False
+        
+        #get config
+        backfill = self.gdax_conf.get('backfill')
+        if not backfill:
+            return None
+    
+        for entry in backfill:
+            if entry.get('enabled'):
+                self.gdax_conf['backfill_enabled'] = entry['enabled']
+            if entry.get('period'):
+                self.gdax_conf['backfill_period'] = int(entry['period'])
+            if entry.get('granularity'):
+                self.gdax_conf['backfill_granularity'] = int(entry['granularity'])            
+            
+        
+        self.public_client = CBPRO.PublicClient()
+        if (self.public_client) == None :
+            log.critical("gdax public client init failed")
+            return False
+        
+        key = self.gdax_conf.get('apiKey')
+        b64secret = self.gdax_conf.get('apiSecret')
+        passphrase = self.gdax_conf.get('apiPassphrase')
+        api_base = self.gdax_conf.get ('apiBase')
+        feed_base = self.gdax_conf.get ('wsFeed')
+        
+        if ((key and b64secret and passphrase and api_base ) == False):
+            log.critical ("Invalid API Credentials in CBPRO Config!! ")
+            return False
+        
+        self.auth_client = CBPRO.AuthenticatedClient(key, b64secret, passphrase,
+                                      api_url=api_base)
+        
+        if self.auth_client == None:
+            log.critical("Unable to Authenticate with CBPRO exchange. Abort!!")
+            return False
+            
+#         global gdax_products
+        products = self.public_client.get_products()
+        if (len(products) and len (self.gdax_conf['products'])):
+            for prod in products:
+                for p in self.gdax_conf['products']:              
+                    if prod['id'] in p.keys():
+                        self.gdax_products.append(prod)
+        
+        # Popoulate the account details for each interested currencies
+        accounts =  self.auth_client.get_accounts()
+        if (accounts == None):
+            log.critical("Unable to get account details!!")
+            return False
+        #log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
+        for account in accounts:
+            for prod in self.gdax_conf['products']:
+                for prod_id in prod.keys():
+                    currency = prod[prod_id][0]['currency']            
+                    if account['currency'] in currency:
+                        log.debug ("Interested Account Found for Currency: "+account['currency'])
+                        self.gdax_accounts[account['currency']] = account
+                        break
+        
+        # register websocket feed 
+        self.ws_client = self.register_feed (api_key=key, api_secret=b64secret, api_passphrase=passphrase, url=feed_base)
+        if self.ws_client == None:
+            log.critical("Unable to get websocket feed. Abort!!")
+            return False
+        
+        #Start websocket Feed Client
+        if (self.ws_client != None):
+            log.debug ("Starting Websocket Feed... ")
+            self.ws_client.start()    
+                
+        log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
+                        pprint.pformat(self.gdax_products, 4), pprint.pformat(self.gdax_accounts, 4)))
+        return True
+     
     def market_init (self, exchange, product):
-        global ws_client
-        usd_acc = gdax_accounts['USD']
-        crypto_acc = gdax_accounts.get(product['base_currency'])
+#         global ws_client
+        usd_acc = self.gdax_accounts['USD']
+        crypto_acc = self.gdax_accounts.get(product['base_currency'])
         if (usd_acc == None or crypto_acc == None): 
             log.error ("No account available for product: %s"%(product['id']))
             return None
@@ -56,7 +140,7 @@ class CBPRO (Exchange):
     
         
         ## Feed Cb
-        market.consume_feed = gdax_consume_feed
+        market.consume_feed = self.gdax_consume_feed
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
@@ -64,96 +148,11 @@ class CBPRO (Exchange):
         
     def close (self):
         log.debug("Closing exchange...")    
-        global ws_client
-        if (ws_client):
+#         global self.ws_client
+        if (self.ws_client):
             log.debug("Closing WebSocket Client")
-            ws_client.close ()
-
-    def __init__(self):
-        global ws_client
-        log.info('init CBPRO params')
-        global gdax_conf, public_client, auth_client
-        
-        conf = readConf (CBPRO_CONF)
-        if (conf != None and len(conf)):
-            gdax_conf = conf['exchange']
-        else:
-            return False
-        
-        #get config
-        backfill = gdax_conf.get('backfill')
-        if not backfill:
-            return None
-    
-        for entry in backfill:
-            if entry.get('enabled'):
-                gdax_conf['backfill_enabled'] = entry['enabled']
-            if entry.get('period'):
-                gdax_conf['backfill_period'] = int(entry['period'])
-            if entry.get('granularity'):
-                gdax_conf['backfill_granularity'] = int(entry['granularity'])            
-            
-        
-        public_client = CBPRO.PublicClient()
-        if (public_client) == None :
-            log.critical("gdax public client init failed")
-            return False
-        
-        key = gdax_conf.get('apiKey')
-        b64secret = gdax_conf.get('apiSecret')
-        passphrase = gdax_conf.get('apiPassphrase')
-        api_base = gdax_conf.get ('apiBase')
-        feed_base = gdax_conf.get ('wsFeed')
-        
-        if ((key and b64secret and passphrase and api_base ) == False):
-            log.critical ("Invalid API Credentials in CBPRO Config!! ")
-            return False
-        
-        auth_client = CBPRO.AuthenticatedClient(key, b64secret, passphrase,
-                                      api_url=api_base)
-        
-        if auth_client == None:
-            log.critical("Unable to Authenticate with CBPRO exchange. Abort!!")
-            return False
-            
-        global gdax_products
-        products = public_client.get_products()
-        if (len(products) and len (gdax_conf['products'])):
-            for prod in products:
-                for p in gdax_conf['products']:              
-                    if prod['id'] in p.keys():
-                        gdax_products.append(prod)
-        
-        # Popoulate the account details for each interested currencies
-        accounts =  auth_client.get_accounts()
-        if (accounts == None):
-            log.critical("Unable to get account details!!")
-            return False
-        #log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
-        for account in accounts:
-            for prod in gdax_conf['products']:
-                for prod_id in prod.keys():
-                    currency = prod[prod_id][0]['currency']            
-                    if account['currency'] in currency:
-                        log.debug ("Interested Account Found for Currency: "+account['currency'])
-                        gdax_accounts[account['currency']] = account
-                        break
-        
-        # register websocket feed 
-        ws_client = register_feed (api_key=key, api_secret=b64secret, api_passphrase=passphrase, url=feed_base)
-        if ws_client == None:
-            log.critical("Unable to get websocket feed. Abort!!")
-            return False
-        
-        #Start websocket Feed Client
-        if (ws_client != None):
-            log.debug ("Starting Websocket Feed... ")
-            ws_client.start()    
-                
-        log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
-                        pprint.pformat(gdax_products, 4), pprint.pformat(gdax_accounts, 4)))
-        return True
-    
+            self.ws_client.close ()
+   
     def normalized_order (self, order):
         '''
         Desc:
@@ -239,7 +238,7 @@ class CBPRO (Exchange):
     
     def register_feed (self, api_key="", api_secret="", api_passphrase="", url=""):
         products = []
-        for p in gdax_conf['products']: #["BTC-USD", "ETH-USD"]
+        for p in self.gdax_conf['products']: #["BTC-USD", "ETH-USD"]
             products += p.keys()
             
         channels = [
@@ -269,30 +268,30 @@ class CBPRO (Exchange):
         msg_type = msg['type']
         #log.debug ("Feed received: msg:\n %s"%(json.dumps(msg, indent=4, sort_keys=True)))
         if (msg_type == 'ticker'):
-            gdax_consume_ticker_feed (market, msg)
+            self._gdax_consume_ticker_feed (market, msg)
         elif (msg_type == 'heartbeat'):
             log.debug ("Feed: Heartbeat")
         elif (msg_type == 'snapshot'):
-            gdax_consume_l2_book_snapshot (market, msg)
+            self._gdax_consume_l2_book_snapshot (market, msg)
         elif (msg_type == 'l2update'):
-            gdax_consume_l2_book_update (market, msg)        
+            self._gdax_consume_l2_book_update (market, msg)        
         elif (msg_type in ['pending', 'received' , 'open' , 'done' , 'change'] ):
-            gdax_consume_order_update_feed (market, msg)
+            self._gdax_consume_order_update_feed (market, msg)
         elif (msg_type == 'error'):
             log.error ("Feed: Error Msg received on Feed msg: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
         else:
             log.error ("Feed: Unknown Feed Msg Type (%s) msg: %s"%(msg['type'], json.dumps(msg, indent=4, sort_keys=True)))
     
-    def gdax_consume_order_update_feed (self, market, msg):
+    def _gdax_consume_order_update_feed (self, market, msg):
         ''' 
         Process the order status update feed msg 
         '''
         log.debug ("Order Status Update id:%s"%(msg.get('order_id')))
-        order = normalized_order(msg)
+        order = self._normalized_order(msg)
         market.order_status_update (order)
     
         
-    def gdax_consume_l2_book_snapshot (self, market, msg):
+    def _gdax_consume_l2_book_snapshot (self, market, msg):
         '''
          Consume the OrderBook Snapshot and build orderbook
         '''    
@@ -302,7 +301,7 @@ class CBPRO (Exchange):
             market.name, len(bids), len(asks)))
         market.order_book.new_book (bids, asks)
         
-    def gdax_consume_l2_book_update (self, market, msg):
+    def _gdax_consume_l2_book_update (self, market, msg):
         '''
         {
             "type": "l2update",
@@ -327,7 +326,7 @@ class CBPRO (Exchange):
             elif (size == 'sell'):
                 market.order_book.add_asks([[price, size]])            
             
-    def gdax_consume_ticker_feed (self, market, msg):
+    def _gdax_consume_ticker_feed (self, market, msg):
         '''
         {
             "best_ask": "11367.87", 
@@ -347,10 +346,10 @@ class CBPRO (Exchange):
             "volume_30d": "364800.84143217"
         }
         '''
-        global gdax_conf
+#         global self.gdax_conf
         log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
         
-        granularity = int(gdax_conf.get('backfill_granularity'))   
+        granularity = int(self.gdax_conf.get('backfill_granularity'))   
         
         price = Decimal(msg.get('price'))
         last_size = msg.get('last_size')
@@ -407,19 +406,19 @@ class CBPRO (Exchange):
         Get registered products on this exchange
         """
         #  log.debug(gdax_products)    
-        return gdax_products
+        return self.gdax_products
     
     def get_product_order_book (self, product, level = 1):
         '''
         Get the order book at specified level
         '''
-        v = public_client.get_product_order_book(product, level)
+        v = self.public_client.get_product_order_book(product, level)
         #log.debug(v)
         return v
     
     def get_accounts (self):
-    #     log.debug (pprint.pformat(gdax_accounts))
-        return gdax_accounts    
+    #     log.debug (pprint.pformat(self.gdax_accounts))
+        return self.gdax_accounts    
     
     
     def get_historic_rates (self, product_id, start=None, end=None):
@@ -437,9 +436,9 @@ class CBPRO (Exchange):
         candles_list = []
         
         #get config
-        enabled = gdax_conf.get('backfill_enabled')
-        period = int(gdax_conf.get('backfill_period'))
-        granularity = int(gdax_conf.get('backfill_granularity'))   
+        enabled = self.gdax_conf.get('backfill_enabled')
+        period = int(self.gdax_conf.get('backfill_period'))
+        granularity = int(self.gdax_conf.get('backfill_granularity'))   
         
         if not enabled:
             log.debug ("Historical data retrieval not enabled")
@@ -473,7 +472,7 @@ class CBPRO (Exchange):
             
             start_str = start.isoformat()
             end_str = tmp_end.isoformat()
-            candles = public_client.get_product_historic_rates (product_id, start_str, end_str, granularity)
+            candles = self.public_client.get_product_historic_rates (product_id, start_str, end_str, granularity)
             if candles:
                 if isinstance(candles, dict):
                     ## Error Case
@@ -508,32 +507,32 @@ class CBPRO (Exchange):
     
     def buy (self, trade_req) :
         log.debug ("BUY - Placing Order on exchange --" )    
-        order = auth_client.buy(price=trade_req.price, #USD
+        order = self.auth_client.buy(price=trade_req.price, #USD
                         size=trade_req.size, #BTC
                         product_id=trade_req.product,
                         type='limit',
                         post_only='True'                    
                         )
-        return normalized_order (order);
+        return self._normalized_order (order);
     
     def sell (self, trade_req) :
         log.debug ("SELL - Placing Order on exchange --" )    
-        order = auth_client.buy(price=trade_req.price, #USD
+        order = self.auth_client.buy(price=trade_req.price, #USD
                         size=trade_req.size, #BTC
                         product_id=trade_req.product,
                         type='limit',
                         post_only='True'
                         )
-        return normalized_order (order);
+        return self._normalized_order (order);
     
     def get_order (self,  order_id):
         log.debug ("GET - order (%s) "%(order_id))
-        order = auth_client.get_order(order_id)
-        return normalized_order (order);
+        order = self.auth_client.get_order(order_id)
+        return self._normalized_order (order);
     
     def cancel_order (self, order_id):
         log.debug ("CANCEL - order (%s) "%(order_id))
-        auth_client.cancel_order(order_id)
+        self.auth_client.cancel_order(order_id)
         
 
 
