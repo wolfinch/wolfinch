@@ -29,7 +29,6 @@ log.setLevel(log.DEBUG)
 CBPRO_CONF = 'exchanges/gdaxClient/config.yml'
 
 class CBPRO (Exchange):
-
     public_client = None
     auth_client   = None
     ws_client = None
@@ -46,7 +45,7 @@ class CBPRO (Exchange):
         if (conf != None and len(conf)):
             self.gdax_conf = conf['exchange']
         else:
-            return False
+            return None
         
         #get config
         backfill = self.gdax_conf.get('backfill')
@@ -65,7 +64,7 @@ class CBPRO (Exchange):
         self.public_client = CBPRO.PublicClient()
         if (self.public_client) == None :
             log.critical("gdax public client init failed")
-            return False
+            return None
         
         key = self.gdax_conf.get('apiKey')
         b64secret = self.gdax_conf.get('apiSecret')
@@ -75,14 +74,14 @@ class CBPRO (Exchange):
         
         if ((key and b64secret and passphrase and api_base ) == False):
             log.critical ("Invalid API Credentials in CBPRO Config!! ")
-            return False
+            return None
         
         self.auth_client = CBPRO.AuthenticatedClient(key, b64secret, passphrase,
                                       api_url=api_base)
         
         if self.auth_client == None:
             log.critical("Unable to Authenticate with CBPRO exchange. Abort!!")
-            return False
+            return None
             
 #         global gdax_products
         products = self.public_client.get_products()
@@ -111,7 +110,7 @@ class CBPRO (Exchange):
         self.ws_client = self.register_feed (api_key=key, api_secret=b64secret, api_passphrase=passphrase, url=feed_base)
         if self.ws_client == None:
             log.critical("Unable to get websocket feed. Abort!!")
-            return False
+            return None
         
         #Start websocket Feed Client
         if (self.ws_client != None):
@@ -120,7 +119,6 @@ class CBPRO (Exchange):
                 
         log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
                         pprint.pformat(self.gdax_products, 4), pprint.pformat(self.gdax_accounts, 4)))
-        return True
      
     def market_init (self, exchange, product):
 #         global ws_client

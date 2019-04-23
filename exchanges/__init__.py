@@ -1,2 +1,2 @@
-from exchange import Exchange
-from cbpro import cbpro
+from exchange_base import Exchange
+from exchanges_list import exchanges

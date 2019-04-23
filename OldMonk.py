@@ -24,7 +24,7 @@ from decimal import *
 import argparse
 
 import sims
-import exchanges
+from exchanges import exchanges
 from market import *
 from utils import *
 import db
@@ -34,7 +34,7 @@ log.setLevel(log.CRITICAL)
 
 # Global Variables
 exchange_list = []
-TICK_DELAY    = 10        # 20 Sec
+MAIN_TICK_DELAY    = 10        # 20 Sec
 
 def OldMonk_init():
     global exchange_list
@@ -58,15 +58,14 @@ def OldMonk_end():
 def init_exchanges ():
     global exchange_list
     #init exchanges 
-    for importer, modname, ispkg in pkgutil.iter_modules(exchanges.__path__):
-        if ispkg == True:
-            log.debug ("Initializing exchange (%s)"%(modname))
-            exchange = getattr(exchanges, modname)
-            if (exchange.init() == True):
-                exchange_list.append(exchange)
-                #Market init
-            else:
-                log.critical (" Exchange \"%s\" init failed "%modname)
+    for exch_cls in exchanges:
+        log.debug ("Initializing exchange (%s)"%(exch_cls.__name__))
+        exch_obj = exch_cls()
+        if (exch_obj != None):
+            exchange_list.append(exch_obj)
+            #Market init
+        else:
+            log.critical (" Exchange \"%s\" init failed "%exch_cls.__name__)
                 
 def close_exchanges():
     global exchange_list
@@ -79,7 +78,7 @@ def oldmonk_main ():
     """
     Main Function for OldMonk
     """
-    sleep_time = TICK_DELAY
+    sleep_time = MAIN_TICK_DELAY
     while (True) : 
         cur_time = time.time()
         log.debug("Current Sleep time left:"+str(sleep_time))         
@@ -92,7 +91,7 @@ def oldmonk_main ():
         for market in get_market_list():
             process_market (market)
         '''Make sure each iteration take exactly LOOP_DELAY time'''
-        sleep_time = (TICK_DELAY - (time.time() - cur_time))
+        sleep_time = (MAIN_TICK_DELAY - (time.time() - cur_time))
         sleep_time  = 0 if (sleep_time < 0) else sleep_time     
     #end While(true)
     
