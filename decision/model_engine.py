@@ -52,8 +52,9 @@ class Model ():
         self.regressor.add(LSTM(units = 50))
         self.regressor.add(Dropout(0.2))
         
+        self.regressor.add(Dense(units = 1))
+#         self.regressor.add(Dense(units = 1, activation="tanh"))
 #         self.regressor.add(Dense(units = 1, activation="softmax"))
-        self.regressor.add(Dense(units = 1, activation="tanh"))
         
 
         self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics=['accuracy'])
@@ -75,7 +76,8 @@ class Model ():
         
 
     def predict(self, X):        
-        Y_pred = self.regressor.predict_classes(X)
+#         Y_pred = self.regressor.predict_classes(X)
+        Y_pred = self.regressor.predict(X)
         
         return self.scY.inverse_transform(Y_pred.reshape(-1, 1))   
     
@@ -100,6 +102,7 @@ if __name__ == '__main__':
         def form_x_from_ind (ind, strat):
             x = [ind['ohlc'].close, ind['ohlc'].open , ind['ohlc'].high, ind['ohlc'].low, ind['ohlc'].volume]
             map(lambda s: x.append(s), strat.itervalues())
+#             x += [yy]
 #             print ("x: %s"%x)
 #             print ("ind %s"%ind['ohlc'].close)
 #             print ("strat %s"%strat)
@@ -131,21 +134,20 @@ if __name__ == '__main__':
 #         y_train.append(x_list[-2])
 #         return y_train  
         
-    def normalize_input(model, x_list):
+    def normalize_input(model, x_list, y_list):
         x_train = []
         
-        y_train = create_y_list(x_list)
         
         for i in range (X_RANGE, len(x_list)):
             x_train.append(x_list[i-X_RANGE:i])        
         
-        x_arr, y_arr = np.array(x_train), np.array(y_train).reshape(-1, 1)
+        x_arr, y_arr = np.array(x_train), np.array(y_list).reshape(-1, 1)
         print ("x_arr shape: %s y_arr shape: %s"%(x_arr.shape, y_arr.shape))
         
         # tranform
         x, y = model.scaleX(x_arr), model.scaleY(y_arr)
 #         print ("X_train: \n%s"%x)
-        print ("Y_train: \n%s"%y_train)
+        print ("Y_train: \n%s"%y_list)
                 
         #reshape
         X_train, Y_train = np.reshape(x, (x.shape[0], x.shape[1], -1)), y
@@ -187,14 +189,26 @@ if __name__ == '__main__':
     indicator_list = m.get_indicator_list()
     strategies_list = m.get_strategies_list()
     x_list = create_x_list(indicator_list, strategies_list)
-    x_arr = np.array(x_list)
-
+    
+    y_list = create_y_list(x_list)
+    
+    # TEST MODEL
+    print ("len x y",len(x_list),len(y_list))
+    map (lambda x: x.append(0), x_list[:X_RANGE])    
+    map (lambda x,y : x.append(y), x_list[X_RANGE:], y_list)
+#     i = 0
+#     for x, y in zip(x_list, y_list):
+#         x_list[i].append(y)
+#         print x_list[i]
+#         i += 1
+    # TEST MODEL
+    x_arr = np.array(x_list).reshape(-1, 8)
     print ("Model engine init, importing historic data\n")
     
     print ("Model Engine Start.. X.shape:%s\n"%(str(x_arr.shape)))
     model = Model ((X_RANGE, x_arr.shape[1]))
 
-    X, Y, X_train, Y_train = normalize_input(model, x_list)
+    X, Y, X_train, Y_train = normalize_input(model, x_list, y_list)
     
     model.train(X_train, Y_train)
     print ("Training done")
