@@ -29,6 +29,7 @@ log.setLevel(log.DEBUG)
 CBPRO_CONF = 'exchanges/gdaxClient/config.yml'
 
 class CBPRO (Exchange):
+    name = "CBPRO"
     public_client = None
     auth_client   = None
     ws_client = None

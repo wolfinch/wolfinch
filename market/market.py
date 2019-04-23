@@ -195,7 +195,7 @@ class Market:
     def __init__(self, product=None, exchange=None):
         self.product_id = None if product == None else product['id']
         self.name = None if product == None else product['display_name']
-        self.exchange_name = None if exchange == None else exchange.__name__
+        self.exchange_name = None if exchange == None else exchange.name
         self.exchange = exchange       #exchange module
         self.current_market_rate = Decimal(0.0)
         self.consume_feed = None
@@ -402,7 +402,7 @@ class Market:
         db.db_add_or_update_order (self, trade_req.product, order)
         
     def _get_manual_trade_req (self):
-        exchange_name = self.exchange.__name__
+        exchange_name = self.exchange.name
         trade_req_list = []
         manual_file_name = "override/TRADE_%s.%s"%(exchange_name, self.product_id)
         if os.path.isfile(manual_file_name):
@@ -667,7 +667,7 @@ class Market:
             -- To ignore a product
                add an empty file with name "<exchange_name>_<product>.ignore"
         """
-        exchange_name = self.exchange.__name__
+        exchange_name = self.exchange.name
         ignore_file = "override/%s_%s.ignore"%(exchange_name, self.product_id)
         #Override file name = override/TRADE_<exchange_name>.<product>
         if (os.path.isfile(ignore_file)):
@@ -735,7 +735,7 @@ def market_init (exchange_list):
         for product in exchange.get_products():
             market = exchange.market_init (exchange, product)
             if (market == None):
-                log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.__name__, product['id']))
+                log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
             else:
                 OldMonk_market_list.append(market)
                  

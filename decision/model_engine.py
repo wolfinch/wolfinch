@@ -178,7 +178,7 @@ if __name__ == '__main__':
     
     prod = {"id" : "BTC-USD", "display_name" : "BTC-USD"}
     class gdax:
-        __name__ = "gdax"
+        name = "CBPRO"
         
     m = market.Market(product=prod, exchange=gdax)
     m._import_historic_candles(local_only=True)

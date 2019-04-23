@@ -59,19 +59,19 @@ def init_exchanges ():
     global exchange_list
     #init exchanges 
     for exch_cls in exchanges:
-        log.debug ("Initializing exchange (%s)"%(exch_cls.__name__))
+        log.debug ("Initializing exchange (%s)"%(exch_cls.name))
         exch_obj = exch_cls()
         if (exch_obj != None):
             exchange_list.append(exch_obj)
             #Market init
         else:
-            log.critical (" Exchange \"%s\" init failed "%exch_cls.__name__)
+            log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
                 
 def close_exchanges():
     global exchange_list
     #init exchanges 
     for exchange in exchange_list:
-            log.info ("Closing exchange (%s)"%(exchange.__name__))
+            log.info ("Closing exchange (%s)"%(exchange.name))
             exchange.close()    
 
 def oldmonk_main ():

@@ -45,6 +45,6 @@ class Exchange:
     def get_historic_rates (self):
         pass        
     @abstractmethod
-    def get_products_order_book (self):
+    def get_product_order_book (self):
         pass                    
 #EOF    
