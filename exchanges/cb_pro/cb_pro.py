@@ -4,21 +4,20 @@
 #  (c) Joshith
 # '''
 
-import requests
+# import requests
 import json
 import pprint
 from decimal import Decimal
-from datetime import tzinfo, datetime, timedelta
+from datetime import datetime, timedelta
 from time import sleep
 import time
 
 # import gdax as CBPRO #Official version seems to be old, doesn't support auth websocket client
 import cbpro
 
-#import third_party.gdax_python.gdax as CBPRO
+# from pstats import add_callers
 from utils import getLogger, readConf
-from pstats import add_callers
-from market import *
+from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 
 log = getLogger ('CBPRO')
@@ -30,17 +29,14 @@ CBPRO_CONF = 'exchanges/gdaxClient/config.yml'
 
 class CBPRO (Exchange):
     name = "CBPRO"
-    public_client = None
-    auth_client   = None
-    ws_client = None
     gdax_conf = {}
     gdax_products = []
-    gdax_accounts = {}    
+    gdax_accounts = {}
+    public_client = None
+    auth_client   = None
+    ws_client = None    
     def __init__(self):
-#         global self.ws_client
-        log.info('init CBPRO params')
-#         global gdax_conf, public_client, auth_client
-        
+        log.info('init CBPRO exchange')        
         
         conf = readConf (CBPRO_CONF)
         if (conf != None and len(conf)):
@@ -108,7 +104,7 @@ class CBPRO (Exchange):
                         break
         
         # register websocket feed 
-        self.ws_client = self.register_feed (api_key=key, api_secret=b64secret, api_passphrase=passphrase, url=feed_base)
+        self.ws_client = self._register_feed (api_key=key, api_secret=b64secret, api_passphrase=passphrase, url=feed_base)
         if self.ws_client == None:
             log.critical("Unable to get websocket feed. Abort!!")
             return None
@@ -139,7 +135,7 @@ class CBPRO (Exchange):
     
         
         ## Feed Cb
-        market.consume_feed = self.gdax_consume_feed
+        market.consume_feed = self._gdax_consume_feed
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
@@ -152,7 +148,7 @@ class CBPRO (Exchange):
             log.debug("Closing WebSocket Client")
             self.ws_client.close ()
    
-    def normalized_order (self, order):
+    def _normalized_order (self, order):
         '''
         Desc:
          Error Handle and Normalize the order json returned by gdax
@@ -235,7 +231,7 @@ class CBPRO (Exchange):
     
     ######### WebSocket Client implementation #########
     
-    def register_feed (self, api_key="", api_secret="", api_passphrase="", url=""):
+    def _register_feed (self, api_key="", api_secret="", api_passphrase="", url=""):
         products = []
         for p in self.gdax_conf['products']: #["BTC-USD", "ETH-USD"]
             products += p.keys()
@@ -259,7 +255,7 @@ class CBPRO (Exchange):
             return websocket_client
     
     ######## Feed Consume #######
-    def gdax_consume_feed (self, market, msg):
+    def _gdax_consume_feed (self, market, msg):
         ''' 
         Feed Call back for Gdax    
         This is where we do all the useful stuff with Feed

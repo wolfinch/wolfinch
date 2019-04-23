@@ -732,12 +732,16 @@ def market_init (exchange_list):
     '''
     global OldMonk_market_list
     for exchange in exchange_list:
-        for product in exchange.get_products():
-            market = exchange.market_init (exchange, product)
-            if (market == None):
-                log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
-            else:
-                OldMonk_market_list.append(market)
+        products = exchange.get_products()
+        if products:
+            for product in products:
+                market = exchange.market_init (exchange, product)
+                if (market == None):
+                    log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
+                else:
+                    OldMonk_market_list.append(market)
+        else:
+            log.error ("No products found in exchange:%s"%(exchange.name))
                  
 def market_setup ():         
     '''
