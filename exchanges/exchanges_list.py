@@ -4,7 +4,7 @@
          Configure the required exchanges here. 
  (c) Joshith Rayaroth Koderi
 '''
-from cbpro import CBPRO
+from exchanges.cb_pro import CBPRO
 
 exchanges = [
         CBPRO,

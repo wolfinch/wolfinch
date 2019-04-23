@@ -13,7 +13,7 @@ from time import sleep
 import time
 
 # import gdax as CBPRO #Official version seems to be old, doesn't support auth websocket client
-import cbpro as CBPRO 
+import cbpro
 
 #import third_party.gdax_python.gdax as CBPRO
 from utils import getLogger, readConf
@@ -61,7 +61,7 @@ class CBPRO (Exchange):
                 self.gdax_conf['backfill_granularity'] = int(entry['granularity'])            
             
         
-        self.public_client = CBPRO.PublicClient()
+        self.public_client = cbpro.PublicClient()
         if (self.public_client) == None :
             log.critical("gdax public client init failed")
             return None
@@ -73,14 +73,14 @@ class CBPRO (Exchange):
         feed_base = self.gdax_conf.get ('wsFeed')
         
         if ((key and b64secret and passphrase and api_base ) == False):
-            log.critical ("Invalid API Credentials in CBPRO Config!! ")
+            log.critical ("Invalid API Credentials in cbpro Config!! ")
             return None
         
-        self.auth_client = CBPRO.AuthenticatedClient(key, b64secret, passphrase,
+        self.auth_client = cbpro.AuthenticatedClient(key, b64secret, passphrase,
                                       api_url=api_base)
         
         if self.auth_client == None:
-            log.critical("Unable to Authenticate with CBPRO exchange. Abort!!")
+            log.critical("Unable to Authenticate with cbpro exchange. Abort!!")
             return None
             
 #         global gdax_products
@@ -534,7 +534,7 @@ class CBPRO (Exchange):
         
 
 
-class cbproWebsocketClient (CBPRO.WebsocketClient):
+class cbproWebsocketClient (cbpro.WebsocketClient):
 #     __init__(self, url="wss://ws-feed.gdax.com", products=None, message_type="subscribe", mongo_collection=None,
 #                  should_print=True, auth=False, api_key="", api_secret="", api_passphrase="", channels=None):
         def on_open(self):
