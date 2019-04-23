@@ -26,7 +26,7 @@ from utils import *
 log = getLogger ('MARKET')
 log.setLevel(log.DEBUG)
 
-EPOCH = 100
+EPOCH = 600
 BATCH_SIZE = 64
 X_RANGE = 60
 class Model ():
@@ -193,16 +193,11 @@ if __name__ == '__main__':
     y_list = create_y_list(x_list)
     
     # TEST MODEL
-    print ("len x y",len(x_list),len(y_list))
-    map (lambda x: x.append(0), x_list[:X_RANGE])    
-    map (lambda x,y : x.append(y), x_list[X_RANGE:], y_list)
-#     i = 0
-#     for x, y in zip(x_list, y_list):
-#         x_list[i].append(y)
-#         print x_list[i]
-#         i += 1
+#     print ("len x y",len(x_list),len(y_list))
+#     map (lambda x: x.append(0), x_list[:X_RANGE])    
+#     map (lambda x,y : x.append(y), x_list[X_RANGE:], y_list)
     # TEST MODEL
-    x_arr = np.array(x_list).reshape(-1, 8)
+    x_arr = np.array(x_list).reshape(len(x_list), -1)
     print ("Model engine init, importing historic data\n")
     
     print ("Model Engine Start.. X.shape:%s\n"%(str(x_arr.shape)))

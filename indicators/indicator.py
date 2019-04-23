@@ -11,7 +11,7 @@ class Indicator:
     @abstractmethod
     def __init__ (self):
         ''' 
-        Init for the strategy class
+        Init for the indicator class
         '''
         pass
     
@@ -25,3 +25,4 @@ class Indicator:
     def calculate (self):
         pass
     
+    #EOF
