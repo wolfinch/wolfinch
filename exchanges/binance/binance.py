@@ -11,11 +11,12 @@ from datetime import datetime, timedelta
 from time import sleep
 import time
 
+from binance.client import Client
+
 from utils import getLogger, readConf
 from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 
-from binance.client import Client
 
 log = getLogger ('Binance')
 log.setLevel(log.DEBUG)
@@ -148,5 +149,6 @@ if __name__ == '__main__':
     
     print ("Testing Binance exch:")
     
-    
+    bnc = Binance ()
+    print ("Done")
 #EOF    

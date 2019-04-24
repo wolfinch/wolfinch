@@ -1,1 +1,1 @@
-from binance import Binance
+from exchanges.binance.binance import Binance
