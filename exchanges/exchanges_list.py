@@ -4,7 +4,7 @@
          Configure the required exchanges here. 
  (c) Joshith Rayaroth Koderi
 '''
-from exchanges.cb_pro import CBPRO
+from exchanges.cbpro import CBPRO
 from exchanges.binance import Binance
 
 exchanges = [

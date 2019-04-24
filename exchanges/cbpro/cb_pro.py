@@ -25,7 +25,7 @@ log.setLevel(log.DEBUG)
 
 
 #CBPRO CONFIG FILE
-CBPRO_CONF = 'exchanges/gdaxClient/config.yml'
+CBPRO_CONF = 'exchanges/cbpro/config.yml'
 
 class CBPRO (Exchange):
     name = "CBPRO"
@@ -47,6 +47,7 @@ class CBPRO (Exchange):
         #get config
         backfill = self.gdax_conf.get('backfill')
         if not backfill:
+            log.fatal("Invalid Config file")            
             return None
     
         for entry in backfill:
