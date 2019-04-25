@@ -49,8 +49,8 @@ def market_init (exchange, product):
     market.fund.set_hold_value(Decimal(usd_acc['hold']))
     market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%
     market.fund.set_max_per_buy_fund_value(100)
-    market.crypto.set_initial_size(Decimal( crypto_acc['available']))
-    market.crypto.set_hold_size( Decimal(crypto_acc['hold']))
+    market.asset.set_initial_size(Decimal( crypto_acc['available']))
+    market.asset.set_hold_size( Decimal(crypto_acc['hold']))
 
     
     ## Feed Cb

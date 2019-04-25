@@ -24,7 +24,7 @@ class TradeRequest:
 #            product: <name>
 #            side: <BUY|SELL>
 #            type: <limit|market>
-#            size: <SIZE crypto>
+#            size: <SIZE Asset>
 #            price: <limit/market-price>
 #            }
 #    '''   

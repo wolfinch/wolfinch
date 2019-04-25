@@ -117,7 +117,7 @@ class Fund:
              self.current_unrealized_profit, self.total_profit, self.current_avg_buy_price, 
              self.latest_buy_price, self.fund_liquidity_percent, self.max_per_buy_fund_value )
                 
-class Crypto:
+class Asset:
     def __init__(self):    
         self.initial_size = Decimal(0.0)
         self.current_size = Decimal(0.0)
@@ -135,7 +135,7 @@ class Crypto:
     def set_hold_size (self, size):
         self.current_hold_size = size
         
-    def get_crypto_to_trade (self, strength):       ### FIXME: jork: Check the hold value
+    def get_asset_to_trade (self, strength):       ### FIXME: jork: Check the hold value
         slice = float(self.max_per_trade_size)/5.0
         
         cur_size = slice * strength
@@ -169,7 +169,7 @@ class Market:
 #      fund_liquidity_percent: <% of total initial fund allowed to use>
 #      max_per_buy_fund_value:
 #      }
-#      crypto {
+#      asset {
 #      initial_size:
 #      current_size:
 #      current_hold_size:
@@ -200,7 +200,7 @@ class Market:
         self.current_market_rate = Decimal(0.0)
         self.consume_feed = None
         self.fund = Fund ()
-        self.crypto = Crypto ()
+        self.asset = Asset ()
         #self.order_book = Orders ()
         self.order_book = OrderBook(market=self)
         # Market Strategy related Data
@@ -332,14 +332,14 @@ class Market:
             self.fund.latest_buy_price = market_order.price
             self.fund.total_traded_value += order_cost
             #avg cost
-            curr_total_crypto_size = (self.crypto.current_hold_size + self.crypto.current_size)
+            curr_total_asset_size = (self.asset.current_hold_size + self.asset.current_size)
             self.fund.current_avg_buy_price = (((self.fund.current_avg_buy_price *
-                                                  curr_total_crypto_size) + (order_cost))/
-                                                        (curr_total_crypto_size + market_order.request_size))
-            #crypto
-            self.crypto.current_size += market_order.filled_size
-            self.crypto.latest_traded_size = market_order.filled_size
-            self.crypto.total_traded_size += market_order.filled_size
+                                                  curr_total_asset_size) + (order_cost))/
+                                                        (curr_total_asset_size + market_order.request_size))
+            #asset
+            self.asset.current_size += market_order.filled_size
+            self.asset.latest_traded_size = market_order.filled_size
+            self.asset.total_traded_size += market_order.filled_size
             
     def _buy_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
@@ -376,8 +376,8 @@ class Market:
             else:
                 log.error ("BUY: unknown order_type: %s"%(order_type))
                 return
-            self.crypto.current_hold_size += size
-            self.crypto.current_size -= size            
+            self.asset.current_hold_size += size
+            self.asset.current_size -= size            
                         
     def _sell_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
@@ -385,9 +385,9 @@ class Market:
             order_cost = (market_order.filled_size*market_order.price)        
             #fund
             self.fund.current_value += order_cost
-            #crypto
-            self.crypto.current_hold_size -= (market_order.filled_size + market_order.remaining_size)
-            self.crypto.current_size += market_order.remaining_size
+            #asset
+            self.asset.current_hold_size -= (market_order.filled_size + market_order.remaining_size)
+            self.asset.current_size += market_order.remaining_size
             #profit
             profit = (market_order.price - self.fund.current_avg_buy_price )*market_order.filled_size
             self.fund.current_realized_profit += profit
@@ -395,8 +395,8 @@ class Market:
     def _sell_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
-            self.crypto.current_hold_size -= market_order.remaining_size
-            self.crypto.current_size += market_order.remaining_size
+            self.asset.current_hold_size -= market_order.remaining_size
+            self.asset.current_size += market_order.remaining_size
 
     def _save_order (self, trade_req, order):
         db.db_add_or_update_order (self, trade_req.product, order)
@@ -448,17 +448,17 @@ class Market:
                 return None            
         elif signal < 0:
             # SELL
-            crypto_size = self.crypto.get_crypto_to_trade (signal * -1)
-            if crypto_size > 0:
-                log.debug ("Generating SELL trade_req with crypto size: %d"%(crypto_size))       
+            asset_size = self.asset.get_asset_to_trade (signal * -1)
+            if asset_size > 0:
+                log.debug ("Generating SELL trade_req with asset size: %d"%(asset_size))       
                 return TradeRequest(Product=self.product_id,
                                   Side="SELL",
-                                   Size=round(Decimal(crypto_size),8),
+                                   Size=round(Decimal(asset_size),8),
                                    Type="market",
                                    Price=round(Decimal(0), 8),
                                    Stop=0)
             else:
-                log.debug ("Unable to generate SELL request for signal (%d). Too low crypto size"%(signal))
+                log.debug ("Unable to generate SELL request for signal (%d). Too low asset size"%(signal))
                 return None
 
         else:
@@ -687,9 +687,9 @@ class Market:
             self._execute_market_trade(trade_req_list)
 
     def __str__(self):
-        return "{'product_id':%s,'name':%s,'exchange_name':%s,'fund':%s,'crypto':%s,'orders':%s}"%(
+        return "{'product_id':%s,'name':%s,'exchange_name':%s,'fund':%s,'asset':%s,'orders':%s}"%(
                 self.product_id,self.name,self.exchange_name, 
-                str(self.fund), str(self.crypto), str(self.order_book))
+                str(self.fund), str(self.asset), str(self.order_book))
         
         
 ############# Market Class Def - end ############# 

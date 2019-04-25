@@ -79,16 +79,17 @@ class Binance (Exchange):
             return None
             
 #         global binance_products
-        products = self.public_client.get_exchange_info()
-        log.debug ("products: ",products)
+        exch_info = self.public_client.get_exchange_info()
+        products = exch_info.get("symbols")
         if (len(products) and len (self.binance_conf['products'])):
             for prod in products:
                 for p in self.binance_conf['products']:              
-                    if prod['id'] in p.keys():
+                    if prod['symbol'] in p.keys():
+                        log.debug ("product found: %s"%prod)                        
                         self.binance_products.append(prod)
         
         # Popoulate the account details for each interested currencies
-        accounts =  self.auth_client.get_accounts()
+        accounts =  self.auth_client.get_account()
         if (accounts == None):
             log.critical("Unable to get account details!!")
             return False
