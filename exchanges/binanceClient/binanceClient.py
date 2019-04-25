@@ -22,7 +22,7 @@ log = getLogger ('Binance')
 log.setLevel(log.DEBUG)
 
 #BINANCE CONFIG FILE
-BINANCE_CONF = 'exchanges/binance/config.yml'
+BINANCE_CONF = 'config/binance.yml'
 
 class Binance (Exchange):
     name = "binance"

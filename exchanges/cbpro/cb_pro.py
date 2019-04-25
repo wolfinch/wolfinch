@@ -25,7 +25,7 @@ log.setLevel(log.DEBUG)
 
 
 #CBPRO CONFIG FILE
-CBPRO_CONF = 'exchanges/cbpro/config.yml'
+CBPRO_CONF = 'config/cbpro.yml'
 
 class CBPRO (Exchange):
     name = "CBPRO"

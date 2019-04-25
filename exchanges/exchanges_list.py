@@ -5,7 +5,7 @@
  (c) Joshith Rayaroth Koderi
 '''
 from exchanges.cbpro import CBPRO
-from exchanges.binance import Binance
+from exchanges.binanceClient import Binance
 
 exchanges = [
         CBPRO,
