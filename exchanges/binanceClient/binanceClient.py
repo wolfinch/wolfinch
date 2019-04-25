@@ -88,31 +88,32 @@ class Binance (Exchange):
                         log.debug ("product found: %s"%prod)                        
                         self.binance_products.append(prod)
         
-        # Popoulate the account details for each interested currencies
-        accounts =  self.auth_client.get_account()
-        if (accounts == None):
-            log.critical("Unable to get account details!!")
-            return False
-        #log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
-        for account in accounts:
-            for prod in self.binance_conf['products']:
-                for prod_id in prod.keys():
-                    currency = prod[prod_id][0]['currency']            
-                    if account['currency'] in currency:
-                        log.debug ("Interested Account Found for Currency: "+account['currency'])
-                        self.binance_accounts[account['currency']] = account
-                        break
+        # EXH supported in spectator mode. 
+#         # Popoulate the account details for each interested currencies
+#         accounts =  self.auth_client.get_account()
+#         if (accounts == None):
+#             log.critical("Unable to get account details!!")
+#             return False
+#         #log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
+#         for account in accounts:
+#             for prod in self.binance_conf['products']:
+#                 for prod_id in prod.keys():
+#                     currency = prod[prod_id][0]['currency']            
+#                     if account['currency'] in currency:
+#                         log.debug ("Interested Account Found for Currency: "+account['currency'])
+#                         self.binance_accounts[account['currency']] = account
+#                         break
         
         # register websocket feed 
-        self.ws_client = self._register_feed (api_key=key, api_secret=b64secret, api_passphrase=passphrase, url=feed_base)
-        if self.ws_client == None:
-            log.critical("Unable to get websocket feed. Abort!!")
-            return None
-        
-        #Start websocket Feed Client
-        if (self.ws_client != None):
-            log.debug ("Starting Websocket Feed... ")
-            self.ws_client.start()    
+#         self.ws_client = self._register_feed (api_key=key, api_secret=b64secret, api_passphrase=passphrase, url=feed_base)
+#         if self.ws_client == None:
+#             log.critical("Unable to get websocket feed. Abort!!")
+#             return None
+#         
+#         #Start websocket Feed Client
+#         if (self.ws_client != None):
+#             log.debug ("Starting Websocket Feed... ")
+#             self.ws_client.start()    
                 
         log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
                         pprint.pformat(self.binance_products, 4), pprint.pformat(self.binance_accounts, 4)))        
@@ -122,10 +123,35 @@ class Binance (Exchange):
     def __str__ (self):
         return "{Message: Binance Exchange }"
     
-    def market_init (self):
-        pass
+    #TODO: FIXME: Spectator mode, make full operational    
+    def market_init (self, product):
+#         usd_acc = self.binance_accounts['USD']
+#         crypto_acc = self.binance_accounts.get(product['base_currency'])
+#         if (usd_acc == None or crypto_acc == None): 
+#             log.error ("No account available for product: %s"%(product['id']))
+#             return None
+        #Setup the initial params
+        market = Market(product=product, exchange=self)    
+        market.fund.set_initial_value(Decimal(0))#usd_acc['available']))
+        market.fund.set_hold_value(Decimal(0))#usd_acc['hold']))
+        market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%
+        market.fund.set_max_per_buy_fund_value(100)
+        market.asset.set_initial_size(Decimal(0)) #crypto_acc['available']))
+        market.asset.set_hold_size(0) #Decimal(crypto_acc['hold']))
+    
+        ## Feed Cb
+        market.consume_feed = self._gdax_consume_feed
+        
+        ## Init Exchange specific private state variables
+        market.O = market.H = market.L = market.C = market.V = 0
+        log.info ("Market init complete: %"%(product['id']))
+        return market
     def close (self):
-        pass    
+        log.debug("Closing exchange...")    
+#         global self.ws_client
+        if (self.ws_client):
+            log.debug("Closing WebSocket Client")
+            self.ws_client.close ()  
     
     def buy (self):
         pass
@@ -141,7 +167,9 @@ class Binance (Exchange):
     def get_accounts (self):
         pass     
     def get_historic_rates (self):
-        pass        
+        klines = self.public_client.get_historical_klines("ETHBTC", Client.KLINE_INTERVAL_5MINUTE, "1 Dec, 2017", "1 Jan, 2018")
+        log.debug (klines)
+        
     def get_product_order_book (self):
         pass  
 
@@ -151,5 +179,8 @@ if __name__ == '__main__':
     print ("Testing Binance exch:")
     
     bnc = Binance ()
+    
+    bnc.get_historic_rates()
+    
     print ("Done")
 #EOF    

@@ -113,12 +113,12 @@ class CBPRO (Exchange):
         #Start websocket Feed Client
         if (self.ws_client != None):
             log.debug ("Starting Websocket Feed... ")
-            self.ws_client.start()    
+            self.ws_client.start()
                 
         log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
                         pprint.pformat(self.gdax_products, 4), pprint.pformat(self.gdax_accounts, 4)))
      
-    def market_init (self, exchange, product):
+    def market_init (self, product):
 #         global ws_client
         usd_acc = self.gdax_accounts['USD']
         crypto_acc = self.gdax_accounts.get(product['base_currency'])
@@ -126,7 +126,7 @@ class CBPRO (Exchange):
             log.error ("No account available for product: %s"%(product['id']))
             return None
         #Setup the initial params
-        market = Market(product=product, exchange=exchange)    
+        market = Market(product=product, exchange=self)    
         market.fund.set_initial_value(Decimal(usd_acc['available']))
         market.fund.set_hold_value(Decimal(usd_acc['hold']))
         market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%

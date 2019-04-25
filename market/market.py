@@ -735,7 +735,7 @@ def market_init (exchange_list):
         products = exchange.get_products()
         if products:
             for product in products:
-                market = exchange.market_init (exchange, product)
+                market = exchange.market_init (product)
                 if (market == None):
                     log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
                 else:
