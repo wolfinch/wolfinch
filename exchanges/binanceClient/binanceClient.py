@@ -12,6 +12,7 @@ from time import sleep
 import time
 
 from binance.client import Client
+import binance.client
 
 from utils import getLogger, readConf
 from market import Market, OHLC, feed_enQ, get_market_by_product, Order
@@ -52,8 +53,8 @@ class Binance (Exchange):
                 self.binance_conf['backfill_enabled'] = entry['enabled']
             if entry.get('period'):
                 self.binance_conf['backfill_period'] = int(entry['period'])
-            if entry.get('granularity'):
-                self.binance_conf['backfill_granularity'] = int(entry['granularity'])            
+            if entry.get('interval'):
+                self.binance_conf['backfill_interval'] = int(entry['interval'])            
             
         
         # for public client, no need of api key
@@ -64,7 +65,6 @@ class Binance (Exchange):
         
         key = self.binance_conf.get('apiKey')
         b64secret = self.binance_conf.get('apiSecret')
-
 
         feed_base = self.binance_conf.get ('wsFeed')
         
@@ -83,10 +83,13 @@ class Binance (Exchange):
         products = exch_info.get("symbols")
         if (len(products) and len (self.binance_conf['products'])):
             for prod in products:
-                for p in self.binance_conf['products']:              
-                    if prod['symbol'] in p.keys():
-                        log.debug ("product found: %s"%prod)                        
-                        self.binance_products.append(prod)
+                for p in self.binance_conf['products']:
+                    for k,v in p.iteritems():
+                        if prod['symbol'] is k:
+                            log.debug ("product found: %s p: %s"%(prod, v))
+                            prod['id'] = v['id']
+                            prod['display_name'] = k
+                            self.binance_products.append(prod)
         
         # EXH supported in spectator mode. 
 #         # Popoulate the account details for each interested currencies
@@ -152,6 +155,113 @@ class Binance (Exchange):
         if (self.ws_client):
             log.debug("Closing WebSocket Client")
             self.ws_client.close ()  
+    def get_products (self):
+        log.debug ("products num %d"%(len(self.binance_products)))
+        return self.binance_products    
+    def get_accounts (self):
+    #     log.debug (pprint.pformat(self.binance_accounts))
+        return self.binance_accounts    
+    def get_historic_rates (self, product_id, start=None, end=None):
+        '''
+            Args:
+        product_id (str): Product
+        start (Optional[str]): Start time in ISO 8601
+        end (Optional[str]): End time in ISO 8601
+        interval (Optional[str]): Desired time slice in 
+         seconds
+         '''
+        #Max Candles in one call
+        epoch = datetime.utcfromtimestamp(0)
+        max_candles = 200
+        candles_list = []
+        
+        #get config
+        enabled = self.binance_conf.get('backfill_enabled')
+        period = int(self.binance_conf.get('backfill_period'))
+        interval = int(self.binance_conf.get('backfill_interval'))*1000
+        
+        product = None
+        for p in self.get_products():
+            if p['id'] == product_id:
+                product = p
+        
+        if product is None:
+            log.error ("Invalid Product Id: %s"%product_id)
+            return None
+        
+        if not enabled:
+            log.debug ("Historical data retrieval not enabled")
+            return None
+    
+        if not end:
+            # if no end, use current time
+            end = datetime.now()
+             
+        if not start:
+            # if no start given, use the config
+            real_start = start = end - timedelta(days = period)
+        else:
+            real_start = start
+        
+        log.debug ("Retrieving Historic candles for period: %s to %s"%(
+                    real_start.isoformat(), end.isoformat()))
+        
+        td = max_candles*interval
+        tmp_end = start + timedelta(seconds = td)
+        tmp_end = min(tmp_end, end)
+        count = 0
+        while (start < end):
+            ## looks like there is a rate=limiting in force, we will have to slow down
+            count += 1
+            if (count > 3):
+                #rate-limiting
+                count = 0
+                sleep (2)
+            
+            start_ts = int((start - epoch).total_seconds() * 1000.0)
+            end_ts = int((tmp_end - epoch).total_seconds() * 1000.0)
+            
+            log.debug ("Start: %s end: %s"%(start_ts, end_ts))
+            candles = self.public_client.get_klines (
+                symbol=product['symbol'],
+                interval='5m',
+                limit=max_candles,
+                startTime=start_ts,
+                endTime=end_ts
+            )
+            if candles:
+                if isinstance(candles, dict):
+                    ## Error Case
+                    err_msg = candles.get('message')
+                    if (err_msg):
+                        log.error ("Error while retrieving Historic rates: msg: %s\n will retry.."%(err_msg))
+                else:
+                    #candles are of struct [[time, o, h, l,c, V]]
+                    candles_list += map(
+                        lambda candle: OHLC(time=candle[0], 
+                                            low=candle[1], high=candle[2], open=candle[3], 
+                                            close=candle[4], volume=candle[5]), reversed(candles))
+    #                 log.debug ("%s"%(candles))
+                    log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
+                        start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))
+                    
+                    # new period, start from the (last +1)th position
+                    start = tmp_end + timedelta(seconds = interval)
+                    tmp_end = start + timedelta(seconds = td)
+                    tmp_end = min(tmp_end, end)
+
+            else:
+                log.error ("Error While Retrieving Historic candles for period: %s to %s num: %d"%(
+                    start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))
+                return None
+        
+        log.debug ("Retrieved Historic candles for period: %s to %s num: %d"%(
+                    real_start.isoformat(), end.isoformat(), (0 if not candles_list else len(candles_list))))
+    #     log.debug ("%s"%(candles_list))
+        return candles_list
+        
+    def get_product_order_book (self):
+        pass    
     
     def buy (self):
         pass
@@ -161,17 +271,6 @@ class Binance (Exchange):
         pass
     def cancel_order (self):
         pass
-    def get_products (self):
-        return []
-    
-    def get_accounts (self):
-        pass     
-    def get_historic_rates (self):
-        klines = self.public_client.get_historical_klines("ETHBTC", Client.KLINE_INTERVAL_5MINUTE, "1 Dec, 2017", "1 Jan, 2018")
-        log.debug (klines)
-        
-    def get_product_order_book (self):
-        pass  
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
@@ -180,7 +279,7 @@ if __name__ == '__main__':
     
     bnc = Binance ()
     
-    bnc.get_historic_rates()
+    bnc.get_historic_rates('BTC-USD')
     
     print ("Done")
 #EOF    
