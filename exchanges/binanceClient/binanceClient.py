@@ -85,9 +85,10 @@ class Binance (Exchange):
             for prod in products:
                 for p in self.binance_conf['products']:
                     for k,v in p.iteritems():
-                        if prod['symbol'] is k:
+#                         log.debug ("pk: %s s: %s"%(k, prod['symbol']))
+                        if prod['symbol'] == k:
                             log.debug ("product found: %s p: %s"%(prod, v))
-                            prod['id'] = v['id']
+                            prod['id'] = v[0]['id']
                             prod['display_name'] = k
                             self.binance_products.append(prod)
         
