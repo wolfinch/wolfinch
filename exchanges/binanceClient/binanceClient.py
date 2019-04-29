@@ -54,7 +54,7 @@ class Binance (Exchange):
             if entry.get('period'):
                 self.binance_conf['backfill_period'] = int(entry['period'])
             if entry.get('interval'):
-                self.binance_conf['backfill_interval'] = int(entry['interval'])            
+                self.binance_conf['backfill_interval'] = str(entry['interval'])   
             
         
         # for public client, no need of api key
@@ -123,6 +123,29 @@ class Binance (Exchange):
                         pprint.pformat(self.binance_products, 4), pprint.pformat(self.binance_accounts, 4)))        
         
         
+    def _interval_to_milliseconds(self, interval):
+        """Convert a Binance interval string to milliseconds
+    
+        :param interval: Binance interval string, e.g.: 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w
+        :type interval: str
+    
+        :return:
+             int value of interval in milliseconds
+             None if interval prefix is not a decimal integer
+             None if interval suffix is not one of m, h, d, w
+    
+        """
+        seconds_per_unit = {
+            "m": 60,
+            "h": 60 * 60,
+            "d": 24 * 60 * 60,
+            "w": 7 * 24 * 60 * 60,
+        }
+        try:
+            return int(interval[:-1]) * seconds_per_unit[interval[-1]] * 1000
+        except (ValueError, KeyError):
+            return None
+        
         
     def __str__ (self):
         return "{Message: Binance Exchange }"
@@ -179,7 +202,11 @@ class Binance (Exchange):
         #get config
         enabled = self.binance_conf.get('backfill_enabled')
         period = int(self.binance_conf.get('backfill_period'))
-        interval = int(self.binance_conf.get('backfill_interval'))*1000
+        interval_str = self.binance_conf.get('backfill_interval')
+        
+        interval = self._interval_to_milliseconds(interval_str)
+        if (interval == None):
+            log.error ("Invalid Interval - %s"%interval_str)
         
         product = None
         for p in self.get_products():
@@ -225,7 +252,7 @@ class Binance (Exchange):
             log.debug ("Start: %s end: %s"%(start_ts, end_ts))
             candles = self.public_client.get_klines (
                 symbol=product['symbol'],
-                interval='5m',
+                interval=Client.KLINE_INTERVAL_5MINUTE,
                 limit=max_candles,
                 startTime=start_ts,
                 endTime=end_ts
@@ -240,8 +267,8 @@ class Binance (Exchange):
                     #candles are of struct [[time, o, h, l,c, V]]
                     candles_list += map(
                         lambda candle: OHLC(time=candle[0], 
-                                            low=candle[1], high=candle[2], open=candle[3], 
-                                            close=candle[4], volume=candle[5]), reversed(candles))
+                                            low=candle[3], high=candle[2], open=candle[1], 
+                                            close=candle[4], volume=candle[5]), candles)
     #                 log.debug ("%s"%(candles))
                     log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
                         start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))
@@ -251,6 +278,7 @@ class Binance (Exchange):
                     tmp_end = start + timedelta(seconds = td)
                     tmp_end = min(tmp_end, end)
 
+#                     log.debug ("c: %s"%(candles))
             else:
                 log.error ("Error While Retrieving Historic candles for period: %s to %s num: %d"%(
                     start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))
