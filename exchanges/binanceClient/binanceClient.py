@@ -10,6 +10,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 from time import sleep
 import time
+from twisted.internet import reactor
 
 from binance.client import Client
 import binance.helpers
@@ -174,7 +175,10 @@ class Binance (Exchange):
 #         global self.ws_client
         if (self.ws_client):
             log.debug("Closing WebSocket Client")
-            self.ws_client.close ()  
+            self.ws_client.close ()
+            self.ws_client.join(1)
+            reactor.stop()
+            log.debug("Closed websockets")
     def get_products (self):
         log.debug ("products num %d"%(len(self.binance_products)))
         return self.binance_products    
@@ -306,7 +310,7 @@ if __name__ == '__main__':
     
     bnc.get_historic_rates('BTC-USD')
     
-    sleep(20)
+    sleep(10)
     bnc.close()
     print ("Done")
 #EOF    
