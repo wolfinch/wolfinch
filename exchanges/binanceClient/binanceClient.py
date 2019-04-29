@@ -12,7 +12,8 @@ from time import sleep
 import time
 
 from binance.client import Client
-import binance.client
+import binance.helpers
+from binance.websockets import BinanceSocketManager
 
 from utils import getLogger, readConf
 from market import Market, OHLC, feed_enQ, get_market_by_product, Order
@@ -32,7 +33,8 @@ class Binance (Exchange):
     binance_accounts = {}
     public_client = None
     auth_client   = None
-    ws_client = None    
+    ws_client = None
+    symbol_to_id = {}
     def __init__ (self):
         log.info ("Init Binance exchange")
         
@@ -65,8 +67,6 @@ class Binance (Exchange):
         
         key = self.binance_conf.get('apiKey')
         b64secret = self.binance_conf.get('apiSecret')
-
-        feed_base = self.binance_conf.get ('wsFeed')
         
         if ((key and b64secret ) == False):
             log.critical ("Invalid API Credentials in binance Config!! ")
@@ -90,6 +90,7 @@ class Binance (Exchange):
                             log.debug ("product found: %s p: %s"%(prod, v))
                             prod['id'] = v[0]['id']
                             prod['display_name'] = k
+                            self.symbol_to_id[k] = prod['id']
                             self.binance_products.append(prod)
         
         # EXH supported in spectator mode. 
@@ -106,49 +107,44 @@ class Binance (Exchange):
 #                     if account['currency'] in currency:
 #                         log.debug ("Interested Account Found for Currency: "+account['currency'])
 #                         self.binance_accounts[account['currency']] = account
-#                         break
+#                         break  
         
-        # register websocket feed 
-#         self.ws_client = self._register_feed (api_key=key, api_secret=b64secret, api_passphrase=passphrase, url=feed_base)
-#         if self.ws_client == None:
-#             log.critical("Unable to get websocket feed. Abort!!")
-#             return None
-#         
-#         #Start websocket Feed Client
-#         if (self.ws_client != None):
-#             log.debug ("Starting Websocket Feed... ")
-#             self.ws_client.start()    
+        self.ws_client = bm = BinanceSocketManager(self.public_client)
+        for prod in self.get_products():
+            # Start Kline socket
+            bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg)
+        bm.start()
                 
         log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
-                        pprint.pformat(self.binance_products, 4), pprint.pformat(self.binance_accounts, 4)))        
-        
-        
-    def _interval_to_milliseconds(self, interval):
-        """Convert a Binance interval string to milliseconds
-    
-        :param interval: Binance interval string, e.g.: 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w
-        :type interval: str
-    
-        :return:
-             int value of interval in milliseconds
-             None if interval prefix is not a decimal integer
-             None if interval suffix is not one of m, h, d, w
-    
-        """
-        seconds_per_unit = {
-            "m": 60,
-            "h": 60 * 60,
-            "d": 24 * 60 * 60,
-            "w": 7 * 24 * 60 * 60,
-        }
-        try:
-            return int(interval[:-1]) * seconds_per_unit[interval[-1]] * 1000
-        except (ValueError, KeyError):
-            return None
-        
+                        pprint.pformat(self.binance_products, 4), pprint.pformat(self.binance_accounts, 4)))
         
     def __str__ (self):
         return "{Message: Binance Exchange }"
+    ######## Feed Consume #######
+    def _feed_enQ_msg (self, msg):
+            log.debug("message :%s "%msg)      
+            msg_type = msg.get('e') 
+            symbol = msg.get("s")
+            product_id = self.symbol_to_id[symbol]
+            if (msg_type == 'kline'):
+                log.debug ("kline")
+                market = get_market_by_product (product_id)
+                if (market == None):
+                    log.error ("Feed Thread: Unknown market: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
+                    return                
+                feed_enQ(market, msg)                
+            else:
+                log.error ("Unknown feed. message type: %s prod: %s"%(msg_type, product_id))
+            return
+                
+    def _binance_consume_feed (self, market, msg):
+        ''' 
+        Feed Call back for Binance    
+        This is where we do all the useful stuff with Feed
+        '''
+        log.debug ("msg: %s"%msg)
+            
+    #### Feed consume done #####    
     
     #TODO: FIXME: Spectator mode, make full operational    
     def market_init (self, product):
@@ -167,7 +163,7 @@ class Binance (Exchange):
         market.asset.set_hold_size(0) #Decimal(crypto_acc['hold']))
     
         ## Feed Cb
-        market.consume_feed = self._gdax_consume_feed
+        market.consume_feed = self._binance_consume_feed
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
@@ -204,7 +200,7 @@ class Binance (Exchange):
         period = int(self.binance_conf.get('backfill_period'))
         interval_str = self.binance_conf.get('backfill_interval')
         
-        interval = self._interval_to_milliseconds(interval_str)
+        interval = binance.helpers.interval_to_milliseconds(interval_str)
         if (interval == None):
             log.error ("Invalid Interval - %s"%interval_str)
         
@@ -310,5 +306,7 @@ if __name__ == '__main__':
     
     bnc.get_historic_rates('BTC-USD')
     
+    sleep(20)
+    bnc.close()
     print ("Done")
 #EOF    
