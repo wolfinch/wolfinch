@@ -20,7 +20,8 @@ from utils import getLogger, readConf
 from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 
-log = getLogger ('CBPRO')
+EXHANGE_NAME = "CBPRO"
+log = getLogger (EXHANGE_NAME)
 log.setLevel(log.DEBUG)
 
 
@@ -28,7 +29,7 @@ log.setLevel(log.DEBUG)
 CBPRO_CONF = 'config/cbpro.yml'
 
 class CBPRO (Exchange):
-    name = "CBPRO"
+    name = EXHANGE_NAME
     gdax_conf = {}
     gdax_products = []
     gdax_accounts = {}
@@ -55,8 +56,8 @@ class CBPRO (Exchange):
                 self.gdax_conf['backfill_enabled'] = entry['enabled']
             if entry.get('period'):
                 self.gdax_conf['backfill_period'] = int(entry['period'])
-            if entry.get('granularity'):
-                self.gdax_conf['backfill_granularity'] = int(entry['granularity'])            
+            if entry.get('interval'):
+                self.gdax_conf['backfill_interval'] = int(entry['interval'])            
             
         
         self.public_client = cbpro.PublicClient()
@@ -345,7 +346,7 @@ class CBPRO (Exchange):
 #         global self.gdax_conf
         log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
         
-        granularity = int(self.gdax_conf.get('backfill_granularity'))   
+        interval = int(self.gdax_conf.get('backfill_interval'))   
         
         price = Decimal(msg.get('price'))
         last_size = msg.get('last_size')
@@ -370,7 +371,7 @@ class CBPRO (Exchange):
         market.V = v
         
         now = time.time()
-        if now >= market.cur_candle_time + granularity:
+        if now >= market.cur_candle_time + interval:
             # close the current candle period and start a new candle period
             c = price
             candle = OHLC(long(market.cur_candle_time), market.O, market.H, market.L, c, market.V)
@@ -423,7 +424,7 @@ class CBPRO (Exchange):
         product_id (str): Product
         start (Optional[str]): Start time in ISO 8601
         end (Optional[str]): End time in ISO 8601
-        granularity (Optional[str]): Desired time slice in 
+        interval (Optional[str]): Desired time slice in 
          seconds
          '''
         #Max Candles in one call
@@ -434,7 +435,7 @@ class CBPRO (Exchange):
         #get config
         enabled = self.gdax_conf.get('backfill_enabled')
         period = int(self.gdax_conf.get('backfill_period'))
-        granularity = int(self.gdax_conf.get('backfill_granularity'))   
+        interval = int(self.gdax_conf.get('backfill_interval'))   
         
         if not enabled:
             log.debug ("Historical data retrieval not enabled")
@@ -453,7 +454,7 @@ class CBPRO (Exchange):
         log.debug ("Retrieving Historic candles for period: %s to %s"%(
                     real_start.isoformat(), end.isoformat()))
         
-        td = max_candles*granularity
+        td = max_candles*interval
         tmp_end = start + timedelta(seconds = td)
         if tmp_end > end:
             tmp_end = end
@@ -468,7 +469,7 @@ class CBPRO (Exchange):
             
             start_str = start.isoformat()
             end_str = tmp_end.isoformat()
-            candles = self.public_client.get_product_historic_rates (product_id, start_str, end_str, granularity)
+            candles = self.public_client.get_product_historic_rates (product_id, start_str, end_str, interval)
             if candles:
                 if isinstance(candles, dict):
                     ## Error Case
@@ -486,7 +487,7 @@ class CBPRO (Exchange):
                         start_str, end_str, (0 if not candles else len(candles))))
                     
                     # new period, start from the (last +1)th position
-                    start = tmp_end + timedelta(seconds = granularity)
+                    start = tmp_end + timedelta(seconds = interval)
                     tmp_end = start + timedelta(seconds = td)
                     if tmp_end > end:
                         tmp_end = end
@@ -535,6 +536,7 @@ class CBPRO (Exchange):
 class cbproWebsocketClient (cbpro.WebsocketClient):
 #     __init__(self, url="wss://ws-feed.gdax.com", products=None, message_type="subscribe", mongo_collection=None,
 #                  should_print=True, auth=False, api_key="", api_secret="", api_passphrase="", channels=None):
+        name = EXHANGE_NAME
         def on_open(self):
             #self.url = "wss://ws-feed.gdax.com/"
             self.message_count = 0
@@ -555,7 +557,7 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
                 if (product_id == None):
                     log.error ("Feed Thread: Invalid Product-id: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
                     return
-                market = get_market_by_product (product_id)
+                market = get_market_by_product (self.name, product_id)
                 if (market == None):
                     log.error ("Feed Thread: Unknown market: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
                     return                
@@ -564,7 +566,7 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
                 if (product_id == None):
                     log.error ("Feed Thread: Invalid Product-id: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
                     return
-                market = get_market_by_product (product_id)
+                market = get_market_by_product (self.name, product_id)
                 if (market == None):
                     log.error ("Feed Thread: Unknown market: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
                     return                
@@ -573,7 +575,7 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
                 if (product_id == None):
                     log.error ("Feed Thread: Invalid Product-id: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
                     return
-                market = get_market_by_product (product_id)
+                market = get_market_by_product (self.name, product_id)
                 if (market == None):
                     log.error ("Feed Thread: Unknown market: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
                     return                  

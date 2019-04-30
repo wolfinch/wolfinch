@@ -720,9 +720,9 @@ def feed_Q_process_msg (msg):
 def get_market_list ():
     return OldMonk_market_list
 
-def get_market_by_product (product_id):
+def get_market_by_product (exchange_name, product_id):
     for market in OldMonk_market_list:
-        if market.product_id == product_id:
+        if market.product_id == product_id and market.exchange_name == exchange_name:
             return market
         
 def market_init (exchange_list):

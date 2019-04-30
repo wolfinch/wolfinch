@@ -129,11 +129,17 @@ class Binance (Exchange):
             product_id = self.symbol_to_id[symbol]
             if (msg_type == 'kline'):
                 log.debug ("kline")
-                market = get_market_by_product (product_id)
+                market = get_market_by_product (self.name, product_id)
                 if (market == None):
-                    log.error ("Feed Thread: Unknown market: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
-                    return                
-                feed_enQ(market, msg)                
+                    log.error ("Feed Thread: Unknown market product: %s: msg %s"%(product_id, json.dumps(msg, indent=4, sort_keys=True)))
+                    return
+                k = msg.get('k')
+                if k.get('x') == True:
+                    #This kline closed, this is a candle
+                    feed_enQ(market, msg)
+                else:
+                    # not interested
+                    pass                            
             else:
                 log.error ("Unknown feed. message type: %s prod: %s"%(msg_type, product_id))
             return
@@ -144,6 +150,27 @@ class Binance (Exchange):
         This is where we do all the useful stuff with Feed
         '''
         log.debug ("msg: %s"%msg)
+#         msg_type = msg.get('e')
+        now = time.time()
+        k = msg.get('k')
+        t = long(k.get('t'))
+        o = Decimal(k.get('o'))
+        h = Decimal(k.get('h'))
+        l = Decimal(k.get('l'))
+        c = Decimal(k.get('c'))
+        v = Decimal(k.get('v'))
+        
+#         if now >= market.cur_candle_time + interval:
+            # close the current candle period and start a new candle period
+        candle = OHLC(long(t), o, h, l, c, v)
+        log.debug ("New candle identified %s"%(candle))        
+        market.O = market.V = market.H = market.L = 0
+        market.cur_candle_time = now
+        market.add_new_candle (candle)
+        
+        #TODO: FIXME: jork: might need to rate-limit the logic here after
+        market.set_market_rate (c)
+        market.update_market_states()        
             
     #### Feed consume done #####    
     
@@ -310,7 +337,7 @@ if __name__ == '__main__':
     
     bnc.get_historic_rates('BTC-USD')
     
-    sleep(10)
+    sleep(20)
     bnc.close()
     print ("Done")
 #EOF    
