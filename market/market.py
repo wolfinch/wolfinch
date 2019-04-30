@@ -523,7 +523,7 @@ class Market:
         else:
             start = db_candle_list[-1].time if (db_candle_list and db_candle_list[-1]) else 0            
             log.debug ("Importing Historic rates #num Candles from exchange starting from time: %s to now"%(start))
-            candle_list = self.exchange.get_historic_rates(self.product_id, start= (datetime.fromtimestamp(start)
+            candle_list = self.exchange.get_historic_rates(self.product_id, start=(datetime.fromtimestamp(start)
                                                                                      if start > 0 else 0))
 #             candle_list = [OHLC(time=10, open=10, high=20, low=10, close=3, volume=3)]
             if candle_list:
@@ -620,6 +620,7 @@ class Market:
                     strategies and may result in generating trade signals
         """
         self.market_indicators_data.append({'ohlc': candle})
+        self.market_strategies_data.append({})
         #save to db
         self.candlesDb.db_save_candle(candle)
 #         self.cur_candle_time = candle.time

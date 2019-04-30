@@ -58,8 +58,7 @@ class Binance (Exchange):
                 self.binance_conf['backfill_period'] = int(entry['period'])
             if entry.get('interval'):
                 self.binance_conf['backfill_interval'] = str(entry['interval'])   
-            
-        
+                    
         # for public client, no need of api key
         self.public_client = Client("", "")
         if (self.public_client) == None :
@@ -113,7 +112,8 @@ class Binance (Exchange):
         self.ws_client = bm = BinanceSocketManager(self.public_client)
         for prod in self.get_products():
             # Start Kline socket
-            bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg)
+            backfill_interval = self.binance_conf.get('backfill_interval')
+            bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg, interval=backfill_interval)
         bm.start()
                 
         log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
@@ -153,7 +153,7 @@ class Binance (Exchange):
 #         msg_type = msg.get('e')
         now = time.time()
         k = msg.get('k')
-        t = long(k.get('t'))
+        t = long(k.get('t'))//1000
         o = Decimal(k.get('o'))
         h = Decimal(k.get('h'))
         l = Decimal(k.get('l'))
@@ -182,6 +182,7 @@ class Binance (Exchange):
 #             log.error ("No account available for product: %s"%(product['id']))
 #             return None
         #Setup the initial params
+#         log.debug ("product: %s"%product)
         market = Market(product=product, exchange=self)    
         market.fund.set_initial_value(Decimal(0))#usd_acc['available']))
         market.fund.set_hold_value(Decimal(0))#usd_acc['hold']))
@@ -195,7 +196,7 @@ class Binance (Exchange):
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
-        log.info ("Market init complete: %"%(product['id']))
+        log.info ("Market init complete: %s"%(product['id']))
         return market
     def close (self):
         log.debug("Closing exchange...")    
@@ -211,6 +212,7 @@ class Binance (Exchange):
         return self.binance_products    
     def get_accounts (self):
     #     log.debug (pprint.pformat(self.binance_accounts))
+        log.debug ("get accounts")
         return self.binance_accounts    
     def get_historic_rates (self, product_id, start=None, end=None):
         '''
@@ -293,7 +295,7 @@ class Binance (Exchange):
                 else:
                     #candles are of struct [[time, o, h, l,c, V]]
                     candles_list += map(
-                        lambda candle: OHLC(time=candle[0], 
+                        lambda candle: OHLC(time=long(candle[0])//1000, 
                                             low=candle[3], high=candle[2], open=candle[1], 
                                             close=candle[4], volume=candle[5]), candles)
     #                 log.debug ("%s"%(candles))
@@ -316,17 +318,22 @@ class Binance (Exchange):
     #     log.debug ("%s"%(candles_list))
         return candles_list
         
-    def get_product_order_book (self):
-        pass    
+    def get_product_order_book (self, product, level = 1):
+        log.error ("***********Not-Implemented******")
+        return None
     
     def buy (self):
-        pass
+        log.error ("***********Not-Implemented******")
+        return None
     def sell (self):
-        pass
+        log.error ("***********Not-Implemented******")
+        return None
     def get_order (self):
-        pass
+        log.error ("***********Not-Implemented******")
+        return None
     def cancel_order (self):
-        pass
+        log.error ("***********Not-Implemented******")
+        return None
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
@@ -334,6 +341,8 @@ if __name__ == '__main__':
     print ("Testing Binance exch:")
     
     bnc = Binance ()
+    
+    m = bnc.market_init('BTC-USD')
     
     bnc.get_historic_rates('BTC-USD')
     

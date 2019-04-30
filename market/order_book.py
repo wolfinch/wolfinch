@@ -166,6 +166,9 @@ class OrderBook():
         self._bids = RBTree()
         res = self.market.exchange.get_product_order_book(self.market.product_id, level=3)
         # log.debug ("%s"%(str(res)))     
+        if res == None:
+            log.error ("Unable to get orderbook for exchange(%s) product: %s"%(self.market.exchange.name, self.market.product_id))
+            return
         for bid in res['bids']:
             new_size = Decimal(bid[1]) 
             price = Decimal(bid[0])
