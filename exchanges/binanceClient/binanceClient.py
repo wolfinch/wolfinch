@@ -263,7 +263,7 @@ class Binance (Exchange):
         log.debug ("Retrieving Historic candles for period: %s to %s"%(
                     real_start.isoformat(), end.isoformat()))
         
-        td = max_candles*interval
+        td = max_candles*interval//1000
         tmp_end = start + timedelta(seconds = td)
         tmp_end = min(tmp_end, end)
         count = 0
@@ -303,7 +303,7 @@ class Binance (Exchange):
                         start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))
                     
                     # new period, start from the (last +1)th position
-                    start = tmp_end + timedelta(seconds = interval)
+                    start = tmp_end + timedelta(seconds = (interval//1000))
                     tmp_end = start + timedelta(seconds = td)
                     tmp_end = min(tmp_end, end)
 
@@ -342,7 +342,7 @@ if __name__ == '__main__':
     
     bnc = Binance ()
     
-    m = bnc.market_init('BTC-USD')
+#     m = bnc.market_init('BTC-USD')
     
     bnc.get_historic_rates('BTC-USD')
     

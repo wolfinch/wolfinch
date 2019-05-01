@@ -47,7 +47,7 @@ class CandlesDb(object):
         try:
             self.mapping = mapper(ohlcCls, self.table)
         except Exception as e:
-            log.debug ("mapping failed with except: %s"%(e))
+            log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(e))
             self.mapping = mapper(ohlcCls, self.table, non_primary=True)            
                     
     def __str__ (self):
