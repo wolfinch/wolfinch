@@ -8,7 +8,7 @@ from exchanges.cbpro import CBPRO
 from exchanges.binanceClient import Binance
 
 exchanges = [
-#         CBPRO,
+        CBPRO,
         Binance
     ]
 

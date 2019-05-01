@@ -44,7 +44,11 @@ class CandlesDb(object):
         else:
             log.info ("table %s exists already"%self.table_name)
             self.table = self.db.metadata.tables[self.table_name]
-        mapper(ohlcCls, self.table)
+        try:
+            self.mapping = mapper(ohlcCls, self.table)
+        except Exception as e:
+            log.debug ("mapping failed with except: %s"%(e))
+            self.mapping = mapper(ohlcCls, self.table, non_primary=True)            
                     
     def __str__ (self):
         return "{time: %s, open: %g, high: %g, low: %g, close: %g, volume: %g}"%(
@@ -79,7 +83,7 @@ class CandlesDb(object):
 #             query = select([self.table])
 #             ResultProxy = self.db.connection.execute(query)
 #             ResultSet = ResultProxy.fetchall()
-            ResultSet = self.db.session.query(self.ohlcCls).order_by(self.ohlcCls.time).all()
+            ResultSet = self.db.session.query(self.mapping).order_by(self.ohlcCls.time).all()
             log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
 #             log.debug ("Res: %s"%str(ResultSet))
             return ResultSet
