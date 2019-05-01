@@ -35,16 +35,18 @@ class CBPRO (Exchange):
     gdax_accounts = {}
     public_client = None
     auth_client   = None
-    ws_client = None    
-    def __init__(self):
+    ws_client = None
+    primary = False
+    def __init__(self, config=CBPRO_CONF, primary=False):
         log.info('init CBPRO exchange')        
         
-        conf = readConf (CBPRO_CONF)
+        conf = readConf (config)
         if (conf != None and len(conf)):
             self.gdax_conf = conf['exchange']
         else:
             return None
         
+        self.primary = primary
         #get config
         backfill = self.gdax_conf.get('backfill')
         if not backfill:
@@ -95,7 +97,7 @@ class CBPRO (Exchange):
         if (accounts == None):
             log.critical("Unable to get account details!!")
             return False
-        #log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
+        log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
         for account in accounts:
             for prod in self.gdax_conf['products']:
                 for prod_id in prod.keys():
@@ -141,6 +143,10 @@ class CBPRO (Exchange):
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
+        
+        #set whether primary or secondary
+        market.primary = self.primary
+                
         return market
         
     def close (self):

@@ -26,13 +26,16 @@ import argparse
 import sims
 from exchanges import exchanges
 from market import *
-from utils import *
+from utils import getLogger
 import db
+from utils.readconf import readConf
+from dateparser import conf
 
 log = getLogger ('OldMonk')
 log.setLevel(log.CRITICAL)
 
 # Global Variables
+OldMonkConfig = None
 exchange_list = []
 MAIN_TICK_DELAY    = 10        # 20 Sec
 
@@ -56,16 +59,23 @@ def OldMonk_end():
     close_exchanges ()
     
 def init_exchanges ():
-    global exchange_list
+    global exchange_list, OldMonkConfig
+    
     #init exchanges 
     for exch_cls in exchanges:
         log.debug ("Initializing exchange (%s)"%(exch_cls.name))
-        exch_obj = exch_cls()
-        if (exch_obj != None):
-            exchange_list.append(exch_obj)
-            #Market init
-        else:
-            log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
+        for exch in OldMonkConfig['exchanges']:
+            for name,v in exch.iteritems():
+                if name.lower() == exch_cls.name.lower():
+                    role = v['role']
+                    cfg = v['config']
+                    log.debug ("initializing exchange(%s)"%name)
+                    exch_obj = exch_cls(config=cfg, primary=(role == 'primary'))
+                    if (exch_obj != None):
+                        exchange_list.append(exch_obj)
+                        #Market init
+                    else:
+                        log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
                 
 def close_exchanges():
     global exchange_list
@@ -110,18 +120,59 @@ def clean_states ():
     log.info ("Clearing Db")
     db.clear_db()
     
+def load_config (cfg_file):
+    global OldMonkConfig
+    OldMonkConfig = readConf(cfg_file)
+    if not conf:
+        return False
+    
+    log.debug ("cfg: %s"%OldMonkConfig)
+    # sanitize the config
+    for k,v in OldMonkConfig.iteritems():
+        if k == 'exchanges':
+            prim = False
+            for exch in v:
+                for ex_k, ex_v in exch.iteritems():
+                    log.debug ("processing exch: %s"%ex_k)
+                    role = ex_v.get('role')
+                    if role == 'primary':
+                        if prim == True:
+                            print ("more than one primary exchange not supported")
+                            return False
+                        else:
+                            prim = True
+            if prim == False:
+                print ("No primary exchange configured!!")
+                return False
+
+    log.debug ("config loaded successfully!")
+    return True
         
 def arg_parse ():
     parser = argparse.ArgumentParser(description='OldMonk Auto Trading Bot')
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
-    parser.add_argument("--clean", help='Start Clean. Clear all the existing states', action='store_true')
+    parser.add_argument("--clean", help='Clean states,dbs and exit. Clear all the existing states', action='store_true')
+    parser.add_argument("--config", help='OldMonk Global config file')
     
     args = parser.parse_args()
     
     if (args.clean):
         clean_states ()
-        exit ()
+        exit (0)
+        
+    if (args.config):
+        log.debug ("config file: %s"%args.config)
+        if False == load_config (args.config):
+            log.critical ("Config parse error!!")
+            parser.print_help()
+            exit(1)
+        else:
+            log.debug ("config loaded successfully!")
+#             exit (0)
+    else:
+        parser.print_help()
+        exit(1)
     
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':

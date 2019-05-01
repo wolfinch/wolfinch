@@ -36,15 +36,17 @@ class Binance (Exchange):
     auth_client   = None
     ws_client = None
     symbol_to_id = {}
-    def __init__ (self):
+    primary = False
+    def __init__ (self, config=BINANCE_CONF, primary=False):
         log.info ("Init Binance exchange")
         
-        conf = readConf (BINANCE_CONF)
+        conf = readConf (config)
         if (conf != None and len(conf)):
             self.binance_conf = conf['exchange']
         else:
             return None
         
+        self.primary = primary        
         #get config
         backfill = self.binance_conf.get('backfill')
         if not backfill:
@@ -197,6 +199,10 @@ class Binance (Exchange):
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
         log.info ("Market init complete: %s"%(product['id']))
+        
+        #set whether primary or secondary
+        market.primary = self.primary
+        
         return market
     def close (self):
         log.debug("Closing exchange...")    

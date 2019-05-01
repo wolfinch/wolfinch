@@ -28,8 +28,8 @@ exchange:
   apiBase      : 'https://api-public.sandbox.gdax.com'
   wsFeed       : 'wss://ws-feed-public.sandbox.gdax.com'
   apiPassphrase: 'vbf2vuem4da'
-  apiKey       : '0xxxxx2'
-  apiSecret    : 'reed'
+  apiKey       : '0068fd511915b4f659fcf0513e2f3362'
+  apiSecret    : 'rMybWQ2CzcDAl3duxf6H+4d9K+CtR/qtvWIbxY3k/JcyGnqdnGotwabBdvOXCRm56ny+6SNRKn7HjsUrmoh+hg=='
   
   #### LIVE API **** Be careful with these **** ###
 #  apiBase     : 'https://api.gdax.com'
