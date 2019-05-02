@@ -40,7 +40,7 @@ class CandlesDb(object):
                 Column('close', Numeric, default=0),
                 Column('volume', Numeric, default=0))
             # Implement the creation
-            self.db.metadata.create_all(self.db.engine, checkfirst=True)        
+            self.db.metadata.create_all(self.db.engine, checkfirst=True)   
         else:
             log.info ("table %s exists already"%self.table_name)
             self.table = self.db.metadata.tables[self.table_name]

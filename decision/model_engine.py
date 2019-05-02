@@ -26,7 +26,7 @@ from utils import *
 log = getLogger ('MARKET')
 log.setLevel(log.DEBUG)
 
-EPOCH = 600
+EPOCH = 30
 BATCH_SIZE = 64
 X_RANGE = 60
 class Model ():
@@ -100,7 +100,7 @@ if __name__ == '__main__':
         
     def create_x_list(indi_list, strat_list):
         def form_x_from_ind (ind, strat):
-            x = [ind['ohlc'].close, ind['ohlc'].open , ind['ohlc'].high, ind['ohlc'].low, ind['ohlc'].volume]
+            x = [ind['ohlc'].time, ind['ohlc'].close, ind['ohlc'].open , ind['ohlc'].high, ind['ohlc'].low, ind['ohlc'].volume]
             map(lambda s: x.append(s), strat.itervalues())
 #             x += [yy]
 #             print ("x: %s"%x)
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     def create_y_list(x_list):
         y_train = []
          
-        for i in range (X_RANGE, len(x_list)):
+        for i in range (0, len(x_list)):
             d = 0
             p = x_list[i-1]
             for s in x_list[i: (i+5 if i+5 < len(x_list) else len(x_list))]:
@@ -134,12 +134,14 @@ if __name__ == '__main__':
 #         y_train.append(x_list[-2])
 #         return y_train  
         
-    def normalize_input(model, x_list, y_list):
+    def normalize_input(model, x_list, y_list_in):
         x_train = []
         
         
         for i in range (X_RANGE, len(x_list)):
-            x_train.append(x_list[i-X_RANGE:i])        
+            x_train.append(x_list[i-X_RANGE:i])
+            
+        y_list = y_list_in[X_RANGE:]
         
         x_arr, y_arr = np.array(x_train), np.array(y_list).reshape(-1, 1)
         print ("x_arr shape: %s y_arr shape: %s"%(x_arr.shape, y_arr.shape))
@@ -175,23 +177,80 @@ if __name__ == '__main__':
         
 #     plot_model(model.regressor, to_file='model.png')
 #     exit()
+    def merge_x_list(x1_list, x2_list):
+        x_list = []
+        i =0; j = 0
+        found = False
+        for _ in range(min(len(x1_list), len(x2_list))):
+            if x1_list[i][0] == x2_list[j][0]:
+                found = True
+                break
+            elif x1_list[i][0] > x2_list[j][0]:
+                j += 1
+            else:
+                i += 1
+        if found == False:
+            print ("unable to find commond timeline")
+            return []
+        print ("found common base at i:%d j: %d time: %d"%(i, j, x1_list[i][0]))
+        xi = i
+        
+        for k in range(min(len(x1_list), len(x2_list))):
+            if x1_list[i][0] != x2_list[j][0]:
+                print ("found mismatch base at i:%d j: %d time: %d, stop merge"%(i, j, x1_list[i][0]))                
+                break
+                
+#             x_list[k] = map (lambda x1, x2: x1[1:]+x2[1:], x1_list[i], x2_list[j])
+            x_list.append ( x1_list[i][1:] + x2_list[j][1:])
+            
+            i += 1
+            j += 1
+        return x_list, xi
     
     prod = {"id" : "BTC-USD", "display_name" : "BTC-USD"}
+    
+    #CBPRO
     class gdax:
         name = "CBPRO"
         
-    m = market.Market(product=prod, exchange=gdax)
-    m._import_historic_candles(local_only=True)
-    m._calculate_historic_indicators()
-    m._process_historic_strategies()
+    m_cb = market.Market(product=prod, exchange=gdax)
+    m_cb._import_historic_candles(local_only=True)
+    m_cb._calculate_historic_indicators()
+    m_cb._process_historic_strategies()
     
     print ("Model init complete, training starts.. \n")
-    indicator_list = m.get_indicator_list()
-    strategies_list = m.get_strategies_list()
-    x_list = create_x_list(indicator_list, strategies_list)
+    indicator_list = m_cb.get_indicator_list()
+    strategies_list = m_cb.get_strategies_list()
+    x_cb_list = create_x_list(indicator_list, strategies_list)
     
-    y_list = create_y_list(x_list)
+    y_cb_list = create_y_list(x_cb_list)
     
+    #Binance
+    class bnc:
+        name = "binance"
+        
+    m_bnc = market.Market(product=prod, exchange=bnc)
+    m_bnc._import_historic_candles(local_only=True)
+    m_bnc._calculate_historic_indicators()
+    m_bnc._process_historic_strategies()
+    
+    print ("Model init complete, training starts.. \n")
+    indicator_list = m_bnc.get_indicator_list()
+    strategies_list = m_bnc.get_strategies_list()
+    x_bnc_list = create_x_list(indicator_list, strategies_list)
+    
+    y_bnc_list = create_y_list(x_bnc_list)    
+    
+    x_list, x_start = merge_x_list (x_cb_list, x_bnc_list)
+    y_list = y_cb_list[x_start: len(x_list)+1]
+    
+    if (x_list == None or len(x_list) == 0):
+        print ("Unable to get x_list")
+        exit(1)
+    else:
+        print ("x_list: len(%d) "%(len(x_list)))
+#         print ("x_list: %s len(%d) "%(x_list, len(x_list)))    
+
     # TEST MODEL
 #     print ("len x y",len(x_list),len(y_list))
 #     map (lambda x: x.append(0), x_list[:X_RANGE])    
