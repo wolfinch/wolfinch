@@ -123,7 +123,7 @@ class Order (Base):
     def DbGet (cls, order_id):
         global Db
         if not Db:
-            Db = db.init_db()        
+            Db = db.init_db()
         try:
             result = Db.session.query(cls).filter_by(id=order_id)
             if result:

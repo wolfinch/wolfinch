@@ -51,7 +51,7 @@ import db
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.DEBUG)
+log.setLevel(log.CRITICAL)
 
 OldMonk_market_list = []
 

@@ -25,7 +25,7 @@ log = getLogger ('CANDLE-DB')
 
 class CandlesDb(object):
     def __init__ (self, ohlcCls, exchange_name, product_id):
-        self.ohlcCls = ohlcCls
+#         self.ohlcCls = ohlcCls
         self.db = init_db()
         log.info ("init candlesdb")
         self.table_name = "candle_%s_%s"%(exchange_name, product_id)
@@ -45,10 +45,21 @@ class CandlesDb(object):
             log.info ("table %s exists already"%self.table_name)
             self.table = self.db.metadata.tables[self.table_name]
         try:
-            self.mapping = mapper(ohlcCls, self.table)
+            # HACK ALERT: to support multi-table with same class on sqlalchemy mapping
+            class T (ohlcCls):
+                def __init__ (self, c):
+                    self.time = c.time
+                    self.open = c.open
+                    self.high = c.high
+                    self.low = c.low
+                    self.close = c.close
+                    self.volume = c.volume
+            self.ohlcCls = T
+            self.mapping = mapper(self.ohlcCls, self.table)
         except Exception as e:
             log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(e))
-            self.mapping = mapper(ohlcCls, self.table, non_primary=True)            
+#             self.mapping = mapper(ohlcCls, self.table, non_primary=True)            
+            raise e
                     
     def __str__ (self):
         return "{time: %s, open: %g, high: %g, low: %g, close: %g, volume: %g}"%(
@@ -60,7 +71,8 @@ class CandlesDb(object):
 #         self.db.connection.execute(self.table.insert(), {'close':candle.close, 'high':candle.high,
 #                                                               'low':candle.low, 'open':candle.open, 
 #                                                               'time':candle.time, 'volume':candle.volume})
-        self.db.session.merge (candle)
+        c = self.ohlcCls(candle)
+        self.db.session.merge (c)
         self.db.session.commit()
         
     def db_save_candles (self, candles):
@@ -74,7 +86,8 @@ class CandlesDb(object):
 #                                             'low':cdl.low, 'open':cdl.open, 
 #                                             'time':cdl.time, 'volume':cdl.volume}, candles)
         for cdl in candles:
-            self.db.session.merge (cdl)
+            c = self.ohlcCls(cdl)
+            self.db.session.merge (c)
         self.db.session.commit()
         
     def db_get_all_candles (self):
