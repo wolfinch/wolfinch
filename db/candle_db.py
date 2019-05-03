@@ -33,7 +33,9 @@ class CandlesDb(object):
             # Create a table with the appropriate Columns
             log.info ("creating table: %s"%(self.table_name))            
             self.table = Table(self.table_name, self.db.metadata,
-                Column('time', Integer, primary_key=True, nullable=False),
+                Column('Id', Integer, primary_key=True),
+                Column('time', Integer, nullable=False),
+#                 Column('time', Integer, primary_key=True, nullable=False),                
                 Column('open', Numeric, default=0),
                 Column('high', Numeric, default=0),
                 Column('low', Numeric, default=0),
