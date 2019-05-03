@@ -309,7 +309,7 @@ class Binance (Exchange):
                         start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))
                     
                     # new period, start from the (last +1)th position
-                    start = tmp_end + timedelta(seconds = (interval//1000))
+                    start = tmp_end #+ timedelta(seconds = (interval//1000))
                     tmp_end = start + timedelta(seconds = td)
                     tmp_end = min(tmp_end, end)
 
