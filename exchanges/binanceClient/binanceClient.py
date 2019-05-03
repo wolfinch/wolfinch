@@ -82,6 +82,12 @@ class Binance (Exchange):
             
 #         global binance_products
         exch_info = self.public_client.get_exchange_info()
+        serverTime = long(exch_info['serverTime'])
+        localTime = long(time.time()*1000)
+        self.timeOffset = (serverTime - localTime)//1000
+        
+        log.info ("servertime: %d localtime: %d offset: %d"%(serverTime, localTime, self.timeOffset))
+        
         products = exch_info.get("symbols")
         if (len(products) and len (self.binance_conf['products'])):
             for prod in products:
@@ -155,7 +161,7 @@ class Binance (Exchange):
 #         msg_type = msg.get('e')
         now = time.time()
         k = msg.get('k')
-        t = long(k.get('t'))//1000
+        t = long(k.get('t'))//1000 + self.timeOffset
         o = Decimal(k.get('o'))
         h = Decimal(k.get('h'))
         l = Decimal(k.get('l'))
@@ -272,6 +278,11 @@ class Binance (Exchange):
         td = max_candles*interval//1000
         tmp_end = start + timedelta(seconds = td)
         tmp_end = min(tmp_end, end)
+        
+        #adjust time with server time
+        start = start + timedelta(seconds = self.timeOffset)
+        tmp_end = tmp_end + timedelta(seconds = self.timeOffset)
+        
         count = 0
         while (start < end):
             ## looks like there is a rate=limiting in force, we will have to slow down

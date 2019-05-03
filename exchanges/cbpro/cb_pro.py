@@ -84,6 +84,12 @@ class CBPRO (Exchange):
             log.critical("Unable to Authenticate with cbpro exchange. Abort!!")
             return None
             
+        #time sync
+        serverTime = int(self.public_client.get_time()['epoch'])*1000
+        localTime = time.time()*1000
+        self.timeOffset = (serverTime - localTime)//1000        
+        log.info ("servertime: %d localtime: %d offset: %d"%(serverTime, localTime, self.timeOffset))
+        
 #         global gdax_products
         products = self.public_client.get_products()
         if (len(products) and len (self.gdax_conf['products'])):
@@ -464,6 +470,11 @@ class CBPRO (Exchange):
         tmp_end = start + timedelta(seconds = td)
         if tmp_end > end:
             tmp_end = end
+        
+        #adjust with serverTime
+        start = start + timedelta(seconds = self.timeOffset)
+        tmp_end = tmp_end + timedelta(seconds = self.timeOffset)
+        
         count = 0
         while (start < end):
             ## looks like there is a rate=limiting in force on gdax, we will have to slow down

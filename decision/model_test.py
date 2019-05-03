@@ -56,14 +56,15 @@ def create_y_list(x_list):
     y_train = []
      
     for i in range (0, len(x_list)):
+        log.debug("x: %s"%x_list[i])
         d = 0
-        p = x_list[i-1]
+        p = x_list[i][1]
         for s in x_list[i: (i+5 if i+5 < len(x_list) else len(x_list))]:
-            if s < p:
+            if s[1] < p:
                 d -= 1
-            elif s > p:
+            elif s[1] > p:
                 d += 1
-                p = s
+                p = s[1]
         y_train.append(d)
     return y_train        
 
