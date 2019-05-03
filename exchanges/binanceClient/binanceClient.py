@@ -262,7 +262,7 @@ class Binance (Exchange):
              
         if not start:
             # if no start given, use the config
-            real_start = start = end - timedelta(days = period)
+            real_start = start = end - timedelta(days = period) - timedelta(seconds = interval//1000)
         else:
             real_start = start
         
