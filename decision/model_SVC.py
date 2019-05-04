@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # OldMonk Auto trading Bot
-# Desc: LSTM (Long Short-Term memory) Model
+# Desc: SVM (support Vector Machines) Model
 # 
 # Copyright 2018, Joshith Rayaroth Koderi. All Rights Reserved.
 #
@@ -16,12 +16,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import LSTM
-from keras.layers import Dropout
+from sklearn import svm
 from sklearn.preprocessing import MinMaxScaler
 from utils import getLogger
+import  numpy as np
+from sklearn import preprocessing
+from sklearn import utils
 
 log = getLogger ('MODEL')
 log.setLevel(log.DEBUG)
@@ -36,29 +36,13 @@ class Model ():
             self.scX += [MinMaxScaler(feature_range = (0, 1))]
         self.scY = MinMaxScaler(feature_range = (0, 1))
         
-        # Init Keras
-        self.regressor = Sequential()
-        
-        self.regressor.add(LSTM(units = 50, return_sequences = True, input_shape = X_shape))
-        self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(LSTM(units = 50, return_sequences = True))
-        self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(LSTM(units = 50, return_sequences = True))
-        self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(LSTM(units = 50))
-        self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(Dense(units = 1))
-#         self.regressor.add(Dense(units = 1, activation="tanh"))
-#         self.regressor.add(Dense(units = 1, activation="softmax"))
-        
+        self.lab_enc = preprocessing.LabelEncoder()
 
-        self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics=['accuracy'])
-#         self.regressor.compile(optimizer = 'rmsprop', loss = 'mean_squared_error', metrics=['accuracy'])
-#         self.regressor.compile(optimizer='rmsprop', loss='mean_squared_error', metrics=['accuracy'])
+        # Init Keras
+        self.classifier = svm.SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+                            decision_function_shape='ovo', degree=3, gamma='scale', kernel='rbf',
+                            max_iter=-1, probability=False, random_state=None, shrinking=True,
+                            tol=0.001, verbose=False)
 
         
     def scaleX(self, X):
@@ -71,12 +55,18 @@ class Model ():
         return self.scY.fit_transform(Y)
             
     def train(self, X_train, Y_train):
-        self.regressor.fit(X_train, Y_train, epochs = self.EPOCH, batch_size = self.BATCH_SIZE)
+        
+        X = np.array(X_train).reshape(X_train.shape[0], -1)
+        Y_encoded = self.lab_enc.fit_transform(Y_train)
+        
+        self.classifier.fit(X, Y_encoded)
         
 
-    def predict(self, X):        
-#         Y_pred = self.regressor.predict_classes(X)
-        Y_pred = self.regressor.predict(X)
+    def predict(self, X_pred):        
+        X = np.array(X_pred).reshape(X_pred.shape[0], -1)
+
+        Y_label = self.classifier.predict(X)
+        Y_pred = self.lab_enc.inverse_transform(Y_label)
         return self.scY.inverse_transform(Y_pred.reshape(-1, 1))   
     
 #EOF

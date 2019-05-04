@@ -19,7 +19,7 @@
 import  numpy as np
 import matplotlib.pyplot as plt
 
-from model_LSTM import Model
+from model_SVC import Model
 from utils import getLogger
 import market
 
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     print ("Testing .. ")
     Y_pred = model.predict(X_train)
     print ("Testing done.. summary:\n \n ploting..")
-    model.regressor.summary()
+#    model.regressor.summary()
     
     plot_res(x_arr, Y, Y_pred)
 
