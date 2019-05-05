@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # OldMonk Auto trading Bot
-# Desc: LSTM (Long Short-Term memory) Model
+# Desc: Simple Model
 # 
 # Copyright 2018, Joshith Rayaroth Koderi. All Rights Reserved.
 #
@@ -18,7 +18,6 @@
 
 from keras.models import Sequential
 from keras.layers import Dense
-from keras.layers import LSTM
 from keras.layers import Dropout
 from sklearn.preprocessing import MinMaxScaler
 from utils import getLogger
@@ -39,16 +38,16 @@ class Model ():
         # Init Keras
         self.regressor = Sequential()
         
-        self.regressor.add(LSTM(units = 50, return_sequences = True, input_shape = X_shape))
+        self.regressor.add(Dense(units = 50, init='uniform', activation='relu', input_shape = X_shape))
         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(LSTM(units = 50, return_sequences = True))
+        self.regressor.add(Dense(units = 50, return_sequences = True))
         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(LSTM(units = 50, return_sequences = True))
+        self.regressor.add(Dense(units = 50, return_sequences = True))
         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(LSTM(units = 50))
+        self.regressor.add(Dense(units = 50))
         self.regressor.add(Dropout(0.2))
         
         self.regressor.add(Dense(units = 1))

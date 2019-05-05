@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # OldMonk Auto trading Bot
-# Desc: LSTM (Long Short-Term memory) Model
+# Desc: ARIMA (autoRegressive Integrated Moving Avg) Model
 # 
 # Copyright 2018, Joshith Rayaroth Koderi. All Rights Reserved.
 #
@@ -16,12 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import LSTM
-from keras.layers import Dropout
+from statsmodels.tsa.arima_model import ARIMA
+
 from sklearn.preprocessing import MinMaxScaler
 from utils import getLogger
+import  numpy as np
+from sklearn import preprocessing
+from sklearn import utils
 
 log = getLogger ('MODEL')
 log.setLevel(log.DEBUG)
@@ -35,30 +36,6 @@ class Model ():
         for _ in range (X_shape[1]):
             self.scX += [MinMaxScaler(feature_range = (0, 1))]
         self.scY = MinMaxScaler(feature_range = (0, 1))
-        
-        # Init Keras
-        self.regressor = Sequential()
-        
-        self.regressor.add(LSTM(units = 50, return_sequences = True, input_shape = X_shape))
-        self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(LSTM(units = 50, return_sequences = True))
-        self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(LSTM(units = 50, return_sequences = True))
-        self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(LSTM(units = 50))
-        self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(Dense(units = 1))
-#         self.regressor.add(Dense(units = 1, activation="tanh"))
-#         self.regressor.add(Dense(units = 1, activation="softmax"))
-        
-
-        self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics=['accuracy'])
-#         self.regressor.compile(optimizer = 'rmsprop', loss = 'mean_squared_error', metrics=['accuracy'])
-#         self.regressor.compile(optimizer='rmsprop', loss='mean_squared_error', metrics=['accuracy'])
 
         
     def scaleX(self, X):
@@ -71,15 +48,18 @@ class Model ():
         return self.scY.fit_transform(Y)
             
     def train(self, X_train, Y_train):
-        self.regressor.fit(X_train, Y_train, epochs = self.EPOCH, batch_size = self.BATCH_SIZE)
+        
+        self.model.fit(X, Y_encoded)
         
 
-    def predict(self, X):        
-#         Y_pred = self.regressor.predict_classes(X)
-        Y_pred = self.regressor.predict(X)
-        return self.scY.inverse_transform(Y_pred.reshape(-1, 1))   
+    def predict(self, X_pred):        
+        X = np.array(X_pred).reshape(X_pred.shape[0], X_pred.shape[1]*X_pred.shape[2])
+
+        Y_label = self.model.predict(X)
+        Y_pred = self.lab_enc.inverse_transform(Y_label)
+        return self.scY.inverse_transform(Y_pred.reshape(-1, 1))
     
     def summary(self):
-        self.regressor.summary()    
+        self.model.summary()
     
 #EOF

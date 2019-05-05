@@ -56,17 +56,21 @@ class Model ():
             
     def train(self, X_train, Y_train):
         
-        X = np.array(X_train).reshape(X_train.shape[0], -1)
+        X = np.array(X_train).reshape(X_train.shape[0], X_train.shape[1]*X_train.shape[2])
         Y_encoded = self.lab_enc.fit_transform(Y_train)
         
         self.classifier.fit(X, Y_encoded)
         
 
     def predict(self, X_pred):        
-        X = np.array(X_pred).reshape(X_pred.shape[0], -1)
+        X = np.array(X_pred).reshape(X_pred.shape[0], X_pred.shape[1]*X_pred.shape[2])
 
         Y_label = self.classifier.predict(X)
         Y_pred = self.lab_enc.inverse_transform(Y_label)
         return self.scY.inverse_transform(Y_pred.reshape(-1, 1))   
+    
+    def summary(self):
+        pass
+            
     
 #EOF
