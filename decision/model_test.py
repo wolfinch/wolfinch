@@ -195,9 +195,9 @@ if __name__ == '__main__':
 #         print ("x_list: %s len(%d) "%(x_list, len(x_list)))    
 
     # TEST MODEL
-#     print ("len x y",len(x_list),len(y_list))
+    print ("len x y",len(x_list[0]),len(y_list))
 #     map (lambda x: x.append(0), x_list[:X_RANGE])    
-#     map (lambda x,y : x.append(y), x_list[X_RANGE:], y_list)
+    map (lambda x,y : x.append(y), x_list, y_list)
     # TEST MODEL
     x_arr = np.array(x_list).reshape(len(x_list), -1)
     print ("Model engine init, importing historic data\n")
