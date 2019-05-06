@@ -19,6 +19,9 @@
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
+from keras.layers import Flatten
+import  numpy as np
+
 from sklearn.preprocessing import MinMaxScaler
 from utils import getLogger
 
@@ -30,6 +33,10 @@ class Model ():
     BATCH_SIZE = 64
     def __init__(self, X_shape):
         # init preprocessor/scaler as the number of feature layers and o/p layer
+#         X_shape = X_shape_in[0] * X_shape_in[1]
+#         log.debug ("X_Shape: %s norm_shape: %d"%(str(X_shape_in), X_shape))
+        log.debug ("X_Shape: %s "%(str(X_shape)))
+        
         self.scX = []
         for _ in range (X_shape[1]):
             self.scX += [MinMaxScaler(feature_range = (0, 1))]
@@ -38,19 +45,21 @@ class Model ():
         # Init Keras
         self.regressor = Sequential()
         
-        self.regressor.add(Dense(units = 50, init='uniform', activation='relu', input_shape = X_shape))
+        self.regressor.add(Dense(units = 100, init='uniform', activation='relu', input_shape = X_shape))
         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(Dense(units = 50, return_sequences = True))
+        self.regressor.add(Dense(units = 100))
         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(Dense(units = 50, return_sequences = True))
+        self.regressor.add(Dense(units = 100))
         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(Dense(units = 50))
+        self.regressor.add(Dense(units = 100))
         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(Dense(units = 1))
+        self.regressor.add(Flatten())
+        
+        self.regressor.add(Dense(units = 1, activation='sigmoid'))
 #         self.regressor.add(Dense(units = 1, activation="tanh"))
 #         self.regressor.add(Dense(units = 1, activation="softmax"))
         
@@ -58,6 +67,7 @@ class Model ():
         self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics=['accuracy'])
 #         self.regressor.compile(optimizer = 'rmsprop', loss = 'mean_squared_error', metrics=['accuracy'])
 #         self.regressor.compile(optimizer='rmsprop', loss='mean_squared_error', metrics=['accuracy'])
+        self.regressor.summary()
 
         
     def scaleX(self, X):
@@ -69,13 +79,15 @@ class Model ():
     def scaleY(self, Y):
         return self.scY.fit_transform(Y)
             
-    def train(self, X_train, Y_train):
-        self.regressor.fit(X_train, Y_train, epochs = self.EPOCH, batch_size = self.BATCH_SIZE)
+    def train(self, X, Y_train):
+#         X = np.array(X_train).reshape(X_train.shape[0], X_train.shape[1]*X_train.shape[2])
+        
+        self.regressor.fit(X, Y_train, epochs = self.EPOCH, batch_size = self.BATCH_SIZE)
         
 
-    def predict(self, X):        
-#         Y_pred = self.regressor.predict_classes(X)
-        Y_pred = self.regressor.predict(X)
+    def predict(self, X_pred):        
+#         X = np.array(X_pred).reshape(X_pred.shape[0], X_pred.shape[1]*X_pred.shape[2])
+        Y_pred = self.regressor.predict(X_pred)
         return self.scY.inverse_transform(Y_pred.reshape(-1, 1))   
     
     def summary(self):
