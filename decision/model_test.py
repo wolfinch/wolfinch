@@ -20,6 +20,9 @@ import  numpy as np
 import matplotlib.pyplot as plt
 
 from model_simple import Model
+# from model_LSTM import Model
+# from model_SVC import Model
+
 from utils import getLogger
 import market
 
@@ -31,8 +34,11 @@ X_RANGE = 60
         
 def plot_res (X_train, Y_orig, Y_Pred):
 #         plt.plot(X_train, color = 'blue', label = 'Real X')    
+    new_arr = np.zeros([(Y_orig.shape[0] - Y_Pred.shape[0]), 1])
+#     log.debug ("y_shape: %s c_shape: %s"%(new_arr.shape, Y_Pred.shape))
+    new_arr = np.append(new_arr, Y_Pred, 0)
     plt.plot(Y_orig, color = 'black', label = 'Real Y')
-    plt.plot(Y_Pred, color = 'green', label = 'Pred Y')
+    plt.plot(new_arr, color = 'green', label = 'Pred Y')
     plt.title('Prediction')
     plt.xlabel('Time')
     plt.ylabel('Y Prediction')
@@ -196,9 +202,10 @@ if __name__ == '__main__':
 
     # TEST MODEL
     print ("len x y",len(x_list[0]),len(y_list))
-#     map (lambda x: x.append(0), x_list[:X_RANGE])    
     map (lambda x,y : x.append(y), x_list, y_list)
     # TEST MODEL
+    
+    
     x_arr = np.array(x_list).reshape(len(x_list), -1)
     print ("Model engine init, importing historic data\n")
     
@@ -207,11 +214,11 @@ if __name__ == '__main__':
 
     X, Y, X_train, Y_train = normalize_input(model, x_list, y_list)
     
-    model.train(X_train, Y_train)
+    model.train(X_train[:-60, :, :], Y_train[:-60, :])
     print ("Training done")
     
     print ("Testing .. ")
-    Y_pred = model.predict(X_train)
+    Y_pred = model.predict(X_train[-60:,:,:])
     print ("Testing done.. summary:\n \n ploting..")
     model.summary()
     

@@ -46,16 +46,16 @@ class Model ():
         self.regressor = Sequential()
         
         self.regressor.add(Dense(units = 100, init='uniform', activation='relu', input_shape = X_shape))
-        self.regressor.add(Dropout(0.2))
+#         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(Dense(units = 100))
-        self.regressor.add(Dropout(0.2))
+        self.regressor.add(Dense(units = 100, activation='relu'))
+#         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(Dense(units = 100))
-        self.regressor.add(Dropout(0.2))
+        self.regressor.add(Dense(units = 100, activation='relu'))
+#         self.regressor.add(Dropout(0.2))
         
-        self.regressor.add(Dense(units = 100))
-        self.regressor.add(Dropout(0.2))
+        self.regressor.add(Dense(units = 100, activation='relu'))
+#         self.regressor.add(Dropout(0.2))
         
         self.regressor.add(Flatten())
         
