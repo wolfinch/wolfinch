@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # OldMonk Auto trading Bot
-# Desc: Simple Model
+# Desc: Simple DeNoising Auto Encoder (DAE) Model
 # 
 # Copyright 2018, Joshith Rayaroth Koderi. All Rights Reserved.
 #
@@ -49,12 +49,12 @@ class Model ():
 #         self.regressor.add(Dropout(0.2))
         
         self.regressor.add(Dense(units = 100, activation='relu'))
-#         self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(Dense(units = 100, activation='relu'))
-#         self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(Dense(units = 100, activation='relu'))
+# #         self.regressor.add(Dropout(0.2))
+#         
+#         self.regressor.add(Dense(units = 100, activation='relu'))
+# #         self.regressor.add(Dropout(0.2))
+#         
+#         self.regressor.add(Dense(units = 100, activation='relu'))
 #         self.regressor.add(Dropout(0.2))
         
         self.regressor.add(Flatten())

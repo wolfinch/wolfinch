@@ -19,7 +19,7 @@
 import  numpy as np
 import matplotlib.pyplot as plt
 
-from model_simple import Model
+from model_simple_DAE import Model
 # from model_LSTM import Model
 # from model_SVC import Model
 
@@ -100,7 +100,7 @@ def normalize_input(model, x_list, y_list_in):
     print ("Y_train: \n%s"%y_list)
     #reshape
     X_train, Y_train = np.reshape(x, (x.shape[0], x.shape[1], -1)), y
-    print ("X_train shape: %s Y_train shape: %s"%(X_train.shape, Y_train.shape))
+#     print ("X_train shape: %s Y_train shape: %s"%(X_train.shape, Y_train.shape))
     return x, y_arr, X_train, Y_train
     
 #         predicted_stock_price = regressor.predict(X_test)
