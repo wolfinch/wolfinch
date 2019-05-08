@@ -16,15 +16,22 @@
 # limitations under the License.
 
 from utils import getLogger
-import decision_simple as decision 
+import decision_simple
+import decision_ML
 
 log = getLogger ('DECISION')
 log.setLevel(log.DEBUG)
 
 class Decision ():
-    def __init__(self, market, market_list, model="", config_path=""):        
-        log.debug ("init decision for market(%s): model:%s config_path: %s"%(market.name, model, config_path))
-        self.decision = decision.Decision(market, market_list, model, config_path)        
+    def __init__(self, market, market_list, decision_type="", config_path=""):        
+        log.debug ("init decision for market(%s): model:%s config_path: %s"%(market.name, decision_type, config_path))
+        if str(decision_type).lower() == "simple":
+            self.decision = decision_simple.Decision(market)
+        elif str(decision_type).lower() == "ml":
+            self.decision = decision_ML.Decision(market, market_list, config_path=config_path)
+        else:
+            log.error ("Unknown decision type %s"%(decision_type))
+            return None    
             
     def generate_signal(self):
         return self.decision.generate_signal()

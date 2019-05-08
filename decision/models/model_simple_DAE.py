@@ -100,4 +100,8 @@ class Model ():
     def load (self, path):
         pass
     
+def load_model():
+    log.info ("loading model")
+    log.critical ("********** NOT IMPLEMENTED*********")
+    
 #EOF

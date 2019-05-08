@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from utils import getLogger
-from models.model_simple_DAE import Model
+from models.model_simple_DAE import Model, load_model
 # from models.model_LSTM import Model
 # from models.model_SVC import Model
 
@@ -24,14 +24,25 @@ log = getLogger ('decision_simple')
 log.setLevel(log.DEBUG)
 
 class Decision ():
-    def __init__(self, market, market_list):        
+    def __init__(self, market, market_list, config_path="", **kwargs):        
         log.debug ("init decision for market(%s)"%(market.name))
+        
+        if config_path == "":
+            log.critical("Unable to load pretrained model. Invalid cfg_path")
+            return None
+        else:
+            self.model = load_model(config_path)
+            if self.model == None:
+                log.critical("Unable to load pretrained model.")
+                return None                
         self.market = market
         self.market_list = market_list
-                
+                        
     def generate_signal(self):
         # simple decision uses the latest "EMA_RSI" strategy signal for now
-        return self.market.market_strategies_data[self.market.num_candles - 1]["EMA_RSI"]
+        
+        #TODO: FIXME: jork: add logic for normalizing data and call predict
+        return self.model.predict()
          
     def summary(self):
         pass

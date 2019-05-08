@@ -609,6 +609,12 @@ class Market:
     def decision_setup (self, market_list):
         log.debug ("decision setup for market (%s)"%(self.name))
         self.decision = Decision(self, market_list)
+        if self.decision == None:
+            log.error ("Failed to setup decision engine")
+            return False
+        else:
+            log.info ("done setup decision engine")
+            return True
         
         
     def update_market_states (self):
