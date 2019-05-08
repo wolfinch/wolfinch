@@ -37,6 +37,7 @@ import time
 from utils import *
 from order_book import OrderBook
 from order import TradeRequest
+from decision import Decision
 import db
 import sims
 import indicators
@@ -204,6 +205,7 @@ class Market:
         self.asset = Asset ()
         #self.order_book = Orders ()
         self.order_book = OrderBook(market=self)
+        self.decision = None  #will setup later
         # Market Strategy related Data
         # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema': val, name:val...}]
         self.market_indicators_data     = []
@@ -592,12 +594,21 @@ class Market:
         1. Get historic rates
         2. Calculate the indicators based on configured strategies 
         '''
+        log.debug ("market (%s) setup"%(self.name))
+                
         self._import_historic_candles()
         self._calculate_historic_indicators()
         self._process_historic_strategies()
         num_candles = len(self.market_indicators_data)
         self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
         self.num_candles = num_candles
+        log.debug ("market (%s) setup done! num_candles(%d) cur_candle_time(%d)"%(
+            self.name, num_candles, self.cur_candle_time))
+        
+        
+    def decision_setup (self, market_list):
+        log.debug ("decision setup for market (%s)"%(self.name))
+        self.decision = Decision(self, market_list)
         
         
     def update_market_states (self):
@@ -638,10 +649,7 @@ class Market:
                  -5 strong sell
                  +5 strong buy
         """
-        #TODO: jork: implement
-        signal = self.decision.generate_signal(self.market_indicators_data,
-                                                self.market_strategies_data,
-                                                 self.cur_candle_time, self.cur_candle_time)
+        signal = self.decision.generate_signal()
         
         log.info ("Generated Trade Signal(%d) for product(%s)"%(signal, self.product_id))
                 
@@ -745,7 +753,7 @@ def market_init (exchange_list):
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))
                  
-def market_setup ():         
+def market_setup ():
     '''
     Setup market states.
     This is where we want to keep all the run stats
@@ -755,6 +763,17 @@ def market_setup ():
             status = market.market_setup ()
             if (status == False):
                 log.critical ("Market Init Failed for market: %s"%(market.name))
+                return False
             else:
                 log.info ("Market setup completed for market: %s"%(market.name))
+                
+            
+            status = market.decision_setup (OldMonk_market_list)
+            if (status == False):
+                log.critical ("decision_setup Failed for market: %s"%(market.name))
+                return False
+            else:
+                log.info ("decision_setup completed for market: %s"%(market.name))
+                        
+            
 #EOF

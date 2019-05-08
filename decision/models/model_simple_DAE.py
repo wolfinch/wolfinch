@@ -98,6 +98,6 @@ class Model ():
         self.regressor.save(path)
         
     def load (self, path):
-        self.
+        pass
     
 #EOF
