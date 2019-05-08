@@ -111,10 +111,13 @@ def process_market (market):
     """
     log.info ("processing Market: exchange (%s) product: %s"%( market.exchange_name, market.name))
     market.update_market_states()
-    signal = market.generate_trade_signal ()
-    market.consume_trade_signal (signal)
-    if (sims.simulator_on):
-        sims.market_simulator_run (market)
+    
+    # Trade only on primary markets
+    if market.primary is True:
+        signal = market.generate_trade_signal ()
+        market.consume_trade_signal (signal)
+        if (sims.simulator_on):
+            sims.market_simulator_run (market)
     
 def clean_states ():
     log.info ("Clearing Db")

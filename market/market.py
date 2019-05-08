@@ -192,6 +192,7 @@ class Market:
 #         self.price = Price
 #         
 #     '''    
+    primary = True
     def __init__(self, product=None, exchange=None):
         self.product_id = None if product == None else product['id']
         self.name = None if product == None else product['display_name']
@@ -638,12 +639,12 @@ class Market:
                  +5 strong buy
         """
         #TODO: jork: implement
+        signal = self.decision.generate_signal(self.market_indicators_data,
+                                                self.market_strategies_data,
+                                                 self.cur_candle_time, self.cur_candle_time)
         
-        log.info ("Generate Trade Signal for product: "+self.product_id)
-        signal = 0 
-        
-        ################# TODO: FIXME: jork: Implementation ###################
-        
+        log.info ("Generated Trade Signal(%d) for product(%s)"%(signal, self.product_id))
+                
         return signal
     
     def consume_trade_signal (self, signal):

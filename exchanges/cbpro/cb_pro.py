@@ -46,7 +46,7 @@ class CBPRO (Exchange):
         else:
             return None
         
-        self.primary = primary
+        self.primary = True if primary else False
         #get config
         backfill = self.gdax_conf.get('backfill')
         if not backfill:

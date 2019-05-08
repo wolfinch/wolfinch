@@ -16,17 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import Dropout
-from keras.layers import Flatten
-import  numpy as np
-from keras.models import load_model
-
-from sklearn.preprocessing import MinMaxScaler
 from utils import getLogger
 
-log = getLogger ('MODEL')
+log = getLogger ('decision_simple')
 log.setLevel(log.DEBUG)
 
 class Model ():
@@ -37,38 +29,6 @@ class Model ():
 #         X_shape = X_shape_in[0] * X_shape_in[1]
 #         log.debug ("X_Shape: %s norm_shape: %d"%(str(X_shape_in), X_shape))
         log.debug ("X_Shape: %s "%(str(X_shape)))
-        
-        self.scX = []
-        for _ in range (X_shape[1]):
-            self.scX += [MinMaxScaler(feature_range = (0, 1))]
-        self.scY = MinMaxScaler(feature_range = (0, 1))
-        
-        # Init Keras
-        self.regressor = Sequential()
-        
-        self.regressor.add(Dense(units = 100, init='uniform', activation='relu', input_shape = X_shape))
-#         self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(Dense(units = 100, activation='relu'))
-# #         self.regressor.add(Dropout(0.2))
-#         
-#         self.regressor.add(Dense(units = 100, activation='relu'))
-# #         self.regressor.add(Dropout(0.2))
-#         
-#         self.regressor.add(Dense(units = 100, activation='relu'))
-#         self.regressor.add(Dropout(0.2))
-        
-        self.regressor.add(Flatten())
-        
-        self.regressor.add(Dense(units = 1, activation='sigmoid'))
-#         self.regressor.add(Dense(units = 1, activation="tanh"))
-#         self.regressor.add(Dense(units = 1, activation="softmax"))
-        
-
-        self.regressor.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics=['accuracy'])
-#         self.regressor.compile(optimizer = 'rmsprop', loss = 'mean_squared_error', metrics=['accuracy'])
-#         self.regressor.compile(optimizer='rmsprop', loss='mean_squared_error', metrics=['accuracy'])
-        self.regressor.summary()
 
         
     def scaleX(self, X):
