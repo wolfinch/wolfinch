@@ -606,9 +606,9 @@ class Market:
             self.name, num_candles, self.cur_candle_time))
         
         
-    def decision_setup (self, market_list):
+    def decision_setup (self, market_list, cfg):
         log.debug ("decision setup for market (%s)"%(self.name))
-        self.decision = Decision(self, market_list)
+        self.decision = Decision(self, market_list, decision_type=cfg['model_type'], config_path=cfg['model_config'])
         if self.decision == None:
             log.error ("Failed to setup decision engine")
             return False
@@ -759,7 +759,7 @@ def market_init (exchange_list):
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))
                  
-def market_setup ():
+def market_setup (decisionConfig):
     '''
     Setup market states.
     This is where we want to keep all the run stats

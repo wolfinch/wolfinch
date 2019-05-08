@@ -35,6 +35,7 @@ log = getLogger ('OldMonk')
 log.setLevel(log.CRITICAL)
 
 # Global Variables
+decisionConfig = {}
 OldMonkConfig = None
 exchange_list = []
 MAIN_TICK_DELAY    = 10        # 20 Sec
@@ -52,7 +53,7 @@ def OldMonk_init():
     market_init (exchange_list)
     
     #4. Setup markets
-    market_setup()
+    market_setup(decisionConfig)
     
 def OldMonk_end():
     log.info ("Finalizing OldMonk")
@@ -125,6 +126,7 @@ def clean_states ():
     
 def load_config (cfg_file):
     global OldMonkConfig
+    global decisionConfig
     OldMonkConfig = readConf(cfg_file)
     if not conf:
         return False
@@ -147,7 +149,15 @@ def load_config (cfg_file):
             if prim == False:
                 print ("No primary exchange configured!!")
                 return False
+        elif k == 'decision':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'model':
+                    decisionConfig ['model_type'] = ex_v
+                elif ex_k == 'config':
+                    decisionConfig ['model_config'] = ex_v     
 
+#         print ("v: %s"%str(decisionConfig))
+#         exit(1)
     log.debug ("config loaded successfully!")
     return True
         
