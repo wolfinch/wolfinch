@@ -21,7 +21,7 @@ log = getLogger ('decision_simple')
 log.setLevel(log.DEBUG)
 
 class Decision ():
-    def __init__(self, market, market_list):        
+    def __init__(self, market, market_list, *args):        
         log.debug ("init decision for market(%s)"%(market.name))
         self.market = market
         self.market_list = market_list

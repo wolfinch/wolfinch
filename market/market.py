@@ -760,20 +760,21 @@ def market_setup ():
     '''
     global OldMonk_market_list
     for market in OldMonk_market_list:
-            status = market.market_setup ()
-            if (status == False):
-                log.critical ("Market Init Failed for market: %s"%(market.name))
-                return False
-            else:
-                log.info ("Market setup completed for market: %s"%(market.name))
+        status = market.market_setup ()
+        if (status == False):
+            log.critical ("Market Init Failed for market: %s"%(market.name))
+            return False
+        else:
+            log.info ("Market setup completed for market: %s"%(market.name))
                 
-            
-            status = market.decision_setup (OldMonk_market_list)
-            if (status == False):
-                log.critical ("decision_setup Failed for market: %s"%(market.name))
-                return False
-            else:
-                log.info ("decision_setup completed for market: %s"%(market.name))
+    log.info ("market setup complete for all markets, init decision engines now")
+    for market in OldMonk_market_list:            
+        status = market.decision_setup (OldMonk_market_list)
+        if (status == False):
+            log.critical ("decision_setup Failed for market: %s"%(market.name))
+            return False
+        else:
+            log.info ("decision_setup completed for market: %s"%(market.name))
                         
             
 #EOF
