@@ -92,11 +92,52 @@ def do_trade (market):
             open_orders_pvt.remove (order)
             log.info ("Traded market order: %s"%(str(order)))   
         
+def do_backtesting ():
+    # don't sleep for backtesting    
+    sleep_time = 0
+    done = False
+        
+    for market in get_market_list():
+        log.debug ("backtest setup for market: %s num_candles:%d"%(market.name, market.num_candles))
+        market.backtesting_idx = 0
+                          
+    while (not done) : 
+        # check for the msg in the feed Q and process, with timeout
+        done = True
+        msg = feed_deQ(sleep_time) 
+        while (msg != None):
+            feed_Q_process_msg (msg)
+            msg = feed_deQ(0)        
+        for market in get_market_list():
+            market.update_market_states()
+            # Trade only on primary markets
+            if (market.primary == True and (market.backtesting_idx < market.num_candles)):
+                log.info ("backtest processing on market: exchange (%s) product: %s"%( market.exchange_name, market.name))                
+                signal = market.generate_trade_signal (market.backtesting_idx)
+                market.backtesting_idx += 1
+                market.consume_trade_signal (signal)
+                if (simulator_on):
+                    market_simulator_run (market)
+                #if atleast one market is not done, we will continue
+                done = False
+    #end While(true)
+def shoow_stats ():
+    pass
 
 ############# Public APIs ######################
 def market_simulator_run (market):
     log.debug ("Running SIM exchange for market: %s"%(market.product_id))
     do_trade (market)
+        
+def market_backtesting_run ():
+    """
+    market backtesting 
+    """
+    log.debug("starting backtesting")    
+    do_backtesting()
+    log.info ("backtesting complete. ")
+    shoow_stats ()
+
     
 def buy (trade_req) :
     if not isinstance( trade_req, TradeRequest):

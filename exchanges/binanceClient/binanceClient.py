@@ -336,20 +336,20 @@ class Binance (Exchange):
         return candles_list
         
     def get_product_order_book (self, product, level = 1):
-        log.error ("***********Not-Implemented******")
+        log.error ("get_product_order_book: ***********Not-Implemented******")
         return None
     
     def buy (self):
-        log.error ("***********Not-Implemented******")
+        log.error ("buy: ***********Not-Implemented******")
         return None
     def sell (self):
-        log.error ("***********Not-Implemented******")
+        log.error ("sell: ***********Not-Implemented******")
         return None
     def get_order (self):
-        log.error ("***********Not-Implemented******")
+        log.error ("get_order: ***********Not-Implemented******")
         return None
     def cancel_order (self):
-        log.error ("***********Not-Implemented******")
+        log.error ("cancel_order: ***********Not-Implemented******")
         return None
 
 ######### ******** MAIN ****** #########

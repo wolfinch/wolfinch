@@ -170,7 +170,7 @@ def load_config (cfg_file):
                         sims.backtesting_on = True
                     else:
                         log.debug ("backtesting disabled")       
-                        sims.backtesting_on = False  
+                        sims.backtesting_on = False
                 
 #                 print ("v: %s"%str(ex_k))
 #     exit(1)
@@ -183,6 +183,7 @@ def arg_parse ():
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
     parser.add_argument("--clean", help='Clean states,dbs and exit. Clear all the existing states', action='store_true')
     parser.add_argument("--config", help='OldMonk Global config file')
+    parser.add_argument("--backtesting", help='do backtesting', action='store_true')
     
     args = parser.parse_args()
     
@@ -190,6 +191,10 @@ def arg_parse ():
         clean_states ()
         exit (0)
         
+    if (args.backtesting):              
+        log.debug ("backtesting enabled")       
+        sims.backtesting_on = True
+                 
     if (args.config):
         log.debug ("config file: %s"%args.config)
         if False == load_config (args.config):
@@ -214,8 +219,14 @@ if __name__ == '__main__':
     
     try:
         OldMonk_init()
-        log.debug ("Starting Main Loop")
-        oldmonk_main ()
+        
+        if (sims.backtesting_on):
+            sims.market_backtesting_run ()
+            OldMonk_end()
+            sys.exit()
+        else:
+            log.debug ("Starting Main forever loop")
+            oldmonk_main ()
     except (KeyboardInterrupt, SystemExit):
         OldMonk_end()
         sys.exit()

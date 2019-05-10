@@ -38,11 +38,11 @@ class Decision ():
         self.market = market
         self.market_list = market_list
                         
-    def generate_signal(self):
+    def generate_signal(self, idx):
         # simple decision uses the latest "EMA_RSI" strategy signal for now
         
         #TODO: FIXME: jork: add logic for normalizing data and call predict
-        return self.model.predict()
+        return self.model.predict(idx)
          
     def summary(self):
         pass

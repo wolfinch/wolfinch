@@ -97,8 +97,8 @@ class Fund:
         self.max_per_buy_fund_value = Decimal(value)  
 
     def get_fund_to_trade (self, strength): ## TODO: FIXME: jork: Check hold value
-        slice = self.max_per_buy_fund_value / 5.0 #max strength
-        liquid_fund = self.initial_value *  self.fund_liquidity_percent / 100.0
+        slice = self.max_per_buy_fund_value / Decimal(5) #max strength
+        liquid_fund = self.initial_value *  self.fund_liquidity_percent / Decimal(100)
         rock_bottom = self.initial_value - liquid_fund
         
         fund = slice * strength
@@ -137,7 +137,7 @@ class Asset:
         self.current_hold_size = size
         
     def get_asset_to_trade (self, strength):       ### FIXME: jork: Check the hold value
-        slice = float(self.max_per_trade_size)/5.0
+        slice = Decimal(self.max_per_trade_size)/Decimal(5.0)
         
         cur_size = slice * strength
         if self.current_size >= cur_size:
@@ -439,7 +439,7 @@ class Market:
             #BUY
             fund = self.fund.get_fund_to_trade(signal)
             if fund > 0:
-                log.debug ("Generating BUY trade_req with fund: %d for signal"%(fund, signal))
+                log.debug ("Generating BUY trade_req with fund: %d for signal: %d"%(fund, signal))
                 return TradeRequest(Product=self.product_id,
                                   Side="BUY",
                                    Size=round(Decimal(fund), 8),
@@ -606,7 +606,7 @@ class Market:
             self.name, num_candles, self.cur_candle_time))
         
         
-    def decision_setup (self, market_list, cfg):
+    def decision_setup (self, market_list, cfg=None):
         log.debug ("decision setup for market (%s)"%(self.name))
         self.decision = Decision(self, market_list, decision_type=cfg['model_type'], config_path=cfg['model_config'])
         if self.decision == None:
@@ -647,7 +647,7 @@ class Market:
         self.num_candles += 1
         
                 
-    def generate_trade_signal (self):
+    def generate_trade_signal (self, idx=-1):
         """ 
         Do all the magic to generate the trade signal
         params : exchange, product
@@ -655,7 +655,7 @@ class Market:
                  -5 strong sell
                  +5 strong buy
         """
-        signal = self.decision.generate_signal()
+        signal = self.decision.generate_signal((idx if idx != -1 else (self.num_candles-1)))
         
         log.info ("Generated Trade Signal(%d) for product(%s)"%(signal, self.product_id))
                 
@@ -775,7 +775,7 @@ def market_setup (decisionConfig):
                 
     log.info ("market setup complete for all markets, init decision engines now")
     for market in OldMonk_market_list:            
-        status = market.decision_setup (OldMonk_market_list)
+        status = market.decision_setup (OldMonk_market_list, decisionConfig)
         if (status == False):
             log.critical ("decision_setup Failed for market: %s"%(market.name))
             return False
