@@ -22,10 +22,11 @@ log.setLevel (log.DEBUG)
 
 ###### SIMULATOR Global switch ######
 simulator_on = True
+backtesting_on = True
 
 '''
-Description: Exchange Simulation for papertrade. 
-             Works in conjuction with the regular exchange. 
+Description: Exchange Simulation for papertrade/backtesting. 
+             Works in conjunction with the regular exchange. 
     When Initialized with an exchange it handles the buy/sell
     order and handles the trade as if it is done on exchange based on the ticker value.
     Maintains a list of open orders and executed orders. 

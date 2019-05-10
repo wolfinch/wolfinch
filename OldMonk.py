@@ -155,9 +155,25 @@ def load_config (cfg_file):
                     decisionConfig ['model_type'] = ex_v
                 elif ex_k == 'config':
                     decisionConfig ['model_config'] = ex_v     
-
-#         print ("v: %s"%str(decisionConfig))
-#         exit(1)
+        elif k == 'simulator':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'enabled':
+                    if ex_v == True:
+                        log.debug ("simulator enabled")
+                        sims.simulator_on = True
+                    else:
+                        log.debug ("simulator disabled")
+                        sims.simulator_on = False
+                elif ex_k == 'backtesting':
+                    if ex_v == True:
+                        log.debug ("backtesting enabled")
+                        sims.backtesting_on = True
+                    else:
+                        log.debug ("backtesting disabled")       
+                        sims.backtesting_on = False  
+                
+#                 print ("v: %s"%str(ex_k))
+#     exit(1)
     log.debug ("config loaded successfully!")
     return True
         
