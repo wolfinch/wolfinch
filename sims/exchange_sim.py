@@ -18,7 +18,7 @@ from market import *
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
-log.setLevel (log.DEBUG)
+log.setLevel (log.INFO)
 
 ###### SIMULATOR Global switch ######
 simulator_on = True
@@ -59,10 +59,16 @@ def do_trade (market):
     if traded_orders_pvt == None:
         traded_orders_pvt = []
         traded_orders[market.product_id] = traded_orders_pvt
-    price = market.get_market_rate()
+    if backtesting_on == True:
+        price = market.market_indicators_data[market.backtesting_idx]['ohlc'].close
+    else:
+        price = market.get_market_rate()
     log.debug ("SIM EXH stats: open_orders : %d traded_orders: %d price: %s"%(
         len(open_orders_pvt), len(traded_orders_pvt), price))
     for order in open_orders_pvt[:]:
+        #first update order state
+        market.order_status_update (order)
+        #now trade
         this_order = order_struct
         this_order['id'] = order.id
         this_order['type'] = "done"
@@ -92,6 +98,15 @@ def do_trade (market):
             open_orders_pvt.remove (order)
             log.info ("Traded market order: %s"%(str(order)))   
         
+def set_initial_acc_values (market):
+    #Setup the initial params
+    market.fund.set_initial_value(Decimal(2000))
+    market.fund.set_hold_value(Decimal(100))
+    market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%
+    market.fund.set_max_per_buy_fund_value(100)
+    market.asset.set_initial_size(Decimal(10))
+    market.asset.set_hold_size( Decimal(0.1))
+        
 def do_backtesting ():
     # don't sleep for backtesting    
     sleep_time = 0
@@ -100,11 +115,12 @@ def do_backtesting ():
     for market in get_market_list():
         log.debug ("backtest setup for market: %s num_candles:%d"%(market.name, market.num_candles))
         market.backtesting_idx = 0
+        set_initial_acc_values(market)        
                           
     while (not done) : 
         # check for the msg in the feed Q and process, with timeout
         done = True
-        msg = feed_deQ(sleep_time) 
+        msg = feed_deQ(sleep_time)
         while (msg != None):
             feed_Q_process_msg (msg)
             msg = feed_deQ(0)        
@@ -112,17 +128,18 @@ def do_backtesting ():
             market.update_market_states()
             # Trade only on primary markets
             if (market.primary == True and (market.backtesting_idx < market.num_candles)):
-                log.info ("backtest processing on market: exchange (%s) product: %s"%( market.exchange_name, market.name))                
+                log.info ("BACKTEST(%d): processing on market: exchange (%s) product: %s"%(
+                    market.backtesting_idx, market.exchange_name, market.name))     
                 signal = market.generate_trade_signal (market.backtesting_idx)
-                market.backtesting_idx += 1
                 market.consume_trade_signal (signal)
                 if (simulator_on):
                     market_simulator_run (market)
                 #if atleast one market is not done, we will continue
                 done = False
+                market.backtesting_idx += 1                
     #end While(true)
-def shoow_stats ():
-    pass
+def show_stats ():
+    display_market_stats()
 
 ############# Public APIs ######################
 def market_simulator_run (market):
@@ -136,7 +153,7 @@ def market_backtesting_run ():
     log.debug("starting backtesting")    
     do_backtesting()
     log.info ("backtesting complete. ")
-    shoow_stats ()
+    show_stats ()
 
     
 def buy (trade_req) :

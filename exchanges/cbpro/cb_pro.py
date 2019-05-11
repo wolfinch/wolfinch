@@ -22,7 +22,7 @@ from exchanges import Exchange
 
 EXHANGE_NAME = "CBPRO"
 log = getLogger (EXHANGE_NAME)
-log.setLevel(log.DEBUG)
+log.setLevel(log.CRITICAL)
 
 
 #CBPRO CONFIG FILE

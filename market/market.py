@@ -52,7 +52,7 @@ import db
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.DEBUG)
+log.setLevel(log.CRITICAL)
 
 OldMonk_market_list = []
 
@@ -265,7 +265,10 @@ class Market:
         if side == 'buy':
             if msg_type == 'done':
                 #for an order done, get the order details
-                order_det = self.exchange.get_order(order.id)
+                if (sims.simulator_on):
+                    order_det = sims.get_order(order.id)
+                else:                
+                    order_det = self.exchange.get_order(order.id)
                 if (order_det):
                     order = order_det
                 if reason == 'filled':
@@ -281,7 +284,10 @@ class Market:
         elif side == 'sell':
             if msg_type == 'done':
                 #for an order done, get the order details
-                order_det = self.exchange.get_order(order.id)
+                if (sims.simulator_on):
+                    order_det = sims.get_order(order.id)
+                else:                 
+                    order_det = self.exchange.get_order(order.id)
                 if (order_det):
                     order = order_det                
                 if reason == 'filled':
@@ -783,5 +789,9 @@ def market_setup (decisionConfig):
         else:
             log.info ("decision_setup completed for market: %s"%(market.name))
                         
-            
+def display_market_stats ():
+    global OldMonk_market_list
+    print ("Market statistics:\n")
+    for market in OldMonk_market_list:
+        print ("\n%s\n\n"%str(market))    
 #EOF
