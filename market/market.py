@@ -104,6 +104,7 @@ class Fund:
         fund = slice * strength
         
         if self.current_value - fund <= rock_bottom:
+            log.critical ("**** No Funds to trade. signal(%d) ****"%(strength))
             return 0
         else:
             return fund
@@ -143,6 +144,7 @@ class Asset:
         if self.current_size >= cur_size:
             return cur_size
         else:
+            log.critical("**** No Funds to trade. signal(%d) ****"%(strength))
             return 0
 
     def __str__(self):
@@ -699,7 +701,7 @@ class Market:
         #get manual trade reqs if any
         trade_req_list = self._get_manual_trade_req ()
         # Now generate auto trade req list
-        log.info ("Trade Signal strength:"+str(signal))         ## TODO: FIXME: IMPLEMENT:
+        log.info ("Trade Signal strength:"+str(signal))
         trade_req = self._generate_trade_request( signal)
         #validate the trade Req
         if (trade_req != None):
@@ -710,9 +712,9 @@ class Market:
             self._execute_market_trade(trade_req_list)
 
     def __str__(self):
-        return "{'product_id':%s,'name':%s,'exchange_name':%s,'fund':%s,'asset':%s,'orders':%s}"%(
-                self.product_id,self.name,self.exchange_name, 
-                str(self.fund), str(self.asset), str(self.order_book))
+        return "{''exchange_name':%s, product_id':%s,'name':%s \n'fund':%s \n 'asset':%s}"%(
+                self.exchange_name, self.product_id,self.name, 
+                str(self.fund), str(self.asset))
         
         
 ############# Market Class Def - end ############# 

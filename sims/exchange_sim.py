@@ -18,7 +18,7 @@ from market import *
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
-log.setLevel (log.INFO)
+log.setLevel (log.DEBUG)
 
 ###### SIMULATOR Global switch ######
 simulator_on = True
@@ -42,12 +42,12 @@ order_struct = {u'created_at': u'2018-01-10T09:49:02.639681Z',
              u'filled_size': u'0.00000000',
              u'id': u'7150b013-62ca-49c7-aa28-4a9473778644',
              u'post_only': True,
-             u'price': u'14296.99000000',
+             u'price': u'0.0',
              u'product_id': u'BTC-USD',
              u'settled': False,
              u'side': u'buy',
-             u'size': u'0.13988959',
-             u'status': u'pending',
+             u'size': u'0.0',
+             u'status': u'',
              u'stp': u'dc',
              u'time_in_force': u'GTC',
              u'type': u'limit'}
@@ -69,7 +69,8 @@ def do_trade (market):
         #first update order state
         market.order_status_update (order)
         #now trade
-        this_order = order_struct
+        this_order = order_struct # Note: this at the top
+        this_order['product_id'] = market.product_id
         this_order['id'] = order.id
         this_order['type'] = "done"
         this_order['reason'] = 'filled'    
@@ -96,13 +97,13 @@ def do_trade (market):
             feed_enQ(market, this_order)
             traded_orders_pvt.append (order)
             open_orders_pvt.remove (order)
-            log.info ("Traded market order: %s"%(str(order)))   
+            log.info ("Traded market order: %s filled_order: %s price: %s"%(str(order), str(this_order), str(price)))   
         
 def set_initial_acc_values (market):
     #Setup the initial params
     market.fund.set_initial_value(Decimal(2000))
     market.fund.set_hold_value(Decimal(100))
-    market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%
+    market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
     market.fund.set_max_per_buy_fund_value(100)
     market.asset.set_initial_size(Decimal(10))
     market.asset.set_hold_size( Decimal(0.1))
