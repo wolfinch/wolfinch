@@ -52,7 +52,7 @@ import db
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.DEBUG)
 
 OldMonk_market_list = []
 
@@ -476,7 +476,7 @@ class Market:
         '''
         for trade_req in trade_req_list:
             log.debug ("Executing Trade Request:"+str(trade_req))
-            if (trade_req.type == 'limit'):
+            if (trade_req.type == 'limit' or trade_req.type == 'market'):
                 if (trade_req.side == 'BUY'):
                     order = self._buy_order_create (trade_req)
                 elif (trade_req.side == 'SELL'):
@@ -595,8 +595,9 @@ class Market:
         2. Calculate the indicators based on configured strategies 
         '''
         log.debug ("market (%s) setup"%(self.name))
-                
-        self._import_historic_candles()
+        
+        # do not import candles from exch while backtesting.
+        self._import_historic_candles(local_only=sims.backtesting_on)
         self._calculate_historic_indicators()
         self._process_historic_strategies()
         num_candles = len(self.market_indicators_data)

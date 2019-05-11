@@ -17,6 +17,7 @@
 
 from utils import getLogger
 from db import init_db
+import sims
 
 import uuid
 
@@ -29,7 +30,9 @@ Db = None
 def db_add_or_update_order (market, product_id, order):
     log.debug ("Adding order to db")
     ORDER_DB [uuid.UUID(order.id)] = order
-    order.DbSave()
+    
+    if not ( sims.backtesting_on or sims.simulator_on):
+        order.DbSave()
     
     
 def db_del_order (market, product_id, order):

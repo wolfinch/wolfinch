@@ -22,7 +22,7 @@ from exchanges import Exchange
 
 
 log = getLogger ('Binance')
-log.setLevel(log.DEBUG)
+log.setLevel(log.CRITICAL)
 
 #BINANCE CONFIG FILE
 BINANCE_CONF = 'config/binance.yml'
@@ -217,7 +217,8 @@ class Binance (Exchange):
             log.debug("Closing WebSocket Client")
             self.ws_client.close ()
             self.ws_client.join(1)
-            reactor.stop()
+            if not reactor._stopped:
+                reactor.stop()
             log.debug("Closed websockets")
     def get_products (self):
         log.debug ("products num %d"%(len(self.binance_products)))
