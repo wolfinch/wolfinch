@@ -28,17 +28,18 @@ class TradeRequest:
 #            price: <limit/market-price>
 #            }
 #    '''   
-    def __init__(self, Product, Side, Size, Type, Price, Stop):
+    def __init__(self, Product, Side, Size, Fund, Type, Price, Stop):
         self.product = Product
         self.side = Side
         self.size = Size
+        self.fund = Fund
         self.type = Type
         self.price = Price
         self.stop = Decimal(Stop or 0)
 
     def __str__(self):
-        return "{'product':%s, 'side':%s, 'size':%g 'type':%s, 'price':%g, 'stop':%g}" % (
-            self.product, self.side, self.size, self.type, self.price, self.stop)
+        return "{'product':%s, 'side':%s, 'size':%g, 'fund':%g, 'type':%s, 'price':%g, 'stop':%g}" % (
+            self.product, self.side, self.size, self.fund, self.type, self.price, self.stop)
 
 
 class Order (Base):

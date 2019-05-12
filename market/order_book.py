@@ -22,7 +22,7 @@ from decimal import Decimal
 from utils import *
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.DEBUG)
 
 
 class OrderBook():
@@ -150,6 +150,7 @@ class OrderBook():
         else:
             log.critical("Invalid order :%s" % (order))
             return None
+        log.debug ("Order: %s\n"%(str(order)))
         return order
     
     ######### L2 Order book for Exchange, product ########

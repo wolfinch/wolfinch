@@ -520,7 +520,8 @@ class CBPRO (Exchange):
         
     
     def buy (self, trade_req) :
-        log.debug ("BUY - Placing Order on exchange --" )    
+        #TODO: FIXME: Implement Market/STOP orders
+        log.debug ("BUY - Placing Order on exchange --" )
         order = self.auth_client.buy(price=trade_req.price, #USD
                         size=trade_req.size, #BTC
                         product_id=trade_req.product,
@@ -530,6 +531,7 @@ class CBPRO (Exchange):
         return self._normalized_order (order);
     
     def sell (self, trade_req) :
+        #TODO: FIXME: Implement Market/STOP orders        
         log.debug ("SELL - Placing Order on exchange --" )    
         order = self.auth_client.buy(price=trade_req.price, #USD
                         size=trade_req.size, #BTC

@@ -59,14 +59,14 @@ def do_trade (market):
     if traded_orders_pvt == None:
         traded_orders_pvt = []
         traded_orders[market.product_id] = traded_orders_pvt
-    if backtesting_on == True:
-        price = market.market_indicators_data[market.backtesting_idx]['ohlc'].close
-    else:
-        price = market.get_market_rate()
+    
+    price = market.get_market_rate()
     log.debug ("SIM EXH stats: open_orders : %d traded_orders: %d price: %s"%(
         len(open_orders_pvt), len(traded_orders_pvt), price))
     for order in open_orders_pvt[:]:
         #first update order state
+        order.status_type = 'received'
+        print ("order: %s"%(str(order)))
         market.order_status_update (order)
         #now trade
         this_order = order_struct # Note: this at the top
@@ -92,12 +92,13 @@ def do_trade (market):
                     open_orders_pvt.remove (order)
                     log.info ("Traded sell order: %s"%(str(order)))
         elif order.order_type == 'market':
-            this_order['filled_size'] = order.funds/price 
+            this_order['price'] = price            
+            this_order['filled_size'] = order.request_size
             this_order['executed_value'] = order.funds
             feed_enQ(market, this_order)
             traded_orders_pvt.append (order)
             open_orders_pvt.remove (order)
-            log.info ("Traded market order: %s filled_order: %s price: %s"%(str(order), str(this_order), str(price)))   
+            log.info ("Traded market order: %s filled_order: %s price: %s"%(str(order), str(this_order), str(price)))
         
 def set_initial_acc_values (market):
     #Setup the initial params
@@ -164,7 +165,7 @@ def buy (trade_req) :
     
     buy_order = Order(str(uuid.uuid1()), trade_req.product, "pending", order_type=trade_req.type, 
                       status_reason=None, side='buy', request_size=trade_req.size,
-                   filled_size=0,  price=trade_req.price, funds=0,
+                   filled_size=0,  price=trade_req.price, funds=trade_req.fund,
                  fees=0, create_time=time.ctime())
     
     open_orders_pvt = open_orders.get(trade_req.product) 

@@ -102,6 +102,7 @@ class Fund:
         rock_bottom = self.initial_value - liquid_fund
         
         fund = slice * strength
+        log.debug ("fund: %s slice: %s signal: %s"%(fund, slice, strength))
         
         if self.current_value - fund <= rock_bottom:
             log.critical ("**** No Funds to trade. signal(%d) ****"%(strength))
@@ -231,7 +232,10 @@ class Market:
         self.current_market_rate = price
         
     def get_market_rate (self):
-        return self.current_market_rate       
+        if sims.backtesting_on == True:
+            return self.market_indicators_data[self.backtesting_idx]['ohlc'].close
+        else:        
+            return self.current_market_rate       
         
     def market_consume_feed(self, msg):
         if (self.consume_feed != None):
@@ -282,7 +286,8 @@ class Market:
             elif (msg_type in ['open', 'match', 'change', 'margin_profile_update', 'activate' ]):
                 log.debug ("Ignored buy order status: %s"%(msg_type))
             else:
-                log.error ("Unknown buy order status: %s"%(msg_type))
+                log.critical ("Unknown buy order status: %s"%(msg_type))
+                raise Exception("Unknown buy order status: %s"%(msg_type))
         elif side == 'sell':
             if msg_type == 'done':
                 #for an order done, get the order details
@@ -302,12 +307,16 @@ class Market:
                 log.debug ("Ignored sell order status: %s"%(msg_type))
             else:
                 log.error ("Unknown sell order status: %s"%(msg_type))
+                raise Exception("Unknown sell order status: %s"%(msg_type))                
         else:
             log.error ("Unknown order Side (%s)"%(side))
+            raise Exception("Unknown order Side (%s)"%(side))         
                     
     def _buy_order_received (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
+            log.debug ("BUY RECV>>> request_size:%s funds:%s"%(market_order.request_size, market_order.funds))
+            
             #update fund 
             order_type = market_order.order_type
             order_cost = 0
@@ -318,8 +327,15 @@ class Market:
             else:
                 log.error ("BUY: unknown order_type: %s"%(order_type))
                 return
+            
+            if order_cost == 0:
+                log.critical ("Invalid order_cost!")
+                raise Exception("Invalid order_cost!")
             self.fund.current_hold_value += order_cost
             self.fund.current_value -= order_cost
+        else:
+            log.critical("Invalid Market_order filled order:%s"%(str(order)))
+            raise Exception("Invalid Market_order filled order:%s"%(str(order)))            
                                         
     def _buy_order_create (self, trade_req):
         if (sims.simulator_on):
@@ -336,7 +352,8 @@ class Market:
             
     def _buy_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
-        if(market_order): #Valid order          
+        if(market_order): #Valid order
+            log.debug ("BUY FILLED>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))
             order_cost = (market_order.filled_size*market_order.price)
             #fund
             self.fund.current_hold_value -= order_cost
@@ -351,6 +368,9 @@ class Market:
             self.asset.current_size += market_order.filled_size
             self.asset.latest_traded_size = market_order.filled_size
             self.asset.total_traded_size += market_order.filled_size
+        else:
+            log.critical("Invalid Market_order filled order:%s"%(str(order)))
+            raise Exception("Invalid Market_order filled order:%s"%(str(order)))            
             
     def _buy_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
@@ -377,6 +397,7 @@ class Market:
         #log.debug ("SELL RECV: %s"%(json.dumps(order, indent=4, sort_keys=True)))
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
+            log.debug ("SELL RECV>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))            
             #update fund 
             order_type = market_order.order_type
             size = 0
@@ -388,11 +409,15 @@ class Market:
                 log.error ("BUY: unknown order_type: %s"%(order_type))
                 return
             self.asset.current_hold_size += size
-            self.asset.current_size -= size            
+            self.asset.current_size -= size
+        else:
+            log.critical("Invalid Market_order filled order:%s"%(str(order)))
+            raise Exception("Invalid Market_order filled order:%s"%(str(order)))
                         
     def _sell_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
-        if(market_order): #Valid order       
+        if(market_order): #Valid order
+            log.debug ("SELL FILLED>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))            
             order_cost = (market_order.filled_size*market_order.price)        
             #fund
             self.fund.current_value += order_cost
@@ -402,6 +427,9 @@ class Market:
             #profit
             profit = (market_order.price - self.fund.current_avg_buy_price )*market_order.filled_size
             self.fund.current_realized_profit += profit
+        else:
+            log.critical("Invalid Market_order filled order:%s"%(str(order)))
+            raise Exception("Invalid Market_order filled order:%s"%(str(order)))
             
     def _sell_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
@@ -427,6 +455,7 @@ class Market:
                     trade_req = TradeRequest(Product=trade_req_dict['product'],
                                               Side=trade_req_dict['side'],
                                                Size=round(Decimal(trade_req_dict['size']),8),
+                                               Fund=round(Decimal(0), 8), #TODO: FIXME: make sure correct fund/size                        
                                                 Type=trade_req_dict['type'],
                                                  Price=round(Decimal(trade_req_dict['price']), 8),
                                                  Stop=trade_req_dict['stop'])
@@ -447,10 +476,12 @@ class Market:
             #BUY
             fund = self.fund.get_fund_to_trade(signal)
             if fund > 0:
-                log.debug ("Generating BUY trade_req with fund: %d for signal: %d"%(fund, signal))
+                size = fund / self.get_market_rate()
+                log.debug ("Generating BUY trade_req with fund: %d size: %d for signal: %d"%(fund, size, signal))
                 return TradeRequest(Product=self.product_id,
                                   Side="BUY",
-                                   Size=round(Decimal(fund), 8),
+                                   Size=round(Decimal(size), 8),
+                                   Fund=round(Decimal(fund), 8),
                                    Type="market",
                                    Price=round(Decimal(0), 8),
                                    Stop=0)            
@@ -465,6 +496,7 @@ class Market:
                 return TradeRequest(Product=self.product_id,
                                   Side="SELL",
                                    Size=round(Decimal(asset_size),8),
+                                   Fund=round(Decimal(0), 8),                                   
                                    Type="market",
                                    Price=round(Decimal(0), 8),
                                    Stop=0)
@@ -793,7 +825,7 @@ def market_setup (decisionConfig):
                         
 def display_market_stats ():
     global OldMonk_market_list
-    print ("Market statistics:\n")
+    print ("\n\n*****Market statistics*****\n")
     for market in OldMonk_market_list:
         print ("\n%s\n\n"%str(market))    
 #EOF
