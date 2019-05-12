@@ -111,10 +111,13 @@ class Fund:
             return fund
         
     def __str__(self):
-        return ("{'initial_value':%f,'current_value':%f,'current_hold_value':%f,"
-                "'total_traded_value':%f,'current_realized_profit':%f,'current_unrealized_profit':%f"
-                ",'total_profit':%f,'current_avg_buy_price':%f,'latest_buy_price':%f,"
-                "'fund_liquidity_percent':%d, 'max_per_buy_fund_value':%d}")%(
+        return ("""
+{
+"initial_value":%f,"current_value":%f,"current_hold_value":%f, "total_traded_value":%f,
+"current_realized_profit":%f,"current_unrealized_profit":%f, "total_profit":%f,
+"current_avg_buy_price":%f,"latest_buy_price":%f,
+"fund_liquidity_percent":%d, "max_per_buy_fund_value":%d
+}""")%(
             self.initial_value, self.current_value, self.current_hold_value,
              self.total_traded_value,self.current_realized_profit, 
              self.current_unrealized_profit, self.total_profit, self.current_avg_buy_price, 
@@ -134,6 +137,12 @@ class Asset:
             
     def set_initial_size (self, size):
         self.initial_size = self.current_size = size
+    
+    def get_initial_size (self):
+        return self.initial_size
+    
+    def get_current_size (self):
+        return self.current_size
         
     def set_hold_size (self, size):
         self.current_hold_size = size
@@ -149,8 +158,11 @@ class Asset:
             return 0
 
     def __str__(self):
-        return ("{'initial_size':%f, 'current_size':%f, 'latest_traded_size':%f,"
-                " 'current_hold_size':%f, 'total_traded_size':%f}")%(
+        return ("""
+{
+"initial_size":%f, "current_size":%f, "current_hold_size":%f, 
+"latest_traded_size":%f, "total_traded_size":%f
+}""")%(
             self.initial_size, self.current_size, self.latest_traded_size,
             self.current_hold_size, self.total_traded_size)
                 
@@ -775,7 +787,23 @@ class Market:
             trade_req_list.append(trade_req)
         if (len(trade_req_list)):
             self._execute_market_trade(trade_req_list)
-
+    
+    def finish_trading(self):
+        log.info ("finishing trading session; selling all acquired assets")
+        # sell assets and come back to initial state
+        self.num_sell_req += 1                            
+        asset_size = self.asset.get_current_size() - self.asset.get_initial_size()
+        if asset_size > 0:
+            log.debug ("Generating SELL trade_req with asset size: %d"%(asset_size))       
+            trade_req = TradeRequest(Product=self.product_id,
+                              Side="SELL",
+                               Size=round(Decimal(asset_size),8),
+                               Fund=round(Decimal(0), 8),                                   
+                               Type="market",
+                               Price=round(Decimal(0), 8),
+                               Stop=0)
+            self._execute_market_trade([trade_req])
+            
     def __str__(self):
         return """
 {

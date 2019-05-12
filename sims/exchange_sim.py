@@ -103,22 +103,30 @@ def set_initial_acc_values (market):
     #Setup the initial params
     market.fund.set_initial_value(Decimal(2000))
     market.fund.set_hold_value(Decimal(100))
-    market.fund.set_fund_liquidity_percent(99)       #### Limit the fund to 90%
-    market.fund.set_max_per_buy_fund_value(100)
+    market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
+    market.fund.set_max_per_buy_fund_value(50)
     market.asset.set_initial_size(Decimal(10))
     market.asset.set_hold_size( Decimal(0.1))
         
+def finish_backtesting(market):
+    log.info ("finish backtesting. market:%s"%(market.name))
+
+    # sell acquired assets and come back to initial state
+    market.finish_trading()
+    return True
+    
 def do_backtesting ():
     # don't sleep for backtesting    
     sleep_time = 0
     done = False
+    all_done = 0
         
     for market in get_market_list():
         log.info ("backtest setup for market: %s num_candles:%d"%(market.name, market.num_candles))
         market.backtesting_idx = 0
         set_initial_acc_values(market)        
                           
-    while (not done) : 
+    while (all_done < 10) : 
         # check for the msg in the feed Q and process, with timeout
         done = True
         msg = feed_deQ(sleep_time)
@@ -137,7 +145,12 @@ def do_backtesting ():
                     market_simulator_run (market)
                 #if atleast one market is not done, we will continue
                 done = False
-                market.backtesting_idx += 1                
+                market.backtesting_idx += 1
+            elif done == True:
+                finish_backtesting(market)
+                #let's do few iterations and make sure everything is really done!
+                all_done += 1 
+                       
     #end While(true)
 def show_stats ():
     display_market_stats()
