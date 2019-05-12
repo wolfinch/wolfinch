@@ -96,7 +96,7 @@ class Fund:
     def set_max_per_buy_fund_value (self, value):
         self.max_per_buy_fund_value = Decimal(value)  
 
-    def get_fund_to_trade (self, strength): ## TODO: FIXME: jork: Check hold value
+    def get_fund_to_trade (self, strength):
         slice = self.max_per_buy_fund_value / Decimal(5) #max strength
         liquid_fund = self.initial_value *  self.fund_liquidity_percent / Decimal(100)
         rock_bottom = self.initial_value - liquid_fund
@@ -104,7 +104,7 @@ class Fund:
         fund = slice * strength
         log.debug ("fund: %s slice: %s signal: %s"%(fund, slice, strength))
         
-        if self.current_value - fund <= rock_bottom:
+        if self.current_value - (self.current_hold_value + fund) <= rock_bottom:
             log.critical ("**** No Funds to trade. signal(%d) ****"%(strength))
             return 0
         else:
@@ -138,14 +138,14 @@ class Asset:
     def set_hold_size (self, size):
         self.current_hold_size = size
         
-    def get_asset_to_trade (self, strength):       ### FIXME: jork: Check the hold value
+    def get_asset_to_trade (self, strength):
         slice = Decimal(self.max_per_trade_size)/Decimal(5.0)
         
         cur_size = slice * strength
-        if self.current_size >= cur_size:
+        if (self.current_size - self.current_hold_size) >= cur_size:
             return cur_size
         else:
-            log.critical("**** No Funds to trade. signal(%d) ****"%(strength))
+            log.critical("**** No Assets to trade. signal(%d) ****"%(strength))
             return 0
 
     def __str__(self):
@@ -648,6 +648,14 @@ class Market:
             if new_result != 0: #signal generated
                 log.debug ("strategy (%s) val (%s)"%(strategy.name, str(new_result)))
         
+    def _init_states(self):
+        #calc init avg price
+        # We calculate the avg buy price based on the current asset size and first available candle size
+        # This may not be the actual avg buy price. 
+        # But from our life-cycle perspective, this is good ( or the best we can do.)
+        #TODO: Validate: This??
+        self.fund.current_avg_buy_price = self.get_indicator_list()[0]['ohlc'].close
+        log.debug ("_init_states: current_avg_buy_price: %d"%(self.fund.current_avg_buy_price))
         
     ##########################################
     ############## Public APIs ###############
@@ -667,6 +675,7 @@ class Market:
         num_candles = len(self.market_indicators_data)
         self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
         self.num_candles = num_candles
+        self._init_states()
         log.debug ("market (%s) setup done! num_candles(%d) cur_candle_time(%d)"%(
             self.name, num_candles, self.cur_candle_time))
         
