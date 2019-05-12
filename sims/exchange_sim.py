@@ -4,21 +4,20 @@
 #  (c) Joshith
 # '''
 
-import requests
-import json
-import pprint
+# import requests
+# import json
 import uuid
 import time
-from decimal import *
+from decimal import Decimal
 
-from utils import *
+from utils import getLogger
 from market import *
 #from market.order import Order, TradeRequest
 #from market import feed_enQ
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
-log.setLevel (log.DEBUG)
+log.setLevel (log.INFO)
 
 ###### SIMULATOR Global switch ######
 simulator_on = True
@@ -66,7 +65,7 @@ def do_trade (market):
     for order in open_orders_pvt[:]:
         #first update order state
         order.status_type = 'received'
-        print ("order: %s"%(str(order)))
+#         print ("order: %s"%(str(order)))
         market.order_status_update (order)
         #now trade
         this_order = order_struct # Note: this at the top
@@ -98,15 +97,15 @@ def do_trade (market):
             feed_enQ(market, this_order)
             traded_orders_pvt.append (order)
             open_orders_pvt.remove (order)
-            log.info ("Traded market order: %s filled_order: %s price: %s"%(str(order), str(this_order), str(price)))
+            log.debug ("Traded market order: %s filled_order: %s price: %s"%(str(order), str(this_order), str(price)))
         
 def set_initial_acc_values (market):
     #Setup the initial params
     market.fund.set_initial_value(Decimal(2000))
     market.fund.set_hold_value(Decimal(100))
-    market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
+    market.fund.set_fund_liquidity_percent(99)       #### Limit the fund to 90%
     market.fund.set_max_per_buy_fund_value(100)
-    market.asset.set_initial_size(Decimal(10))
+    market.asset.set_initial_size(Decimal(0))
     market.asset.set_hold_size( Decimal(0.1))
         
 def do_backtesting ():
@@ -115,7 +114,7 @@ def do_backtesting ():
     done = False
         
     for market in get_market_list():
-        log.debug ("backtest setup for market: %s num_candles:%d"%(market.name, market.num_candles))
+        log.info ("backtest setup for market: %s num_candles:%d"%(market.name, market.num_candles))
         market.backtesting_idx = 0
         set_initial_acc_values(market)        
                           
@@ -178,10 +177,10 @@ def buy (trade_req) :
     
 def sell (trade_req) :
     if not isinstance(trade_req, TradeRequest):
-        return None    
+        return None
     log.debug ("SELL - Placing Order on SIM exchange --" )
     sell_order = Order(str(uuid.uuid1()), trade_req.product, "pending", order_type=trade_req.type, 
-                      status_reason=None, side='buy', request_size=trade_req.size,
+                      status_reason=None, side='sell', request_size=trade_req.size,
                    filled_size=0,  price=trade_req.price, funds=0,
                  fees=0, create_time=time.ctime()) 
     open_orders_pvt = open_orders.get(trade_req.product) 

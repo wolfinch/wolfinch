@@ -111,10 +111,10 @@ class Fund:
             return fund
         
     def __str__(self):
-        return ("{'initial_value':%g,'current_value':%g,'current_hold_value':%g,"
-                "'total_traded_value':%g,'current_realized_profit':%g,'current_unrealized_profit':%g"
-                ",'total_profit':%g,'current_avg_buy_price':%g,'latest_buy_price':%g,"
-                "'fund_liquidity_percent':%g, 'max_per_buy_fund_value':%g}")%(
+        return ("{'initial_value':%f,'current_value':%f,'current_hold_value':%f,"
+                "'total_traded_value':%f,'current_realized_profit':%f,'current_unrealized_profit':%f"
+                ",'total_profit':%f,'current_avg_buy_price':%f,'latest_buy_price':%f,"
+                "'fund_liquidity_percent':%d, 'max_per_buy_fund_value':%d}")%(
             self.initial_value, self.current_value, self.current_hold_value,
              self.total_traded_value,self.current_realized_profit, 
              self.current_unrealized_profit, self.total_profit, self.current_avg_buy_price, 
@@ -149,8 +149,8 @@ class Asset:
             return 0
 
     def __str__(self):
-        return ("{'initial_size':%g, 'current_size':%g, 'latest_traded_size':%g,"
-                " 'current_hold_size':%g, 'total_traded_size':%g}")%(
+        return ("{'initial_size':%f, 'current_size':%f, 'latest_traded_size':%f,"
+                " 'current_hold_size':%f, 'total_traded_size':%f}")%(
             self.initial_size, self.current_size, self.latest_traded_size,
             self.current_hold_size, self.total_traded_size)
                 
@@ -197,6 +197,16 @@ class Market:
 #         
 #     '''    
     primary = True
+    num_buy_req =0 
+    num_sell_req = 0
+    num_buy_req_reject = 0
+    num_sell_req_reject = 0
+    num_buy_order = 0
+    num_sell_order = 0    
+    num_buy_order_success = 0
+    num_sell_order_success = 0    
+    num_buy_order_failed = 0
+    num_sell_order_failed = 0    
     def __init__(self, product=None, exchange=None):
         self.product_id = None if product == None else product['id']
         self.name = None if product == None else product['display_name']
@@ -310,7 +320,7 @@ class Market:
                 raise Exception("Unknown sell order status: %s"%(msg_type))                
         else:
             log.error ("Unknown order Side (%s)"%(side))
-            raise Exception("Unknown order Side (%s)"%(side))         
+            raise Exception("Unknown order Side (%s)"%(side))
                     
     def _buy_order_received (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
@@ -338,16 +348,19 @@ class Market:
             raise Exception("Invalid Market_order filled order:%s"%(str(order)))            
                                         
     def _buy_order_create (self, trade_req):
+        
+        self.num_buy_order += 1
         if (sims.simulator_on):
             order = sims.buy (trade_req)
         else:
             order = self.exchange.buy (trade_req)
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
-            log.debug ("BUY Order Sent to exchange. ")      
+            log.debug ("BUY Order Sent to exchange. ")
             return market_order
         else:
             log.debug ("BUY Order Failed to place")
+            self.num_buy_order_failed += 1            
             return None
             
     def _buy_order_filled (self, order):
@@ -363,11 +376,14 @@ class Market:
             curr_total_asset_size = (self.asset.current_hold_size + self.asset.current_size)
             self.fund.current_avg_buy_price = (((self.fund.current_avg_buy_price *
                                                   curr_total_asset_size) + (order_cost))/
-                                                        (curr_total_asset_size + market_order.request_size))
+                                                        (curr_total_asset_size + market_order.filled_size))
             #asset
             self.asset.current_size += market_order.filled_size
             self.asset.latest_traded_size = market_order.filled_size
             self.asset.total_traded_size += market_order.filled_size
+            
+            #stats
+            self.num_buy_order_success += 1            
         else:
             log.critical("Invalid Market_order filled order:%s"%(str(order)))
             raise Exception("Invalid Market_order filled order:%s"%(str(order)))            
@@ -380,6 +396,7 @@ class Market:
             self.fund.current_value += order_cost
             
     def _sell_order_create (self, trade_req):
+        self.num_sell_order += 1                    
         if (sims.simulator_on):
             order = sims.sell (trade_req)
         else:
@@ -390,6 +407,7 @@ class Market:
             log.debug ("SELL Order Sent to exchange. ")      
             return market_order 
         else:
+            self.num_sell_order_failed += 1                        
             log.debug ("SELL Order Failed to place")
             return None        
 
@@ -427,6 +445,8 @@ class Market:
             #profit
             profit = (market_order.price - self.fund.current_avg_buy_price )*market_order.filled_size
             self.fund.current_realized_profit += profit
+            #stats
+            self.num_sell_order_success += 1            
         else:
             log.critical("Invalid Market_order filled order:%s"%(str(order)))
             raise Exception("Invalid Market_order filled order:%s"%(str(order)))
@@ -474,6 +494,7 @@ class Market:
         log.debug ('Calculate trade Req')
         if signal > 0 :
             #BUY
+            self.num_buy_req += 1
             fund = self.fund.get_fund_to_trade(signal)
             if fund > 0:
                 size = fund / self.get_market_rate()
@@ -487,9 +508,11 @@ class Market:
                                    Stop=0)            
             else:
                 log.debug ("Unable to generate BUY request for signal (%d). Too low fund"%(signal))
+                self.num_buy_req_reject += 1                
                 return None            
         elif signal < 0:
             # SELL
+            self.num_sell_req += 1                            
             asset_size = self.asset.get_asset_to_trade (signal * -1)
             if asset_size > 0:
                 log.debug ("Generating SELL trade_req with asset size: %d"%(asset_size))       
@@ -502,6 +525,7 @@ class Market:
                                    Stop=0)
             else:
                 log.debug ("Unable to generate SELL request for signal (%d). Too low asset size"%(signal))
+                self.num_sell_req_reject += 1                                
                 return None
 
         else:
@@ -744,8 +768,21 @@ class Market:
             self._execute_market_trade(trade_req_list)
 
     def __str__(self):
-        return "{''exchange_name':%s, product_id':%s,'name':%s \n'fund':%s \n 'asset':%s}"%(
+        return """
+{
+"exchange_name": %s, "product_id": %s,"name": %s,
+"num_buy_req": %s, "num_buy_req_reject": %s,
+"num_sell_req": %s, "num_sell_req_reject": %s,
+"num_buy_order": %s, "num_buy_order_success": %s, "num_buy_order_failed": %s,                   
+"num_sell_order": %s, "num_sell_order_success": %s, "num_sell_order_failed": %s,
+"fund":%s
+"asset":%s
+}"""%(
                 self.exchange_name, self.product_id,self.name, 
+                self.num_buy_req, self.num_buy_req_reject,
+                self.num_sell_req, self.num_sell_req_reject,
+                self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed, 
+                self.num_sell_order, self.num_sell_order_success, self.num_sell_order_failed,                 
                 str(self.fund), str(self.asset))
         
         

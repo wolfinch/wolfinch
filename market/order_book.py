@@ -19,10 +19,10 @@ import uuid
 from bintrees import RBTree
 from decimal import Decimal
 
-from utils import *
+from utils import getLogger
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.DEBUG)
+log.setLevel(log.CRITICAL)
 
 
 class OrderBook():
@@ -125,6 +125,7 @@ class OrderBook():
                 log.info ("Buy order_id(%s) Status: %s" % (str(order_id), order_status))                
             else:
                 log.critical("UNKNOWN buy order status: %s" % (order_status))
+                raise Exception("UNKNOWN buy order status: %s" % (order_status))
                 return None
         elif (order_side == 'sell'):
             # insert/replace the order
@@ -140,17 +141,19 @@ class OrderBook():
                        "total_open_order_count: %d "
                        "traded_sell_orders_count: %d" % (self.total_order_count,
                                                        self.total_open_order_count,
-                                                       len(self.traded_sell_orders_db)))                
+                                                       len(self.traded_sell_orders_db)))    
             elif (order_status in ['pending', 'open', 'received', 'match']):
                 # Nothing much to do for us here
-                log.info ("Sell order_id(%s) Status: %s" % (str(order_id), order_status))              
+                log.info ("Sell order_id(%s) Status: %s" % (str(order_id), order_status))
             else:
                 log.critical("UNKNOWN sell order status: %s" % (order_status))
+                raise Exception("UNKNOWN buy order status: %s" % (order_status))                
                 return None
         else:
             log.critical("Invalid order :%s" % (order))
+            raise Exception("Invalid order :%s" % (order))            
             return None
-        log.debug ("Order: %s\n"%(str(order)))
+#         log.debug ("Order: %s\n"%(str(order)))
         return order
     
     ######### L2 Order book for Exchange, product ########

@@ -12,6 +12,7 @@ import db
 
 Db = None #db.init_db()
 log = getLogger ('ORDER')
+log.setLevel (log.CRITICAL)
 
 Base = declarative_base()
 
@@ -38,7 +39,7 @@ class TradeRequest:
         self.stop = Decimal(Stop or 0)
 
     def __str__(self):
-        return "{'product':%s, 'side':%s, 'size':%g, 'fund':%g, 'type':%s, 'price':%g, 'stop':%g}" % (
+        return "{'product':%s, 'side':%s, 'size':%f, 'fund':%f, 'type':%s, 'price':%f, 'stop':%f}" % (
             self.product, self.side, self.size, self.fund, self.type, self.price, self.stop)
 
 
@@ -97,9 +98,9 @@ class Order (Base):
         
     def __str__ (self):
         return ("{'id':%s, 'product_id':%s, 'side':%s, 'order_type':%s, "
-            "'status_type':%s, 'status_reason':%s, 'request_size':%s, "
-            "'filled_size':%s, 'remaining_size':%s, 'price':%s, 'funds':%s, "
-            "'fees':%s, 'create_time':%s, 'update_time':%s}") % (
+            "'status_type':%s, 'status_reason':%s, 'request_size':%f, "
+            "'filled_size':%f, 'remaining_size':%f, 'price':%f, 'funds':%f, "
+            "'fees':%f, 'create_time':%s, 'update_time':%s}") % (
             self.id, self.product_id, self.side, self.order_type, self.status_type,
              self.status_reason, self.request_size, self.filled_size, self.remaining_size,
              self.price, self.funds, self.fees, self.create_time, self.update_time)
