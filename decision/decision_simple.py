@@ -28,7 +28,7 @@ class Decision ():
                 
     def generate_signal(self, idx):
         # simple decision uses the latest "EMA_RSI" strategy signal for now
-        return self.market.market_strategies_data[idx]["EMA_RSI"]
+        return self.market.market_strategies_data[idx]["TREND_RSI"] #["EMA_RSI"]
          
     def summary(self):
         pass

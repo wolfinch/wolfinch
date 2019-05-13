@@ -194,6 +194,9 @@ def arg_parse ():
     if (args.backtesting):              
         log.debug ("backtesting enabled")       
         sims.backtesting_on = True
+    else:
+        log.debug ("backtesting disabled")       
+        sims.backtesting_on = False        
                  
     if (args.config):
         log.debug ("config file: %s"%args.config)
@@ -207,6 +210,9 @@ def arg_parse ():
     else:
         parser.print_help()
         exit(1)
+    
+#     log.debug("sims.backtesting_on: %d"%(sims.backtesting_on))
+#     exit(1)
     
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
