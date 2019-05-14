@@ -44,7 +44,7 @@ class OrderBook():
         self.open_sell_orders_db = {}
         self.traded_buy_orders_db = []
         self.traded_sell_orders_db = []
-        self.pending_trade_req = []  # TODO: FIXME: jork: this better be a nice AVL tree or sort
+        self.pending_trade_req = []  # TODO: FIXME: jork: this better be a nice AVL tree of sort
                     
     def add_pending_trade_req(self, trade_req):
         self.pending_trade_req.append(trade_req)

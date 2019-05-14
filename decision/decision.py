@@ -20,7 +20,7 @@ import decision_simple
 # import decision_ML
 
 log = getLogger ('DECISION')
-log.setLevel(log.DEBUG)
+log.setLevel(log.CRITICAL)
 
 class Decision ():
     def __init__(self, market, market_list, decision_type="", config_path=""):        

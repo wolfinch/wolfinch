@@ -27,7 +27,7 @@ from utils import getLogger
 import market
 
 log = getLogger ('MODEL-TEST')
-log.setLevel(log.DEBUG)
+log.setLevel(log.CRITICAL)
     
 X_RANGE = 60
 

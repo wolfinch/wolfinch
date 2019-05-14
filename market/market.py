@@ -16,7 +16,6 @@
 
 ##############################################
 ###### Bugs/Caveats, TODOs, AIs###############
-### 1. Account Remaining_size for fund calculations
 ### 2. Use Fee and enhance to maker/taker fees
 
 
@@ -52,7 +51,7 @@ import db
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 OldMonk_market_list = []
 
@@ -218,7 +217,9 @@ class Market:
     num_buy_order_success = 0
     num_sell_order_success = 0    
     num_buy_order_failed = 0
-    num_sell_order_failed = 0    
+    num_sell_order_failed = 0
+    maker_fee = 0
+    taker_fee = 0
     def __init__(self, product=None, exchange=None):
         self.product_id = None if product == None else product['id']
         self.name = None if product == None else product['display_name']
@@ -228,7 +229,6 @@ class Market:
         self.consume_feed = None
         self.fund = Fund ()
         self.asset = Asset ()
-        #self.order_book = Orders ()
         self.order_book = OrderBook(market=self)
         self.decision = None  #will setup later
         # Market Strategy related Data
@@ -337,7 +337,7 @@ class Market:
     def _buy_order_received (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
-            log.debug ("BUY RECV>>> request_size:%s funds:%s"%(market_order.request_size, market_order.funds))
+            log.info ("BUY RECV>>> request_size:%s funds:%s"%(market_order.request_size, market_order.funds))
             
             #update fund 
             order_type = market_order.order_type
@@ -378,7 +378,7 @@ class Market:
     def _buy_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
-            log.debug ("BUY FILLED>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))
+            log.info ("BUY FILLED>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))
             order_cost = (market_order.filled_size*market_order.price)
             #fund
             self.fund.current_hold_value -= order_cost
@@ -406,9 +406,16 @@ class Market:
             order_cost = (market_order.remaining_size*market_order.price)
             self.fund.current_hold_value -= order_cost
             self.fund.current_value += order_cost
-            
+    
+    def open_position(self):
+        pass
+    
+    def close_position(self):
+        pass
+    
     def _sell_order_create (self, trade_req):
-        self.num_sell_order += 1                    
+        self.num_sell_order += 1
+        log.critical("SELL: %d sig: %s"%(self.num_sell_order, trade_req))
         if (sims.simulator_on):
             order = sims.sell (trade_req)
         else:
@@ -424,10 +431,10 @@ class Market:
             return None        
 
     def _sell_order_received (self, order):
-        #log.debug ("SELL RECV: %s"%(json.dumps(order, indent=4, sort_keys=True)))
+#         log.critical ("SELL RECV: %s"%(json.dumps(order, indent=4, sort_keys=True)))
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
-            log.debug ("SELL RECV>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))            
+            log.info ("SELL RECV>>> filled_size:%s price:%s"%(market_order.request_size, market_order.price))            
             #update fund 
             order_type = market_order.order_type
             size = 0
@@ -436,7 +443,7 @@ class Market:
             elif order_type == 'limit':
                 size = Decimal (market_order.request_size)
             else:
-                log.error ("BUY: unknown order_type: %s"%(order_type))
+                log.error ("SELL: unknown order_type: %s"%(order_type))
                 return
             self.asset.current_hold_size += size
             self.asset.current_size -= size
@@ -447,7 +454,7 @@ class Market:
     def _sell_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
-            log.debug ("SELL FILLED>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))            
+            log.info ("SELL FILLED>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))            
             order_cost = (market_order.filled_size*market_order.price)        
             #fund
             self.fund.current_value += order_cost
@@ -743,7 +750,10 @@ class Market:
         """
         signal = self.decision.generate_signal((idx if idx != -1 else (self.num_candles-1)))
         
-        log.info ("Generated Trade Signal(%d) for product(%s)"%(signal, self.product_id))
+        if signal != 0:
+            log.info ("Generated Trade Signal(%d) for product(%s) idx(%d)"%(signal, self.product_id, idx))  
+        else:
+            log.debug ("Generated Trade Signal(%d) for product(%s) idx(%d)"%(signal, self.product_id, idx))            
                 
         return signal
     
@@ -778,7 +788,7 @@ class Market:
         #get manual trade reqs if any
         trade_req_list = self._get_manual_trade_req ()
         # Now generate auto trade req list
-        log.info ("Trade Signal strength:"+str(signal))
+        log.debug ("Trade Signal strength:"+str(signal))
         trade_req = self._generate_trade_request( signal)
         #validate the trade Req
         if (trade_req != None):
@@ -788,13 +798,14 @@ class Market:
         if (len(trade_req_list)):
             self._execute_market_trade(trade_req_list)
     
-    def finish_trading(self):
+    def close_all_positions(self):
+        #TODO: FIXME: TBD: big Q: should we enhance to track positions ???
         log.info ("finishing trading session; selling all acquired assets")
         # sell assets and come back to initial state
-        self.num_sell_req += 1                            
         asset_size = self.asset.get_current_size() - self.asset.get_initial_size()
         if asset_size > 0:
             log.debug ("Generating SELL trade_req with asset size: %d"%(asset_size))       
+            self.num_sell_req += 1                                        
             trade_req = TradeRequest(Product=self.product_id,
                               Side="SELL",
                                Size=round(Decimal(asset_size),8),

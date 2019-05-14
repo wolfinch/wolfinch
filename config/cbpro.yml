@@ -36,8 +36,10 @@ exchange:
 #  apiBase     : 'https://api.gdax.com'
 #  wsFeed      : 'wss://ws-feed.gdax.com'
 
-  orderType    : limit
-  orderFee     : 0
+  orderType    : market
+  orderFee     : 
+     maker : 0.15
+     taker : 0.25
   
   backfill:
     - enabled  : Yes  

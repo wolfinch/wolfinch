@@ -112,7 +112,7 @@ def finish_backtesting(market):
     log.info ("finish backtesting. market:%s"%(market.name))
 
     # sell acquired assets and come back to initial state
-    market.finish_trading()
+    market.close_all_positions()
     return True
     
 def do_backtesting ():
@@ -137,8 +137,8 @@ def do_backtesting ():
             market.update_market_states()
             # Trade only on primary markets
             if (market.primary == True and (market.backtesting_idx < market.num_candles)):
-                log.info ("BACKTEST(%d): processing on market: exchange (%s) product: %s"%(
-                    market.backtesting_idx, market.exchange_name, market.name))     
+#                 log.info ("BACKTEST(%d): processing on market: exchange (%s) product: %s"%(
+#                     market.backtesting_idx, market.exchange_name, market.name))     
                 signal = market.generate_trade_signal (market.backtesting_idx)
                 market.consume_trade_signal (signal)
                 if (simulator_on):
@@ -148,6 +148,9 @@ def do_backtesting ():
                 market.backtesting_idx += 1
             elif done == True:
                 finish_backtesting(market)
+                market.backtesting_idx = market.num_candles - 1
+                if (simulator_on):
+                    market_simulator_run (market)                
                 #let's do few iterations and make sure everything is really done!
                 all_done += 1 
                        
