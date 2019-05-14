@@ -129,7 +129,8 @@ class Asset:
         self.latest_traded_size = Decimal(0.0)
         self.current_hold_size = Decimal(0.0)
         self.total_traded_size = Decimal(0.0)
-        self.max_per_trade_size = 0.001 #FIXME: jork
+        self.max_per_trade_size = Decimal(0.0)
+        self.hold_size = Decimal(0.0)
     
     def set_max_per_trade_size (self, size):
         self.max_per_trade_size = size
@@ -144,26 +145,25 @@ class Asset:
         return self.current_size
         
     def set_hold_size (self, size):
-        self.current_hold_size = size
+        self.hold_size = size
         
     def get_asset_to_trade (self, strength):
         slice = Decimal(self.max_per_trade_size)/Decimal(5.0)
         
         cur_size = slice * strength
-        if (self.current_size - self.current_hold_size) >= cur_size:
+        if ((self.current_size - self.current_hold_size) >= (cur_size + self.hold_size)):
             return cur_size
         else:
             log.critical("**** No Assets to trade. signal(%d) ****"%(strength))
             return 0
 
     def __str__(self):
-        return ("""
-{
-"initial_size":%f, "current_size":%f, "current_hold_size":%f, 
-"latest_traded_size":%f, "total_traded_size":%f
+        return ("""{
+"initial_size":%f, "current_size":%f, "hold_size": %f, "current_hold_size":%f, 
+"max_per_trade_size":%f, "latest_traded_size":%f, "total_traded_size":%f
 }""")%(
-            self.initial_size, self.current_size, self.latest_traded_size,
-            self.current_hold_size, self.total_traded_size)
+            self.initial_size, self.current_size, self.hold_size, self.current_hold_size,
+            self.max_per_trade_size, self.latest_traded_size, self.total_traded_size)
                 
 class Market:
 #     '''
@@ -452,6 +452,7 @@ class Market:
             raise Exception("Invalid Market_order filled order:%s"%(str(order)))
                         
     def _sell_order_filled (self, order):
+        # TODO: FIXME: support multi part fills (important)
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
             log.info ("SELL FILLED>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))            
@@ -532,7 +533,7 @@ class Market:
         elif signal < 0:
             # SELL
             self.num_sell_req += 1                            
-            asset_size = self.asset.get_asset_to_trade (signal * -1)
+            asset_size = self.asset.get_asset_to_trade (abs(signal))
             if asset_size > 0:
                 log.debug ("Generating SELL trade_req with asset size: %d"%(asset_size))       
                 return TradeRequest(Product=self.product_id,
@@ -543,7 +544,7 @@ class Market:
                                    Price=round(Decimal(0), 8),
                                    Stop=0)
             else:
-                log.debug ("Unable to generate SELL request for signal (%d). Too low asset size"%(signal))
+                log.critical ("Unable to generate SELL request for signal (%d). Too low asset size(%f)"%(signal, asset_size))
                 self.num_sell_req_reject += 1                                
                 return None
 

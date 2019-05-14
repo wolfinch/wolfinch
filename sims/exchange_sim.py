@@ -107,6 +107,7 @@ def set_initial_acc_values (market):
     market.fund.set_max_per_buy_fund_value(50)
     market.asset.set_initial_size(Decimal(10))
     market.asset.set_hold_size( Decimal(0.1))
+    market.asset.set_max_per_trade_size(Decimal(0.01))
         
 def finish_backtesting(market):
     log.info ("finish backtesting. market:%s"%(market.name))
