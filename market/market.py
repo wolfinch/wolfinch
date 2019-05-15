@@ -82,6 +82,9 @@ class Fund:
         self.latest_buy_price = Decimal(0.0)         
         self.fund_liquidity_percent = Decimal(0.0)
         self.max_per_buy_fund_value = Decimal(0.0)
+        self.maker_fee_rate = 0
+        self.taker_fee_rate = 0
+        self.fee_accrued = Decimal(0)        
             
     def set_initial_value (self, value):
         self.initial_value = self.current_value = Decimal(value)
@@ -93,7 +96,11 @@ class Fund:
         self.current_hold_value = Decimal(value)      
         
     def set_max_per_buy_fund_value (self, value):
-        self.max_per_buy_fund_value = Decimal(value)  
+        self.max_per_buy_fund_value = Decimal(value)
+    
+    def set_fee(self, maker_fee, taker_fee):
+        self.maker_fee_rate = maker_fee
+        self.taker_fee_rate = taker_fee          
 
     def get_fund_to_trade (self, strength):
         slice = self.max_per_buy_fund_value / Decimal(5) #max strength
@@ -103,7 +110,7 @@ class Fund:
         fund = slice * strength
         log.debug ("fund: %s slice: %s signal: %s"%(fund, slice, strength))
         
-        if self.current_value - (self.current_hold_value + fund) <= rock_bottom:
+        if self.current_value - (self.current_hold_value + fund) < rock_bottom:
             log.critical ("**** No Funds to trade. signal(%d) ****"%(strength))
             return 0
         else:
@@ -112,13 +119,13 @@ class Fund:
     def __str__(self):
         return ("""
 {
-"initial_value":%f,"current_value":%f,"current_hold_value":%f, "total_traded_value":%f,
+"initial_value":%f,"current_value":%f,"current_hold_value":%f, "total_traded_value":%f, "fee_accrued": %f,
 "current_realized_profit":%f,"current_unrealized_profit":%f, "total_profit":%f,
 "current_avg_buy_price":%f,"latest_buy_price":%f,
 "fund_liquidity_percent":%d, "max_per_buy_fund_value":%d
 }""")%(
             self.initial_value, self.current_value, self.current_hold_value,
-             self.total_traded_value,self.current_realized_profit, 
+             self.total_traded_value, self.fee_accrued, self.current_realized_profit, 
              self.current_unrealized_profit, self.total_profit, self.current_avg_buy_price, 
              self.latest_buy_price, self.fund_liquidity_percent, self.max_per_buy_fund_value )
                 
@@ -218,8 +225,6 @@ class Market:
     num_sell_order_success = 0    
     num_buy_order_failed = 0
     num_sell_order_failed = 0
-    maker_fee = 0
-    taker_fee = 0
     def __init__(self, product=None, exchange=None):
         self.product_id = None if product == None else product['id']
         self.name = None if product == None else product['display_name']
@@ -269,20 +274,20 @@ class Market:
 
         if 0 == len(self.order_book.pending_trade_req):
             return 
-        market_price = self.get_market_price()
+        market_price = self.get_market_rate()
         for trade_req in self.order_book.pending_trade_req[:]:
             if (trade_req.side == 'BUY'):
                 if (trade_req.stop >= market_price):
                     self.buy_order_create(trade_req)
                     self.order_book.remove_pending_trade_req(trade_req)
                 else:
-                    log.debug("STOP BUY: market(%g) higher than STOP (%g)"%(self.current_market_rate, trade_req.stop))
+                    log.debug("STOP BUY: market(%g) higher than STOP (%g)"%(self.get_market_rate(), trade_req.stop))
             elif (trade_req.side <= 'SELL'):
                 if (trade_req.stop <= market_price):
                     self.sell_order_create(trade_req)
                     self.order_book.remove_pending_trade_req(trade_req)     
                 else:
-                    log.debug("STOP SELL: market(%g) lower than STOP (%g)"%(self.current_market_rate, trade_req.stop))                                   
+                    log.debug("STOP SELL: market(%g) lower than STOP (%g)"%(self.get_market_rate(), trade_req.stop))                                   
             
     def order_status_update (self, order):
         log.debug ("ORDER UPDATE: %s"%(str(order)))        
@@ -337,7 +342,8 @@ class Market:
     def _buy_order_received (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
-            log.info ("BUY RECV>>> request_size:%s funds:%s"%(market_order.request_size, market_order.funds))
+            log.info ("BUY RECV>>> request_size:%s funds:%s"%(
+                round(market_order.request_size, 4), round(market_order.funds, 4)))
             
             #update fund 
             order_type = market_order.order_type
@@ -378,7 +384,8 @@ class Market:
     def _buy_order_filled (self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
-            log.info ("BUY FILLED>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))
+            log.info ("BUY FILLED>>> filled_size:%s price:%s"%(
+                round(market_order.filled_size, 4), round(market_order.price, 4)))
             order_cost = (market_order.filled_size*market_order.price)
             #fund
             self.fund.current_hold_value -= order_cost
@@ -434,7 +441,8 @@ class Market:
 #         log.critical ("SELL RECV: %s"%(json.dumps(order, indent=4, sort_keys=True)))
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
-            log.info ("SELL RECV>>> filled_size:%s price:%s"%(market_order.request_size, market_order.price))            
+            log.info ("SELL RECV>>> filled_size:%s price:%s"%(
+                round(market_order.request_size, 4), round(market_order.price, 4)))            
             #update fund 
             order_type = market_order.order_type
             size = 0
@@ -455,18 +463,21 @@ class Market:
         # TODO: FIXME: support multi part fills (important)
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
-            log.info ("SELL FILLED>>> filled_size:%s price:%s"%(market_order.filled_size, market_order.price))            
             order_cost = (market_order.filled_size*market_order.price)        
             #fund
             self.fund.current_value += order_cost
             #asset
             self.asset.current_hold_size -= (market_order.filled_size + market_order.remaining_size)
             self.asset.current_size += market_order.remaining_size
+            self.asset.latest_traded_size = market_order.filled_size
+            self.asset.total_traded_size += market_order.filled_size            
             #profit
             profit = (market_order.price - self.fund.current_avg_buy_price )*market_order.filled_size
             self.fund.current_realized_profit += profit
             #stats
-            self.num_sell_order_success += 1            
+            self.num_sell_order_success += 1
+            log.info ("SELL FILLED>>> filled_size:%s price:%s profit:%f"%(
+                round(market_order.filled_size, 4), round(market_order.price, 4), profit))            
         else:
             log.critical("Invalid Market_order filled order:%s"%(str(order)))
             raise Exception("Invalid Market_order filled order:%s"%(str(order)))

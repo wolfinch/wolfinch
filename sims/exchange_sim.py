@@ -102,7 +102,7 @@ def do_trade (market):
 def set_initial_acc_values (market):
     #Setup the initial params
     market.fund.set_initial_value(Decimal(2000))
-    market.fund.set_hold_value(Decimal(100))
+#     market.fund.set_hold_value(Decimal(100))
     market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
     market.fund.set_max_per_buy_fund_value(50)
     market.asset.set_initial_size(Decimal(10))
@@ -127,7 +127,7 @@ def do_backtesting ():
         market.backtesting_idx = 0
         set_initial_acc_values(market)        
                           
-    while (all_done < 10) : 
+    while (all_done < 5) : 
         # check for the msg in the feed Q and process, with timeout
         done = True
         msg = feed_deQ(sleep_time)

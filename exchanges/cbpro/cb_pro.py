@@ -140,9 +140,9 @@ class CBPRO (Exchange):
         market.fund.set_hold_value(Decimal(usd_acc['hold']))
         market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%
         market.fund.set_max_per_buy_fund_value(100)
+        market.fund.set_fee(self.gdax_conf['Fee']['maker'], self.gdax_conf['Fee']['taker'])        
         market.asset.set_initial_size(Decimal( crypto_acc['available']))
         market.asset.set_hold_size( Decimal(crypto_acc['hold']))
-    
         
         ## Feed Cb
         market.consume_feed = self._gdax_consume_feed
