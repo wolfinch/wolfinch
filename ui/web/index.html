@@ -49,24 +49,35 @@
 				dataSrc : ''
 			},
 			columns : [ {
-				title : "product",
-				data : "product_id"
-			}, {
 				title : "side",
 				data : "side"
 			}, {
 				title : "type",
 				data : "order_type"
 			}, {
-				title : "status",
-				data : "status_type"
+				title : "request size",
+				data : "request_size"
 			}, {
 				title : "filled size",
 				data : "filled_size"
 			}, {
 				title : "remaining size",
 				data : "remaining_size"
-			} ]
+			}, {
+				title : "price",
+				data : "price"
+			}, {
+				title : "funds ",
+				data : "funds"
+			}, {
+				title : "time size",
+				data : "create_time"
+			}, {
+				title : "status",
+				data : "status_type"
+			}
+			
+			]
 		});
 
 		setInterval(function() {
@@ -132,13 +143,17 @@
 						style="vertical-align: top;">
 						<thead>
 							<tr>
-								<th style="width: 599px;">0</th>
-								<th style="width: 179px;">1</th>
-								<th style="width: 599px;">2</th>
-								<th style="width: 179px;">3</th>
-								<th style="width: 599px;">4</th>
-								<th style="width: 179px;">5</th>
-							</tr>
+								<th style="width: 50px;">0</th>
+								<th style="width: 75px;">1</th>
+								<th style="width: 75px;">2</th>
+								<th style="width: 75px;">3</th>
+								<th style="width: 50px;">4</th>
+								<th style="width: 75px;">5</th>
+								<th style="width: 75px;">6</th>
+								<th style="width: 110px;">7</th>
+								<th style="width: 75px;">8</th>
+<!-- 								<th style="width: 179px;">9</th>								
+ -->							</tr>
 						</thead>
 						<tbody></tbody>
 					</table>
