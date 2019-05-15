@@ -157,7 +157,7 @@ def do_backtesting ():
                        
     #end While(true)
 def show_stats ():
-    display_market_stats()
+    flush_all_stats()
 
 ############# Public APIs ######################
 def market_simulator_run (market):

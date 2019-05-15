@@ -20,8 +20,8 @@
 
 
 ##############################################
-
 import json
+import sys
 import os
 import uuid
 import Queue
@@ -830,12 +830,12 @@ class Market:
     def __str__(self):
         return """
 {
-"exchange_name": %s, "product_id": %s,"name": %s,
+"exchange_name": "%s", "product_id": "%s","name": "%s",
 "num_buy_req": %s, "num_buy_req_reject": %s,
 "num_sell_req": %s, "num_sell_req_reject": %s,
 "num_buy_order": %s, "num_buy_order_success": %s, "num_buy_order_failed": %s,                   
 "num_sell_order": %s, "num_sell_order_success": %s, "num_sell_order_failed": %s,
-"fund":%s
+"fund":%s,
 "asset":%s
 }"""%(
                 self.exchange_name, self.product_id,self.name, 
@@ -920,9 +920,19 @@ def market_setup (decisionConfig):
         else:
             log.info ("decision_setup completed for market: %s"%(market.name))
                         
-def display_market_stats ():
+def display_market_stats (fd = sys.stdout):
     global OldMonk_market_list
-    print ("\n\n*****Market statistics*****\n")
+    if sys.stdout != fd:
+        fd.write("\n\n*****Market statistics*****\n")
     for market in OldMonk_market_list:
-        print ("\n%s\n\n"%str(market))    
+        fd.write(str("\n%s\n\n"%str(market)))
+
+STATS_FILE = "data/stats_traded_orders_%s.json"
+def flush_all_stats ():
+    display_market_stats()
+    
+    for market in OldMonk_market_list:
+        with open(STATS_FILE%(market.product_id), "w") as fd:
+            market.order_book.dump_traded_orders(fd)
+            
 #EOF

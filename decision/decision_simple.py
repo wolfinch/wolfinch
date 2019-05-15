@@ -30,13 +30,13 @@ class Decision ():
     def generate_signal(self, idx):
 
         # simple decision uses the latest "EMA_RSI" strategy signal for now
-#         return self.market.market_strategies_data[idx]["EMA_RSI"]#["TREND_RSI"] 
-        signal = min (self.market.market_strategies_data[idx]["EMA_RSI"],
-                       self.market.market_strategies_data[idx]["TREND_RSI"] )
-        
-        if signal < 0:
-            signal = max (self.market.market_strategies_data[idx]["EMA_RSI"],
-                       self.market.market_strategies_data[idx]["TREND_RSI"] )
+        return self.market.market_strategies_data[idx]["EMA_RSI"]#["TREND_RSI"] 
+#         signal = min (self.market.market_strategies_data[idx]["EMA_RSI"],
+#                        self.market.market_strategies_data[idx]["TREND_RSI"] )
+#         
+#         if signal < 0:
+#             signal = max (self.market.market_strategies_data[idx]["EMA_RSI"],
+#                        self.market.market_strategies_data[idx]["TREND_RSI"] )
         
 #         if signal != 0:
 #             if self.num_dec > 5 :
@@ -44,7 +44,7 @@ class Decision ():
 #             else:
 #                 self.num_dec += 1        
             
-        return signal
+#         return signal
          
     def summary(self):
         pass

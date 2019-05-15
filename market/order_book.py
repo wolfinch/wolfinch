@@ -16,6 +16,8 @@
 # limitations under the License.
 
 import uuid
+import sys
+import json
 from bintrees import RBTree
 from decimal import Decimal
 
@@ -58,7 +60,10 @@ class OrderBook():
             self.add_asks (asks)
         if (bids):            
             self.add_bids (bids)
-                    
+                
+    def dump_traded_orders (self, fd=sys.stdout):
+        traded = """{"buy": %s, "sell": %s}"""%(str(self.traded_buy_orders_db), str(self.traded_sell_orders_db))
+        fd.write(traded)
 #         
 #     def on_sequence_gap(self, gap_start, gap_end):
 #         self.reset_book()

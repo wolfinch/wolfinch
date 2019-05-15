@@ -16,6 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function
 import time
 import pkgutil
 import pprint
@@ -241,7 +242,7 @@ if __name__ == '__main__':
         OldMonk_end()
         raise
     #'''Not supposed to reach here'''
-    print("OldMonk end")
+    print("\nOldMonk end")
     
 
 #EOF

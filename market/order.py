@@ -97,13 +97,15 @@ class Order (Base):
         self.update_time = update_time
         
     def __str__ (self):
-        return ("{'id':%s, 'product_id':%s, 'side':%s, 'order_type':%s, "
-            "'status_type':%s, 'status_reason':%s, 'request_size':%f, "
-            "'filled_size':%f, 'remaining_size':%f, 'price':%f, 'funds':%f, "
-            "'fees':%f, 'create_time':%s, 'update_time':%s}") % (
+        return ("""{"id":"%s", "product_id":"%s", "side":"%s", "order_type":"%s",
+"status_type":"%s", "status_reason":"%s", "request_size":%f,
+"filled_size":%f, "remaining_size":%f, "price":%f, "funds":%f,
+"fees":%f, "create_time":"%s", "update_time":"%s"}""") % (
             self.id, self.product_id, self.side, self.order_type, self.status_type,
              self.status_reason, self.request_size, self.filled_size, self.remaining_size,
              self.price, self.funds, self.fees, self.create_time, self.update_time)
+    def __repr__ (self):
+        return self.__str__()
             
     def DbSave (self):
         global Db

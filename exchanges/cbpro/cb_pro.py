@@ -567,7 +567,7 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
             self.message_count += 1
 
         def on_close(self):
-            print("-- Goodbye! --")
+            print("\n-- Goodbye! --")
         def feed_enQ_msg (self, msg):
             #print("Feed MSG: %s"%(json.dumps(msg, indent=4, sort_keys=True)))     
             msg_type = msg.get('type') 
