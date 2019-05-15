@@ -32,12 +32,12 @@ from utils.readconf import readConf
 from dateparser import conf
 
 log = getLogger ('UI')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.DEBUG)
 
-static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'web/static')
-
+static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
+TRADE_DATA = "stats_traded_orders_BTC-USD.json"
 def server_main ():
-    app = Flask(__name__, root_path='web/', static_url_path='/web/')
+    app = Flask(__name__, static_folder='web/', static_url_path='/web/')
 
     @app.route('/js/<path:path>')
     def send_js(path):
@@ -45,9 +45,15 @@ def server_main ():
     @app.route('/')
     def root():
         return app.send_static_file('index.html')
+    @app.route('/api/data')
+    def trade_data():
+        with open (os.path.join(static_file_dir, TRADE_DATA), 'r') as fp:
+            return fp.read()  
+    
+    log.debug("static_dir: %s root: %s"%(static_file_dir, app.root_path))
     
     log.debug ("starting server..")
-    app.run()
+    app.run(debug=False)
     log.error ("server finished!")
         
 def arg_parse ():

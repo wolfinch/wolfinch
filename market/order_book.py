@@ -62,7 +62,7 @@ class OrderBook():
             self.add_bids (bids)
                 
     def dump_traded_orders (self, fd=sys.stdout):
-        traded = """{"buy": %s, "sell": %s}"""%(str(self.traded_buy_orders_db), str(self.traded_sell_orders_db))
+        traded = str(self.traded_buy_orders_db + self.traded_sell_orders_db)
         fd.write(traded)
 #         
 #     def on_sequence_gap(self, gap_start, gap_end):
