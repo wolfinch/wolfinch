@@ -35,7 +35,8 @@ log = getLogger ('UI')
 log.setLevel(log.DEBUG)
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
-TRADE_DATA = "stats_traded_orders_BTC-USD.json"
+TRADE_DATA = "stats_traded_orders_%s_%s.json"%("CBPRO", "BTC-USD")
+MARKET_STATS = "stats_market_%s_%s.json"%("CBPRO", "BTC-USD")
 def server_main ():
     app = Flask(__name__, static_folder='web/', static_url_path='/web/')
 
@@ -45,11 +46,15 @@ def server_main ():
     @app.route('/')
     def root():
         return app.send_static_file('index.html')
-    @app.route('/api/data')
+    @app.route('/api/order_data')
     def trade_data():
         with open (os.path.join(static_file_dir, TRADE_DATA), 'r') as fp:
             return fp.read()  
-    
+    @app.route('/api/market_stats')
+    def market_stats():
+        with open (os.path.join(static_file_dir, MARKET_STATS), 'r') as fp:
+            return fp.read()  
+            
     log.debug("static_dir: %s root: %s"%(static_file_dir, app.root_path))
     
     log.debug ("starting server..")
@@ -68,25 +73,6 @@ def arg_parse ():
     
     if (args.clean):
         exit (0)
-#     if (args.backtesting):              
-#         log.debug ("backtesting enabled")       
-#         sims.backtesting_on = True
-#     else:
-#         log.debug ("backtesting disabled")       
-#         sims.backtesting_on = False        
-#                  
-#     if (args.config):
-#         log.debug ("config file: %s"%args.config)
-#         if False == load_config (args.config):
-#             log.critical ("Config parse error!!")
-#             parser.print_help()
-#             exit(1)
-#         else:
-#             log.debug ("config loaded successfully!")
-# #             exit (0)
-#     else:
-#         parser.print_help()
-#         exit(1)
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':

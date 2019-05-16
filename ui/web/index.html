@@ -37,15 +37,65 @@
 	 "request_size":0.009659, "filled_size":0.009659, "remaining_size":0.000000, "price":5176.580000, 
 	 "funds":50.000000, "fees":0.000000, "create_time":"2018-01-10T09:49:02.639681Z", "update_time":"None"}]
 	 */
+	 
+/* 	 {
+		 "exchange_name": "CBPRO", "product_id": "BTC-USD","name": "BTC/USD",
+		 "num_buy_req": 1222, "num_buy_req_reject": 678,
+		 "num_sell_req": 486, "num_sell_req_reject": 0,
+		 "num_buy_order": 544, "num_buy_order_success": 544, "num_buy_order_failed": 0,                   
+		 "num_sell_order": 486, "num_sell_order_success": 486, "num_sell_order_failed": 0,
+		 "fund":
+		 {
+		 "initial_value":2000.000000,"current_value":3144.391100,"current_hold_value":0.000146, "total_traded_value":25660.000000, "fee_accrued": 0.000000,
+		 "current_realized_profit":3002.599900,"current_unrealized_profit":0.000000, "total_profit":0.000000,
+		 "current_avg_buy_price":5430.439000,"latest_buy_price":44172.710000,
+		 "fund_liquidity_percent":90, "max_per_buy_fund_value":50
+		 },
+		 "asset":{
+		 "initial_size":10.000000, "current_size":9.796999, "hold_size": 0.100000, "current_hold_size":0.000000, 
+		 "max_per_trade_size":0.010000, "latest_traded_size":0.001132, "total_traded_size":8.908994
+		 }
+		 } */
+	 
 	var table;
 	$(document).ready(function() {
+		
+	    $.ajax({ 
+	        type: 'GET', 
+	        url: '/api/market_stats', 
+	        data: { get_param: 'value' }, 
+	        dataType: 'json',
+	        success: function (data) {
+	        	console.log(data.exchange_name)
+	        	$("#exch").text(data.exchange_name)
+	        	$("#mkt").text(data.product_id)
+	        	$("#nbuy").text(data.num_buy_req)
+	        	$("#nbuy_rej").text(data.num_buy_req_reject)
+	        	$("#nsell").text(data.num_sell_req)
+	        	$("#nsell_rej").text(data.num_sell_req_reject)
+	        	$("#nbuy_odr").text(data.num_buy_order)
+	        	$("#nbuy_odr_s").text(data.num_buy_order_success)
+	        	$("#nbuy_odr_f").text(data.num_buy_order_failed)
+	        	$("#nsell_odr").text(data.num_sell_order)
+	        	$("#nsell_odr_s").text(data.num_sell_order_success)
+	        	$("#nsell_odr_f").text(data.num_sell_order_failed)	        	
+	        	
+/* 	            $.each(data, function(index, element) {
+	                $('body').append($('<div>', {
+	                    text: element.name
+	                }));
+	            }); */
+	        }
+	    });
+		
+		
 		table = $('#statsTable').DataTable({
 			//data : dataSet,
 			//ajax: '/api/data',
 			"processing" : true,
 			pageLength : 25,
 			ajax : {
-				url : "/api/data?abcd=1",
+				url : "/api/order_data?abcd=1",
 				dataSrc : ''
 			},
 			columns : [ {
@@ -70,7 +120,7 @@
 				title : "funds ",
 				data : "funds"
 			}, {
-				title : "time size",
+				title : "time",
 				data : "create_time"
 			}, {
 				title : "status",
@@ -107,26 +157,47 @@
 				<td style="width: 74.9364%; height: 60px;">
 					<table style="margin: false; height: 60px; width: 695px;" border="1"
 						width="575" height="49">
-						<tbody>
+						<tbody>							
 							<tr style="border-top: 2px solid #555;">
 								<td style="border: 2px solid #555555; width: 74px; height: 24px;">Exchange</td>
 								<td id="exch" style="border:0; width: 92px; height: 24px;">exch_name</td>
 								<td style="border:0; width: 70px; height: 24px;">Num Trades</td>
-								<td style="border:0; width: 50px;">&nbsp;Buys</td>
-								<td style="border:0; width: 92px;">&nbsp;num_buys</td>
-								<td style="border:0; width: 87px;">&nbsp;success</td>
-								<td style="border:0; width: 70px;">&nbsp;reject</td>
+								<td style="border:0; width: 50px;">&nbsp;Buy Reqs</td>
+								<td id="nbuy" style="border:0; width: 92px;">&nbsp;num_buys</td>
+								
+								<td style="border:0; width: 50px;">&nbsp;Reject Reqs</td>
+								<td id="nbuy_rej" style="border:0; width: 92px;">&nbsp;num_sells</td>
+																
+								<td style="border:0; width: 87px;">&nbsp;num oders</td>
+								<td id="nbuy_odr" style="border:0; width: 87px;">&nbsp;num_buys</td>
+								
+
+								<td style="border:0; width: 70px;">&nbsp;success</td>
+								<td id="nbuy_odr_s" style="border:0; width: 70px;">&nbsp;success</td>
+								
 								<td style="border:0; width: 158px;">fail</td>
+								<td id="nbuy_odr_f" style="border:0; width: 158px;">fail</td>
+								
 							</tr>
 							<tr style="background-color: rgba(0, 0, 0, 0.1);">
 								<td style="border:0; width: 74px; height: 23px;">Market</td>
-								<td style="border:0; width: 92px; height: 23px;">mkt_name</td>
+								<td id="mkt" style="border:0; width: 92px; height: 23px;">mkt_name</td>
 								<td style="border:0; width: 70px; height: 23px;"></td>
-								<td style="border:0; width: 50px;">&nbsp;Sells</td>
-								<td style="border:0; width: 92px;">&nbsp;num_sells</td>
-								<td style="border:0; width: 87px;">&nbsp;success&nbsp;</td>
-								<td style="border:0; width: 70px;">&nbsp;reject</td>
+								
+								<td style="border:0; width: 50px;">&nbsp;Sell Reqs</td>
+								<td id="nsell" style="border:0; width: 92px;">&nbsp;num_sells</td>
+								
+								<td style="border:0; width: 50px;">&nbsp;Reject Reqs</td>
+								<td id="nsell_rej" style="border:0; width: 92px;">&nbsp;Reject</td>
+																
+								<td style="border:0; width: 87px;">&nbsp;num oders</td>
+								<td id="nsell_odr" style="border:0; width: 87px;">&nbsp;num_sell</td>
+								
+								<td style="border:0; width: 70px;">&nbsp;success</td>
+								<td id="nsell_odr_s" style="border:0; width: 70px;">&nbsp;success</td>
+								
 								<td style="border:0; width: 158px;">fail</td>
+								<td id="nsell_odr_f" style="border:0; width: 158px;">fail</td>
 							</tr>
 						</tbody>
 					</table>

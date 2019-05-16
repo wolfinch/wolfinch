@@ -32,7 +32,9 @@ TRADED_STATS_FILE = "data/stats_traded_orders_%s_%s.json"
 MARKET_STATS_FILE = "data/stats_market_%s_%s.json"
 STATS_INTERVAL = 10
 _stop = False
+
 #TODO: FIXME: enhance. This is a super basic impl.
+# Dumping the whole order db doesn't scale in long run
 
 # Stats Q routines
 statsQ = Queue.Queue()
