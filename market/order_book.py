@@ -22,6 +22,7 @@ from bintrees import RBTree
 from decimal import Decimal
 
 from utils import getLogger
+import stats
 
 log = getLogger('ORDER-BOOK')
 log.setLevel(log.CRITICAL)
@@ -159,6 +160,7 @@ class OrderBook():
             raise Exception("Invalid order :%s" % (order))            
             return None
 #         log.debug ("Order: %s\n"%(str(order)))
+        stats.stats_update (self.market, order)
         return order
     
     ######### L2 Order book for Exchange, product ########

@@ -31,6 +31,7 @@ from utils import getLogger
 import db
 from utils.readconf import readConf
 from dateparser import conf
+import stats
 
 log = getLogger ('OldMonk')
 log.setLevel(log.CRITICAL)
@@ -56,9 +57,15 @@ def OldMonk_init():
     #4. Setup markets
     market_setup(decisionConfig)
     
+    #5. start stats thread
+    stats.start()
+    
 def OldMonk_end():
     log.info ("Finalizing OldMonk")
     close_exchanges ()
+    
+    # stop stats thread
+    stats.stop()
     
 def init_exchanges ():
     global exchange_list, OldMonkConfig
