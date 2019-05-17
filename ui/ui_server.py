@@ -48,12 +48,26 @@ def server_main ():
         return app.send_static_file('index.html')
     @app.route('/api/order_data')
     def trade_data():
-        with open (os.path.join(static_file_dir, TRADE_DATA), 'r') as fp:
-            return fp.read()  
+        try:
+            with open (os.path.join(static_file_dir, TRADE_DATA), 'r') as fp:
+                s = fp.read()
+                if not len (s):
+                    return "{}"
+                else:
+                    return s
+        except Exception:
+            return "{}"        
     @app.route('/api/market_stats')
     def market_stats():
-        with open (os.path.join(static_file_dir, MARKET_STATS), 'r') as fp:
-            return fp.read()  
+        try:
+            with open (os.path.join(static_file_dir, MARKET_STATS), 'r') as fp:
+                s = fp.read()
+                if not len (s):
+                    return "{}"
+                else:
+                    return s
+        except Exception:
+            return "{}"
             
     log.debug("static_dir: %s root: %s"%(static_file_dir, app.root_path))
     

@@ -73,6 +73,9 @@ class CBPRO (Exchange):
         api_base = self.gdax_conf.get ('apiBase')
         feed_base = self.gdax_conf.get ('wsFeed')
         
+        self.max_fund_liquidity_percent = self.gdax_conf.get ('maxFundLiquidity')
+        self.max_per_buy_fund_val = self.gdax_conf.get ('maxPerBuyFundValue')
+                
         if ((key and b64secret and passphrase and api_base ) == False):
             log.critical ("Invalid API Credentials in cbpro Config!! ")
             return None
@@ -138,8 +141,8 @@ class CBPRO (Exchange):
         market = Market(product=product, exchange=self)    
         market.fund.set_initial_value(Decimal(usd_acc['available']))
         market.fund.set_hold_value(Decimal(usd_acc['hold']))
-        market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%
-        market.fund.set_max_per_buy_fund_value(100)
+        market.fund.set_fund_liquidity_percent(self.max_fund_liquidity_percent)       #### Limit the fund to 10%
+        market.fund.set_max_per_buy_fund_value(self.max_per_buy_fund_val)
         market.fund.set_fee(self.gdax_conf['Fee']['maker'], self.gdax_conf['Fee']['taker'])        
         market.asset.set_initial_size(Decimal( crypto_acc['available']))
         market.asset.set_hold_size( Decimal(crypto_acc['hold']))

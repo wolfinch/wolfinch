@@ -36,6 +36,8 @@ exchange:
 #  apiBase     : 'https://api.gdax.com'
 #  wsFeed      : 'wss://ws-feed.gdax.com'
 
+  maxFundLiquidity : 80 #80 Percent
+  maxPerBuyFundValue : 100 #$100 max per buy
   orderType    : market
   Fee     : 
      maker : 0.15
@@ -43,6 +45,6 @@ exchange:
   
   backfill:
     - enabled  : Yes  
-    - period   : 365  #in Days
+    - period   : 10  #in Days
     - interval: 300  #in Sec    
 
