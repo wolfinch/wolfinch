@@ -192,12 +192,20 @@ def arg_parse ():
     parser.add_argument("--clean", help='Clean states,dbs and exit. Clear all the existing states', action='store_true')
     parser.add_argument("--config", help='OldMonk Global config file')
     parser.add_argument("--backtesting", help='do backtesting', action='store_true')
+    parser.add_argument("--import_only", help='do import only', action='store_true')
     
     args = parser.parse_args()
     
     if (args.clean):
         clean_states ()
         exit (0)
+        
+    if (args.import_only):              
+        log.debug ("import_only enabled")       
+        sims.import_only = True
+    else:
+        log.debug ("import_only disabled")       
+        sims.import_only = False          
         
     if (args.backtesting):              
         log.debug ("backtesting enabled")       
@@ -234,10 +242,13 @@ if __name__ == '__main__':
     try:
         OldMonk_init()
         
+        if sims.import_only:
+            log.info ("import only")
+            raise SystemExit
+               
         if (sims.backtesting_on):
             sims.market_backtesting_run ()
-            OldMonk_end()
-            sys.exit()
+            raise SystemExit
         else:
             log.debug ("Starting Main forever loop")
             oldmonk_main ()

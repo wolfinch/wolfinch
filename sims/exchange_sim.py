@@ -21,7 +21,8 @@ log.setLevel (log.INFO)
 
 ###### SIMULATOR Global switch ######
 simulator_on = True
-backtesting_on = True
+backtesting_on = False
+import_only = False
 
 '''
 Description: Exchange Simulation for papertrade/backtesting. 

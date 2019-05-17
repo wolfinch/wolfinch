@@ -701,6 +701,13 @@ class Market:
         
         # do not import candles from exch while backtesting.
         self._import_historic_candles(local_only=sims.backtesting_on)
+        
+        log.info ("import complete")
+        
+        if sims.import_only:
+            log.info ("Import only")
+            return
+        
         self._calculate_historic_indicators()
         self._process_historic_strategies()
         num_candles = len(self.market_indicators_data)
@@ -742,6 +749,10 @@ class Market:
                     This will result in calculating and indicators and
                     strategies and may result in generating trade signals
         """
+        # Do not add new candles if backtesting is running
+        if sims.backtesting_on == True:
+            return
+                    
         self.market_indicators_data.append({'ohlc': candle})
         self.market_strategies_data.append({})
         #save to db
@@ -910,6 +921,10 @@ def market_setup (decisionConfig):
             return False
         else:
             log.info ("Market setup completed for market: %s"%(market.name))
+        
+    if sims.import_only:
+        log.info ("import_only! skip rest of setup")
+        return
                 
     log.info ("market setup complete for all markets, init decision engines now")
     for market in OldMonk_market_list:            
