@@ -33,15 +33,16 @@ exchange:
   apiSecret    : 'rMybWQ2CzcDAl3duxf6H+4d9K+CtR/qtvWIbxY3k/JcyGnqdnGotwabBdvOXCRm56ny+6SNRKn7HjsUrmoh+hg=='
   
   #### LIVE API **** Be careful with these **** ###
-#  apiBase     : 'https://api.gdax.com'
-#  wsFeed      : 'wss://ws-feed.gdax.com'
+#  apiBase     : 'https://api.pro.coinbase.com'
+#  wsFeed      : 'wss://ws-feed.pro.coinbase.com'
 
   maxFundLiquidity : 80 #80 Percent
   maxPerBuyFundValue : 100 #$100 max per buy
+  maxPerTradeAssetSize: 0.01 #per sell asset size max
   orderType    : market
   Fee     : 
-     maker : 0.15
-     taker : 0.25
+     maker : 0.15 #make fee %
+     taker : 0.25 #taker fee %
   
   backfill:
     - enabled  : Yes  

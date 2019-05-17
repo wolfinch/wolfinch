@@ -122,7 +122,7 @@ def process_market (market):
     market.update_market_states()
     
     # Trade only on primary markets
-    if market.primary is True:
+    if market.primary is True and market.new_candle is True:
         signal = market.generate_trade_signal ()
         market.consume_trade_signal (signal)
         if (sims.simulator_on):

@@ -761,6 +761,7 @@ class Market:
         self._calculate_all_indicators(self.num_candles)
         self._process_all_strategies(self.num_candles)
         self.num_candles += 1
+        self.new_candle = True
         
                 
     def generate_trade_signal (self, idx=-1):
@@ -778,6 +779,8 @@ class Market:
         else:
             log.debug ("Generated Trade Signal(%d) for product(%s) idx(%d)"%(signal, self.product_id, idx))            
                 
+        #processed the new candle
+        self.new_candle = False
         return signal
     
     def consume_trade_signal (self, signal):

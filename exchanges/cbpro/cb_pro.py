@@ -60,12 +60,6 @@ class CBPRO (Exchange):
                 self.gdax_conf['backfill_period'] = int(entry['period'])
             if entry.get('interval'):
                 self.gdax_conf['backfill_interval'] = int(entry['interval'])            
-            
-        
-        self.public_client = cbpro.PublicClient()
-        if (self.public_client) == None :
-            log.critical("gdax public client init failed")
-            return None
         
         key = self.gdax_conf.get('apiKey')
         b64secret = self.gdax_conf.get('apiSecret')
@@ -75,7 +69,13 @@ class CBPRO (Exchange):
         
         self.max_fund_liquidity_percent = self.gdax_conf.get ('maxFundLiquidity')
         self.max_per_buy_fund_val = self.gdax_conf.get ('maxPerBuyFundValue')
-                
+        self.max_per_trade_asset_size = self.gdax_conf.get ('maxPerTradeAssetSize')
+        
+        self.public_client = cbpro.PublicClient(api_url=api_base)
+        if (self.public_client) == None :
+            log.critical("gdax public client init failed")
+            return None
+                        
         if ((key and b64secret and passphrase and api_base ) == False):
             log.critical ("Invalid API Credentials in cbpro Config!! ")
             return None
@@ -146,6 +146,7 @@ class CBPRO (Exchange):
         market.fund.set_fee(self.gdax_conf['Fee']['maker'], self.gdax_conf['Fee']['taker'])        
         market.asset.set_initial_size(Decimal( crypto_acc['available']))
         market.asset.set_hold_size( Decimal(crypto_acc['hold']))
+        market.asset.set_max_per_trade_size(self.max_per_trade_asset_size)
         
         ## Feed Cb
         market.consume_feed = self._gdax_consume_feed
