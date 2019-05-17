@@ -131,6 +131,7 @@ def process_market (market):
 def clean_states ():
     log.info ("Clearing Db")
     db.clear_db()
+    stats.clear_stats()
     
 def load_config (cfg_file):
     global OldMonkConfig

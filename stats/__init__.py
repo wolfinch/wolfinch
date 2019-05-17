@@ -1,1 +1,1 @@
-from stats import stats_update, start, stop
+from stats import stats_update, clear_stats, start, stop

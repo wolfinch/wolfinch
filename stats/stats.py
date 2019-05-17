@@ -70,6 +70,9 @@ def _stats_run ():
 def stats_update(market, order):
     _stats_enQ(market, order)
 
+def clear_stats():
+    os.system("rm -rf data/stats_*")
+    
 def start ():
     t = Thread(target=_stats_run)
     t.start()

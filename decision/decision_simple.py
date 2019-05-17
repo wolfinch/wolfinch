@@ -30,8 +30,8 @@ class Decision ():
     def generate_signal(self, idx):
 
         # simple decision uses the latest "EMA_RSI" strategy signal for now
-#         return self.market.market_strategies_data[idx]["EMA_RSI"]#["TREND_RSI"] 
-        return self.market.market_strategies_data[idx]["TREND_RSI"] 
+        return self.market.market_strategies_data[idx]["EMA_RSI"]#["TREND_RSI"] 
+#         return self.market.market_strategies_data[idx]["TREND_RSI"] 
     
 #         signal = min (self.market.market_strategies_data[idx]["EMA_RSI"],
 #                        self.market.market_strategies_data[idx]["TREND_RSI"] )
