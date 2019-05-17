@@ -22,7 +22,7 @@ from exchanges import Exchange
 
 EXHANGE_NAME = "CBPRO"
 log = getLogger (EXHANGE_NAME)
-log.setLevel(log.CRITICAL)
+log.setLevel(log.DEBUG)
 
 
 #CBPRO CONFIG FILE
@@ -105,7 +105,12 @@ class CBPRO (Exchange):
         accounts =  self.auth_client.get_accounts()
         if (accounts == None):
             log.critical("Unable to get account details!!")
+            raise Exception ("Unable to get CBPRO Accounts!!")            
             return False
+        #{   u'message': u'Forbidden'}
+        if (accounts.get('message') == 'Forbidden'):
+            log.critical("Forbidden to get accounts. Potential permissions issue")
+            raise Exception ("Unable to get CBPRO Accounts!! Potential permissions issue.")
         log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
         for account in accounts:
             for prod in self.gdax_conf['products']:

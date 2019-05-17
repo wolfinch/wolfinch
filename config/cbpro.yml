@@ -1,20 +1,10 @@
-# Example: YAML file format
-#mysql:
-#    host: localhost
-#    user: root
-#    passwd: my secret password
-#    db: write-math
-#other:
-#    preprocessing_queue:
-#        - preprocessing.scale_and_center
-#        - preprocessing.dot_reduction
-#       - preprocessing.connect_lines
-#    use_anonymous: yes
+# ################################################
+# CoinbasePro Exchange Config file 
 ##################################################
 
 exchange:
-  name        : gdax
-  products: 
+   name        : cbpro
+   products: 
     - 'BTC-USD':
        - currency:
           - 'BTC'
@@ -25,27 +15,26 @@ exchange:
 #          - 'USD'
     
   ##### sandbox api base ######
-  #apiBase      : 'https://api-public.sandbox.gdax.com'
-  apiBase      : 'https://api-public.sandbox.pro.coinbase.com'
-  wsFeed       : 'wss://ws-feed-public.sandbox.pro.coinbase.com'
-  apiPassphrase: 'vbf2vuem4da'
-  apiKey       : '0068fd511915b4f659fcf0513e2f3362'
-  apiSecret    : 'rMybWQ2CzcDAl3duxf6H+4d9K+CtR/qtvWIbxY3k/JcyGnqdnGotwabBdvOXCRm56ny+6SNRKn7HjsUrmoh+hg=='
+#   apiBase      : 'https://api-public.sandbox.pro.coinbase.com'
+#   wsFeed       : 'wss://ws-feed-public.sandbox.pro.coinbase.com'
+#   apiPassphrase: 'vbf2vuem4da'
+#   apiKey       : '0068fd511915b4f659fcf0513e2f3362'
+#   apiSecret    : 'rMybWQ2CzcDAl3duxf6H+4d9K+CtR/qtvWIbxY3k/JcyGnqdnGotwabBdvOXCRm56ny+6SNRKn7HjsUrmoh+hg=='
   
   #### LIVE API **** Be careful with these **** ###
-#  apiBase     : 'https://api.pro.coinbase.com'
-#  wsFeed      : 'wss://ws-feed.pro.coinbase.com'
+   apiBase     : 'https://api.pro.coinbase.com'
+   wsFeed      : 'wss://ws-feed.pro.coinbase.com'
 
-  maxFundLiquidity : 80 #80 Percent
-  maxPerBuyFundValue : 100 #$100 max per buy
-  maxPerTradeAssetSize: 0.01 #per sell asset size max
-  orderType    : market
-  Fee     : 
-     maker : 0.15 #make fee %
-     taker : 0.25 #taker fee %
+   maxFundLiquidity : 60 #60 Percent
+   maxPerBuyFundValue : 100 #$100 max per buy
+   maxPerTradeAssetSize: 0.01 #per sell asset size max
+   orderType    : market
+   Fee     : 
+      maker : 0.15 #make fee %
+      taker : 0.25 #taker fee %
   
-  backfill:
-    - enabled  : Yes  
-    - period   : 10  #in Days
-    - interval: 300  #in Sec    
+   backfill:
+      - enabled  : Yes  
+      - period   : 10  #in Days
+      - interval: 300  #in Sec    
 
