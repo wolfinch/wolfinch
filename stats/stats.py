@@ -22,6 +22,7 @@ import time
 import pprint
 import sys
 import os
+import sims
 
 from utils import getLogger
 
@@ -68,7 +69,8 @@ def _stats_run ():
 ######### ******** MAIN ****** #########
                 
 def stats_update(market, order):
-    _stats_enQ(market, order)
+    if not sims.backtesting_on:
+        _stats_enQ(market, order)
 
 def clear_stats():
     os.system("rm -rf data/stats_*")

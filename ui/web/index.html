@@ -80,21 +80,29 @@
 					$("#nsell_odr_s").text(data.num_sell_order_success)
 					$("#nsell_odr_f").text(data.num_sell_order_failed)
 
+					
 					//#Fund
 					$("#fund_init").text(data.fund.initial_value)
 					$("#fund_curr").text(data.fund.current_value)
 					$("#curr_hold").text(data.fund.current_hold_value)
 					$("#fund_profit").text(data.fund.current_realized_profit)
+					$("#fund_trade_fee").text(data.fund.fee_accrued)					
 					$("#fund_traded").text(data.fund.total_traded_value)
 					$("#fund_avg_price").text(data.fund.current_avg_buy_price)
 					$("#fund_last_price").text(data.fund.latest_buy_price)
-
+					$("#fund_liq_cent").text(data.fund.fund_liquidity_percent)
+					$("#fund_max_per_buy").text(data.fund.max_per_buy_fund_value)
+					
 					//#Assets
 					$("#asset_init").text(data.asset.initial_size)
 					$("#asset_curr").text(data.asset.current_size)
 					$("#asset_traded").text(data.asset.total_traded_size)
 					$("#asset_last_traded").text(data.asset.latest_traded_size)
 					$("#asset_max_per_trade").text(data.asset.max_per_trade_size)
+					$("#asset_hold_sz").text(data.asset.hold_size)
+					$("#asset_cur_hold_sz").text(data.asset.current_hold_size)
+										
+					
 					/* 	            $.each(data, function(index, element) {
 					 $('body').append($('<div>', {
 					 text: element.name
@@ -225,63 +233,7 @@
 						</tbody>
 					</table>
 				</td>
-<!-- 				<td style="width: 45%;">
-					style="width: 1.65893%; height: 60px;"> 					<table border="0" style="border-collapse: collapse;"
-						class="display">
-						<tbody>
-							<tr style="background-color: rgba(0, 0, 0, 0.1);">
-								<td align="center" colspan="9">
-									style="width: 101.272%;"  > <b>Funds</b>
-								</td>
-							</tr>
-							<tr>
-								<td style="width: 10%;">Inital</td>
-								<td style="width: 10%;">Current</td>
-								<td style="width: 10%;">Curr. hold</td>
-								<td style="width: 10%;">Total Traded</td>
-								<td style="width: 10%;">Rel. Profit</td>
-								<td style="width: 10%;">Avg. Price</td>
-								<td style="width: 10%;">Last Price</td>
-								<td style="width: 10%;"></td>
-								<td style="width: 10%;"></td>
-							</tr>
-							<tr style="background-color: rgba(0, 0, 0, 0.1);" border="1px">
-								<td style="width: 10%;" id="fund_init">0</td>
-								<td style="width: 10%;" id="fund_curr">0</td>
-								<td style="width: 10%;" id="curr_hold">0</td>
-								<td style="width: 10%;" id="fund_profit">0</td>
-								<td style="width: 10%;" id="fund_traded">0</td>
-								<td style="width: 10%;" id="fund_avg_price"></td>
-								<td style="width: 10%;" id="fund_last_price">0</td>
-								<td style="width: 10%;"></td>
-								<td style="width: 10%;"></td>
-							</tr>
-						</tbody>
-					</table>
-				</td> -->
 				<td style="width: 33%;">
-					<!--  style="width: 1.65893%; height: 60px;"> --> <!-- 					<table border="0" style="border-collapse: collapse; width: 100%;"
-						class="display">
-						<tbody>
-							<tr style="background-color: rgba(0, 0, 0, 0.1);">
-								<td style="width: 100;" colspan="5" align="center"><b>Assets</b></td>
-							</tr>
-							<tr>
-								<td style="width: 10%;">Inital</td>
-								<td style="width: 10%;">Current</td>
-								<td style="width: 10%;">Total Traded</td>
-								<td style="width: 10%;">Last Traded</td>
-								<td style="width: 10%;">Max per trade</td>
-							</tr>
-							<tr style="background-color: rgba(0, 0, 0, 0.1);">
-								<td style="width: 10%;" id="asset_init">0</td>
-								<td style="width: 10%;" id="asset_curr">0</td>
-								<td style="width: 10%;" id="asset_traded">0</td>
-								<td style="width: 10%;" id="asset_last_traded">0</td>
-								<td style="width: 10%;" id="asset_max_per_trade">0</td>
-							</tr>
-						</tbody>
-					</table> -->
 				</td>
 			</tr>
 			<tr style="width: 100%; height: 23px;" align="center">
@@ -336,12 +288,12 @@
 								</tr>
 								<tr>
 									<td style="width: 10%;">Total Traded</td>
-									<td style="width: 10%;" id="fund_profit">0</td>
+									<td style="width: 10%;" id="fund_traded">0</td>
 
 								</tr>
 								<tr>
 									<td style="width: 10%;">Real. Profit</td>
-									<td style="width: 10%;" id="fund_traded">0</td>
+									<td style="width: 10%;" id="fund_profit">0</td>
 
 								</tr>
 								<tr>
@@ -355,6 +307,21 @@
 
 								</tr>
 								<tr>
+									<td style="width: 10%;">Fee Accrued</td>
+									<td style="width: 10%;" id="fund_trade_fee">0</td>
+
+								</tr>
+								<tr>
+									<td style="width: 10%;">Config. Fund Liq.(%)</td>
+									<td style="width: 10%;" id="fund_liq_cent"></td>
+
+								</tr>
+								<tr>
+									<td style="width: 10%;">Config. Max Per buy($)</td>
+									<td style="width: 10%;" id="fund_max_per_buy">0</td>
+
+								</tr>								
+								<tr>
 									<td style="width: 10%;"></td>
 									<td style="width: 10%;"></td>
 
@@ -366,7 +333,7 @@
 							</tbody>
 						</table>
 					</div>
-
+		
 					<div>
 						<table border="0"
 							style="vertical-align: top; border-collapse: collapse; width: 100%;"
@@ -399,6 +366,17 @@
 									<td style="width: 10%;">Max per trade</td>
 									<td style="width: 10%;" id="asset_max_per_trade">0</td>
 								</tr>
+
+								<tr>
+									<td style="width: 10%;">Config. Hold Size</td>
+									<td style="width: 10%;" id="asset_hold_sz">0</td>
+								</tr>
+
+								<tr>
+									<td style="width: 10%;">Curr. Hold Size</td>
+									<td style="width: 10%;" id="asset_cur_hold_sz">0</td>
+								</tr>
+																
 							</tbody>
 						</table>
 					</div>
