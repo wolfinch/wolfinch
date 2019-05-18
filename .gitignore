@@ -1,5 +1,6 @@
 *.pyc
 *.yml
 data/*
+config/*.yml
 .*
 #third_party/*

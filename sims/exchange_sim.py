@@ -8,6 +8,8 @@
 # import json
 import uuid
 import time
+from datetime import datetime
+# from dateutil.tz import tzlocal
 from decimal import Decimal
 
 from utils import getLogger
@@ -70,6 +72,7 @@ def do_trade (market):
         market.order_status_update (order)
         #now trade
         this_order = order_struct # Note: this at the top
+        this_order['created_at'] = datetime.now().isoformat()
         this_order['product_id'] = market.product_id
         this_order['id'] = order.id
         this_order['type'] = "done"

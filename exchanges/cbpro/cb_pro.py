@@ -11,6 +11,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 from time import sleep
 import time
+from dateutil.tz import tzlocal
 
 # import gdax as CBPRO #Official version seems to be old, doesn't support auth websocket client
 import cbpro
@@ -22,7 +23,7 @@ from exchanges import Exchange
 
 EXHANGE_NAME = "CBPRO"
 log = getLogger (EXHANGE_NAME)
-log.setLevel(log.DEBUG)
+log.setLevel(log.INFO)
 
 
 #CBPRO CONFIG FILE
@@ -89,6 +90,7 @@ class CBPRO (Exchange):
             
         #time sync
         serverTime = int(self.public_client.get_time()['epoch'])*1000
+        
         localTime = time.time()*1000
         self.timeOffset = (serverTime - localTime)//1000        
         log.info ("servertime: %d localtime: %d offset: %d"%(serverTime, localTime, self.timeOffset))
@@ -107,11 +109,15 @@ class CBPRO (Exchange):
             log.critical("Unable to get account details!!")
             raise Exception ("Unable to get CBPRO Accounts!!")            
             return False
-        #{   u'message': u'Forbidden'}
-        if (accounts.get('message') == 'Forbidden'):
-            log.critical("Forbidden to get accounts. Potential permissions issue")
-            raise Exception ("Unable to get CBPRO Accounts!! Potential permissions issue.")
+        
         log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
+        if isinstance(accounts, dict):
+                    ## Error Case
+                    #{   u'message': u'Forbidden'}                    
+                    err_msg = accounts.get('message')        
+                    if (err_msg == 'Forbidden'):
+                        log.critical("Forbidden to get accounts. Potential permissions issue")
+                        raise Exception ("Unable to get CBPRO Accounts!! Potential permissions issue.")
         for account in accounts:
             for prod in self.gdax_conf['products']:
                 for prod_id in prod.keys():
@@ -493,8 +499,8 @@ class CBPRO (Exchange):
                 count = 0
                 sleep (2)
             
-            start_str = start.isoformat()
-            end_str = tmp_end.isoformat()
+            start_str = start.replace(tzinfo=tzlocal()).isoformat()
+            end_str = tmp_end.replace(tzinfo=tzlocal()).isoformat()
             candles = self.public_client.get_product_historic_rates (product_id, start_str, end_str, interval)
             if candles:
                 if isinstance(candles, dict):

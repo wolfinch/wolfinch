@@ -25,6 +25,7 @@ exchange:
    apiBase     : 'https://api.pro.coinbase.com'
    wsFeed      : 'wss://ws-feed.pro.coinbase.com'
 
+
    maxFundLiquidity : 60 #60 Percent
    maxPerBuyFundValue : 100 #$100 max per buy
    maxPerTradeAssetSize: 0.01 #per sell asset size max
