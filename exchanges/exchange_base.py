@@ -23,6 +23,9 @@ class Exchange:
     def close (self):
         pass    
     
+    def add_candle(self, market):
+        pass
+    
     @abstractmethod
     def buy (self):
         pass

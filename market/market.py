@@ -51,7 +51,7 @@ import db
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.INFO)
+log.setLevel(log.CRITICAL)
 
 OldMonk_market_list = []
 
@@ -245,6 +245,8 @@ class Market:
         self.candlesDb = db.CandlesDb (OHLC, self.exchange_name, self.product_id)
         self.indicator_calculators     = indicators.Configure()
         self.market_strategies     = strategy.Configure()
+        self.new_candle = False
+        self.candle_interval = 0
         
     def get_candle_list (self):
         return map(lambda x: x["ohlc"], self.market_indicators_data)
@@ -735,7 +737,10 @@ class Market:
               2. perform any pending trades (stop requests)
               3. Cancel/timeout any open orders if need be
         '''
-        #TODO: jork: implement    
+        now = time.time()
+        if now >= self.cur_candle_time + self.candle_interval:
+            self.exchange.add_candle (self)
+              
         #1.update market states
         if (self.order_book.book_valid == False):
             log.debug ("Re-Construct the Order Book")
@@ -755,12 +760,17 @@ class Market:
                     
         self.market_indicators_data.append({'ohlc': candle})
         self.market_strategies_data.append({})
-        #save to db
-        self.candlesDb.db_save_candle(candle)
+
 #         self.cur_candle_time = candle.time
         self._calculate_all_indicators(self.num_candles)
         self._process_all_strategies(self.num_candles)
         self.num_candles += 1
+        self.cur_candle_time = candle.time   
+        
+        self.O = self.V = self.H = self.L = self.C = 0
+
+        #save to db
+        self.candlesDb.db_save_candle(candle)
         self.new_candle = True
         
                 

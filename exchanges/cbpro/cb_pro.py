@@ -38,6 +38,7 @@ class CBPRO (Exchange):
     auth_client   = None
     ws_client = None
     primary = False
+    candle_interval = 0
     def __init__(self, config=CBPRO_CONF, primary=False):
         log.info('init CBPRO exchange')        
         
@@ -92,7 +93,9 @@ class CBPRO (Exchange):
         serverTime = int(self.public_client.get_time()['epoch'])*1000
         
         localTime = time.time()*1000
-        self.timeOffset = (serverTime - localTime)//1000        
+        self.timeOffset = (serverTime - localTime)//1000
+        if abs(self.timeOffset) < 5:
+            self.timeOffset = 0        
         log.info ("servertime: %d localtime: %d offset: %d"%(serverTime, localTime, self.timeOffset))
         
 #         global gdax_products
@@ -138,6 +141,7 @@ class CBPRO (Exchange):
             log.debug ("Starting Websocket Feed... ")
             self.ws_client.start()
                 
+        self.candle_interval = int(self.gdax_conf.get('backfill_interval'))
         log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
                         pprint.pformat(self.gdax_products, 4), pprint.pformat(self.gdax_accounts, 4)))
      
@@ -164,6 +168,7 @@ class CBPRO (Exchange):
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
+        market.candle_interval = self.candle_interval
         
         #set whether primary or secondary
         market.primary = self.primary
@@ -176,6 +181,12 @@ class CBPRO (Exchange):
         if (self.ws_client):
             log.debug("Closing WebSocket Client")
             self.ws_client.close ()
+
+    def add_candle(self, market):
+        # close the current candle period and start a new candle period
+        candle = OHLC(long(time.time()), self.O, self.H, self.L, self.get_market_rate(), self.V)
+        log.debug ("New candle identified %s"%(candle))        
+        market.add_new_candle (candle)   
    
     def _normalized_order (self, order):
         '''
@@ -351,30 +362,28 @@ class CBPRO (Exchange):
                 market.order_book.add_asks([[price, size]])            
             
     def _gdax_consume_ticker_feed (self, market, msg):
-        '''
-        {
-            "best_ask": "11367.87", 
-            "best_bid": "11366.44", 
-            "high_24h": "12019.44000000", 
-            "last_size": "0.01000000", 
-            "low_24h": "11367.87000000", 
-            "open_24h": "10896.04000000", 
-            "price": "11367.87000000", 
-            "product_id": "BTC-USD", 
-            "sequence": 3000902, 
-            "side": "buy", 
-            "time": "2018-01-19T09:53:02.816000Z", 
-            "trade_id": 566669, 
-            "type": "ticker", 
-            "volume_24h": "264992.94231824", 
-            "volume_30d": "364800.84143217"
-        }
-        '''
+#         '''
+#         {
+#             "best_ask": "11367.87", 
+#             "best_bid": "11366.44", 
+#             "high_24h": "12019.44000000", 
+#             "last_size": "0.01000000", 
+#             "low_24h": "11367.87000000", 
+#             "open_24h": "10896.04000000", 
+#             "price": "11367.87000000", 
+#             "product_id": "BTC-USD", 
+#             "sequence": 3000902, 
+#             "side": "buy", 
+#             "time": "2018-01-19T09:53:02.816000Z", 
+#             "trade_id": 566669, 
+#             "type": "ticker", 
+#             "volume_24h": "264992.94231824", 
+#             "volume_30d": "364800.84143217"
+#         }
+#         '''
 #         global self.gdax_conf
-        log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
-        
-        interval = int(self.gdax_conf.get('backfill_interval'))   
-        
+#         log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
+            
         price = Decimal(msg.get('price'))
         last_size = msg.get('last_size')
         if (price == 0 or not last_size):
@@ -398,19 +407,18 @@ class CBPRO (Exchange):
         market.V = v
         
         now = time.time()
-        if now >= market.cur_candle_time + interval:
+#         log.critical("next_cdl: %d now: %d"%(market.cur_candle_time+self.candle_interval, now))
+        if now >= market.cur_candle_time + self.candle_interval:
             # close the current candle period and start a new candle period
             c = price
-            candle = OHLC(long(market.cur_candle_time), market.O, market.H, market.L, c, market.V)
+            candle = OHLC(long(now), market.O, market.H, market.L, c, market.V)
             log.debug ("New candle identified %s"%(candle))        
-            market.O = market.V = market.H = market.L = 0
-            market.cur_candle_time = now
             market.add_new_candle (candle)
             
             
         #TODO: FIXME: jork: might need to rate-limit the logic here after
         market.set_market_rate (price)
-        market.update_market_states()
+#         market.update_market_states()
         
     ###################### WebSocket Impl : end #############################
         
@@ -462,7 +470,7 @@ class CBPRO (Exchange):
         #get config
         enabled = self.gdax_conf.get('backfill_enabled')
         period = int(self.gdax_conf.get('backfill_period'))
-        interval = int(self.gdax_conf.get('backfill_interval'))   
+        interval = self.candle_interval 
         
         if not enabled:
             log.debug ("Historical data retrieval not enabled")

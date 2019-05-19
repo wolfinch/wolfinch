@@ -100,10 +100,10 @@ def oldmonk_main ():
     sleep_time = MAIN_TICK_DELAY
     while (True) : 
         cur_time = time.time()
-        log.debug("Current Sleep time left:"+str(sleep_time))         
-        #time.sleep(sleep_time)             
+#         log.critical("Current (%d) Sleep time left:%s"%(cur_time, str(sleep_time)))         
         # check for the msg in the feed Q and process, with timeout
         msg = feed_deQ(sleep_time) 
+#         log.critical("Current (%d)"%(time.time()))
         while (msg != None):
             feed_Q_process_msg (msg)
             msg = feed_deQ(0)        
@@ -111,6 +111,8 @@ def oldmonk_main ():
             process_market (market)
         '''Make sure each iteration take exactly LOOP_DELAY time'''
         sleep_time = (MAIN_TICK_DELAY - (time.time() - cur_time))
+        if sleep_time <0 :
+            log.critical ("******* TIMING SKEWED (%d) ******"%(sleep_time))
         sleep_time  = 0 if (sleep_time < 0) else sleep_time     
     #end While(true)
     

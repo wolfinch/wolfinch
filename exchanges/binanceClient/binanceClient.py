@@ -10,6 +10,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 from time import sleep
 import time
+# from dateutil.tz import tzlocal
 from twisted.internet import reactor
 
 from binance.client import Client
@@ -46,7 +47,7 @@ class Binance (Exchange):
         else:
             return None
         
-        self.primary = primary        
+        self.primary = primary
         #get config
         backfill = self.binance_conf.get('backfill')
         if not backfill:
@@ -59,8 +60,10 @@ class Binance (Exchange):
             if entry.get('period'):
                 self.binance_conf['backfill_period'] = int(entry['period'])
             if entry.get('interval'):
-                self.binance_conf['backfill_interval'] = str(entry['interval'])   
-                    
+                self.binance_conf['backfill_interval'] = str(entry['interval'])
+                interval_str = self.binance_conf.get('backfill_interval')
+                self.candle_interval = long(binance.helpers.interval_to_milliseconds(interval_str))//1000
+                                    
         # for public client, no need of api key
         self.public_client = Client("", "")
         if (self.public_client) == None :
@@ -85,6 +88,9 @@ class Binance (Exchange):
         serverTime = long(exch_info['serverTime'])
         localTime = long(time.time()*1000)
         self.timeOffset = (serverTime - localTime)//1000
+        #if time diff is less the 5s, ignore. 
+        if abs(self.timeOffset) < 5: 
+            self.timeOffset = 0
         
         log.info ("servertime: %d localtime: %d offset: %d"%(serverTime, localTime, self.timeOffset))
         
@@ -157,11 +163,10 @@ class Binance (Exchange):
         Feed Call back for Binance    
         This is where we do all the useful stuff with Feed
         '''
-        log.debug ("msg: %s"%msg)
+        log.info ("msg: %s"%msg)
 #         msg_type = msg.get('e')
-        now = time.time()
         k = msg.get('k')
-        t = long(k.get('t'))//1000 + self.timeOffset
+        t = long(k.get('T')+1)//1000 + self.timeOffset
         o = Decimal(k.get('o'))
         h = Decimal(k.get('h'))
         l = Decimal(k.get('l'))
@@ -173,12 +178,11 @@ class Binance (Exchange):
         candle = OHLC(long(t), o, h, l, c, v)
         log.debug ("New candle identified %s"%(candle))        
         market.O = market.V = market.H = market.L = 0
-        market.cur_candle_time = now
         market.add_new_candle (candle)
         
         #TODO: FIXME: jork: might need to rate-limit the logic here after
         market.set_market_rate (c)
-        market.update_market_states()        
+#         market.update_market_states()        
             
     #### Feed consume done #####    
     
@@ -204,6 +208,7 @@ class Binance (Exchange):
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
+        market.candle_interval = self.candle_interval
         log.info ("Market init complete: %s"%(product['id']))
         
         #set whether primary or secondary
@@ -237,7 +242,7 @@ class Binance (Exchange):
          seconds
          '''
         #Max Candles in one call
-        epoch = datetime.utcfromtimestamp(0)
+        epoch = datetime.utcfromtimestamp(0) #.replace(tzinfo=tzlocal())
         max_candles = 200
         candles_list = []
         
@@ -266,12 +271,15 @@ class Binance (Exchange):
         if not end:
             # if no end, use current time
             end = datetime.now()
+#             end = end.replace(tzinfo=tzlocal())
              
         if not start:
             # if no start given, use the config
             real_start = start = end - timedelta(days = period) - timedelta(seconds = interval//1000)
         else:
             real_start = start
+            
+#         real_start = start = start.replace(tzinfo=tzlocal())
         
         log.debug ("Retrieving Historic candles for period: %s to %s"%(
                     real_start.isoformat(), end.isoformat()))
@@ -313,7 +321,7 @@ class Binance (Exchange):
                 else:
                     #candles are of struct [[time, o, h, l,c, V]]
                     candles_list += map(
-                        lambda candle: OHLC(time=long(candle[0])//1000, 
+                        lambda candle: OHLC(time=long(candle[6] + 1)//1000, 
                                             low=candle[3], high=candle[2], open=candle[1], 
                                             close=candle[4], volume=candle[5]), candles)
     #                 log.debug ("%s"%(candles))
@@ -337,20 +345,19 @@ class Binance (Exchange):
         return candles_list
         
     def get_product_order_book (self, product, level = 1):
-        log.error ("get_product_order_book: ***********Not-Implemented******")
+        log.debug ("get_product_order_book: ***********Not-Implemented******")
         return None
-    
     def buy (self):
-        log.error ("buy: ***********Not-Implemented******")
+        log.debug ("buy: ***********Not-Implemented******")
         return None
     def sell (self):
-        log.error ("sell: ***********Not-Implemented******")
+        log.debug ("sell: ***********Not-Implemented******")
         return None
     def get_order (self):
-        log.error ("get_order: ***********Not-Implemented******")
+        log.debug ("get_order: ***********Not-Implemented******")
         return None
     def cancel_order (self):
-        log.error ("cancel_order: ***********Not-Implemented******")
+        log.debug ("cancel_order: ***********Not-Implemented******")
         return None
 
 ######### ******** MAIN ****** #########
