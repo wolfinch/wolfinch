@@ -113,7 +113,7 @@ class CBPRO (Exchange):
             raise Exception ("Unable to get CBPRO Accounts!!")            
             return False
         
-        log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
+        log.info ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
         if isinstance(accounts, dict):
                     ## Error Case
                     #{   u'message': u'Forbidden'}                    
@@ -121,6 +121,9 @@ class CBPRO (Exchange):
                     if (err_msg == 'Forbidden'):
                         log.critical("Forbidden to get accounts. Potential permissions issue")
                         raise Exception ("Unable to get CBPRO Accounts!! Potential permissions issue.")
+                    elif (err_msg != None):
+                        log.critical("error while getting accounts: msg: %s"%err_msg)
+                        raise Exception ("error while getting accounts: msg: %s"%err_msg)
         for account in accounts:
             for prod in self.gdax_conf['products']:
                 for prod_id in prod.keys():

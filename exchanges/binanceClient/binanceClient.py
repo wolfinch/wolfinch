@@ -23,7 +23,7 @@ from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 
 log = getLogger ('Binance')
-log.setLevel(log.DEBUG)
+log.setLevel(log.CRITICAL)
 
 #BINANCE CONFIG FILE
 BINANCE_CONF = 'config/binance.yml'
