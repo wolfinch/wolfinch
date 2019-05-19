@@ -111,7 +111,7 @@ def oldmonk_main ():
             process_market (market)
         '''Make sure each iteration take exactly LOOP_DELAY time'''
         sleep_time = (MAIN_TICK_DELAY - (time.time() - cur_time))
-        if sleep_time <0 :
+        if sleep_time < 0 :
             log.critical ("******* TIMING SKEWED (%d) ******"%(sleep_time))
         sleep_time  = 0 if (sleep_time < 0) else sleep_time     
     #end While(true)
