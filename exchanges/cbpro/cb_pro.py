@@ -184,7 +184,7 @@ class CBPRO (Exchange):
 
     def add_candle(self, market):
         # close the current candle period and start a new candle period
-        candle = OHLC(long(time.time()), self.O, self.H, self.L, self.get_market_rate(), self.V)
+        candle = OHLC(long(time.time()), market.O, market.H, market.L, market.get_market_rate(), market.V)
         log.debug ("New candle identified %s"%(candle))        
         market.add_new_candle (candle)   
    
