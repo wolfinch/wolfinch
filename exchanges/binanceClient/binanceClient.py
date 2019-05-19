@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # '''
 #  OldMonk Auto trading Bot
 #  Desc: Binance exchange interactions for OldMonk
@@ -10,7 +11,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 from time import sleep
 import time
-# from dateutil.tz import tzlocal
+from dateutil.tz import tzlocal, tzutc
 from twisted.internet import reactor
 
 from binance.client import Client
@@ -21,9 +22,8 @@ from utils import getLogger, readConf
 from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 
-
 log = getLogger ('Binance')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.DEBUG)
 
 #BINANCE CONFIG FILE
 BINANCE_CONF = 'config/binance.yml'
@@ -242,7 +242,7 @@ class Binance (Exchange):
          seconds
          '''
         #Max Candles in one call
-        epoch = datetime.utcfromtimestamp(0) #.replace(tzinfo=tzlocal())
+        epoch = datetime.utcfromtimestamp(0).replace(tzinfo=tzutc())
         max_candles = 200
         candles_list = []
         
@@ -271,7 +271,7 @@ class Binance (Exchange):
         if not end:
             # if no end, use current time
             end = datetime.now()
-#             end = end.replace(tzinfo=tzlocal())
+            end = end.replace(tzinfo=tzlocal())
              
         if not start:
             # if no start given, use the config
@@ -279,7 +279,7 @@ class Binance (Exchange):
         else:
             real_start = start
             
-#         real_start = start = start.replace(tzinfo=tzlocal())
+        real_start = start = start.replace(tzinfo=tzlocal())
         
         log.debug ("Retrieving Historic candles for period: %s to %s"%(
                     real_start.isoformat(), end.isoformat()))
