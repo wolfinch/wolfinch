@@ -69,9 +69,10 @@ class CBPRO (Exchange):
         api_base = self.gdax_conf.get ('apiBase')
         feed_base = self.gdax_conf.get ('wsFeed')
         
-        self.max_fund_liquidity_percent = self.gdax_conf.get ('maxFundLiquidity')
-        self.max_per_buy_fund_val = self.gdax_conf.get ('maxPerBuyFundValue')
-        self.max_per_trade_asset_size = self.gdax_conf.get ('maxPerTradeAssetSize')
+        self.max_fund_liquidity_percent = self.gdax_conf.get ('fundMaxLiquidity')
+        self.max_per_buy_fund_val = self.gdax_conf.get ('fundMaxPerBuyValue')
+        self.max_per_trade_asset_size = self.gdax_conf.get ('assetMaxPerTradeSize')
+        self.asset_hold_size = self.gdax_conf.get ('assetHoldSize')
         
         self.public_client = cbpro.PublicClient(api_url=api_base)
         if (self.public_client) == None :
@@ -165,6 +166,7 @@ class CBPRO (Exchange):
         market.asset.set_initial_size(Decimal( crypto_acc['available']))
         market.asset.set_hold_size( Decimal(crypto_acc['hold']))
         market.asset.set_max_per_trade_size(self.max_per_trade_asset_size)
+        market.asset.set_hold_size(self.asset_hold_size)
         
         ## Feed Cb
         market.consume_feed = self._gdax_consume_feed

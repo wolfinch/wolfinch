@@ -294,6 +294,9 @@ class Market:
     def order_status_update (self, order):
         log.debug ("ORDER UPDATE: %s"%(str(order)))        
         
+        if order == None:
+            return None
+        
         side = order.side
         msg_type = order.status_type
         reason = order.status_reason
