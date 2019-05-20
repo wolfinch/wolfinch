@@ -1,7 +1,7 @@
 '''
  OldMonk Auto trading Bot
  Desc: highlevel Db Implementation
- (c) Joshith Rayaroth Koderi
+ (c) OldMonk Bot
 '''
 
 # use the specific db impl

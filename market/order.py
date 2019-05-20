@@ -2,7 +2,7 @@
 '''
  OldMonk Auto trading Bot
  Desc: Order Class and TradeRequest class - implementation
- (c) Joshith Rayaroth Koderi
+ (c) OldMonk Bot
 '''
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base

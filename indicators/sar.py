@@ -1,7 +1,7 @@
 # '''
 #  Desc: Parabolic SAR (Overlap Studies) implementation using ta-lib
 #  (c) https://mrjbq7.github.io/ta-lib/
-#  (c) Joshith Rayaroth Koderi
+#  (c) OldMonk Bot
 # '''
 
 from indicator import Indicator

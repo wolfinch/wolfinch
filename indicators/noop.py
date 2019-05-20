@@ -1,7 +1,7 @@
 # '''
 #  Desc: NO-OP Indicator implementation
 #    Returns the closing price on each candle
-#  (c) Joshith Rayaroth Koderi
+#  (c) OldMonk Bot
 # '''
 
 from decimal import Decimal

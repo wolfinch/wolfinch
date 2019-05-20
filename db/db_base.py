@@ -1,7 +1,7 @@
 '''
  OldMonk Auto trading Bot
  Desc: Db Abstract Class Implementation
- (c) Joshith Rayaroth Koderi
+ (c) OldMonk Bot
 '''
 
 from abc import ABCMeta, abstractmethod

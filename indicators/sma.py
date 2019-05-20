@@ -1,6 +1,6 @@
 # '''
 #  Desc: Market Simple Moving Average (SMA) implementation 
-#  (c) Joshith Rayaroth Koderi
+#  (c) OldMonk Bot
 # '''
 
 from decimal import Decimal
