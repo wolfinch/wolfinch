@@ -285,7 +285,7 @@ class CBPRO (Exchange):
                 "level2",
                 "heartbeat",
                 "ticker",
-    #             "user"         #Receive details about our orders only
+                "user"         #Receive details about our orders only
             ]
         message_type = "subscribe"
         websocket_client = cbproWebsocketClient (url, products=products, message_type=message_type,

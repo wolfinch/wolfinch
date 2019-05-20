@@ -140,10 +140,10 @@ class Asset:
         self.hold_size = Decimal(0.0)
     
     def set_max_per_trade_size (self, size):
-        self.max_per_trade_size = size
+        self.max_per_trade_size = Decimal(size)
             
     def set_initial_size (self, size):
-        self.initial_size = self.current_size = size
+        self.initial_size = self.current_size = Decimal(size)
     
     def get_initial_size (self):
         return self.initial_size
@@ -152,7 +152,7 @@ class Asset:
         return self.current_size
         
     def set_hold_size (self, size):
-        self.hold_size = size
+        self.hold_size = Decimal(size)
         
     def get_asset_to_trade (self, strength):
         slice = Decimal(self.max_per_trade_size)/Decimal(5.0)
