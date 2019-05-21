@@ -109,7 +109,7 @@ def set_initial_acc_values (market):
 #     market.fund.set_hold_value(Decimal(100))
     market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
     market.fund.set_max_per_buy_fund_value(50)
-    market.asset.set_initial_size(Decimal(10))
+    market.asset.set_initial_size(Decimal(1))
     market.asset.set_hold_size( Decimal(0.1))
     market.asset.set_max_per_trade_size(Decimal(0.01))
         
@@ -183,7 +183,7 @@ def buy (trade_req) :
     
     if not isinstance( trade_req, TradeRequest):
         return None
-    log.debug ("BUY - Placing Order on SIM exchange --" ) 
+    log.debug ("BUY - Placing Order on SIM exchange --" )
     
     buy_order = Order(str(uuid.uuid1()), trade_req.product, "pending", order_type=trade_req.type, 
                       status_reason=None, side='buy', request_size=trade_req.size,

@@ -962,15 +962,14 @@ def display_market_stats (fd = sys.stdout):
     global OldMonk_market_list
     if sys.stdout != fd:
         fd.write("\n\n*****Market statistics*****\n")
-    for market in OldMonk_market_list:
-        with open(MARKET_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
-            st = str(market)
-            fd.write(st)         
+    for market in OldMonk_market_list:        
         fd.write(str("\n%s\n\n"%str(market)))
 def flush_all_stats ():
     display_market_stats()
     
     for market in OldMonk_market_list:
+        with open(MARKET_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
+            fd.write(str("\n%s\n\n"%str(market)))      
         with open(STATS_FILE%(market.product_id), "w") as fd:
             market.order_book.dump_traded_orders(fd)
             
