@@ -27,6 +27,9 @@ class TREND_BOLLINGER(Strategy):
         #internal states
         self.position = ''
         self.signal = 0
+        self.trend = ''
+        self.last_hit_bollinger = ''
+        self.last_hit_close = 0
     def generate_signal (self, candles):
         '''
         Trade Signal in range(-5..0..5), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
@@ -36,22 +39,22 @@ class TREND_BOLLINGER(Strategy):
         if len_candles < self.period:
             return 0
         
-        (upperBound, _, lowerBound) = candles[-1]['BOLLINGER']
-        candle = candles[-1]["OHLC"]
+        (upperBound, _, lowerBound) = candles[-1]['BBANDS']
+        close = candles[-1]["closing"]
 
         self.signal = 0 # hold        
         if (upperBound and lowerBound):
-            if (candle.close > (upperBound / 100) * (100 - self.bollinger_upper_bound_pct)):
+            if (close > (upperBound / 100) * (100 - self.bollinger_upper_bound_pct)):
                 self.last_hit_bollinger = 'upper'
-            elif (candle.close < (lowerBound / 100) * (100 + self.bollinger_lower_bound_pct)):
+            elif (close < (lowerBound / 100) * (100 + self.bollinger_lower_bound_pct)):
                 self.last_hit_bollinger = 'lower'
             else:
-                if (self.last_hit_bollinger == 'upper' and candle.close < self.last_hit_close):
+                if (self.last_hit_bollinger == 'upper' and close < self.last_hit_close):
                     self.trend = 'down'
-                elif (self.last_hit_bollinger == 'lower' and candle.close > self.last_hit_close):
+                elif (self.last_hit_bollinger == 'lower' and close > self.last_hit_close):
                     self.trend = 'up'
                 self.last_hit_bollinger = 'middle'
-            self.last_hit_close = candle.close
+            self.last_hit_close = close
     
             if (self.trend == 'down'):
                 #sell

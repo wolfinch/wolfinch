@@ -146,6 +146,9 @@ def load_config (cfg_file):
     # sanitize the config
     for k,v in OldMonkConfig.iteritems():
         if k == 'exchanges':
+            if v == None:
+                print ("Atleast one exchange need to be configured")
+                return False
             prim = False
             for exch in v:
                 for ex_k, ex_v in exch.iteritems():
@@ -213,6 +216,7 @@ def arg_parse ():
     if (args.backtesting):              
         log.debug ("backtesting enabled")       
         sims.backtesting_on = True
+        sims.simulator_on = True
     else:
         log.debug ("backtesting disabled")       
         sims.backtesting_on = False        

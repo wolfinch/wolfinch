@@ -373,6 +373,7 @@ class Market:
     def _buy_order_create (self, trade_req):
         
         self.num_buy_order += 1
+        log.info("BUY: %d sig: %s"%(self.num_buy_order, trade_req))        
         if (sims.simulator_on):
             order = sims.buy (trade_req)
         else:
@@ -427,7 +428,7 @@ class Market:
     
     def _sell_order_create (self, trade_req):
         self.num_sell_order += 1
-        log.critical("SELL: %d sig: %s"%(self.num_sell_order, trade_req))
+        log.info("SELL: %d sig: %s"%(self.num_sell_order, trade_req))
         if (sims.simulator_on):
             order = sims.sell (trade_req)
         else:
@@ -740,6 +741,9 @@ class Market:
               2. perform any pending trades (stop requests)
               3. Cancel/timeout any open orders if need be
         '''
+        if sims.backtesting_on == True:
+            return        
+        
         now = time.time()
         if now >= self.cur_candle_time + self.candle_interval:
             self.exchange.add_candle (self)
@@ -951,14 +955,18 @@ def market_setup (decisionConfig):
         else:
             log.info ("decision_setup completed for market: %s"%(market.name))
                         
+
+MARKET_STATS_FILE = "data/stats_market_%s_%s.json"
+STATS_FILE = "data/stats_traded_orders_%s.json"
 def display_market_stats (fd = sys.stdout):
     global OldMonk_market_list
     if sys.stdout != fd:
         fd.write("\n\n*****Market statistics*****\n")
     for market in OldMonk_market_list:
+        with open(MARKET_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
+            st = str(market)
+            fd.write(st)         
         fd.write(str("\n%s\n\n"%str(market)))
-
-STATS_FILE = "data/stats_traded_orders_%s.json"
 def flush_all_stats ():
     display_market_stats()
     
