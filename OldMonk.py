@@ -2,7 +2,7 @@
 #
 # OldMonk Auto trading Bot
 # Desc: Main File implements Bot
-# Copyright 2019, OldMonk Bot. All Rights Reserved.
+# Copyright 2019, Joshith Rayaroth Koderi. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

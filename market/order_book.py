@@ -27,6 +27,22 @@ import stats
 log = getLogger('ORDER-BOOK')
 log.setLevel(log.CRITICAL)
 
+class Position ():
+    
+    def __init__(self, buy=None, sell=None):
+        self.buy = buy
+        self.sell = sell
+        self.profit = 0
+        self.open_time = None
+        self.closed_time = None
+        
+    def add_buy(self, order):
+        self.buy = order
+        self.open_time = order.create_time
+    
+    def add_sell(self, order):
+        self.sell = order
+        self.closed_time = order.create_time
 
 class OrderBook():
 
@@ -43,10 +59,13 @@ class OrderBook():
         # My order Details    
         self.total_order_count = 0
         self.total_open_order_count = 0        
-        self.open_buy_orders_db = {}
-        self.open_sell_orders_db = {}
+        self.pending_buy_orders_db = {}
+        self.pending_sell_orders_db = {}
         self.traded_buy_orders_db = []
         self.traded_sell_orders_db = []
+        self.open_positions = []
+        self.close_pending_positions = []
+        self.closed_positions = []
         self.pending_trade_req = []  # TODO: FIXME: jork: this better be a nice AVL tree of sort
                     
     def add_pending_trade_req(self, trade_req):
@@ -55,7 +74,29 @@ class OrderBook():
     def remove_pending_trade_req(self, trade_req):
         # primitive 
         self.pending_trade_req.remove(trade_req)
+        
+    def add_or_update_pending_buy_order(self, order):
+        self.total_open_order_count += 1
+        self.total_order_count += 1 
+        self.pending_buy_orders_db[uuid.UUID(order.id)] = order
+    def get_pending_buy_order(self, order_id):
+        return self.pending_buy_orders_db.get (order_id)
+    def add_traded_buy_order(self, order):
+        self.total_open_order_count -= 1
+        del (self.pending_buy_orders_db[uuid.UUID(order.id)])
+        self.traded_buy_orders_db.append(order)        
 
+    def add_or_update_pending_sell_order(self, order):
+        self.pending_sell_orders_db[uuid.UUID(order.id)] = order
+        self.total_open_order_count += 1
+        self.total_order_count += 1        
+    def get_pending_sell_order(self, order_id):
+        self.pending_sell_orders_db.get (order_id)
+        
+    def add_traded_sell_order(self, order):
+        del (self.pending_sell_orders_db[uuid.UUID(order.id)])
+        self.total_open_order_count -= 1
+        self.traded_sell_orders_db.append(order)
     def add_order_list (self, bids, asks):
         if (asks):
             self.add_asks (asks)
@@ -88,9 +129,9 @@ class OrderBook():
             return None
         current_order = None
         if (order_side == 'buy'):
-            current_order = self.open_buy_orders_db.get (order_id)
+            current_order = self.get_pending_buy_order(order_id)
         else:
-            current_order = self.open_sell_orders_db.get (order_id)
+            current_order = self.get_pending_sell_order(order_id)
             
         if current_order != None:
             # Copy whatever available, new gets precedence
@@ -113,14 +154,10 @@ class OrderBook():
             
         if (order_side == 'buy'):
             # insert/replace the order
-            self.open_buy_orders_db[order_id] = order
-            self.total_open_order_count += 1
-            self.total_order_count += 1            
+            self.add_or_update_pending_buy_order(order)           
             if (order_status == 'done'):
                 # a previously placed order is completed, remove from open order, add to completed orderlist
-                del (self.open_buy_orders_db[order_id])
-                self.total_open_order_count -= 1
-                self.traded_buy_orders_db.append(order)
+                self.add_traded_buy_order(order)
                 log.debug ("Buy order Done: total_order_count: %d "
                        "total_open_order_count: %d "
                        "traded_buy_orders_count: %d" % (self.total_order_count,
@@ -135,14 +172,10 @@ class OrderBook():
                 return None
         elif (order_side == 'sell'):
             # insert/replace the order
-            self.open_sell_orders_db[order_id] = order
-            self.total_open_order_count += 1
-            self.total_order_count += 1            
+            self.add_or_update_pending_sell_order(order) 
             if (order_status == 'done'):
                 # a previously placed order is completed, remove from open order, add to completed orderlist      
-                del (self.open_sell_orders_db[order_id])
-                self.total_open_order_count -= 1
-                self.traded_sell_orders_db.append(order)
+                self.add_traded_sell_order(order)
                 log.debug ("Sell order Done: total_order_count: %d "
                        "total_open_order_count: %d "
                        "traded_sell_orders_count: %d" % (self.total_order_count,

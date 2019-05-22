@@ -1,6 +1,6 @@
 # OldMonk Auto trading Bot
 # Desc: Market/trading routines
-# Copyright 2018, OldMonk Bot. All Rights Reserved.
+# Copyright 2018, OldMonk Bot, Joshith Rayaroth Koderi. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -200,8 +200,8 @@ class Market:
 #      }
 #      orders {
 #      total_order_num
-#      open_buy_orders_db: <dict>
-#      open_sell_orders_db: <dict>
+#      pending_buy_orders_db: <dict>
+#      pending_sell_orders_db: <dict>
 #      traded_buy_orders_db:
 #      traded_sell_orders_db:
 #      }
