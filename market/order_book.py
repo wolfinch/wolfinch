@@ -64,7 +64,7 @@ class OrderBook():
         self.traded_buy_orders_db = []
         self.traded_sell_orders_db = []
         self.open_positions = []
-        self.close_pending_positions = []
+        self.close_pending_positions = {}
         self.closed_positions = []
         self.pending_trade_req = []  # TODO: FIXME: jork: this better be a nice AVL tree of sort
                     
@@ -75,6 +75,21 @@ class OrderBook():
         # primitive 
         self.pending_trade_req.remove(trade_req)
         
+    def open_position (self, order):
+        #open positions with buy orders only (we don't support 'short' now)
+        position = Position(buy=order)
+        self.open_positions.append(position)
+        
+    def close_pending_position(self, order):
+        pass
+    
+    def closed_position (self, order):
+        position = self.close_pending_positions.get(uuid.UUID(order.id))
+        if position:
+            position.add_sell (order)
+        else:
+            log.critical ("Unable to get closed position. order_id: %s"%(order.id))
+        
     def add_or_update_pending_buy_order(self, order):
         self.total_open_order_count += 1
         self.total_order_count += 1 
@@ -84,7 +99,11 @@ class OrderBook():
     def add_traded_buy_order(self, order):
         self.total_open_order_count -= 1
         del (self.pending_buy_orders_db[uuid.UUID(order.id)])
-        self.traded_buy_orders_db.append(order)        
+        self.traded_buy_orders_db.append(order)
+        
+        #if this is a successful order, we have a new position open
+        if order.status_reason == "filled":
+            self.open_position(order)
 
     def add_or_update_pending_sell_order(self, order):
         self.pending_sell_orders_db[uuid.UUID(order.id)] = order
@@ -92,11 +111,11 @@ class OrderBook():
         self.total_order_count += 1        
     def get_pending_sell_order(self, order_id):
         self.pending_sell_orders_db.get (order_id)
-        
     def add_traded_sell_order(self, order):
         del (self.pending_sell_orders_db[uuid.UUID(order.id)])
         self.total_open_order_count -= 1
         self.traded_sell_orders_db.append(order)
+        
     def add_order_list (self, bids, asks):
         if (asks):
             self.add_asks (asks)
