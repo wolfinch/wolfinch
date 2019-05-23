@@ -70,25 +70,41 @@ class OrderBook():
                     
     def add_pending_trade_req(self, trade_req):
         self.pending_trade_req.append(trade_req)
-        
     def remove_pending_trade_req(self, trade_req):
         # primitive 
         self.pending_trade_req.remove(trade_req)
         
-    def open_position (self, order):
+    def open_position (self, buy_order):
         #open positions with buy orders only (we don't support 'short' now)
-        position = Position(buy=order)
+        position = Position(buy=buy_order)
         self.open_positions.append(position)
-        
-    def close_pending_position(self, order):
-        pass
-    
-    def closed_position (self, order):
-        position = self.close_pending_positions.get(uuid.UUID(order.id))
-        if position:
-            position.add_sell (order)
+    def get_closable_position(self):
+        #get last open position for now
+        if len(self.open_positions):
+            return self.open_positions[-1]
         else:
-            log.critical ("Unable to get closed position. order_id: %s"%(order.id))
+            return None
+    def close_position_pending(self, pos, sell_order):
+        pos.add_sell(sell=sell_order)
+        self.close_pending_positions[uuid.UUID(sell_order.id)] = pos
+        self.open_positions.remove(pos)
+        return pos
+    def close_position_failed(self, sell_order):
+        position = self.close_pending_positions.get(uuid.UUID(sell_order.id))
+        if position:
+            position.sell = None
+            del(self.close_pending_positions[uuid.UUID(sell_order.id)])
+            self.open_positions.append(position)
+        else:
+            log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))        
+    def close_position (self, sell_order):
+        position = self.close_pending_positions.get(uuid.UUID(sell_order.id))
+        if position:
+            position.add_sell (sell_order)
+            del(self.close_pending_positions[uuid.UUID(sell_order.id)])
+            self.closed_positions.append(position)
+        else:
+            log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))
         
     def add_or_update_pending_buy_order(self, order):
         self.total_open_order_count += 1
@@ -115,6 +131,13 @@ class OrderBook():
         del (self.pending_sell_orders_db[uuid.UUID(order.id)])
         self.total_open_order_count -= 1
         self.traded_sell_orders_db.append(order)
+        
+        #close/reopen position
+        #TODO: TBD: more checks required??
+        if order.status_reason == "filled":
+            self.close_position(order)
+        else:
+            self.close_position_failed(order)
         
     def add_order_list (self, bids, asks):
         if (asks):
