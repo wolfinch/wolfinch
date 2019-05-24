@@ -30,7 +30,7 @@ class EMA_RSI(Strategy):
         self.signal = 0
     def generate_signal (self, candles):
         '''
-        Trade Signale in range(-5..0..5), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
+        Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
         '''
         signal = 0
         len_candles = len (candles)
@@ -63,11 +63,11 @@ class EMA_RSI(Strategy):
             if self.trend == 'bullish' and ema5 > ema13 and ema5 > ema21 and ema21 > ema80 and ema13 > ema80:
                 if self.position == 'buy': #if trend continues, increase signal strength
                     self.signal += 1
-                    if self.signal > 5:
-                        self.signal = 5
+                    if self.signal > 3:
+                        self.signal = 3
                 else:
                     self.position = 'buy'
-                    self.signal = 3  # buy
+                    self.signal = 1  # buy
         else: # bearish market
             if self.position == 'buy': #trend reversal, cancel position #TODO: FIXME: implement closing position
                 self.position = '' 
@@ -79,11 +79,11 @@ class EMA_RSI(Strategy):
             if self.trend == 'bearish' and ema5 < ema13 and ema5 < ema21 and ema21 < ema80 and ema13 < ema80:
                 if self.position == 'sell': #if trend continues, increase signal strength
                     self.signal -= 1
-                    if self.signal < -5:
-                        self.signal = -5
+                    if self.signal < -3:
+                        self.signal = -3
                 else:                
                     self.position = 'sell'
-                    self.signal = -3 # sell
+                    self.signal = -1 # sell
         
         return self.signal
     

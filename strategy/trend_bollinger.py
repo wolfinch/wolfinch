@@ -32,7 +32,7 @@ class TREND_BOLLINGER(Strategy):
         self.last_hit_close = 0
     def generate_signal (self, candles):
         '''
-        Trade Signal in range(-5..0..5), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
+        Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
         '''
         len_candles = len (candles)
 
@@ -58,11 +58,11 @@ class TREND_BOLLINGER(Strategy):
     
             if (self.trend == 'down'):
                 #sell
-                self.signal = -5
+                self.signal = -3
                 self.trend = None
             elif (self.trend == 'up'):
                 #buy
-                self.signal = 5
+                self.signal = 3
                 self.trend = None
         
         return self.signal

@@ -50,7 +50,7 @@ class TREND_RSI(Strategy):
         self.rsi_high = 0
     def generate_signal (self, candles):
         '''
-        Trade Signale in range(-5..0..5), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
+        Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
         '''
         signal = 0
         len_candles = len (candles)

@@ -103,7 +103,7 @@ class Fund:
         self.taker_fee_rate = taker_fee          
 
     def get_fund_to_trade (self, strength):
-        slice = self.max_per_buy_fund_value / Decimal(5) #max strength
+        slice = self.max_per_buy_fund_value / Decimal(3) #max strength
         liquid_fund = self.initial_value *  self.fund_liquidity_percent / Decimal(100)
         rock_bottom = self.initial_value - liquid_fund
         
@@ -155,7 +155,7 @@ class Asset:
         self.hold_size = Decimal(size)
         
     def get_asset_to_trade (self, strength):
-        slice = Decimal(self.max_per_trade_size)/Decimal(5.0)
+        slice = Decimal(self.max_per_trade_size)/Decimal(3)
         
         cur_size = slice * strength
         if ((self.current_size - self.current_hold_size) >= (cur_size + self.hold_size)):
@@ -398,10 +398,10 @@ class Market:
             self.fund.latest_buy_price = market_order.price
             self.fund.total_traded_value += order_cost
             #avg cost
-            curr_total_asset_size = (self.asset.current_hold_size + self.asset.current_size)
+            curr_new_asset_size = (self.asset.current_hold_size + self.asset.current_size - self.asset.initial_size)
             self.fund.current_avg_buy_price = (((self.fund.current_avg_buy_price *
-                                                  curr_total_asset_size) + (order_cost))/
-                                                        (curr_total_asset_size + market_order.filled_size))
+                                                  curr_new_asset_size) + (order_cost))/
+                                                        (curr_new_asset_size + market_order.filled_size))
             #asset
             self.asset.current_size += market_order.filled_size
             self.asset.latest_traded_size = market_order.filled_size
@@ -523,51 +523,64 @@ class Market:
     def _generate_trade_request (self, signal):
         '''
         Desc: Consider various parameters and generate a trade request
-        param : Trade signal (-5-0-5) (strong-sell - hold - strong-buy)
+        param : Trade signal (-3-0-3) (strong-sell - hold - strong-buy)
         return: Trade request
         Algo: 1. Trade signal 
         '''
         #TODO: FIXME: jork: impl. limit, stop etc
         log.debug ('Calculate trade Req')
-        if signal > 0 :
-            #BUY
-            self.num_buy_req += 1
-            fund = self.fund.get_fund_to_trade(signal)
-            if fund > 0:
-                size = fund / self.get_market_rate()
-                log.debug ("Generating BUY trade_req with fund: %d size: %d for signal: %d"%(fund, size, signal))
-                return TradeRequest(Product=self.product_id,
-                                  Side="BUY",
-                                   Size=round(Decimal(size), 8),
-                                   Fund=round(Decimal(fund), 8),
-                                   Type="market",
-                                   Price=round(Decimal(0), 8),
-                                   Stop=0)            
+        
+        trade_req_l = []
+        abs_sig = abs(signal)        
+        while (abs_sig):
+            abs_sig -= 1
+            if signal > 0 :
+                #BUY
+                self.num_buy_req += 1
+                fund = self.fund.get_fund_to_trade(1)
+                if fund > 0:
+                    size = fund / self.get_market_rate()
+                    log.debug ("Generating BUY trade_req with fund: %d size: %d for signal: %d"%(fund, size, signal))
+                    trade_req_l.append(TradeRequest(Product=self.product_id,
+                                      Side="BUY",
+                                       Size=round(Decimal(size), 8),
+                                       Fund=round(Decimal(fund), 8),
+                                       Type="market",
+                                       Price=round(Decimal(0), 8),
+                                       Stop=0))   
+                else:
+                    log.debug ("Unable to generate BUY request for signal (%d). Too low fund"%(signal))
+                    self.num_buy_req_reject += 1                
+                    return trade_req_l            
+            elif signal < 0:
+                # SELL
+                self.num_sell_req += 1                            
+#                 asset_size = self.asset.get_asset_to_trade (1)
+                position = self.order_book.get_closable_position()
+                if position:
+                    log.debug ("pos: %s"%(str(position)))                    
+                    asset_size = position.buy.get_asset()
+                    if (asset_size <= 0):
+                        log.critical ("Invalid open position for closing: pos: %s"%str(position))
+                        raise Exception("Invalid open position for closing")
+                    log.debug ("Generating SELL trade_req with asset size: %s"%(str(asset_size)))       
+                    trade_req_l.append(TradeRequest(Product=self.product_id,
+                                      Side="SELL",
+                                       Size=round(Decimal(asset_size),8),
+                                       Fund=round(Decimal(0), 8),                                   
+                                       Type="market",
+                                       Price=round(Decimal(0), 8),
+                                       Stop=0))
+                else:
+                    log.critical ("Unable to generate SELL request for signal (%d)."
+                     "Unable to get open positions to close"%(signal))
+                    self.num_sell_req_reject += 1                                
+                    return trade_req_l
+    
             else:
-                log.debug ("Unable to generate BUY request for signal (%d). Too low fund"%(signal))
-                self.num_buy_req_reject += 1                
-                return None            
-        elif signal < 0:
-            # SELL
-            self.num_sell_req += 1                            
-            asset_size = self.asset.get_asset_to_trade (abs(signal))
-            if asset_size > 0:
-                log.debug ("Generating SELL trade_req with asset size: %d"%(asset_size))       
-                return TradeRequest(Product=self.product_id,
-                                  Side="SELL",
-                                   Size=round(Decimal(asset_size),8),
-                                   Fund=round(Decimal(0), 8),                                   
-                                   Type="market",
-                                   Price=round(Decimal(0), 8),
-                                   Stop=0)
-            else:
-                log.critical ("Unable to generate SELL request for signal (%d). Too low asset size(%f)"%(signal, asset_size))
-                self.num_sell_req_reject += 1                                
-                return None
-
-        else:
-            #signal 0 - hold signal
-            return None
+                #signal 0 - hold signal
+                return trade_req_l
+        return trade_req_l
 
     def _execute_market_trade(self, trade_req_list):
         '''
@@ -691,7 +704,7 @@ class Market:
         # This may not be the actual avg buy price. 
         # But from our life-cycle perspective, this is good ( or the best we can do.)
         #TODO: Validate: This??
-        self.fund.current_avg_buy_price = self.get_indicator_list()[0]['ohlc'].close
+        self.fund.current_avg_buy_price = 0 #self.get_indicator_list()[0]['ohlc'].close
         log.debug ("_init_states: current_avg_buy_price: %d"%(self.fund.current_avg_buy_price))
         
     ##########################################
@@ -785,9 +798,9 @@ class Market:
         """ 
         Do all the magic to generate the trade signal
         params : exchange, product
-        return : trade signal (-5..0..5)
-                 -5 strong sell
-                 +5 strong buy
+        return : trade signal (-3..0..3)
+                 -3 strong sell
+                 +3 strong buy
         """
         signal = self.decision.generate_signal((idx if idx != -1 else (self.num_candles-1)))
         
@@ -832,12 +845,12 @@ class Market:
         trade_req_list = self._get_manual_trade_req ()
         # Now generate auto trade req list
         log.debug ("Trade Signal strength:"+str(signal))
-        trade_req = self._generate_trade_request( signal)
+        trade_req_list += self._generate_trade_request( signal)
         #validate the trade Req
-        if (trade_req != None):
-            ## Now we have a valid trader request
-            # Execute the trade request and retrieve the order # and store it
-            trade_req_list.append(trade_req)
+#         if (trade_req != None):
+#             ## Now we have a valid trader request
+#             # Execute the trade request and retrieve the order # and store it
+#             trade_req_list.append(trade_req)
         if (len(trade_req_list)):
             self._execute_market_trade(trade_req_list)
     
@@ -867,14 +880,15 @@ class Market:
 "num_buy_order": %s, "num_buy_order_success": %s, "num_buy_order_failed": %s,                   
 "num_sell_order": %s, "num_sell_order_success": %s, "num_sell_order_failed": %s,
 "fund":%s,
-"asset":%s
+"asset":%s,
+"order_book":%s
 }"""%(
                 self.exchange_name, self.product_id,self.name, 
                 self.num_buy_req, self.num_buy_req_reject,
                 self.num_sell_req, self.num_sell_req_reject,
                 self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed, 
                 self.num_sell_order, self.num_sell_order_success, self.num_sell_order_failed,                 
-                str(self.fund), str(self.asset))
+                str(self.fund), str(self.asset), str(self.order_book))
         
         
 ############# Market Class Def - end ############# 

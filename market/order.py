@@ -107,6 +107,15 @@ class Order (Base):
     def __repr__ (self):
         return self.__str__()
             
+    def get_price (self):
+        return self.price
+    def get_funds (self):
+        return self.funds
+    def get_asset(self):
+        return self.filled_size
+    def get_side(self):
+        return self.side
+        
     def DbSave (self):
         global Db
         if not Db:

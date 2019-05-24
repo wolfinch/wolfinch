@@ -36,7 +36,7 @@ class Strategy:
     @abstractmethod
     def generate_signal (self):
         '''
-        Trade Signale in range(-5..0..5), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
+        Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
         '''
         return 0
         

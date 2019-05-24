@@ -29,6 +29,11 @@ log.setLevel(log.CRITICAL)
 
 class Position ():
     
+    buy     = None
+    sell    = None
+    profit = Decimal(0)
+    open_time = None
+    closed_time = None
     def __init__(self, buy=None, sell=None):
         self.buy = buy
         self.sell = sell
@@ -67,6 +72,10 @@ class OrderBook():
         self.close_pending_positions = {}
         self.closed_positions = []
         self.pending_trade_req = []  # TODO: FIXME: jork: this better be a nice AVL tree of sort
+    def __str__(self):
+        return """
+position[open: %d, close_pending: %d, closed: %d]"""%(len(self.open_positions),
+                                len(self.close_pending_positions), len(self.closed_positions))
                     
     def add_pending_trade_req(self, trade_req):
         self.pending_trade_req.append(trade_req)
@@ -80,15 +89,26 @@ class OrderBook():
         self.open_positions.append(position)
     def get_closable_position(self):
         #get last open position for now
+        # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
         if len(self.open_positions):
-            return self.open_positions[-1]
+            pos = self.open_positions.pop() 
+            self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
+            return pos
         else:
             return None
-    def close_position_pending(self, pos, sell_order):
-        pos.add_sell(sell=sell_order)
-        self.close_pending_positions[uuid.UUID(sell_order.id)] = pos
-        self.open_positions.remove(pos)
-        return pos
+    def close_position_pending(self, sell_order):
+        # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
+        for k, pos in self.close_pending_positions.iteritems():
+            #find the pos without sell attached. and reinsert after attach
+            if pos.sell == None:
+                pos.add_sell(sell_order)
+                del (self.close_pending_positions[k])
+                self.close_pending_positions[uuid.UUID(sell_order.id)] = pos
+                return pos
+        else:
+            #something is very wrong
+            log.critical("Unable to find pending position for close id: %s"%(sell_order.id))
+            raise Exception ("Unable to find pending position for close")
     def close_position_failed(self, sell_order):
         position = self.close_pending_positions.get(uuid.UUID(sell_order.id))
         if position:
@@ -96,12 +116,13 @@ class OrderBook():
             del(self.close_pending_positions[uuid.UUID(sell_order.id)])
             self.open_positions.append(position)
         else:
-            log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))        
+            log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id)) 
     def close_position (self, sell_order):
         position = self.close_pending_positions.get(uuid.UUID(sell_order.id))
         if position:
             position.add_sell (sell_order)
             del(self.close_pending_positions[uuid.UUID(sell_order.id)])
+            position.profit = Decimal((position.buy.get_price() - position.sell.get_price())*position.buy.get_asset())
             self.closed_positions.append(position)
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))
@@ -116,7 +137,6 @@ class OrderBook():
         self.total_open_order_count -= 1
         del (self.pending_buy_orders_db[uuid.UUID(order.id)])
         self.traded_buy_orders_db.append(order)
-        
         #if this is a successful order, we have a new position open
         if order.status_reason == "filled":
             self.open_position(order)
@@ -135,8 +155,10 @@ class OrderBook():
         #close/reopen position
         #TODO: TBD: more checks required??
         if order.status_reason == "filled":
+            log.critical("closed position order: %s"%(order))
             self.close_position(order)
         else:
+            log.critical("closed position failed order: %s"%(order))            
             self.close_position_failed(order)
         
     def add_order_list (self, bids, asks):
@@ -207,7 +229,7 @@ class OrderBook():
                                                        len(self.traded_buy_orders_db)))
             elif (order_status in ['pending', 'open', 'received', 'match']):
                 # Nothing much to do for us here
-                log.info ("Buy order_id(%s) Status: %s" % (str(order_id), order_status))                
+                log.info ("Buy order_id(%s) Status: %s" % (str(order_id), order_status))       
             else:
                 log.critical("UNKNOWN buy order status: %s" % (order_status))
                 raise Exception("UNKNOWN buy order status: %s" % (order_status))
@@ -226,6 +248,7 @@ class OrderBook():
             elif (order_status in ['pending', 'open', 'received', 'match']):
                 # Nothing much to do for us here
                 log.info ("Sell order_id(%s) Status: %s" % (str(order_id), order_status))
+                self.close_position_pending(order)
             else:
                 log.critical("UNKNOWN sell order status: %s" % (order_status))
                 raise Exception("UNKNOWN buy order status: %s" % (order_status))                
