@@ -14,8 +14,11 @@ import logging
 #         self.getLogger (name)
 #             
 def getLogger (name):
+#     FORMAT = "[%(levelname)s:%(name)s:%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
+    FORMAT = "[%(levelname)s:%(name)s - %(funcName)20s() ] %(message)s"
 
-    logging.basicConfig(level=logging.DEBUG)     
+    
+    logging.basicConfig(filename='oldmonk.log', filemode='a', level=logging.DEBUG, format=FORMAT)     
     log = logging.getLogger(name)
     log.CRITICAL =  logging.CRITICAL
     log.ERROR    =  logging.ERROR

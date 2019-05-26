@@ -101,7 +101,7 @@ def do_trade (market):
             feed_enQ(market, this_order)
             traded_orders_pvt.append (order)
             open_orders_pvt.remove (order)
-            log.debug ("Traded market order: %s filled_order: %s price: %s"%(str(order), str(this_order), str(price)))
+            log.critical ("\n\nTraded market order: %s filled_order: %s price: %s"%(str(order), str(this_order), str(price)))
         
 def set_initial_acc_values (market):
     #Setup the initial params

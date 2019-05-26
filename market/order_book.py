@@ -25,7 +25,7 @@ from utils import getLogger
 import stats
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.DEBUG)
 
 class Position ():
     
@@ -85,52 +85,78 @@ position[open: %d, close_pending: %d, closed: %d]"""%(len(self.open_positions),
         
     def open_position (self, buy_order):
         #open positions with buy orders only (we don't support 'short' now)
+        log.debug ("open_position order: %s"%(buy_order))
         position = Position(buy=buy_order)
-        self.open_positions.append(position)
+        self.open_positions.append(position)        
+        log.debug ("\n\n\n***open_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
+          
+
     def get_closable_position(self):
+        log.debug ("get_closable_position ")    
+            
         #get last open position for now
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
+        pos = None
         if len(self.open_positions):
             pos = self.open_positions.pop() 
             self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
-            return pos
-        else:
-            return None
+        log.debug ("\n\n\n***get_closable_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
+        return pos
     def close_position_pending(self, sell_order):
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
+        log.debug ("close_position_pending order: %s"%(sell_order))
+        log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
+        
+        pos = self.close_pending_positions.get(uuid.UUID(sell_order.id))
+        if pos:
+            log.debug ("close_position_pending: sell order already in pending_list. do nothing")
+            return pos
+        
+        #find a close_pending pos without sell attached.
         for k, pos in self.close_pending_positions.iteritems():
             #find the pos without sell attached. and reinsert after attach
+            log.debug ("pos:buy:%s \nsell: %s\n\n"%(pos.buy, pos.sell))
             if pos.sell == None:
                 pos.add_sell(sell_order)
-                del (self.close_pending_positions[k])
+                del(self.close_pending_positions[k])
                 self.close_pending_positions[uuid.UUID(sell_order.id)] = pos
+                log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))                  
                 return pos
         else:
             #something is very wrong
             log.critical("Unable to find pending position for close id: %s"%(sell_order.id))
             raise Exception ("Unable to find pending position for close")
     def close_position_failed(self, sell_order):
-        position = self.close_pending_positions.get(uuid.UUID(sell_order.id))
+        log.debug ("close_position_failed order: %s"%(sell_order))
+        log.debug ("\n\n\n***close_position_failed: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
+           
+        id = uuid.UUID(sell_order.id)
+        position = self.close_pending_positions.get(id)
         if position:
             position.sell = None
-            del(self.close_pending_positions[uuid.UUID(sell_order.id)])
+            self.close_pending_positions.pop(id, None)
             self.open_positions.append(position)
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id)) 
     def close_position (self, sell_order):
-        position = self.close_pending_positions.get(uuid.UUID(sell_order.id))
+        log.debug ("close_position order: %s"%(sell_order))
+        id = uuid.UUID(sell_order.id)
+        position = self.close_pending_positions.pop(id, None)
         if position:
             position.add_sell (sell_order)
-            del(self.close_pending_positions[uuid.UUID(sell_order.id)])
             position.profit = Decimal((position.buy.get_price() - position.sell.get_price())*position.buy.get_asset())
             self.closed_positions.append(position)
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))
+        log.debug ("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))              
         
     def add_or_update_pending_buy_order(self, order):
-        self.total_open_order_count += 1
-        self.total_order_count += 1 
-        self.pending_buy_orders_db[uuid.UUID(order.id)] = order
+        log.critical ("add_or_update_pending_buy_order ****<<<<<<<<<<<<<<<<<<<order:%s\n\n"%order)
+        id = uuid.UUID(order.id)
+        if not self.pending_buy_orders_db.get(id):
+            self.total_open_order_count += 1
+            self.total_order_count += 1 
+        self.pending_buy_orders_db[id] = order
     def get_pending_buy_order(self, order_id):
         return self.pending_buy_orders_db.get (order_id)
     def add_traded_buy_order(self, order):
@@ -142,9 +168,12 @@ position[open: %d, close_pending: %d, closed: %d]"""%(len(self.open_positions),
             self.open_position(order)
 
     def add_or_update_pending_sell_order(self, order):
-        self.pending_sell_orders_db[uuid.UUID(order.id)] = order
-        self.total_open_order_count += 1
-        self.total_order_count += 1        
+        id = uuid.UUID(order.id)
+        if not self.pending_sell_orders_db.get(id):
+            self.total_open_order_count += 1
+            self.total_order_count += 1        
+        self.pending_sell_orders_db[id] = order
+            
     def get_pending_sell_order(self, order_id):
         self.pending_sell_orders_db.get (order_id)
     def add_traded_sell_order(self, order):
