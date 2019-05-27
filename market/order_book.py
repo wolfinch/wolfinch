@@ -48,6 +48,9 @@ class Position ():
     def add_sell(self, order):
         self.sell = order
         self.closed_time = order.create_time
+    def __str__(self):
+        return """{"buy":%s\n,"sell":%s\n"""%(str(self.buy), str(self.sell))
+        
 
 class OrderBook():
 
@@ -98,24 +101,29 @@ position[open: %d, close_pending: %d, closed: %d]"""%(len(self.open_positions),
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
         pos = None
         if len(self.open_positions):
-            pos = self.open_positions.pop() 
+            pos = self.open_positions.pop()
+            if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
+                log.critical("Position already close pending \npos:%s"%pos)
+                raise ("Duplicate close pending position")            
             self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
-        log.debug ("\n\n\n***get_closable_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
+        log.debug ("\n\n\n***get_closable_position: open(%d) closed(%d) close_pend(%d) \n pos: %s"%(
+            len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), pos))
         return pos
     def close_position_pending(self, sell_order):
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
         log.debug ("close_position_pending order: %s"%(sell_order))
-        log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
+        log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)\n"%(
+            len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
         
         pos = self.close_pending_positions.get(uuid.UUID(sell_order.id))
         if pos:
-            log.debug ("close_position_pending: sell order already in pending_list. do nothing")
+            log.debug ("close_position_pending: sell order already in pending_list. do nothing\npos:%s"%(pos))
             return pos
         
         #find a close_pending pos without sell attached.
         for k, pos in self.close_pending_positions.iteritems():
             #find the pos without sell attached. and reinsert after attach
-            log.debug ("pos:buy:%s \nsell: %s\n\n"%(pos.buy, pos.sell))
+            log.debug ("pos:\n%s"%(pos))
             if pos.sell == None:
                 pos.add_sell(sell_order)
                 del(self.close_pending_positions[k])
@@ -148,7 +156,8 @@ position[open: %d, close_pending: %d, closed: %d]"""%(len(self.open_positions),
             self.closed_positions.append(position)
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))
-        log.debug ("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))              
+        log.debug ("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)\n pos:%s"%(
+            len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))              
         
     def add_or_update_pending_buy_order(self, order):
         log.critical ("add_or_update_pending_buy_order ****<<<<<<<<<<<<<<<<<<<order:%s\n\n"%order)

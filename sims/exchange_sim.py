@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 # from dateutil.tz import tzlocal
 from decimal import Decimal
+import copy
 
 from utils import getLogger
 from market import *
@@ -42,7 +43,7 @@ order_struct = {u'created_at': u'2018-01-10T09:49:02.639681Z',
              u'executed_value': u'0.0000000000000000',
              u'fill_fees': u'0.0000000000000000',
              u'filled_size': u'0.00000000',
-             u'id': u'7150b013-62ca-49c7-aa28-4a9473778644',
+             u'id': u'TESTUUID-62ca-49c7-aa28-TESTUUID',
              u'post_only': True,
              u'price': u'0.0',
              u'product_id': u'BTC-USD',
@@ -71,7 +72,7 @@ def do_trade (market):
 #         print ("order: %s"%(str(order)))
         market.order_status_update (order)
         #now trade
-        this_order = order_struct # Note: this at the top
+        this_order = copy.deepcopy(order_struct) # Note: this at the top
         this_order['created_at'] = datetime.now().isoformat()
         this_order['product_id'] = market.product_id
         this_order['id'] = order.id

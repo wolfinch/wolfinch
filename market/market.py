@@ -51,7 +51,7 @@ import db
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.DEBUG)
 
 OldMonk_market_list = []
 
@@ -858,18 +858,42 @@ class Market:
         #TODO: FIXME: TBD: big Q: should we enhance to track positions ???
         log.info ("finishing trading session; selling all acquired assets")
         # sell assets and come back to initial state
-        asset_size = self.asset.get_current_size() - self.asset.get_initial_size()
-        if asset_size > 0:
-            log.debug ("Generating SELL trade_req with asset size: %d"%(asset_size))       
-            self.num_sell_req += 1                                        
-            trade_req = TradeRequest(Product=self.product_id,
-                              Side="SELL",
-                               Size=round(Decimal(asset_size),8),
-                               Fund=round(Decimal(0), 8),                                   
-                               Type="market",
-                               Price=round(Decimal(0), 8),
-                               Stop=0)
-            self._execute_market_trade([trade_req])
+        trade_req_l = []
+        while (True):
+            position = self.order_book.get_closable_position()            
+            self.num_sell_req += 1                            
+#                 asset_size = self.asset.get_asset_to_trade (1)
+                
+            if position:
+                log.debug ("pos: %s"%(str(position)))                    
+                asset_size = position.buy.get_asset()
+                if (asset_size <= 0):
+                    log.critical ("Invalid open position for closing: pos: %s"%str(position))
+                    raise Exception("Invalid open position for closing")
+                log.debug ("Generating SELL trade_req with asset size: %s"%(str(asset_size)))       
+                trade_req_l.append(TradeRequest(Product=self.product_id,
+                                  Side="SELL",
+                                   Size=round(Decimal(asset_size),8),
+                                   Fund=round(Decimal(0), 8),                                   
+                                   Type="market",
+                                   Price=round(Decimal(0), 8),
+                                   Stop=0))
+            else:                              
+                break
+        
+#         asset_size = self.asset.get_current_size() - self.asset.get_initial_size()
+#         if asset_size > 0:
+#             log.debug ("Generating SELL trade_req with asset size: %d"%(asset_size))       
+#             self.num_sell_req += 1                                        
+#             trade_req = TradeRequest(Product=self.product_id,
+#                               Side="SELL",
+#                                Size=round(Decimal(asset_size),8),
+#                                Fund=round(Decimal(0), 8),                                   
+#                                Type="market",
+#                                Price=round(Decimal(0), 8),
+#                                Stop=0)
+#             self._execute_market_trade([trade_req])
+        self._execute_market_trade(trade_req_l)
             
     def __str__(self):
         return """
@@ -896,6 +920,7 @@ class Market:
 # Feed Q routines
 feedQ = Queue.Queue()
 def feed_enQ (market, msg):
+    log.debug ("-------feed_enQ msg -------")    
     obj = {"market":market, "msg":msg}
     feedQ.put(obj)
     
