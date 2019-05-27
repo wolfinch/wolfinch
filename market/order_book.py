@@ -25,29 +25,43 @@ from utils import getLogger
 import stats
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.DEBUG)
+log.setLevel(log.INFO)
 
 class Position ():
     
     buy     = None
     sell    = None
     profit = Decimal(0)
+    stop_loss = Decimal(0)
+    take_profit = Decimal(0)
     open_time = None
     closed_time = None
+    status = ''  #'open'|closed|close_pending
     def __init__(self, buy=None, sell=None):
-        self.buy = buy
-        self.sell = sell
-        self.profit = 0
-        self.open_time = None
-        self.closed_time = None
+        self.add_buy(buy)
+        self.add_sell(sell)
         
     def add_buy(self, order):
+        if order == None:
+            return
         self.buy = order
+        self.set_status("open")
         self.open_time = order.create_time
     
     def add_sell(self, order):
+        if order == None:
+            return
         self.sell = order
         self.closed_time = order.create_time
+    
+    def set_status (self, status):
+        if status == "open" or status == "close_pending" or status == "closed":
+            self.status = status
+            if status == "closed":
+                self.profit = (self.sell.get_price() - self.buy.get_price())*self.sell.get_asset()
+        else:
+            log.critical ("Unknown position status(%s)"%(status))
+            raise Exception ("Unknown position status(%s)"%(status))
     def __str__(self):
         return """{"buy":%s\n,"sell":%s\n"""%(str(self.buy), str(self.sell))
         
@@ -88,10 +102,10 @@ position[open: %d, close_pending: %d, closed: %d]"""%(len(self.open_positions),
         
     def open_position (self, buy_order):
         #open positions with buy orders only (we don't support 'short' now)
-        log.debug ("open_position order: %s"%(buy_order))
+#         log.debug ("open_position order: %s"%(buy_order))
         position = Position(buy=buy_order)
         self.open_positions.append(position)        
-        log.debug ("\n\n\n***open_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
+#         log.debug ("\n\n\n***open_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
           
 
     def get_closable_position(self):
@@ -106,37 +120,35 @@ position[open: %d, close_pending: %d, closed: %d]"""%(len(self.open_positions),
                 log.critical("Position already close pending \npos:%s"%pos)
                 raise ("Duplicate close pending position")            
             self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
-        log.debug ("\n\n\n***get_closable_position: open(%d) closed(%d) close_pend(%d) \n pos: %s"%(
-            len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), pos))
+#         log.debug ("\n\n\n***get_closable_position: open(%d) closed(%d) close_pend(%d) \n pos: %s"%(
+#             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), pos))
         return pos
     def close_position_pending(self, sell_order):
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
-        log.debug ("close_position_pending order: %s"%(sell_order))
-        log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)\n"%(
-            len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
-        
+        log.debug ("close_position_pending order:%s"%(sell_order.id))
+#         log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)\n"%(
+#             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
         pos = self.close_pending_positions.get(uuid.UUID(sell_order.id))
         if pos:
-            log.debug ("close_position_pending: sell order already in pending_list. do nothing\npos:%s"%(pos))
+            log.debug ("close_position_pending: sell order(%s) already in pending_list. do nothing"%(sell_order.id))
             return pos
-        
         #find a close_pending pos without sell attached.
         for k, pos in self.close_pending_positions.iteritems():
             #find the pos without sell attached. and reinsert after attach
-            log.debug ("pos:\n%s"%(pos))
+#             log.debug ("pos:\n%s"%(pos))
             if pos.sell == None:
                 pos.add_sell(sell_order)
                 del(self.close_pending_positions[k])
                 self.close_pending_positions[uuid.UUID(sell_order.id)] = pos
-                log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))                  
+#                 log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))                  
                 return pos
         else:
             #something is very wrong
             log.critical("Unable to find pending position for close id: %s"%(sell_order.id))
             raise Exception ("Unable to find pending position for close")
     def close_position_failed(self, sell_order):
-        log.debug ("close_position_failed order: %s"%(sell_order))
-        log.debug ("\n\n\n***close_position_failed: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
+        log.debug ("close_position_failed order: %s"%(sell_order.id))
+#         log.debug ("\n\n\n***close_position_failed: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
            
         id = uuid.UUID(sell_order.id)
         position = self.close_pending_positions.get(id)
@@ -147,7 +159,7 @@ position[open: %d, close_pending: %d, closed: %d]"""%(len(self.open_positions),
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id)) 
     def close_position (self, sell_order):
-        log.debug ("close_position order: %s"%(sell_order))
+        log.debug ("close_position order: %s"%(sell_order.id))
         id = uuid.UUID(sell_order.id)
         position = self.close_pending_positions.pop(id, None)
         if position:
@@ -156,11 +168,10 @@ position[open: %d, close_pending: %d, closed: %d]"""%(len(self.open_positions),
             self.closed_positions.append(position)
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))
-        log.debug ("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)\n pos:%s"%(
-            len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))              
+#         log.debug ("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)\n pos:%s"%(
+#             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))              
         
     def add_or_update_pending_buy_order(self, order):
-        log.critical ("add_or_update_pending_buy_order ****<<<<<<<<<<<<<<<<<<<order:%s\n\n"%order)
         id = uuid.UUID(order.id)
         if not self.pending_buy_orders_db.get(id):
             self.total_open_order_count += 1
@@ -189,11 +200,10 @@ position[open: %d, close_pending: %d, closed: %d]"""%(len(self.open_positions),
         del (self.pending_sell_orders_db[uuid.UUID(order.id)])
         self.total_open_order_count -= 1
         self.traded_sell_orders_db.append(order)
-        
         #close/reopen position
         #TODO: TBD: more checks required??
         if order.status_reason == "filled":
-            log.critical("closed position order: %s"%(order))
+            log.debug("closed position order: %s"%(order.id))
             self.close_position(order)
         else:
             log.critical("closed position failed order: %s"%(order))            
