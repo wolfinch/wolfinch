@@ -504,12 +504,13 @@ class Market:
             self.asset.latest_traded_size = market_order.filled_size
             self.asset.total_traded_size += market_order.filled_size            
             #profit
-            profit = (market_order.price - self.fund.current_avg_buy_price )*market_order.filled_size
-            self.fund.current_realized_profit += profit
+            # NOTE: move the profit calculation to position close, that's more accurate
+#             profit = (market_order.price - self.fund.current_avg_buy_price )*market_order.filled_size
+#             self.fund.current_realized_profit += profit
             #stats
             self.num_sell_order_success += 1
-            log.info ("SELL FILLED>>> filled_size:%s price:%s profit:%f"%(
-                round(market_order.filled_size, 4), round(market_order.price, 4), profit))            
+            log.info ("SELL FILLED>>> filled_size:%s price:%s "%(
+                round(market_order.filled_size, 4), round(market_order.price, 4)))            
         else:
             log.critical("Invalid Market_order filled order:%s"%(str(order)))
             raise Exception("Invalid Market_order filled order:%s"%(str(order)))

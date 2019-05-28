@@ -58,11 +58,12 @@ class Position ():
         if status == "open" or status == "close_pending" or status == "closed":
             self.status = status
             if status == "closed":
-                self.profit = round((self.sell.get_price() - self.buy.get_price())*self.sell.get_asset(), 8)
+                self.profit = Decimal((self.sell.get_price() - self.buy.get_price())*self.sell.get_asset())
         else:
             log.critical ("Unknown position status(%s)"%(status))
             raise Exception ("Unknown position status(%s)"%(status))
-        
+    def get_profit(self):
+        return self.profit
     def set_stop_loss(self, market_rate, sl_rate):
         self.stop_loss = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 8))
         log.debug("setting stop_loss (%f) for position. rate:%d"%(self.stop_loss, sl_rate))                
@@ -201,6 +202,7 @@ class OrderBook():
         if position:
             position.add_sell (sell_order)
             position.update_state("closed")
+            self.market.fund.current_realized_profit += position.get_profit()
             self.closed_positions.append(position)
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))
