@@ -949,13 +949,14 @@ def market_init (exchange_list):
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))
                  
-def market_setup (decisionConfig):
+def market_setup (decisionConfig, tradingConfig):
     '''
     Setup market states.
     This is where we want to keep all the run stats
     '''
     global OldMonk_market_list
     for market in OldMonk_market_list:
+        market.tradingConfig = tradingConfig
         status = market.market_setup ()
         if (status == False):
             log.critical ("Market Init Failed for market: %s"%(market.name))

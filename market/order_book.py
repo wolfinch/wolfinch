@@ -45,7 +45,7 @@ class Position ():
         if order == None:
             return
         self.buy = order
-        self.update_status("open")
+        self.update_state("open")
         self.open_time = order.create_time
     
     def add_sell(self, order):
@@ -54,7 +54,7 @@ class Position ():
         self.sell = order
         self.closed_time = order.create_time
     
-    def update_status (self, status):
+    def update_state (self, status):
         if status == "open" or status == "close_pending" or status == "closed":
             self.status = status
             if status == "closed":
@@ -62,11 +62,19 @@ class Position ():
         else:
             log.critical ("Unknown position status(%s)"%(status))
             raise Exception ("Unknown position status(%s)"%(status))
+        
+    def set_stop_loss(self, rate):
+        self.stop_loss = Decimal(round(self.buy.get_price()*(1 - rate/100), 8))
+    def get_stop_loss(self):
+        return self.stop_loss      
+    def set_take_profit(self, rate):
+        self.take_profit = Decimal(round(self.buy.get_price()*(1 + rate/100), 8))
+    def get_take_profit(self):
+        return self.take_profit        
     def __str__(self):
         return """{\n"status": "%s", "open_time":"%s", "closed_time":"%s", "profit": %f, "stop_loss": %f, "take_profit":%f,
 "buy":%s\n,"sell":%s\n}"""%(self.status, self.open_time, self.closed_time, self.profit, self.stop_loss, self.take_profit,
                             str(self.buy), str(self.sell))
-    
     def __repr__(self):
         return self.__str__()
         
@@ -149,7 +157,7 @@ class OrderBook():
 #             log.debug ("pos:\n%s"%(pos))
             if pos.sell == None:
                 pos.add_sell(sell_order)
-                pos.update_status("closed")                
+                pos.update_state("closed")                
                 del(self.close_pending_positions[k])
                 self.close_pending_positions[uuid.UUID(sell_order.id)] = pos
 #                 log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))                  
@@ -176,7 +184,7 @@ class OrderBook():
         position = self.close_pending_positions.pop(id, None)
         if position:
             position.add_sell (sell_order)
-            position.update_status("closed")
+            position.update_state("closed")
             self.closed_positions.append(position)
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))

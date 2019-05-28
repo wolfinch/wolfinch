@@ -38,6 +38,8 @@ log.setLevel(log.CRITICAL)
 
 # Global Variables
 decisionConfig = {}
+tradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 7,
+                 "take_profit_enabled": False, 'take_profit_rate': 10} 
 OldMonkConfig = None
 exchange_list = []
 MAIN_TICK_DELAY    = 10        # 20 Sec
@@ -55,7 +57,7 @@ def OldMonk_init():
     market_init (exchange_list)
     
     #4. Setup markets
-    market_setup(decisionConfig)
+    market_setup(decisionConfig, tradingConfig)
     
     #5. start stats thread
     stats.start()
@@ -163,6 +165,20 @@ def load_config (cfg_file):
             if prim == False:
                 print ("No primary exchange configured!!")
                 return False
+        elif k == 'stop_loss':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'enabled':
+                    tradingConfig ['stop_loss_enabled'] = ex_v
+                elif ex_k == 'smart':
+                    tradingConfig ['stop_loss_smart_rate'] = ex_v
+                elif ex_k == 'rate':
+                    tradingConfig ['stop_loss_rate'] = ex_v                    
+        elif k == 'take_profit':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'enabled':
+                    tradingConfig ['take_profit_enabled'] = ex_v
+                elif ex_k == 'rate':
+                    tradingConfig ['take_profit_rate'] = ex_v                                    
         elif k == 'decision':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'model':
@@ -186,7 +202,7 @@ def load_config (cfg_file):
                         log.debug ("backtesting disabled")       
                         sims.backtesting_on = False
                 
-#                 print ("v: %s"%str(ex_k))
+#     print ("v: %s"%str(tradingConfig))
 #     exit(1)
     log.debug ("config loaded successfully!")
     return True
