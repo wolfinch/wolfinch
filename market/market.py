@@ -978,7 +978,8 @@ def market_setup (decisionConfig):
                         
 
 MARKET_STATS_FILE = "data/stats_market_%s_%s.json"
-STATS_FILE = "data/stats_traded_orders_%s.json"
+TRADE_STATS_FILE = "data/stats_traded_orders_%s.json"
+POSITION_STATS_FILE = "data/stats_positions_%s_%s.json"
 def display_market_stats (fd = sys.stdout):
     global OldMonk_market_list
     if sys.stdout != fd:
@@ -991,7 +992,7 @@ def flush_all_stats ():
     for market in OldMonk_market_list:
         with open(MARKET_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
             fd.write(str("\n%s\n\n"%str(market)))      
-        with open(STATS_FILE%(market.product_id), "w") as fd:
-            market.order_book.dump_traded_orders(fd)
+        with open(POSITION_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
+            market.order_book.dump_positions(fd)
             
 #EOF

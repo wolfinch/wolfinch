@@ -31,33 +31,10 @@
 	 $('#statsTable').DataTable();
 	 } );
 	 */
-	/* 			var dataSet = [
-	 {"id":"50b68478-76e0-11e9-8be1-8c8590ab863e", "product_id":"BTC-USD",
-	 "side":"buy", "order_type":"market", "status_type":"done", "status_reason":"filled",
-	 "request_size":0.009659, "filled_size":0.009659, "remaining_size":0.000000, "price":5176.580000, 
-	 "funds":50.000000, "fees":0.000000, "create_time":"2018-01-10T09:49:02.639681Z", "update_time":"None"}]
-	 */
 
-	/* 	 {
-	 "exchange_name": "CBPRO", "product_id": "BTC-USD","name": "BTC/USD",
-	 "num_buy_req": 1222, "num_buy_req_reject": 678,
-	 "num_sell_req": 486, "num_sell_req_reject": 0,
-	 "num_buy_order": 544, "num_buy_order_success": 544, "num_buy_order_failed": 0,                   
-	 "num_sell_order": 486, "num_sell_order_success": 486, "num_sell_order_failed": 0,
-	 "fund":
-	 {
-	 "initial_value":2000.000000,"current_value":3144.391100,"current_hold_value":0.000146, "total_traded_value":25660.000000, "fee_accrued": 0.000000,
-	 "current_realized_profit":3002.599900,"current_unrealized_profit":0.000000, "total_profit":0.000000,
-	 "current_avg_buy_price":5430.439000,"latest_buy_price":44172.710000,
-	 "fund_liquidity_percent":90, "max_per_buy_fund_value":50
-	 },
-	 "asset":{
-	 "initial_size":10.000000, "current_size":9.796999, "hold_size": 0.100000, "current_hold_size":0.000000, 
-	 "max_per_trade_size":0.010000, "latest_traded_size":0.001132, "total_traded_size":8.908994
-	 }
-	 } */
 
 	 function loadTradingStats() {
+			console.log ("load market stats")
 			$.ajax({
 				type : 'GET',
 				url : '/api/market_stats',
@@ -66,7 +43,7 @@
 				},
 				dataType : 'json',
 				success : function(data) {
-					console.log(data.exchange_name)
+					console.log("exch:"+data.exchange_name)
 					$("#exch").text(data.exchange_name)
 					$("#mkt").text(data.product_id)
 					$("#nbuy").text(data.num_buy_req)
@@ -102,7 +79,7 @@
 					$("#asset_hold_sz").text(data.asset.hold_size)
 					$("#asset_cur_hold_sz").text(data.asset.current_hold_size)
 										
-					
+					//#position
 					/* 	            $.each(data, function(index, element) {
 					 $('body').append($('<div>', {
 					 text: element.name
@@ -114,9 +91,34 @@
 	var table;
 	$(document).ready(function() {
 
+		console.log ("load stats")
 		loadTradingStats();
 		setInterval(loadTradingStats, 30000);
 		
+		/* 			var dataSet = [
+		 {
+		"status": "closed", "open_time":"2019-05-27T16:31:20.743832", "closed_time":"2019-05-27T16:31:20.757285", "profit": 5.555600, "stop_loss": 0.000000, "take_profit":0.000000,
+		"buy":{"id":"88786902-80d7-11e9-9954-8c8590ab863e", "product_id":"BTC-USD", "side":"buy", "order_type":"market",
+		"status_type":"done", "status_reason":"filled", "request_size":92.592594,
+		"filled_size":92.592594, "remaining_size":0.000000, "price":0.180000, "funds":16.666667,
+		"fees":0.000000, "create_time":"2019-05-27T16:31:20.743832", "update_time":"None"}
+		,"sell":{"id":"8879810c-80d7-11e9-be63-8c8590ab863e", "product_id":"BTC-USD", "side":"sell", "order_type":"None",
+		"status_type":"done", "status_reason":"filled", "request_size":92.592594,
+		"filled_size":92.592594, "remaining_size":0.000000, "price":0.240000, "funds":0.000000,
+		"fees":0.000000, "create_time":"2019-05-27T16:31:20.757285", "update_time":"None"}
+		}, {
+		"status": "closed", "open_time":"2019-05-27T16:31:20.744187", "closed_time":"2019-05-27T16:31:20.760100",
+		"profit": 0.000100, "stop_loss": 0.000000, "take_profit":0.000000,
+		"buy":{"id":"88787359-80d7-11e9-ac40-8c8590ab863e", "product_id":"BTC-USD", "side":"buy", "order_type":"market",
+		"status_type":"done", "status_reason":"filled", "request_size":92.592594,
+		"filled_size":92.592594, "remaining_size":0.000000, "price":0.180000, "funds":16.666667,
+		"fees":0.000000, "create_time":"2019-05-27T16:31:20.744187", "update_time":"None"}
+		,"sell":{"id":"8879d682-80d7-11e9-a1c7-8c8590ab863e", "product_id":"BTC-USD", "side":"sell", "order_type":"None",
+		"status_type":"done", "status_reason":"filled", "request_size":0.002451,
+		"filled_size":0.002451, "remaining_size":0.000000, "price":0.240000, "funds":0.000000,
+		"fees":0.000000, "create_time":"2019-05-27T16:31:20.760100", "update_time":"None"}
+		}]
+				*/		
 
 		table = $('#statsTable').DataTable({
 			//data : dataSet,
@@ -127,35 +129,53 @@
 				url : "/api/order_data?abcd=1",
 				dataSrc : ''
 			},
-			columns : [ {
-				title : "side",
-				data : "side"
+
+	columns : [ {
+				title : "status",
+				data : "status"
 			}, {
+				title : "stop loss",
+				data : "stop_loss"
+			}, {
+				title : "take profit",
+				data : "take_profit"
+			},{
+				title : "profit",
+				data : "profit"
+			},
+			{
+				title : "open time",
+				data : "open_time"
+			}, {
+				title : "closed time",
+				data : "closed_time"
+			},  {
 				title : "type",
-				data : "order_type"
+				data : "buy.order_type"
 			}, {
 				title : "request size",
-				data : "request_size"
+				data : "buy.request_size"
 			}, {
-				title : "filled size",
-				data : "filled_size"
-			}, {
+				title : "buy filled size",
+				data : "buy.filled_size"
+			},{
+				title : "sell filled size",
+				data : "sell.filled_size"
+			},
+			{
 				title : "remaining size",
-				data : "remaining_size"
+				data : "buy.remaining_size"
 			}, {
-				title : "price",
-				data : "price"
+				title : "buy price",
+				data : "buy.price"
 			}, {
+				title : "sell price",
+				data : "sell.price"
+			},
+			{
 				title : "funds ",
-				data : "funds"
-			}, {
-				title : "time",
-				data : "create_time"
-			}, {
-				title : "status",
-				data : "status_type"
+				data : "buy.funds"
 			}
-
 			]
 		});
 
@@ -181,7 +201,7 @@
 <div>
 	<table border="0" style="border-collapse: collapse; width: 100%;"
 		class="display">
-		<tbody style="vertical-align:top">
+		<tbody style="vertical-align: top">
 			<tr style="height: 60px;">
 				<td style="width: 45%; height: 60px;">
 					<table style="margin: false; height: 60px;" border="1" height="49">
@@ -192,7 +212,8 @@
 								</td>
 							</tr>
 							<tr style="margin: 0; background-color: rgba(0, 0, 0, 0.1);">
-								<td align="center" colspan="3" style="border: 0;">Number of.</td>
+								<td align="center" colspan="3" style="border: 0;">Number
+									of.</td>
 
 								<td align="center" style="border: 0;">Requests</td>
 								<td align="center" style="border: 0;">Rejects</td>
@@ -233,8 +254,7 @@
 						</tbody>
 					</table>
 				</td>
-				<td style="width: 33%;">
-				</td>
+				<td style="width: 33%;"></td>
 			</tr>
 			<tr style="width: 100%; height: 23px;" align="center">
 				<td style="width: 75%; height: 23px; border-collapse: collapse;"
@@ -252,8 +272,12 @@
 								<th style="width: 75px;">6</th>
 								<th style="width: 70px;">7</th>
 								<th style="width: 75px;">8</th>
-								<!-- 								<th style="width: 179px;">9</th>								
- -->
+<th style="width: 75px;">3</th>
+								<th style="width: 50px;">9</th>
+								<th style="width: 75px;">10</th>
+								<th style="width: 75px;">11</th>
+								<th style="width: 70px;">12</th>
+								<!-- <th style="width: 75px;">13</th>  -->
 							</tr>
 						</thead>
 						<tbody></tbody>
@@ -320,7 +344,7 @@
 									<td style="width: 10%;">Config. Max Per buy($)</td>
 									<td style="width: 10%;" id="fund_max_per_buy">0</td>
 
-								</tr>								
+								</tr>
 								<tr>
 									<td style="width: 10%;"></td>
 									<td style="width: 10%;"></td>
@@ -333,7 +357,7 @@
 							</tbody>
 						</table>
 					</div>
-		
+
 					<div>
 						<table border="0"
 							style="vertical-align: top; border-collapse: collapse; width: 100%;"
@@ -371,13 +395,13 @@
 									<td style="width: 10%;">Config. Hold Size</td>
 									<td style="width: 10%;" id="asset_hold_sz">0</td>
 								</tr>
-																
+
 								<tr>
 									<td style="width: 10%;">Config. Max per trade</td>
 									<td style="width: 10%;" id="asset_max_per_trade">0</td>
 								</tr>
 
-																
+
 							</tbody>
 						</table>
 					</div>

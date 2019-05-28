@@ -35,7 +35,7 @@ log = getLogger ('UI')
 log.setLevel(log.DEBUG)
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
-TRADE_DATA = "stats_traded_orders_%s_%s.json"%("CBPRO", "BTC-USD")
+TRADE_DATA = "stats_positions_%s_%s.json"%("CBPRO", "BTC-USD")
 MARKET_STATS = "stats_market_%s_%s.json"%("CBPRO", "BTC-USD")
 def server_main ():
     app = Flask(__name__, static_folder='web/', static_url_path='/web/')
