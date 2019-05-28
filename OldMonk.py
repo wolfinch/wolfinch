@@ -38,8 +38,8 @@ log.setLevel(log.CRITICAL)
 
 # Global Variables
 decisionConfig = {}
-tradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 7,
-                 "take_profit_enabled": False, 'take_profit_rate': 10} 
+tradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
+                 "take_profit_enabled": False, 'take_profit_rate': 0} 
 OldMonkConfig = None
 exchange_list = []
 MAIN_TICK_DELAY    = 10        # 20 Sec

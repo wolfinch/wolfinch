@@ -225,6 +225,8 @@ class Market:
     num_sell_order_success = 0    
     num_buy_order_failed = 0
     num_sell_order_failed = 0
+    tradeConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
+                 "take_profit_enabled": False, 'take_profit_rate': 0}
     def __init__(self, product=None, exchange=None):
         self.product_id = None if product == None else product['id']
         self.name = None if product == None else product['display_name']
@@ -531,6 +533,32 @@ class Market:
         log.debug ('Calculate trade Req')
         
         trade_req_l = []
+        trade_pos_l = []
+        #1. if stop loss enabled, get stop loss hit positions
+        if self.tradeConfig["stop_loss_enabled"]:
+            log.debug ("find pos hit stop loss")    
+            trade_pos_l += self.order_book.get_stop_loss_positions(self.get_market_rate())
+        
+        #2. if take profit enabled, get TP hit positions
+        if self.tradeConfig["take_profit_enabled"]:
+            log.debug ("find pos hit take profit")        
+            trade_pos_l += self.order_book.get_take_profit_positions(self.get_market_rate())
+        
+        for pos in trade_pos_l:
+            asset_size = pos.buy.get_asset()
+            if (asset_size <= 0):
+                log.critical ("Invalid open position for closing: pos: %s"%str(pos))
+                raise Exception("Invalid open position for closing")            
+            log.debug ("Generating watermark SELL trade_req with asset size: %s"%(str(asset_size)))       
+            trade_req_l.append(TradeRequest(Product=self.product_id,
+                              Side="SELL",
+                               Size=round(Decimal(asset_size),8),
+                               Fund=round(Decimal(0), 8),                                   
+                               Type="market",
+                               Price=round(Decimal(0), 8),
+                               Stop=0))            
+        
+        #3. do regular trade req based on signal
         abs_sig = abs(signal)        
         while (abs_sig):
             abs_sig -= 1
@@ -956,7 +984,7 @@ def market_setup (decisionConfig, tradingConfig):
     '''
     global OldMonk_market_list
     for market in OldMonk_market_list:
-        market.tradingConfig = tradingConfig
+        market.tradeConfig = tradingConfig
         status = market.market_setup ()
         if (status == False):
             log.critical ("Market Init Failed for market: %s"%(market.name))

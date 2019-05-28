@@ -58,17 +58,19 @@ class Position ():
         if status == "open" or status == "close_pending" or status == "closed":
             self.status = status
             if status == "closed":
-                self.profit = round((self.sell.get_price() - self.buy.get_price())*self.sell.get_asset(), 4)
+                self.profit = round((self.sell.get_price() - self.buy.get_price())*self.sell.get_asset(), 8)
         else:
             log.critical ("Unknown position status(%s)"%(status))
             raise Exception ("Unknown position status(%s)"%(status))
         
-    def set_stop_loss(self, rate):
-        self.stop_loss = Decimal(round(self.buy.get_price()*(1 - rate/100), 8))
+    def set_stop_loss(self, market_rate, sl_rate):
+        self.stop_loss = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01))), 8)
+        log.debug("setting stop_loss (%f) for position. rate:%d"%(self.stop_loss, sl_rate))                
     def get_stop_loss(self):
         return self.stop_loss      
-    def set_take_profit(self, rate):
-        self.take_profit = Decimal(round(self.buy.get_price()*(1 + rate/100), 8))
+    def set_take_profit(self, market_rate, tp_rate):
+        self.take_profit = Decimal(round(market_rate*(1 + tp_rate*Decimal(.01))), 8)
+        log.debug("setting take_profit(%f) for position. rate:%d"%(self.take_profit, tp_rate))                        
     def get_take_profit(self):
         return self.take_profit        
     def __str__(self):
@@ -122,11 +124,15 @@ class OrderBook():
         #open positions with buy orders only (we don't support 'short' now)
 #         log.debug ("open_position order: %s"%(buy_order))
         position = Position(buy=buy_order)
+        if self.market.tradeConfig["stop_loss_enabled"]:
+            position.set_stop_loss(buy_order.get_price(), self.market.tradeConfig["stop_loss_rate"])
+        if self.market.tradeConfig["take_profit_enabled"]:
+            position.set_take_profit(buy_order.get_price(), self.market.tradeConfig["take_profit_rate"])
+                
         self.all_positions.append(position)
         self.open_positions.append(position)        
 #         log.debug ("\n\n\n***open_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
           
-
     def get_closable_position(self):
         log.debug ("get_closable_position ")    
             
@@ -142,6 +148,37 @@ class OrderBook():
 #         log.debug ("\n\n\n***get_closable_position: open(%d) closed(%d) close_pend(%d) \n pos: %s"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), pos))
         return pos
+        
+    def smart_stop_loss_update_positions(self):
+        pass
+        ## TODO: FIXME: implement        
+    def get_stop_loss_positions(self, market_rate):
+        sl_pos_list = []
+        pos_list = self.open_positions
+        for pos in pos_list:
+            if pos.get_stop_loss() <= market_rate:
+                log.info ("Found a position hit stop_loss")
+                sl_pos_list.append(pos)
+                self.open_positions.remove(pos)
+                if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
+                    log.critical("Position already close pending \npos:%s"%pos)
+                    raise ("Duplicate close pending position")            
+                self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
+        return sl_pos_list
+    def get_take_profit_positions(self, market_rate):
+        tp_pos_list = []
+        pos_list = self.open_positions
+        for pos in pos_list:
+            if pos.get_take_profit() >= market_rate:
+                log.info ("Found a position hit take_profit")                
+                tp_pos_list.append(pos)
+                self.open_positions.remove(pos)
+                if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
+                    log.critical("Position already close pending \npos:%s"%pos)
+                    raise ("Duplicate close pending position")            
+                self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
+        return tp_pos_list
+        
     def close_position_pending(self, sell_order):
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
         log.debug ("close_position_pending order:%s"%(sell_order.id))
