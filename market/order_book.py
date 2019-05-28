@@ -25,7 +25,7 @@ from utils import getLogger
 import stats
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.INFO)
+log.setLevel(log.CRITICAL)
 
 class Position ():
     
@@ -149,36 +149,6 @@ class OrderBook():
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), pos))
         return pos
         
-    def smart_stop_loss_update_positions(self):
-        pass
-        ## TODO: FIXME: implement        
-    def get_stop_loss_positions(self, market_rate):
-        sl_pos_list = []
-        pos_list = self.open_positions
-        for pos in pos_list:
-            if pos.get_stop_loss() <= market_rate:
-                log.info ("Found a position hit stop_loss")
-                sl_pos_list.append(pos)
-                self.open_positions.remove(pos)
-                if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
-                    log.critical("Position already close pending \npos:%s"%pos)
-                    raise ("Duplicate close pending position")            
-                self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
-        return sl_pos_list
-    def get_take_profit_positions(self, market_rate):
-        tp_pos_list = []
-        pos_list = self.open_positions
-        for pos in pos_list:
-            if pos.get_take_profit() >= market_rate:
-                log.info ("Found a position hit take_profit")                
-                tp_pos_list.append(pos)
-                self.open_positions.remove(pos)
-                if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
-                    log.critical("Position already close pending \npos:%s"%pos)
-                    raise ("Duplicate close pending position")            
-                self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
-        return tp_pos_list
-        
     def close_position_pending(self, sell_order):
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
         log.debug ("close_position_pending order:%s"%(sell_order.id))
@@ -189,7 +159,13 @@ class OrderBook():
             log.debug ("close_position_pending: sell order(%s) already in pending_list. do nothing"%(sell_order.id))
             return pos
         #find a close_pending pos without sell attached.
-        for k, pos in self.close_pending_positions.iteritems():
+#         for k, pos in self.close_pending_positions.iteritems():
+        k = sell_order.buy_id
+        if not k:
+            log.critical("Invalid buy_id attached to order:%s"%(sell_order.id))
+            raise Exception("Invalid buy_id attached to order")            
+        pos = self.close_pending_positions.get(k)
+        if pos:
             #find the pos without sell attached. and reinsert after attach
 #             log.debug ("pos:\n%s"%(pos))
             if pos.sell == None:
@@ -199,6 +175,9 @@ class OrderBook():
                 self.close_pending_positions[uuid.UUID(sell_order.id)] = pos
 #                 log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))                  
                 return pos
+            else:
+                log.critical("Wrong sell attached to pos:%s"%(pos))
+                raise Exception("Wrong sell attached to pos")
         else:
             #something is very wrong
             log.critical("Unable to find pending position for close id: %s"%(sell_order.id))
@@ -228,6 +207,36 @@ class OrderBook():
 #         log.debug ("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)\n pos:%s"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))              
         
+    def smart_stop_loss_update_positions(self):
+        pass
+        ## TODO: FIXME: implement        
+    def get_stop_loss_positions(self, market_rate):
+        sl_pos_list = []
+        pos_list = self.open_positions
+        for pos in pos_list:
+            if pos.get_stop_loss() <= market_rate:
+                log.info ("Found a position hit stop_loss")
+                sl_pos_list.append(pos)
+                self.open_positions.remove(pos)
+                if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
+                    log.critical("Position already close pending \npos:%s"%pos)
+                    raise ("Duplicate close pending position")            
+                self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
+        return sl_pos_list
+    def get_take_profit_positions(self, market_rate):
+        tp_pos_list = []
+        pos_list = self.open_positions
+        for pos in pos_list:
+            if pos.get_take_profit() >= market_rate:
+                log.info ("Found a position hit take_profit")                
+                tp_pos_list.append(pos)
+                self.open_positions.remove(pos)
+                if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
+                    log.critical("Position already close pending \npos:%s"%pos)
+                    raise ("Duplicate close pending position")            
+                self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
+        return tp_pos_list
+            
     def add_or_update_pending_buy_order(self, order):
         id = uuid.UUID(order.id)
         if not self.pending_buy_orders_db.get(id):

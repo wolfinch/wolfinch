@@ -51,7 +51,7 @@ import db
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.INFO)
+log.setLevel(log.CRITICAL)
 
 OldMonk_market_list = []
 
@@ -436,6 +436,7 @@ class Market:
         else:
             order = self.exchange.sell (trade_req)
         #update fund 
+        order.buy_id = trade_req.id
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
             log.debug ("SELL Order Sent to exchange. ")      
@@ -541,7 +542,7 @@ class Market:
         
         #2. if take profit enabled, get TP hit positions
         if self.tradeConfig["take_profit_enabled"]:
-            log.debug ("find pos hit take profit")        
+            log.debug ("find pos hit take profit")
             trade_pos_l += self.order_book.get_take_profit_positions(self.get_market_rate())
         
         for pos in trade_pos_l:
@@ -556,7 +557,7 @@ class Market:
                                Fund=round(Decimal(0), 8),                                   
                                Type="market",
                                Price=round(Decimal(0), 8),
-                               Stop=0))            
+                               Stop=0, id=uuid.UUID(pos.buy.id)))
         
         #3. do regular trade req based on signal
         abs_sig = abs(signal)        
@@ -598,7 +599,7 @@ class Market:
                                        Fund=round(Decimal(0), 8),                                   
                                        Type="market",
                                        Price=round(Decimal(0), 8),
-                                       Stop=0))
+                                       Stop=0, id=uuid.UUID(position.buy.id)))
                 else:
                     log.critical ("Unable to generate SELL request for signal (%d)."
                      "Unable to get open positions to close"%(signal))
@@ -900,7 +901,7 @@ class Market:
                                    Fund=round(Decimal(0), 8),                                   
                                    Type="market",
                                    Price=round(Decimal(0), 8),
-                                   Stop=0))
+                                   Stop=0, id=uuid.UUID(position.buy.id)))
             else:                              
                 break
         self._execute_market_trade(trade_req_l)

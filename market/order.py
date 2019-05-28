@@ -29,7 +29,8 @@ class TradeRequest:
 #            price: <limit/market-price>
 #            }
 #    '''   
-    def __init__(self, Product, Side, Size, Fund, Type, Price, Stop):
+    def __init__(self, Product, Side, Size, Fund, Type, Price, Stop, id=None):
+        self.id = id
         self.product = Product
         self.side = Side
         self.size = Size
