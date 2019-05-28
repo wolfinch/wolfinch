@@ -225,6 +225,8 @@ class Market:
     num_sell_order_success = 0    
     num_buy_order_failed = 0
     num_sell_order_failed = 0
+    num_take_profit_hit = 0
+    num_stop_loss_hit = 0
     tradeConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
                  "take_profit_enabled": False, 'take_profit_rate': 0}
     def __init__(self, product=None, exchange=None):
@@ -249,6 +251,27 @@ class Market:
         self.market_strategies     = strategy.Configure()
         self.new_candle = False
         self.candle_interval = 0
+            
+    def __str__(self):
+        return """
+{
+"exchange_name": "%s", "product_id": "%s","name": "%s",
+"num_buy_req": %s, "num_buy_req_reject": %s,
+"num_sell_req": %s, "num_sell_req_reject": %s,
+"num_buy_order": %s, "num_buy_order_success": %s, "num_buy_order_failed": %s,                   
+"num_sell_order": %s, "num_sell_order_success": %s, "num_sell_order_failed": %s,
+"num_take_profit_hit": %d, "num_stop_loss_hit": %d
+"fund":%s,
+"asset":%s,
+"order_book":%s
+}"""%(
+                self.exchange_name, self.product_id,self.name, 
+                self.num_buy_req, self.num_buy_req_reject,
+                self.num_sell_req, self.num_sell_req_reject,
+                self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed, 
+                self.num_sell_order, self.num_sell_order_success, self.num_sell_order_failed,
+                self.num_take_profit_hit, self.num_stop_loss_hit,         
+                str(self.fund), str(self.asset), str(self.order_book))        
         
     def get_candle_list (self):
         return map(lambda x: x["ohlc"], self.market_indicators_data)
@@ -905,27 +928,6 @@ class Market:
             else:                              
                 break
         self._execute_market_trade(trade_req_l)
-            
-    def __str__(self):
-        return """
-{
-"exchange_name": "%s", "product_id": "%s","name": "%s",
-"num_buy_req": %s, "num_buy_req_reject": %s,
-"num_sell_req": %s, "num_sell_req_reject": %s,
-"num_buy_order": %s, "num_buy_order_success": %s, "num_buy_order_failed": %s,                   
-"num_sell_order": %s, "num_sell_order_success": %s, "num_sell_order_failed": %s,
-"fund":%s,
-"asset":%s,
-"order_book":%s
-}"""%(
-                self.exchange_name, self.product_id,self.name, 
-                self.num_buy_req, self.num_buy_req_reject,
-                self.num_sell_req, self.num_sell_req_reject,
-                self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed, 
-                self.num_sell_order, self.num_sell_order_success, self.num_sell_order_failed,                 
-                str(self.fund), str(self.asset), str(self.order_book))
-        
-        
 ############# Market Class Def - end ############# 
 
 # Feed Q routines

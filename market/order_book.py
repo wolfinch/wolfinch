@@ -212,10 +212,11 @@ class OrderBook():
         ## TODO: FIXME: implement        
     def get_stop_loss_positions(self, market_rate):
         sl_pos_list = []
-        pos_list = self.open_positions
-        for pos in pos_list:
-            if pos.get_stop_loss() <= market_rate:
-                log.info ("Found a position hit stop_loss")
+#         return sl_pos_list
+        for pos in self.open_positions[:]:
+            if pos.get_stop_loss() >= market_rate:
+                log.debug ("Found a position hit stop_loss(%f) market_rate(%f)"%(pos.get_stop_loss(),market_rate))
+                self.market.num_stop_loss_hit += 1
                 sl_pos_list.append(pos)
                 self.open_positions.remove(pos)
                 if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
@@ -225,10 +226,10 @@ class OrderBook():
         return sl_pos_list
     def get_take_profit_positions(self, market_rate):
         tp_pos_list = []
-        pos_list = self.open_positions
-        for pos in pos_list:
-            if pos.get_take_profit() >= market_rate:
-                log.info ("Found a position hit take_profit")                
+        for pos in self.open_positions[:]:
+            if pos.get_take_profit() <= market_rate:
+                log.info ("Found a position hit take_profit")
+                self.market.num_take_profit_hit += 1
                 tp_pos_list.append(pos)
                 self.open_positions.remove(pos)
                 if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
