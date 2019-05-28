@@ -32,69 +32,68 @@
 	 } );
 	 */
 
+	function loadTradingStats() {
+		console.log("load market stats")
+		$.ajax({
+			type : 'GET',
+			url : '/api/market_stats',
+			data : {
+				get_param : 'value'
+			},
+			dataType : 'json',
+			success : function(data) {
+				console.log("exch:" + data.exchange_name)
+				$("#exch").text(data.exchange_name)
+				$("#mkt").text(data.product_id)
+				$("#nbuy").text(data.num_buy_req)
+				$("#nbuy_rej").text(data.num_buy_req_reject)
+				$("#nsell").text(data.num_sell_req)
+				$("#nsell_rej").text(data.num_sell_req_reject)
+				$("#nbuy_odr").text(data.num_buy_order)
+				$("#nbuy_odr_s").text(data.num_buy_order_success)
+				$("#nbuy_odr_f").text(data.num_buy_order_failed)
+				$("#nsell_odr").text(data.num_sell_order)
+				$("#nsell_odr_s").text(data.num_sell_order_success)
+				$("#nsell_odr_f").text(data.num_sell_order_failed)
+				$("#sl_hits").text(data.num_stop_loss_hit)
+				$("#tp_hits").text(data.num_take_profit_hit)
+				//#Fund
+				$("#fund_init").text(data.fund.initial_value)
+				$("#fund_curr").text(data.fund.current_value)
+				$("#curr_hold").text(data.fund.current_hold_value)
+				$("#fund_profit").text(data.fund.current_realized_profit)
+				$("#fund_trade_fee").text(data.fund.fee_accrued)
+				$("#fund_traded").text(data.fund.total_traded_value)
+				$("#fund_avg_price").text(data.fund.current_avg_buy_price)
+				$("#fund_last_price").text(data.fund.latest_buy_price)
+				$("#fund_liq_cent").text(data.fund.fund_liquidity_percent)
+				$("#fund_max_per_buy").text(data.fund.max_per_buy_fund_value)
 
-	 function loadTradingStats() {
-			console.log ("load market stats")
-			$.ajax({
-				type : 'GET',
-				url : '/api/market_stats',
-				data : {
-					get_param : 'value'
-				},
-				dataType : 'json',
-				success : function(data) {
-					console.log("exch:"+data.exchange_name)
-					$("#exch").text(data.exchange_name)
-					$("#mkt").text(data.product_id)
-					$("#nbuy").text(data.num_buy_req)
-					$("#nbuy_rej").text(data.num_buy_req_reject)
-					$("#nsell").text(data.num_sell_req)
-					$("#nsell_rej").text(data.num_sell_req_reject)
-					$("#nbuy_odr").text(data.num_buy_order)
-					$("#nbuy_odr_s").text(data.num_buy_order_success)
-					$("#nbuy_odr_f").text(data.num_buy_order_failed)
-					$("#nsell_odr").text(data.num_sell_order)
-					$("#nsell_odr_s").text(data.num_sell_order_success)
-					$("#nsell_odr_f").text(data.num_sell_order_failed)
+				//#Assets
+				$("#asset_init").text(data.asset.initial_size)
+				$("#asset_curr").text(data.asset.current_size)
+				$("#asset_traded").text(data.asset.total_traded_size)
+				$("#asset_last_traded").text(data.asset.latest_traded_size)
+				$("#asset_max_per_trade").text(data.asset.max_per_trade_size)
+				$("#asset_hold_sz").text(data.asset.hold_size)
+				$("#asset_cur_hold_sz").text(data.asset.current_hold_size)
 
-					
-					//#Fund
-					$("#fund_init").text(data.fund.initial_value)
-					$("#fund_curr").text(data.fund.current_value)
-					$("#curr_hold").text(data.fund.current_hold_value)
-					$("#fund_profit").text(data.fund.current_realized_profit)
-					$("#fund_trade_fee").text(data.fund.fee_accrued)					
-					$("#fund_traded").text(data.fund.total_traded_value)
-					$("#fund_avg_price").text(data.fund.current_avg_buy_price)
-					$("#fund_last_price").text(data.fund.latest_buy_price)
-					$("#fund_liq_cent").text(data.fund.fund_liquidity_percent)
-					$("#fund_max_per_buy").text(data.fund.max_per_buy_fund_value)
-					
-					//#Assets
-					$("#asset_init").text(data.asset.initial_size)
-					$("#asset_curr").text(data.asset.current_size)
-					$("#asset_traded").text(data.asset.total_traded_size)
-					$("#asset_last_traded").text(data.asset.latest_traded_size)
-					$("#asset_max_per_trade").text(data.asset.max_per_trade_size)
-					$("#asset_hold_sz").text(data.asset.hold_size)
-					$("#asset_cur_hold_sz").text(data.asset.current_hold_size)
-										
-					//#position
-					/* 	            $.each(data, function(index, element) {
-					 $('body').append($('<div>', {
-					 text: element.name
-					 }));
-					 }); */
-				}
-			});
-	 }
+				//#position
+				/* 	            $.each(data, function(index, element) {
+				 $('body').append($('<div>', {
+				 text: element.name
+				 }));
+				 }); */
+			}
+		});
+	}
 	var table;
 	$(document).ready(function() {
 
-		console.log ("load stats")
+		console.log("load stats")
 		loadTradingStats();
 		setInterval(loadTradingStats, 30000);
-		
+
 		/* 			var dataSet = [
 		 {
 		"status": "closed", "open_time":"2019-05-27T16:31:20.743832", "closed_time":"2019-05-27T16:31:20.757285", "profit": 5.555600, "stop_loss": 0.000000, "take_profit":0.000000,
@@ -118,7 +117,7 @@
 		"filled_size":0.002451, "remaining_size":0.000000, "price":0.240000, "funds":0.000000,
 		"fees":0.000000, "create_time":"2019-05-27T16:31:20.760100", "update_time":"None"}
 		}]
-				*/		
+		 */
 
 		table = $('#statsTable').DataTable({
 			//data : dataSet,
@@ -130,7 +129,7 @@
 				dataSrc : ''
 			},
 
-	columns : [ {
+			columns : [ {
 				title : "status",
 				data : "status"
 			}, {
@@ -139,17 +138,16 @@
 			}, {
 				title : "sell price",
 				data : "sell.price"
-			},
-			{
+			}, {
 				title : "stop loss",
 				data : "stop_loss"
 			}, {
 				title : "take profit",
 				data : "take_profit"
-			},{
+			}, {
 				title : "profit",
 				data : "profit"
-			},  {
+			}, {
 				title : "type",
 				data : "buy.order_type"
 			}, {
@@ -158,26 +156,22 @@
 			}, {
 				title : "buy filled size",
 				data : "buy.filled_size"
-			},{
+			}, {
 				title : "sell filled size",
 				data : "sell.filled_size"
-			},
-			{
+			}, {
 				title : "remaining size",
 				data : "buy.remaining_size"
-			},
-			{
+			}, {
 				title : "funds ",
 				data : "buy.funds"
-			},
-			{
+			}, {
 				title : "open time",
 				data : "open_time"
 			}, {
 				title : "closed time",
 				data : "closed_time"
-			}
-			]
+			} ]
 		});
 
 		setInterval(function() {
@@ -208,7 +202,7 @@
 					<table style="margin: false; height: 60px;" border="1" height="49">
 						<tbody>
 							<tr style="background-color: rgba(0, 0, 0, 0.1);">
-								<td align="center" style="border: 0;" colspan="9">
+								<td align="center" style="border: 0;" colspan="10">
 									<!-- style="width: 101.272%;"  > --> <b>Trades</b>
 								</td>
 							</tr>
@@ -221,6 +215,7 @@
 								<td align="center" style="border: 0;">Orders</td>
 								<td align="center" style="border: 0;">Success</td>
 								<td align="center" style="border: 0;">Failed</td>
+								<td align="center" style="border: 0;" colspan="2">Hits</td>								
 							</tr>
 							<tr style="border-top: 0px solid #555;">
 								<td
@@ -235,7 +230,10 @@
 									style="border: 0; width: 70px;">&nbsp;0</td>
 								<td align="center" id="nbuy_odr_f"
 									style="border: 0; width: 158px;">0</td>
-
+								<td
+									style="border: 0px solid #555555; width: 74px; height: 24px;">Stop Loss</td>
+								<td align="center" id="sl_hits"
+									style="border: 0; width: 58px;">0</td>									
 							</tr>
 							<tr style="background-color: rgba(0, 0, 0, 0.1);">
 								<td style="border: 0; width: 74px; height: 23px;">Market</td>
@@ -251,6 +249,10 @@
 									style="border: 0; width: 70px;">&nbsp;0</td>
 								<td align="center" id="nsell_odr_f"
 									style="border: 0; width: 158px;">0</td>
+								<td
+									style="border: 0px solid #555555; width: 74px; height: 24px;">Take Profit</td>	
+								<td align="center" id="tp_hits"
+									style="border: 0; width: 58px;">0</td>																	
 							</tr>
 						</tbody>
 					</table>
@@ -273,7 +275,7 @@
 								<th style="width: 75px;">6</th>
 								<th style="width: 70px;">7</th>
 								<th style="width: 75px;">8</th>
-<th style="width: 75px;">3</th>
+								<th style="width: 75px;">3</th>
 								<th style="width: 50px;">9</th>
 								<th style="width: 75px;">10</th>
 								<th style="width: 75px;">11</th>

@@ -22,6 +22,7 @@ from sqlalchemy.orm import sessionmaker
 # from sqlalchemy.ext.declarative import declarative_base
 
 log = getLogger ('SQLLITE')
+log.setLevel (log.CRITICAL)
 
 
 class SqliteDb (DbBase):    

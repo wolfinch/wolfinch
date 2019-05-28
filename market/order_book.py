@@ -64,12 +64,12 @@ class Position ():
             raise Exception ("Unknown position status(%s)"%(status))
         
     def set_stop_loss(self, market_rate, sl_rate):
-        self.stop_loss = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01))), 8)
+        self.stop_loss = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 8))
         log.debug("setting stop_loss (%f) for position. rate:%d"%(self.stop_loss, sl_rate))                
     def get_stop_loss(self):
         return self.stop_loss      
     def set_take_profit(self, market_rate, tp_rate):
-        self.take_profit = Decimal(round(market_rate*(1 + tp_rate*Decimal(.01))), 8)
+        self.take_profit = Decimal(round(market_rate*(1 + tp_rate*Decimal(.01)), 8))
         log.debug("setting take_profit(%f) for position. rate:%d"%(self.take_profit, tp_rate))                        
     def get_take_profit(self):
         return self.take_profit        

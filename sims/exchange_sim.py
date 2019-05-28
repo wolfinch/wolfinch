@@ -109,7 +109,7 @@ def set_initial_acc_values (market):
     market.fund.set_initial_value(Decimal(2000))
 #     market.fund.set_hold_value(Decimal(100))
     market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
-    market.fund.set_max_per_buy_fund_value(50)
+    market.fund.set_max_per_buy_fund_value(100)
     market.asset.set_initial_size(Decimal(1))
     market.asset.set_hold_size( Decimal(0.1))
     market.asset.set_max_per_trade_size(Decimal(0.01))

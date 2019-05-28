@@ -21,7 +21,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import mapper 
 
 log = getLogger ('CANDLE-DB')
-
+log.setLevel (log.CRITICAL)
 
 class CandlesDb(object):
     def __init__ (self, ohlcCls, exchange_name, product_id):

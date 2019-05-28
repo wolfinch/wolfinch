@@ -260,7 +260,7 @@ class Market:
 "num_sell_req": %s, "num_sell_req_reject": %s,
 "num_buy_order": %s, "num_buy_order_success": %s, "num_buy_order_failed": %s,                   
 "num_sell_order": %s, "num_sell_order_success": %s, "num_sell_order_failed": %s,
-"num_take_profit_hit": %d, "num_stop_loss_hit": %d
+"num_take_profit_hit": %d, "num_stop_loss_hit": %d,
 "fund":%s,
 "asset":%s,
 "order_book":%s
