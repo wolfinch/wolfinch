@@ -626,7 +626,7 @@ class Market:
                                        Stop=0, id=uuid.UUID(position.buy.id)))
                 else:
                     log.critical ("Unable to generate SELL request for signal (%d)."
-                     "Unable to get open positions to close"%(signal))
+                     "Unable to get open positions to sell"%(signal))
                     self.num_sell_req_reject += 1                                
                     return trade_req_l
     
