@@ -20,7 +20,7 @@ from market import *
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
-log.setLevel (log.INFO)
+log.setLevel (log.CRITICAL)
 
 ###### SIMULATOR Global switch ######
 simulator_on = True

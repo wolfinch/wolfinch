@@ -21,8 +21,9 @@
 
 from indicators.noop import NOOP
 from indicators.sma import SMA
-from indicators.ema import EMA
+# from indicators.ema import EMA
 from indicators.ta_ema import TA_EMA
+from indicators.ta_trix import TA_TRIX
 from indicators.bollinger import BBANDS
 from indicators.adx import ADX
 from indicators.cci import CCI
@@ -57,6 +58,8 @@ def Configure ():
     ta_ema21 = TA_EMA ('EMA21', 21)
     ta_ema80 = TA_EMA ('EMA80', 80)
     
+    #TA_TRIX30
+    ta_trix30 = TA_TRIX ('TRIX30', 30)    
             
     bbands = BBANDS ('BBANDS') # Bollinger Bands
     adx = ADX('ADX') #Average Directional Movement Index (Momentum Indicators)
@@ -67,7 +70,6 @@ def Configure ():
     macd = MACD('MACD')
             
     # List of all the available strategies
-    global market_indicators
     market_indicators = [
             noop,
             sma15,
@@ -84,7 +86,8 @@ def Configure ():
             rsi14,
             rsi21,
             sar,
-            macd
+            macd,
+            ta_trix30
         ]
     
     #### Configure the Strategies - end ######
