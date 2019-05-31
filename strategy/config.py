@@ -21,6 +21,7 @@
 from trend_rsi import TREND_RSI
 from ema_rsi import EMA_RSI
 from trend_bollinger import TREND_BOLLINGER
+from trix_rsi import TRIX_RSI
 
 init_done = False
 market_strategies = []
@@ -32,10 +33,12 @@ def Configure ():
     trend_rsi = TREND_RSI ('TREND_RSI')
     ema_rsi   = EMA_RSI ('EMA_RSI')
     trend_bollinger = TREND_BOLLINGER ('TREND_BOLLINGER')
+    trix_rsi = TRIX_RSI ('TRIX_RSI')    
     market_strategies = [
         trend_rsi,
         ema_rsi,
-        trend_bollinger
+        trend_bollinger,
+        trix_rsi
         ]
     
     #### Configure the Strategies - end ######
