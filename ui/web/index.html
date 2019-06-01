@@ -57,6 +57,8 @@
 				$("#nsell_odr_f").text(data.num_sell_order_failed)
 				$("#sl_hits").text(data.num_stop_loss_hit)
 				$("#tp_hits").text(data.num_take_profit_hit)
+				$("#success_trades").text(data.num_success_trade)
+				$("#failed_trades").text(data.num_failed_trade)				
 				//#Fund
 				$("#fund_init").text(data.fund.initial_value)
 				$("#fund_curr").text(data.fund.current_value)
@@ -202,7 +204,7 @@
 					<table style="margin: false; height: 60px;" border="1" height="49">
 						<tbody>
 							<tr style="background-color: rgba(0, 0, 0, 0.1);">
-								<td align="center" style="border: 0;" colspan="10">
+								<td align="center" style="border: 0;" colspan="12">
 									<!-- style="width: 101.272%;"  > --> <b>Trades</b>
 								</td>
 							</tr>
@@ -215,7 +217,8 @@
 								<td align="center" style="border: 0;">Orders</td>
 								<td align="center" style="border: 0;">Success</td>
 								<td align="center" style="border: 0;">Failed</td>
-								<td align="center" style="border: 0;" colspan="2">Hits</td>								
+								<td align="center" style="border: 0;" colspan="2">#Hits</td>		
+								<td align="center" style="border: 0;" colspan="2">#Trade Result</td>							
 							</tr>
 							<tr style="border-top: 0px solid #555;">
 								<td
@@ -233,7 +236,11 @@
 								<td
 									style="border: 0px solid #555555; width: 74px; height: 24px;">Stop Loss</td>
 								<td align="center" id="sl_hits"
-									style="border: 0; width: 58px;">0</td>									
+									style="border: 0; width: 58px;">0</td>		
+								<td
+									style="border: 0px solid #555555; width: 74px; height: 24px;">Success</td>
+								<td align="center" id="success_trades"
+									style="border: 0; width: 58px;">0</td>																	
 							</tr>
 							<tr style="background-color: rgba(0, 0, 0, 0.1);">
 								<td style="border: 0; width: 74px; height: 23px;">Market</td>
@@ -252,7 +259,11 @@
 								<td
 									style="border: 0px solid #555555; width: 74px; height: 24px;">Take Profit</td>	
 								<td align="center" id="tp_hits"
-									style="border: 0; width: 58px;">0</td>																	
+									style="border: 0; width: 58px;">0</td>	
+								<td
+									style="border: 0px solid #555555; width: 74px; height: 24px;">Failed</td>	
+								<td align="center" id="failed_trades"
+									style="border: 0; width: 58px;">0</td>																										
 							</tr>
 						</tbody>
 					</table>

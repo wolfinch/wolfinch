@@ -202,7 +202,12 @@ class OrderBook():
         if position:
             position.add_sell (sell_order)
             position.update_state("closed")
-            self.market.fund.current_realized_profit += position.get_profit()
+            profit = position.get_profit()
+            self.market.fund.current_realized_profit += profit
+            if profit > 0 :
+                self.market.num_success_trade += 1
+            else:
+                self.market.num_failed_trade += 1
             self.closed_positions.append(position)
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))

@@ -227,6 +227,8 @@ class Market:
     num_sell_order_failed = 0
     num_take_profit_hit = 0
     num_stop_loss_hit = 0
+    num_success_trade = 0
+    num_failed_trade = 0
     tradeConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
                  "take_profit_enabled": False, 'take_profit_rate': 0}
     def __init__(self, product=None, exchange=None):
@@ -261,6 +263,7 @@ class Market:
 "num_buy_order": %s, "num_buy_order_success": %s, "num_buy_order_failed": %s,                   
 "num_sell_order": %s, "num_sell_order_success": %s, "num_sell_order_failed": %s,
 "num_take_profit_hit": %d, "num_stop_loss_hit": %d,
+"num_success_trade": %d, "num_failed_trade": %d,
 "fund":%s,
 "asset":%s,
 "order_book":%s
@@ -270,7 +273,8 @@ class Market:
                 self.num_sell_req, self.num_sell_req_reject,
                 self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed, 
                 self.num_sell_order, self.num_sell_order_success, self.num_sell_order_failed,
-                self.num_take_profit_hit, self.num_stop_loss_hit,         
+                self.num_take_profit_hit, self.num_stop_loss_hit,
+                self.num_success_trade, self.num_failed_trade,
                 str(self.fund), str(self.asset), str(self.order_book))        
         
     def get_candle_list (self):
