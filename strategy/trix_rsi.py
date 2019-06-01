@@ -16,8 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 # from decimal import Decimal
 from strategy import Strategy
+
+# from utils import getLogger
+# 
+# log = getLogger ('decision_simple')
+# log.setLevel(log.CRITICAL)
 
 class TRIX_RSI(Strategy):
     def __init__ (self, name, period=80, rsi_overbought_level=70, rsi_oversold_level=30):     
@@ -29,6 +35,7 @@ class TRIX_RSI(Strategy):
         #internal states
         self.trend = ''
         self.signal = 0
+        self.acted_on_trend = False
     def generate_signal (self, candles):
         '''
         Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
@@ -40,26 +47,45 @@ class TRIX_RSI(Strategy):
             return 0
         
         rsi21 = candles[-1]['RSI21']
-        trix30 = candles[-1]['TRIX30']
+        trix30 = round(candles[-1]['TRIX30'], 2)
 
         if trix30 > 0:
             #'up' trend
-            if self.trend != 'up':
-                #trend reversal
-                self.trend = 'up'
-                signal = 1
+#             log.critical("TRIX(%f) UP RSI(%f) close(%f)"%(trix30, rsi21, candles[-1]['ohlc'].close))    
+            if self.trend != 'up' or self.acted_on_trend:
+                if self.trend != 'up':
+                    #trend reversal                    
+#                     log.critical("REVERSAL >>> TRIX(%f) UP"%(trix30))
+                    self.acted_on_trend = False
+                    self.trend = 'up'                                    
+                if not self.acted_on_trend:
+#                     log.critical("ACT ON TREND TRIX(%f) UP"%(trix30))
+                    self.acted_on_trend = True
+                    signal = 1
                 if rsi21 <= self.rsi_oversold:
+#                     log.critical("RSI(%f) OVERSOLD TRIX(%f) UP"%(rsi21, trix30))
+                    self.acted_on_trend = False
                     signal = 3
         elif trix30 < 0 :
             #'down' trend
-            if self.trend != 'down':
-                #trend reversal
-                self.trend = 'down'
-                signal = -1
+#             log.critical("TRIX(%f) DOWN RSI(%f) close(%f)"%(trix30, rsi21, candles[-1]['ohlc'].close))
+            if self.trend != 'down' or self.acted_on_trend:
+                if self.trend != 'down':
+#                     log.critical("REVERSAL >>> TRIX(%f) DOWN"%(trix30))                
+                    #trend reversal
+                    self.trend = 'down'
+                    self.acted_on_trend = False
+                if not self.acted_on_trend:
+#                     log.critical("ACT ON TREND TRIX(%f) DOWN"%(trix30))                    
+                    self.acted_on_trend = True
+                    signal = -1
                 if rsi21 >= self.rsi_overbought:
+#                     log.critical("RSI(%f) OVERBOUGHT TRIX(%f) DOWN"%(rsi21, trix30))                    
+                    self.acted_on_trend = False       
                     signal = -3  
         else:
-            self.trend = ''
+#             self.trend = ''
+            pass
         
         return signal        
 #EOF
