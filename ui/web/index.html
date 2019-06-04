@@ -58,7 +58,9 @@
 				$("#sl_hits").text(data.num_stop_loss_hit)
 				$("#tp_hits").text(data.num_take_profit_hit)
 				$("#success_trades").text(data.num_success_trade)
-				$("#failed_trades").text(data.num_failed_trade)				
+				$("#failed_trades").text(data.num_failed_trade)	
+				$("#buyn_hold_profit").text(data.cur_buy_and_hold_profit)	
+				
 				//#Fund
 				$("#fund_init").text(data.fund.initial_value)
 				$("#fund_curr").text(data.fund.current_value)
@@ -334,6 +336,11 @@
 									<td style="width: 10%;" id="fund_profit">0</td>
 
 								</tr>
+								<tr>
+									<td style="width: 10%;">Buy n Hold Profit</td>
+									<td style="width: 10%;" id="buyn_hold_profit">0</td>
+
+								</tr>								
 								<tr>
 									<td style="width: 10%;">Avg. Price</td>
 									<td style="width: 10%;" id="fund_avg_price"></td>

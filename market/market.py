@@ -237,6 +237,7 @@ class Market:
         self.exchange_name = None if exchange == None else exchange.name
         self.exchange = exchange       #exchange module
         self.current_market_rate = Decimal(0.0)
+        self.start_market_rate = Decimal(0.0)
         self.consume_feed = None
         self.fund = Fund ()
         self.asset = Asset ()
@@ -255,6 +256,9 @@ class Market:
         self.candle_interval = 0
             
     def __str__(self):
+#         log.critical ("get_market_rate:%f start_market_rate:%f initial_value:%f fund_liquidity_percent:%f start_market_rate:%f"%(
+#             self.get_market_rate(), self.start_market_rate,
+#                     self.fund.initial_value, self.fund.fund_liquidity_percent, self.start_market_rate))
         return """
 {
 "exchange_name": "%s", "product_id": "%s","name": "%s",
@@ -264,6 +268,7 @@ class Market:
 "num_sell_order": %s, "num_sell_order_success": %s, "num_sell_order_failed": %s,
 "num_take_profit_hit": %d, "num_stop_loss_hit": %d,
 "num_success_trade": %d, "num_failed_trade": %d,
+"cur_buy_and_hold_profit": %f,
 "fund":%s,
 "asset":%s,
 "order_book":%s
@@ -275,6 +280,8 @@ class Market:
                 self.num_sell_order, self.num_sell_order_success, self.num_sell_order_failed,
                 self.num_take_profit_hit, self.num_stop_loss_hit,
                 self.num_success_trade, self.num_failed_trade,
+                (self.get_market_rate() - self.start_market_rate)*(
+                    self.fund.initial_value*Decimal(0.01)*self.fund.fund_liquidity_percent/self.start_market_rate),
                 str(self.fund), str(self.asset), str(self.order_book))        
         
     def get_candle_list (self):
@@ -788,6 +795,10 @@ class Market:
         self._process_historic_strategies()
         num_candles = len(self.market_indicators_data)
         self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
+        if sims.backtesting_on:
+            self.start_market_rate = Decimal(0) if num_candles == 0 else self.market_indicators_data[0]['ohlc'].close
+        else:
+            self.start_market_rate = Decimal(0) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].close
         self.num_candles = num_candles
         self._init_states()
         log.debug ("market (%s) setup done! num_candles(%d) cur_candle_time(%d)"%(
