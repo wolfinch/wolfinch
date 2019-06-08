@@ -30,7 +30,7 @@ log = getLogger ('STATS')
 log.setLevel(log.DEBUG)
 
 TRADED_STATS_FILE = "data/stats_traded_orders_%s_%s.json"
-MARKET_STATS_FILE = "data/stats_positions_%s_%s.json"
+POSITION_STATS_FILE = "data/stats_positions_%s_%s.json"
 MARKET_STATS_FILE = "data/stats_market_%s_%s.json"
 STATS_INTERVAL = 10
 _stop = False
@@ -64,7 +64,7 @@ def _stats_run ():
             with open(MARKET_STATS_FILE%(m.exchange_name, m.product_id), "w") as fd:
                 st = str(m)
                 fd.write(st)              
-            with open(TRADED_STATS_FILE%(m.exchange_name, m.product_id), "w") as fd:
+            with open(POSITION_STATS_FILE%(m.exchange_name, m.product_id), "w") as fd:
                 m.order_book.dump_positions(fd)            
                 
 ######### ******** MAIN ****** #########

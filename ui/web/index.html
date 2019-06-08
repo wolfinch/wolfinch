@@ -141,7 +141,14 @@
 				data : "buy.price"
 			}, {
 				title : "sell price",
-				data : "sell.price"
+				data : null, render: function ( data, type, row ) {
+					//console.log("data:"+data)
+					if (data.sell != undefined ) {
+						return data.sell.price;
+					} else {
+						return "-";
+					}
+				}
 			}, {
 				title : "stop loss",
 				data : "stop_loss"
@@ -162,7 +169,13 @@
 				data : "buy.filled_size"
 			}, {
 				title : "sell filled size",
-				data : "sell.filled_size"
+				data :  null, render: function ( data, type, row ) {
+					if (data.sell != undefined ) {
+						return data.sell.filled_size;
+					} else {
+						return "-";
+					}
+				}
 			}, {
 				title : "remaining size",
 				data : "buy.remaining_size"

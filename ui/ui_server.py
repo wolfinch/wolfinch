@@ -35,8 +35,9 @@ log = getLogger ('UI')
 log.setLevel(log.DEBUG)
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
-TRADE_DATA = "stats_positions_%s_%s.json"%("CBPRO", "BTC-USD")
+POSITION_STATS_FILE = "stats_positions_%s_%s.json"%("CBPRO", "BTC-USD")
 MARKET_STATS = "stats_market_%s_%s.json"%("CBPRO", "BTC-USD")
+TRADED_STATS_FILE = "data/stats_traded_orders_%s_%s.json"%("CBPRO", "BTC-USD")
 def server_main ():
     app = Flask(__name__, static_folder='web/', static_url_path='/web/')
 
@@ -49,7 +50,7 @@ def server_main ():
     @app.route('/api/order_data')
     def trade_data():
         try:
-            with open (os.path.join(static_file_dir, TRADE_DATA), 'r') as fp:
+            with open (os.path.join(static_file_dir, POSITION_STATS_FILE), 'r') as fp:
                 s = fp.read()
                 if not len (s):
                     return "{}"
