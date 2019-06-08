@@ -72,7 +72,7 @@ def server_main ():
     log.debug("static_dir: %s root: %s"%(static_file_dir, app.root_path))
     
     log.debug ("starting server..")
-    app.run(debug=False)
+    app.run(host='0.0.0.0', debug=False)
     log.error ("server finished!")
         
 def arg_parse ():
