@@ -507,7 +507,7 @@ class CBPRO (Exchange):
         while (start < end):
             ## looks like there is a rate=limiting in force on gdax, we will have to slow down
             count += 1
-            if (count > 4):
+            if (count >= 2):
                 #rate-limiting
                 count = 0
                 sleep (2)
