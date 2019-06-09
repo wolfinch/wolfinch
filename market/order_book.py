@@ -75,9 +75,11 @@ class Position ():
     def get_take_profit(self):
         return self.take_profit        
     def __str__(self):
+        buy_str = str(self.buy) if self.buy else "null"
+        sell_str = str(self.buy) if self.sell else "null"        
         return """{\n"status": "%s", "open_time":"%s", "closed_time":"%s", "profit": %f, "stop_loss": %f, "take_profit":%f,
 "buy":%s\n,"sell":%s\n}"""%(self.status, self.open_time, self.closed_time, self.profit, self.stop_loss, self.take_profit,
-                            str(self.buy), str(self.sell))
+                            buy_str, sell_str)
     def __repr__(self):
         return self.__str__()
         
