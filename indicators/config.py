@@ -42,7 +42,7 @@ def Configure ():
         return market_indicators
     
     # No-Op. To get Close price
-    noop = NOOP ('closing')
+    noop = NOOP ('close')
     
     # SMA15, SMA50
     sma15 = SMA ('SMA15', 15)
@@ -57,7 +57,9 @@ def Configure ():
     ta_ema13 = TA_EMA ('EMA13', 13)    
     ta_ema21 = TA_EMA ('EMA21', 21)
     ta_ema80 = TA_EMA ('EMA80', 80)
-    
+    ta_ema50 = TA_EMA ('EMA50', 50)
+    ta_ema120 = TA_EMA ('EMA120', 120)
+        
     #TA_TRIX30
     ta_trix30 = TA_TRIX ('TRIX30', 30)    
             
@@ -79,7 +81,9 @@ def Configure ():
             ta_ema5,
             ta_ema13,
             ta_ema21,
-            ta_ema80,            
+            ta_ema80,
+            ta_ema50,
+            ta_ema120, 
             bbands,
             adx,        # FIXME: bug
             cci,

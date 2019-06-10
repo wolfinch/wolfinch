@@ -20,6 +20,7 @@
 
 from trend_rsi import TREND_RSI
 from ema_rsi import EMA_RSI
+from ema_dev import EMA_DEV
 from trend_bollinger import TREND_BOLLINGER
 from trix_rsi import TRIX_RSI
 
@@ -32,11 +33,13 @@ def Configure ():
     #### Configure the Strategies below ######
     trend_rsi = TREND_RSI ('TREND_RSI')
     ema_rsi   = EMA_RSI ('EMA_RSI')
+    ema_dev   = EMA_DEV ('EMA_DEV')    
     trend_bollinger = TREND_BOLLINGER ('TREND_BOLLINGER')
     trix_rsi = TRIX_RSI ('TRIX_RSI')    
     market_strategies = [
         trend_rsi,
         ema_rsi,
+        ema_dev,
         trend_bollinger,
         trix_rsi
         ]

@@ -40,7 +40,7 @@ class TREND_BOLLINGER(Strategy):
             return 0
         
         (upperBound, _, lowerBound) = candles[-1]['BBANDS']
-        close = candles[-1]["closing"]
+        close = candles[-1]["close"]
 
         self.signal = 0 # hold        
         if (upperBound and lowerBound):
