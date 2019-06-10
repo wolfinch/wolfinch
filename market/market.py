@@ -785,14 +785,18 @@ class Market:
         # do not import candles from exch while backtesting.
         self._import_historic_candles(local_only=sims.backtesting_on)
         
-        log.info ("import complete")
+        log.critical ("import complete")
         
         if sims.import_only:
             log.info ("Import only")
             return
         
+        log.critical ("calculating historic indicators")
         self._calculate_historic_indicators()
+        
+        log.critical ("calculating historic strategies")
         self._process_historic_strategies()
+        
         num_candles = len(self.market_indicators_data)
         self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
         if sims.backtesting_on:
@@ -803,7 +807,7 @@ class Market:
         self._init_states()
         log.debug ("market (%s) setup done! num_candles(%d) cur_candle_time(%d)"%(
             self.name, num_candles, self.cur_candle_time))
-        
+        log.critical ("done setting up historic states")
         
     def decision_setup (self, market_list, cfg=None):
         log.debug ("decision setup for market (%s)"%(self.name))

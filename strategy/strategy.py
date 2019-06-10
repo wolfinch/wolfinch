@@ -20,6 +20,7 @@ from abc import ABCMeta, abstractmethod
 class Strategy:
     __metaclass__ = ABCMeta
 
+    _indicator_list = {}
     @abstractmethod
     def __init__ (self):
         ''' 
@@ -33,6 +34,20 @@ class Strategy:
     def configure (self):
         pass
     
+    def set_indicator (self, name, periods=[]):
+        
+        ind = self._indicator_list.get(name, None)
+        if ind:
+            ind.update(periods)
+        else:
+            self._indicator_list[name] = set(periods)
+
+    def get_indicator_current (self, candles, name, period=0):
+        if period == 0:
+            return candles[-1][name]
+        else:    
+            return candles[-1]['%s%d'%(name, period)]
+        
     @abstractmethod
     def generate_signal (self):
         '''

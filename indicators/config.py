@@ -34,6 +34,19 @@ from indicators.macd import MACD
 market_indicators = []
 init_done = False
 
+indicators_list = [
+    NOOP,
+    SMA,
+    TA_EMA,
+    TA_TRIX,
+    BBANDS,
+    ADX,
+    CCI,
+    RSI,
+    SAR,
+    MACD
+    ]
+
 def Configure ():
     global init_done, market_indicators
     #### Configure the Strategies below ######
@@ -47,10 +60,6 @@ def Configure ():
     # SMA15, SMA50
     sma15 = SMA ('SMA15', 15)
     sma50 = SMA ('SMA50', 50)
-    
-    #EMA12, EMA26
-    #ema12 = EMA ('EMA12', 12)
-    #ema26 = EMA ('EMA26', 26)
         
     #TA_EMA12, TA_EMA26
     ta_ema5 = TA_EMA ('EMA5', 5)

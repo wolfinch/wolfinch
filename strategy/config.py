@@ -26,6 +26,19 @@ from trix_rsi import TRIX_RSI
 from minmax import MINMAX
 
 init_done = False
+
+
+strategies_list = [
+    TREND_RSI,
+    EMA_RSI,
+    EMA_DEV,
+    TREND_BOLLINGER,
+    TRIX_RSI,
+    MINMAX
+    ]
+
+
+
 market_strategies = []
 def Configure ():
     global init_done, market_strategies

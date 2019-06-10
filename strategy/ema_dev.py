@@ -42,6 +42,12 @@ class EMA_DEV(Strategy):
         self.signal = 0
         self.cur_timeout_buy = timeout_buy
         self.cur_timeout_sell = timeout_sell
+        
+        #configure required indicators
+        self.set_indicator("EMA", {ema_buy_s, ema_buy_l, ema_sell_s, ema_sell_l})
+        self.set_indicator("RSI", {21})
+        self.set_indicator("close")
+
     def generate_signal (self, candles):
         '''
         Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
@@ -53,12 +59,14 @@ class EMA_DEV(Strategy):
             return 0
         
 #         cur_rsi = rsi[-1]
-        rsi21 = candles[-1]['RSI21']
-        ema_buy_s = candles[-1]['EMA%d'%self.ema_buy_s]
-        ema_buy_l = candles[-1]['EMA%d'%self.ema_buy_l]
-        ema_sell_s = candles[-1]['EMA%d'%self.ema_sell_s]
-        ema_sell_l = candles[-1]['EMA%d'%self.ema_sell_l]
-        cur_close = candles[-1]['close']
+        rsi21 = self.get_indicator_current(candles, 'RSI', 21)        
+        ema_buy_s = self.get_indicator_current(candles, 'EMA', self.ema_buy_s)
+        ema_buy_l = self.get_indicator_current(candles, 'EMA', self.ema_buy_l)
+        ema_sell_s = self.get_indicator_current(candles, 'EMA', self.ema_sell_s)
+        ema_sell_l = self.get_indicator_current(candles, 'EMA', self.ema_sell_l)
+        
+        cur_close = self.get_indicator_current(candles, 'close')
+
 #         if ema13 > ema21:
 #             self.trend = 'bullish'
 #         else:
