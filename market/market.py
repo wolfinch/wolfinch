@@ -250,8 +250,8 @@ class Market:
         self.cur_candle_time = 0
         self.num_candles        = 0
         self.candlesDb = db.CandlesDb (OHLC, self.exchange_name, self.product_id)
-        self.indicator_calculators     = indicators.Configure()
         self.market_strategies     = strategy.Configure()
+        self.indicator_calculators = strategy.Configure_indicators()        
         self.new_candle = False
         self.candle_interval = 0
             

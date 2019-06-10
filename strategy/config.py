@@ -18,6 +18,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import indicators
+
 from trend_rsi import TREND_RSI
 from ema_rsi import EMA_RSI
 from ema_dev import EMA_DEV
@@ -36,8 +38,6 @@ strategies_list = [
     TRIX_RSI,
     MINMAX
     ]
-
-
 
 market_strategies = []
 def Configure ():
@@ -64,9 +64,20 @@ def Configure ():
     init_done = True
     return market_strategies
 
+def Configure_indicators():
+    global market_strategies
+    #_indicator_list var in abstract class is a central place for all reqd. indicators
+    if not len(market_strategies):
+        print ("no strategies configured!!")
+        raise ("no strategies configured!!")
+    req_indicators = market_strategies[-1]._indicator_list
+    return indicators.Configure(req_indicators)
+
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
-    print ("Market Strategy Test")
+    print ("Market Strategy Test.")
     Configure()
+    Configure_indicators()
+    print ("Strategy config success: all indicators: %s"%(str(market_strategies[-1]._indicator_list)))
     
 #EOF

@@ -1,2 +1,2 @@
-from config import Configure
+from config import Configure, Configure_indicators
 # Configure()

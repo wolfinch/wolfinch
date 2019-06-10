@@ -6,7 +6,7 @@
 from decimal import Decimal
 from indicator import Indicator
 
-class EMA (Indicator):
+class DEFUNCT_EMA (Indicator):
     '''
     Exponential moving Average (EMA) market indicator implementation
     '''
