@@ -29,13 +29,13 @@ class Decision ():
                 
     def generate_signal(self, idx):
         
-        return self.market.market_strategies_data[idx]["MINMAX"] #test
+#         return self.market.market_strategies_data[idx]["MINMAX"] #<buy hold
         
-#         return self.market.market_strategies_data[idx]["EMA_DEV"] #~buy hold
+        return self.market.market_strategies_data[idx]["EMA_DEV"] #~buy hold
         
 
         # simple decision uses the latest "EMA_RSI" strategy signal for now
-#         return self.market.market_strategies_data[idx]["EMA_RSI"] #decent profit
+#         return self.market.market_strategies_data[idx]["EMA_RSI"] #<buy-hold, high fail%
 
 
 #         return self.market.market_strategies_data[idx]["TRIX_RSI"] #very low profit
