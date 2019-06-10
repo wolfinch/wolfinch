@@ -32,6 +32,10 @@ class MINMAX(Strategy):
         self.signal = 0
         self.cur_timeout_buy = timeout_buy
         self.cur_timeout_sell = timeout_sell
+        
+        #configure required indicators
+        self.set_indicator("close")   
+             
     def generate_signal (self, candles):
         '''
         Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 

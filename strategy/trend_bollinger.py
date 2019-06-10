@@ -30,6 +30,11 @@ class TREND_BOLLINGER(Strategy):
         self.trend = ''
         self.last_hit_bollinger = ''
         self.last_hit_close = 0
+        
+        #configure required indicators
+        self.set_indicator("BBANDS")
+        self.set_indicator("close")
+                
     def generate_signal (self, candles):
         '''
         Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
@@ -39,8 +44,8 @@ class TREND_BOLLINGER(Strategy):
         if len_candles < self.period:
             return 0
         
-        (upperBound, _, lowerBound) = candles[-1]['BBANDS']
-        close = candles[-1]["close"]
+        (upperBound, _, lowerBound) = self.get_indicator_current(candles, 'BBANDS')
+        close = self.get_indicator_current(candles, 'close')
 
         self.signal = 0 # hold        
         if (upperBound and lowerBound):

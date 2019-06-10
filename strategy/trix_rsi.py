@@ -36,6 +36,11 @@ class TRIX_RSI(Strategy):
         self.trend = ''
         self.signal = 0
         self.acted_on_trend = False
+        
+        #Configure indicators
+        self.set_indicator("RSI", {21})
+        self.set_indicator("TRIX", {30})
+                
     def generate_signal (self, candles):
         '''
         Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
@@ -46,8 +51,8 @@ class TRIX_RSI(Strategy):
         if len_candles < self.period:
             return 0
         
-        rsi21 = candles[-1]['RSI21']
-        trix30 = round(candles[-1]['TRIX30'], 2)
+        rsi21 = self.get_indicator_current(candles, 'RSI', 21)
+        trix30 = round(self.get_indicator_current(candles, 'TRIX', 30), 2)
 
         if trix30 > 0:
             #'up' trend
