@@ -23,6 +23,7 @@ from ema_rsi import EMA_RSI
 from ema_dev import EMA_DEV
 from trend_bollinger import TREND_BOLLINGER
 from trix_rsi import TRIX_RSI
+from minmax import MINMAX
 
 init_done = False
 market_strategies = []
@@ -36,12 +37,14 @@ def Configure ():
     ema_dev   = EMA_DEV ('EMA_DEV')    
     trend_bollinger = TREND_BOLLINGER ('TREND_BOLLINGER')
     trix_rsi = TRIX_RSI ('TRIX_RSI')    
+    minmax = MINMAX('MINMAX')
     market_strategies = [
         trend_rsi,
         ema_rsi,
         ema_dev,
         trend_bollinger,
-        trix_rsi
+        trix_rsi,
+        minmax
         ]
     
     #### Configure the Strategies - end ######

@@ -1,7 +1,7 @@
 #
 # OldMonk Auto trading Bot
-# Desc:  EMA_DEV strategy
-# strategy based on - https://github.com/R4nd0/ema_dev/blob/master/strategy.js
+# Desc:  MINMAX strategy (Trade if candle close is min or max of history periods.)
+# strategy based on - https://www.reddit.com/r/zenbot/comments/b92mis/minmax_strategy/
 #
 # Copyright 2018, OldMonk Bot. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,23 +18,13 @@
 
 from decimal import Decimal
 from strategy import Strategy
-import numpy as np
 
-class EMA_DEV(Strategy):
-    def __init__ (self, name, period=120, ema_buy_s=50, ema_buy_l=120, ema_sell_s=50, ema_sell_l=120,
-                  treshold_pct_buy_s=1, treshold_pct_buy_l=1.5, treshold_pct_sell_s=0.8, treshold_pct_sell_l=1,
+class MINMAX(Strategy):
+    def __init__ (self, name, period=120,
                   timeout_buy = 50, timeout_sell = 50):     
         self.name = name
         self.period = period
     
-        self.ema_buy_s = ema_buy_s
-        self.ema_buy_l = ema_buy_l
-        self.ema_sell_s = ema_sell_s
-        self.ema_sell_l = ema_sell_l
-        self.treshold_pct_buy_s = Decimal(treshold_pct_buy_s)
-        self.treshold_pct_buy_l = Decimal(treshold_pct_buy_l)
-        self.treshold_pct_sell_s = Decimal(treshold_pct_sell_s)
-        self.treshold_pct_sell_l = Decimal(treshold_pct_sell_l)
         self.timeout_buy = timeout_buy
         self.timeout_sell = timeout_sell
         #internal states
@@ -53,25 +43,20 @@ class EMA_DEV(Strategy):
             return 0
         
 #         cur_rsi = rsi[-1]
-        rsi21 = candles[-1]['RSI21']
-        ema_buy_s = candles[-1]['EMA%d'%self.ema_buy_s]
-        ema_buy_l = candles[-1]['EMA%d'%self.ema_buy_l]
-        ema_sell_s = candles[-1]['EMA%d'%self.ema_sell_s]
-        ema_sell_l = candles[-1]['EMA%d'%self.ema_sell_l]
-        cur_close = candles[-1]['close']
-#         if ema13 > ema21:
-#             self.trend = 'bullish'
-#         else:
-#             self.trend = 'bearish'
-#         
-        if ((cur_close >= ema_sell_s *(1 + (1 * self.treshold_pct_sell_s/100))) and 
-            (cur_close >= ema_sell_l * (1 + (1 * self.treshold_pct_sell_l/100))) and 
+#         rsi21 = candles[-1]['RSI21']
+
+        close_l = [a['close'] for a in candles[-self.period:]]
+
+        cur_min = min(close_l)
+        cur_max = max(close_l)
+        cur_close = close_l[-1]
+        
+        if ((cur_close >= cur_max) and 
             (self.cur_timeout_sell < 0 )):
             
             signal = -3 # sell
             self.cur_timeout_sell = self.timeout_sell
-        elif ((cur_close <= ema_buy_s *(1 + (1 * self.treshold_pct_buy_s/100))) and 
-            (cur_close <= ema_buy_l  * (1 + (1 * self.treshold_pct_buy_l/100))) and 
+        elif ((cur_close <= cur_min) and 
             (self.cur_timeout_sell < 0 )):
             
             signal = 3 # buy
