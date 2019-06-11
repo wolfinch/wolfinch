@@ -30,35 +30,32 @@ from minmax import MINMAX
 init_done = False
 
 
-strategies_list = [
-    TREND_RSI,
-    EMA_RSI,
-    EMA_DEV,
-    TREND_BOLLINGER,
-    TRIX_RSI,
-    MINMAX
-    ]
+#### List all available strategies below ###
+strategies_list = {
+    "TREND_RSI": TREND_RSI,
+    "EMA_RSI": EMA_RSI,
+    "EMA_DEV": EMA_DEV,
+    "TREND_BOLLINGER": TREND_BOLLINGER,
+    "TRIX_RSI": TRIX_RSI,
+    "MINMAX": MINMAX
+    }
+#### List all available strategies above ###
 
 market_strategies = []
-def Configure ():
-    global init_done, market_strategies
+def Configure (strategy_list={}):
+    global init_done, market_strategies, strategies_list
     if init_done:
         return market_strategies
     #### Configure the Strategies below ######
-    trend_rsi = TREND_RSI ('TREND_RSI')
-    ema_rsi   = EMA_RSI ('EMA_RSI')
-    ema_dev   = EMA_DEV ('EMA_DEV')    
-    trend_bollinger = TREND_BOLLINGER ('TREND_BOLLINGER')
-    trix_rsi = TRIX_RSI ('TRIX_RSI')    
-    minmax = MINMAX('MINMAX')
-    market_strategies = [
-        trend_rsi,
-        ema_rsi,
-        ema_dev,
-        trend_bollinger,
-        trix_rsi,
-        minmax
-        ]
+    
+    if not len(strategy_list):
+        return market_strategies
+    
+    for strategy_name, strategy_params in strategy_list.iteritems():
+        strategy = strategies_list.get(strategy_name)
+        if not strategy:
+            raise ("Unknown strategy(%s)"%(strategy_name))
+        market_strategies.append(strategy(strategy_name, **strategy_params))
     
     #### Configure the Strategies - end ######
     init_done = True

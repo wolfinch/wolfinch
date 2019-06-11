@@ -26,7 +26,7 @@ import argparse
 
 import sims
 from exchanges import exchanges
-from market import *
+from market import market_init, market_setup, get_market_list, feed_Q_process_msg, feed_deQ, Order
 from utils import getLogger
 import db
 from utils.readconf import readConf
@@ -36,13 +36,16 @@ import stats
 log = getLogger ('OldMonk')
 log.setLevel(log.CRITICAL)
 
-# Global Variables
+# Global Config 
+OldMonkConfig = None
+
 decisionConfig = {}
 tradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
                  "take_profit_enabled": False, 'take_profit_rate': 0} 
-OldMonkConfig = None
 exchange_list = []
-MAIN_TICK_DELAY    = 10        # 20 Sec
+
+# global Variables
+MAIN_TICK_DELAY    = 10        # 10 Sec
 
 def OldMonk_init():
     global exchange_list
@@ -54,10 +57,10 @@ def OldMonk_init():
     init_exchanges()
     
     #3. Init markets
-    market_init (exchange_list)
+    market_init (exchange_list, decisionConfig, tradingConfig)
     
     #4. Setup markets
-    market_setup(decisionConfig, tradingConfig)
+    market_setup()
     
     #5. start stats thread
     stats.start()

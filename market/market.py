@@ -37,6 +37,7 @@ from utils import *
 from order_book import OrderBook
 from order import TradeRequest
 from decision import Decision
+import decision
 import db
 import sims
 import indicators
@@ -54,6 +55,8 @@ log = getLogger ('MARKET')
 log.setLevel(log.CRITICAL)
 
 OldMonk_market_list = []
+TradingConfig = None
+DecisionConfig = None
 
 class OHLC(object): 
 #     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']    #sqlqlchemy mapper doesn't work with __slots__
@@ -214,24 +217,28 @@ class Market:
 #         self.price = Price
 #         
 #     '''    
-    primary = True
-    num_buy_req =0 
-    num_sell_req = 0
-    num_buy_req_reject = 0
-    num_sell_req_reject = 0
-    num_buy_order = 0
-    num_sell_order = 0    
-    num_buy_order_success = 0
-    num_sell_order_success = 0    
-    num_buy_order_failed = 0
-    num_sell_order_failed = 0
-    num_take_profit_hit = 0
-    num_stop_loss_hit = 0
-    num_success_trade = 0
-    num_failed_trade = 0
-    tradeConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
-                 "take_profit_enabled": False, 'take_profit_rate': 0}
     def __init__(self, product=None, exchange=None):
+        #init states:
+        self.primary = True
+        self.num_buy_req =0 
+        self.num_sell_req = 0
+        self.num_buy_req_reject = 0
+        self.num_sell_req_reject = 0
+        self.num_buy_order = 0
+        self.num_sell_order = 0    
+        self.num_buy_order_success = 0
+        self.num_sell_order_success = 0    
+        self.num_buy_order_failed = 0
+        self.num_sell_order_failed = 0
+        self.num_take_profit_hit = 0
+        self.num_stop_loss_hit = 0
+        self.num_success_trade = 0
+        self.num_failed_trade = 0
+        self.tradeConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
+                 "take_profit_enabled": False, 'take_profit_rate': 0}        
+        
+        
+        #config
         self.product_id = None if product == None else product['id']
         self.name = None if product == None else product['display_name']
         self.exchange_name = None if exchange == None else exchange.name
@@ -242,6 +249,7 @@ class Market:
         self.fund = Fund ()
         self.asset = Asset ()
         self.order_book = OrderBook(market=self)
+        decision.decision_config (DecisionConfig['model_type'], DecisionConfig['model_config'])      
         self.decision = None  #will setup later
         # Market Strategy related Data
         # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema': val, name:val...}]
@@ -250,7 +258,12 @@ class Market:
         self.cur_candle_time = 0
         self.num_candles        = 0
         self.candlesDb = db.CandlesDb (OHLC, self.exchange_name, self.product_id)
-        self.market_strategies     = strategy.Configure()
+
+        strategy_list = decision.get_strategy_list()
+        if strategy_list == None:
+            log.critical ("invalid strategy_list!!")
+            raise ("invalid strategy_list")
+        self.market_strategies     = strategy.Configure(strategy_list)
         self.indicator_calculators = strategy.Configure_indicators()        
         self.new_candle = False
         self.candle_interval = 0
@@ -809,9 +822,9 @@ class Market:
             self.name, num_candles, self.cur_candle_time))
         log.critical ("done setting up historic states")
         
-    def decision_setup (self, market_list, cfg=None):
+    def decision_setup (self, market_list):
         log.debug ("decision setup for market (%s)"%(self.name))
-        self.decision = Decision(self, market_list, decision_type=cfg['model_type'], config_path=cfg['model_config'])
+        self.decision = Decision(self, market_list)
         if self.decision == None:
             log.error ("Failed to setup decision engine")
             return False
@@ -982,12 +995,15 @@ def get_market_by_product (exchange_name, product_id):
         if market.product_id == product_id and market.exchange_name == exchange_name:
             return market
         
-def market_init (exchange_list):
+def market_init (exchange_list, decisionConfig, tradingConfig):
     '''
     Initialize per exchange, per product data.
     This is where we want to keep all the run stats
     '''
-    global OldMonk_market_list
+    global OldMonk_market_list, TradeConfig, DecisionConfig
+    
+    TradeConfig = tradingConfig
+    DecisionConfig = decisionConfig    
     for exchange in exchange_list:
         products = exchange.get_products()
         if products:
@@ -1000,14 +1016,13 @@ def market_init (exchange_list):
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))
                  
-def market_setup (decisionConfig, tradingConfig):
+def market_setup ():
     '''
     Setup market states.
     This is where we want to keep all the run stats
     '''
     global OldMonk_market_list
     for market in OldMonk_market_list:
-        market.tradeConfig = tradingConfig
         status = market.market_setup ()
         if (status == False):
             log.critical ("Market Init Failed for market: %s"%(market.name))
@@ -1021,7 +1036,7 @@ def market_setup (decisionConfig, tradingConfig):
                 
     log.info ("market setup complete for all markets, init decision engines now")
     for market in OldMonk_market_list:            
-        status = market.decision_setup (OldMonk_market_list, decisionConfig)
+        status = market.decision_setup (OldMonk_market_list)
         if (status == False):
             log.critical ("decision_setup Failed for market: %s"%(market.name))
             return False
