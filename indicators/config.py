@@ -35,6 +35,8 @@ from indicators import indicator
 market_indicators = []
 init_done = False
 
+#Configure all the available indicators here:
+# only the indicators required for enabled strategy will be enforced.
 indicators_list = {
     "close": NOOP,
     "SMA": SMA,
@@ -46,6 +48,21 @@ indicators_list = {
     "RSI": RSI,
     "SAR": SAR,
     "MACD": MACD
+    }
+
+# Manually configure all required indicators. Should be used with auto-generation strategy 
+manual_indicator_config = {
+    'close': {},
+    'SMA' : {15, 50},
+    'EMA': {80, 50, 5, 120, 13, 21},    
+    'BBANDS': {},
+    'TRIX' : {30},
+    'ADX' : {},
+    'CCI' : {},
+    'SAR' : {},
+    'MACD': {},
+    'RSI': {21, 14},
+    'TRIX': {30},
     }
 
 def Configure (config_list):
@@ -72,55 +89,6 @@ def Configure (config_list):
             for period in period_list:
                 market_indicators.append(indicator("%s%d"%(ind_name, period), period))
                     
-        
-#     # No-Op. To get Close price
-#     noop = NOOP ('close')
-#     
-#     # SMA15, SMA50
-#     sma15 = SMA ('SMA15', 15)
-#     sma50 = SMA ('SMA50', 50)
-#         
-#     #TA_EMA12, TA_EMA26
-#     ta_ema5 = EMA ('EMA5', 5)
-#     ta_ema13 = EMA ('EMA13', 13)    
-#     ta_ema21 = EMA ('EMA21', 21)
-#     ta_ema80 = EMA ('EMA80', 80)
-#     ta_ema50 = EMA ('EMA50', 50)
-#     ta_ema120 = EMA ('EMA120', 120)
-#         
-#     #TA_TRIX30
-#     ta_trix30 = TRIX ('TRIX30', 30)    
-#             
-#     bbands = BBANDS ('BBANDS') # Bollinger Bands
-#     adx = ADX('ADX') #Average Directional Movement Index (Momentum Indicators)
-#     cci = CCI('CCI')
-#     rsi14 = RSI('RSI14', 14)
-#     rsi21 = RSI('RSI21', 21)    
-#     sar = SAR('SAR')
-#     macd = MACD('MACD')
-#             
-#     # List of all the available strategies
-#     market_indicators = [
-#             noop,
-#             sma15,
-#             sma50,
-#             #ema12,
-#             #ema26,
-#             ta_ema5,
-#             ta_ema13,
-#             ta_ema21,
-#             ta_ema80,
-#             ta_ema50,
-#             ta_ema120, 
-#             bbands,
-#             adx,        # FIXME: bug
-#             cci,
-#             rsi14,
-#             rsi21,
-#             sar,
-#             macd,
-#             ta_trix30
-#         ]
     
     #### Configure the Strategies - end ######
     init_done = True
@@ -129,7 +97,7 @@ def Configure (config_list):
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     print ("Market Indicators Test")
-    Configure ()
+    Configure (manual_indicator_config)
     
     
 #EOF
