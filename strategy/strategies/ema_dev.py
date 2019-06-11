@@ -18,7 +18,6 @@
 
 from decimal import Decimal
 from strategy_base import Strategy
-import numpy as np
 
 class EMA_DEV(Strategy):
     def __init__ (self, name, period=120, ema_buy_s=50, ema_buy_l=120, ema_sell_s=50, ema_sell_l=120,

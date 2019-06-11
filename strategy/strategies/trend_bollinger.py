@@ -18,7 +18,7 @@
 from strategy_base import Strategy
 
 class TREND_BOLLINGER(Strategy):
-    def __init__ (self, name, upper_bound_pct=0, lower_bound_pct=0, period=50):     
+    def __init__ (self, name, period=50, upper_bound_pct=0, lower_bound_pct=0):     
         self.name = name
         self.period = period
         self.bollinger_upper_bound_pct = upper_bound_pct
