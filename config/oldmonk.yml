@@ -40,7 +40,7 @@ decision:
    config   :
       strategy : EMA_DEV
       params : 
-         period: 50
+         period: 120
          ema_buy_s : 50
          ema_buy_l : 120
 # EMA_DEV ~buy n hold

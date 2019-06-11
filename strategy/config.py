@@ -4,7 +4,6 @@
 # Desc: Global Market Strategy Configuration. 
 # ref. implementation.
 # All the globally available market strategies are instantiated and configured here.
-# If a market specific strategy list is required, a similar config may be made specific to the market
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,31 +18,13 @@
 # limitations under the License.
 
 import indicators
-
-from trend_rsi import TREND_RSI
-from ema_rsi import EMA_RSI
-from ema_dev import EMA_DEV
-from trend_bollinger import TREND_BOLLINGER
-from trix_rsi import TRIX_RSI
-from minmax import MINMAX
+from strategies_config import strategies_list
 
 init_done = False
 
-
-#### List all available strategies below ###
-strategies_list = {
-    "TREND_RSI": TREND_RSI,
-    "EMA_RSI": EMA_RSI,
-    "EMA_DEV": EMA_DEV,
-    "TREND_BOLLINGER": TREND_BOLLINGER,
-    "TRIX_RSI": TRIX_RSI,
-    "MINMAX": MINMAX
-    }
-#### List all available strategies above ###
-
 market_strategies = []
 def Configure (strategy_list={}):
-    global init_done, market_strategies, strategies_list
+    global init_done, market_strategies
     if init_done:
         return market_strategies
     #### Configure the Strategies below ######
@@ -76,5 +57,7 @@ if __name__ == '__main__':
     Configure()
     Configure_indicators()
     print ("Strategy config success: all indicators: %s"%(str(market_strategies[-1]._indicator_list)))
+    
+    
     
 #EOF

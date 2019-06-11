@@ -17,7 +17,7 @@
 # limitations under the License.
 
 from decimal import Decimal
-from strategy import Strategy
+from strategy_base import Strategy
 
 class MINMAX(Strategy):
     def __init__ (self, name, period=120,

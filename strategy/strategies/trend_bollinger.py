@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from strategy import Strategy
+from strategy_base import Strategy
 
 class TREND_BOLLINGER(Strategy):
     def __init__ (self, name, upper_bound_pct=0, lower_bound_pct=0, period=50):     
