@@ -1,0 +1,56 @@
+##################################################
+# OldMonk Global config file
+##################################################
+
+
+# Define the interested exchanges here. 
+# One primary exchange for trading and as many others in spectator mode
+# data from exchanges in spectator mode will be considered for trading decision
+exchanges:
+#   - 'binance': 
+#      role: 'secondary'
+#      config: 'config/binance.yml'
+   - 'cbpro' : 
+      role: 'primary'
+      config: 'config/cbpro.yml'
+  
+# TODO: exchanges specific config should follow a common timing, should be driven by global config  
+#  backfill:
+#    - enabled  : Yes  
+#    - period   : 3  #in Days
+#    - interval : '5m'  #5m 
+
+stop_loss:
+   enabled: true
+   smart: false #track price movement and update stop_loss
+   rate : 3 #-3%
+  
+take_profit:
+   enabled: false
+   rate: 10 # 10percent
+
+#decision engine
+
+decision:
+# model : [ML|simple]
+#   model    : ML
+#   config   : "config/model/model.hdf5"
+
+   model    : simple
+   config   :
+      strategy : EMA_DEV
+      params : 
+         period: 50
+         ema_buy_s : 50
+         ema_buy_l : 120
+# EMA_DEV ~buy n hold
+#"MINMAX" #<buy hold
+#"EMA_RSI" #<buy-hold, high fail%
+#TRIX_RSI" #very low profit
+#TREND_BOLLINGER"
+#TREND_RSI"
+simulator:
+   enabled : true
+
+#EOF
+
