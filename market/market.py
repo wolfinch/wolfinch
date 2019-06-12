@@ -742,6 +742,7 @@ class Market:
             return
         
         log.debug ("re-Calculating all indicators for historic data #candles (%d)"%(hist_len))
+        log.info ("#indicators(%d) ind_list:%s"%(len(self.indicator_calculators), str(self.indicator_calculators)))        
         for idx in range (hist_len):
             self._calculate_all_indicators (idx)
         log.debug ("re-Calculated all indicators for historic data #candles (%d)"%(hist_len))            
@@ -761,6 +762,7 @@ class Market:
             return
         
         log.debug ("re-proessing all strategies for historic data #candles (%d)"%(hist_len))
+        log.info ("#strategies(%d) strat_list:%s"%(len(self.market_strategies), str(self.market_strategies)))
         for idx in range (hist_len):
             self._process_all_strategies (idx)
         log.debug ("re-proessed all strategies for historic data #candles (%d)"%(hist_len))            

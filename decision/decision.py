@@ -17,7 +17,7 @@
 
 from utils import getLogger
 import decision_simple
-import decision_ML
+# import decision_ML
 
 log = getLogger ('DECISION')
 log.setLevel(log.CRITICAL)
@@ -31,8 +31,6 @@ class Decision ():
         log.debug ("init decision for market(%s): model:%s config: %s"%(market.name, g_decision_type, g_decision_config))
         if g_decision_type == "simple":
             self.decision = decision_simple.Decision(market, market_list, config=g_strategy_list)
-            
-
         elif  g_decision_type == "ml":
             self.decision = decision_ML.Decision(market, market_list, config_path=g_decision_config)
         else:
