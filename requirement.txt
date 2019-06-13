@@ -18,6 +18,7 @@ constantly==15.1.0
 cryptography==2.6.1
 cycler==0.10.0
 dateparser==0.7.1
+deap==1.2.2
 distlib==0.2.8
 enum34==1.1.6
 Flask==1.0.2
