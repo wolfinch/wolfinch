@@ -34,13 +34,13 @@ log.setLevel (log.CRITICAL)
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 
 #TODO: FIXME: ideally, list should be a dict for strategy dict, working around some issues here. check ga_ops.py
-creator.create("Individual", list, fitness=creator.FitnessMax)
+creator.create("Individual", dict, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
 
 
 toolbox.register("strat_gen", ga_ops.strategyGenerator)
-toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.strat_gen, 1)
+toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.strat_gen)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
   

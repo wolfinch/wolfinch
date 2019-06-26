@@ -23,6 +23,6 @@ def get_strategy ():
     
     
 def eval_strategy_with_config (config_kw):
-    
+    pass
         
 #EOF    

@@ -22,10 +22,10 @@ from strategy_base import Strategy
 class EMA_DEV(Strategy):
     config = {
         'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
-        'ema_buy_s' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
-        'ema_buy_l' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
-        'ema_sell_s' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
-        'ema_sell_l' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
+        'ema_buy_s' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
+        'ema_buy_l' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
+        'ema_sell_s' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
+        'ema_sell_l' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'treshold_pct_buy_s' : {'default': 1, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
         'treshold_pct_buy_l' : {'default': 1.5, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
         'treshold_pct_sell_s' : {'default': 0.8, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
@@ -52,7 +52,7 @@ class EMA_DEV(Strategy):
         self.position = ''
         self.signal = 0
         self.cur_timeout_buy = timeout_buy
-        self.cur_timeout_sell = timeout_sell
+        self.cur_timeout_sell = timeout_sell    
         
         #configure required indicators
         self.set_indicator("EMA", {ema_buy_s, ema_buy_l, ema_sell_s, ema_sell_l})

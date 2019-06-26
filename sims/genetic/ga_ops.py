@@ -32,11 +32,11 @@ strat_config = eval_strategy.get_strategy().config
 
 def selectOneMax(individual):
     log.debug (" individual: %s"%(individual))
-    return sum(individual[0].values()),
+    return sum(individual.values()),
 
 def createOffSpring(indA, indB):
 
-    ind1, ind2 = indA[0],indB[0]
+    ind1, ind2 = indA,indB
     
     size = len(ind1)
     cxpoint1 = random.randint(1, size)
@@ -51,13 +51,13 @@ def createOffSpring(indA, indB):
         tmp = ind1[key]
         ind1[key], ind2[key] = ind2[key], tmp
             
-    indA[0]= ind1
-    indB[0]= ind2
+    indA= ind1
+    indB= ind2
     return indA, indB
     
 def createMutant(individual, indpb):
     
-    ind = individual[0]
+    ind = individual
     
     log.debug ("original: %s"%(ind))
     for key in ind.iterkeys():
@@ -65,7 +65,7 @@ def createMutant(individual, indpb):
         if rand < indpb:
             ind [key] = genParamVal(key)
 #             raise Exception("rand: %f %s"%(rand, ind))
-    individual[0] = ind
+    individual = ind
     log.debug ("mutant: %s"%(ind))    
     return individual,  
 
@@ -97,7 +97,7 @@ def genParamVal (param_key):
         r_max = var['max']
         r_step = var.get('step')
         #get val
-        val = random.randrange (r_min, r_max, r_step)
+        val = random.randrange (r_min, r_max+1, r_step)
     elif tp == float :
         r_min = var['min']
         r_max = var['max']
