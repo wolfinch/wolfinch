@@ -41,7 +41,7 @@ toolbox.register("mutate", ga_ops.createMutant, indpb=0.05)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
 def main():
-    random.seed(64)
+    random.seed()
     
     pop = toolbox.population(n=300)
     
@@ -58,9 +58,10 @@ def main():
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
     
-    algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=400, stats=stats,
+    algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=100, stats=stats,
                         halloffame=hof)
 
+    print ("stats:\n%s\nhof:\n%s"%(str(stats), str(hof)))
     return pop, stats, hof
 
 if __name__ == "__main__":

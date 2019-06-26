@@ -12,7 +12,7 @@ from utils import getLogger
 
 # __name__ = "EA-OPS"
 log = getLogger (__name__)
-log.setLevel (log.DEBUG)
+log.setLevel (log.CRITICAL)
 
 strat_config = EMA_DEV.config
 
@@ -49,9 +49,11 @@ def createMutant(individual, indpb):
     ind = individual[0]
     
     log.debug ("original: %s"%(ind))
-    for key, val in ind.iteritems():
-        if random.random() < indpb:
+    for key in ind.iterkeys():
+        rand = random.random()
+        if rand < indpb:
             ind [key] = genParamVal(key)
+#             raise Exception("rand: %f %s"%(rand, ind))
     individual[0] = ind
     log.debug ("mutant: %s"%(ind))    
     return individual,  
