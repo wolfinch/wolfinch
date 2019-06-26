@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # '''
 #  OldMonk Auto trading Bot
 #  Desc:  exchange interactions Simulation
@@ -6,54 +7,107 @@
 
 import random
 
-import numpy
+from strategy import EMA_DEV
+from utils import getLogger
 
-from deap import algorithms
-from deap import base
-from deap import creator
-from deap import tools
+# __name__ = "EA-OPS"
+log = getLogger (__name__)
+log.setLevel (log.DEBUG)
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-creator.create("Individual", numpy.ndarray, fitness=creator.FitnessMax)
+strat_config = EMA_DEV.config
 
-toolbox = base.Toolbox()
+#TODO: FIXME: lot of hacky code here to fix deap ind generator issue with strat dict
 
-toolbox.register("attr_bool", random.randint, 0, 1)
-toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, n=100)
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 def selectOneMax(individual):
-    return sum(individual),
+    log.debug (" individual: %s"%(individual))
+    return sum(individual[0].values()),
 
-def createOffSpring(ind1, ind2):
-    """Execute a two points crossover with copy on the input individuals. The
-    copy is required because the slicing in numpy returns a view of the data,
-    which leads to a self overwritting in the swap operation. It prevents
-    ::
+def createOffSpring(indA, indB):
+
+    ind1, ind2 = indA[0],indB[0]
     
-        >>> import numpy
-        >>> a = numpy.array((1,2,3,4))
-        >>> b = numpy.array((5.6.7.8))
-        >>> a[1:3], b[1:3] = b[1:3], a[1:3]
-        >>> print(a)
-        [1 6 7 4]
-        >>> print(b)
-        [5 6 7 8]
-    """
     size = len(ind1)
     cxpoint1 = random.randint(1, size)
-    cxpoint2 = random.randint(1, size - 1)
-    if cxpoint2 >= cxpoint1:
-        cxpoint2 += 1
-    else: # Swap the two cx points
-        cxpoint1, cxpoint2 = cxpoint2, cxpoint1
 
-    ind1[cxpoint1:cxpoint2], ind2[cxpoint1:cxpoint2] \
-        = ind2[cxpoint1:cxpoint2].copy(), ind1[cxpoint1:cxpoint2].copy()
-        
-    return ind1, ind2
+    keys = random.sample(list(ind1), cxpoint1)
+    
+    log.debug ("size: %d cxpoint1: %d keys; %s"%(size, cxpoint1, keys))
+    
+    for key in keys:
+        #swap values
+        log.debug ("swapping key: %s"%(key))
+        tmp = ind1[key]
+        ind1[key], ind2[key] = ind2[key], tmp
+            
+    indA[0]= ind1
+    indB[0]= ind2
+    return indA, indB
     
 def createMutant(individual, indpb):
+    
+    ind = individual[0]
+    
+    log.debug ("original: %s"%(ind))
+    for key, val in ind.iteritems():
+        if random.random() < indpb:
+            ind [key] = genParamVal(key)
+    individual[0] = ind
+    log.debug ("mutant: %s"%(ind))    
     return individual,  
 
+def strategyGenerator ():
+    #strat_confg = { 'period' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 100, 'step': 1 }},}
+    
+    # TODO: TBD: NOTE: enhance initial pop generation logic. Right now pure random, We can use heuristics for better pop
+    
+    conf = strat_config
+    strat_gen = {}
+    
+    for param_key in conf.iterkeys():
+        strat_gen [param_key] = genParamVal(param_key)
+#         yield param_key, val    
+#         yield val
+    log.debug ("strat: %s"%(strat_gen))
+    return strat_gen
+
+def genParamVal (param_key):
+    conf = strat_config
+        
+    param_conf = conf[param_key]
+    var = param_conf['var']
+    tp = var['type']
+    
+    val = 0
+    if tp == int:
+        r_min = var['min']
+        r_max = var['max']
+        r_step = var.get('step')
+        #get val
+        val = random.randrange (r_min, r_max, r_step)
+    elif tp == float :
+        r_min = var['min']
+        r_max = var['max']
+        r_step = var.get('step')
+        val = random.uniform (r_min, r_max)
+    elif tp == str:
+        raise Exception("Unsupported var type str")
+    else:
+        raise Exception( "Unsupported var type (%s)"%(repr(tp))) 
+    
+    return val
+
+if __name__ == "__main__":
+    
+    print ("conf: %s"%(strat_config))
+    
+    indA = strategyGenerator ()
+    indB = strategyGenerator ()
+    
+    print ("indA: %s \n indB:%s "%(indA, indB))
+    offA, offB = createOffSpring (indA, indB)
+    
+    m = selectOneMax (indA)
+    print ("indA: %s \n indB: %s \n offA: %s \n offB: %s val: %s"%(indA, indB, offA, offB, m))
+    
 #EOF

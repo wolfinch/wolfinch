@@ -20,6 +20,12 @@ from decimal import Decimal
 from strategy_base import Strategy
 
 class EMA_DEV(Strategy):
+    config = {
+        'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
+        'ema_buy_s' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 100, 'step': 2 }},
+        
+        }
+    
     def __init__ (self, name, period=120, ema_buy_s=50, ema_buy_l=120, ema_sell_s=50, ema_sell_l=120,
                   treshold_pct_buy_s=1, treshold_pct_buy_l=1.5, treshold_pct_sell_s=0.8, treshold_pct_sell_l=1,
                   timeout_buy = 50, timeout_sell = 50):     
