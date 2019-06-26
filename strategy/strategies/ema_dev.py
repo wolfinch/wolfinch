@@ -3,7 +3,7 @@
 # Desc:  EMA_DEV strategy
 # strategy based on - https://github.com/R4nd0/ema_dev/blob/master/strategy.js
 #
-# Copyright 2018, OldMonk Bot. All Rights Reserved.
+# Copyright 2019, OldMonk Bot. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
