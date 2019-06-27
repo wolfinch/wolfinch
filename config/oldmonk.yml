@@ -52,5 +52,10 @@ decision:
 simulator:
    enabled : true
 
+genetic_optimizer: 
+   enabled : true
+   config   :
+      strategy : EMA_DEV   
+
 #EOF
 
