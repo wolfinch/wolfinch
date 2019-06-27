@@ -34,15 +34,6 @@ backtesting_on = False
 import_only = False
 
 ####### Private #########
-def set_initial_acc_values (market):
-    #Setup the initial params
-    market.fund.set_initial_value(Decimal(2000))
-#     market.fund.set_hold_value(Decimal(100))
-    market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
-    market.fund.set_max_per_buy_fund_value(90)
-    market.asset.set_initial_size(Decimal(1))
-    market.asset.set_hold_size( Decimal(0.1))
-    market.asset.set_max_per_trade_size(Decimal(0.01))
         
 def finish_backtesting(market):
     log.info ("finish backtesting. market:%s"%(market.name))
@@ -60,7 +51,6 @@ def do_backtesting ():
     for market in get_market_list():
         log.info ("backtest setup for market: %s num_candles:%d"%(market.name, market.num_candles))
         market.backtesting_idx = 0
-        set_initial_acc_values(market)        
                           
     while (all_done < 5) : 
         # check for the msg in the feed Q and process, with timeout
@@ -125,6 +115,7 @@ def market_backtesting_run ():
     log.debug("starting backtesting")    
     do_backtesting()
     log.info ("backtesting complete. ")
+    show_stats ()
     
 genetic_optimizer_on = False
 gaDecisionConfig = {}

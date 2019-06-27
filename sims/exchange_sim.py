@@ -20,7 +20,7 @@ from market import feed_enQ, TradeRequest, Order, Market
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
-log.setLevel (log.CRITICAL)
+log.setLevel (log.INFO)
 
 ###### SIMULATOR Global switch ######
 simulator_on = True
@@ -125,19 +125,11 @@ class SIM_EXCH (exchanges.Exchange):
         self.products.append(prod)
         
     def market_init (self, product):
-
         #Setup the initial params
-        market = Market(product=product, exchange=self)    
-        market.fund.set_fee(0.25, 0.15)        
-        
+        market = Market(product=product, exchange=self)
+                
         #Setup the initial params
-        market.fund.set_initial_value(Decimal(2000))
-    #     market.fund.set_hold_value(Decimal(100))
-        market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
-        market.fund.set_max_per_buy_fund_value(90)
-        market.asset.set_initial_size(Decimal(1))
-        market.asset.set_hold_size( Decimal(0.1))
-        market.asset.set_max_per_trade_size(Decimal(0.01))
+        self._set_initial_acc_values (market)
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
@@ -147,6 +139,17 @@ class SIM_EXCH (exchanges.Exchange):
         market.primary = self.primary
         return market
     
+    def _set_initial_acc_values (self, market):
+        #Setup the initial params
+        market.fund.set_fee(0.25, 0.15)            
+        market.fund.set_initial_value(Decimal(2000))
+    #     market.fund.set_hold_value(Decimal(100))
+        market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
+        market.fund.set_max_per_buy_fund_value(90)
+        market.asset.set_initial_size(Decimal(1))
+        market.asset.set_hold_size( Decimal(0.1))
+        market.asset.set_max_per_trade_size(Decimal(0.01))
+            
     def close (self):
         log.debug("Closing SIM exchange...")
         

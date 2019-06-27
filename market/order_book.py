@@ -25,7 +25,7 @@ from utils import getLogger
 import stats
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.DEBUG)
 
 class Position ():
     
