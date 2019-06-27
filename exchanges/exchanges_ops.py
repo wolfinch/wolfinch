@@ -11,7 +11,7 @@ import sims
 
 __name__ = "EXCH-OPS"
 log = getLogger (__name__)
-log.setLevel (log.INFO)
+log.setLevel (log.CRITICAL)
 
 
 exchange_list = []

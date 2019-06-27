@@ -315,6 +315,9 @@ class Market:
         else:        
             return self.current_market_rate       
         
+    def register_feed_processor (self, feed_processor_cb):
+        self.consume_feed = feed_processor_cb
+        
     def market_consume_feed(self, msg):
         if (self.consume_feed != None):
             self.consume_feed(self, msg)
@@ -788,16 +791,16 @@ class Market:
         # do not import candles from exch while backtesting.
         self._import_historic_candles(local_only=sims.backtesting_on)
         
-        log.critical ("import complete")
+        log.info ("import complete")
         
         if sims.import_only:
             log.info ("Import only")
             return
         
-        log.critical ("calculating historic indicators")
+        log.info ("calculating historic indicators")
         self._calculate_historic_indicators()
         
-        log.critical ("calculating historic strategies")
+        log.info ("calculating historic strategies")
         self._process_historic_strategies()
         
         num_candles = len(self.market_indicators_data)
@@ -810,7 +813,7 @@ class Market:
         self._init_states()
         log.debug ("market (%s) setup done! num_candles(%d) cur_candle_time(%d)"%(
             self.name, num_candles, self.cur_candle_time))
-        log.critical ("done setting up historic states")
+        log.info ("done setting up historic states")
         
     def decision_setup (self, market_list):
         log.debug ("decision setup for market (%s)"%(self.name))

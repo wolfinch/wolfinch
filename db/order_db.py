@@ -22,7 +22,7 @@ import sims
 import uuid
 
 log = getLogger ('ORDER-DB')
-log.setLevel (log.DEBUG)
+log.setLevel (log.CRITICAL)
 
 # Order db is currently a dictionary, keyed with order.id (UUID)
 ORDER_DB = {}
@@ -57,10 +57,10 @@ def db_get_order (OrderCls, market, product_id, order_id):
 def init_order_db(OrderCls):
     global Db
     
-#     if ( sims.backtesting_on or sims.simulator_on):    
-#         #don't do order db init for sim
-#         return None
-    
+    if ( sims.backtesting_on or sims.simulator_on):    
+        #don't do order db init for sim
+        return None
+     
     if not Db:
         Db = init_db()
         if not Db:

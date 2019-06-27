@@ -49,5 +49,6 @@ class Exchange:
         pass        
     @abstractmethod
     def get_product_order_book (self):
-        pass                    
+        pass
+    
 #EOF    

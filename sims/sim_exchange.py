@@ -20,7 +20,7 @@ from market import feed_enQ, TradeRequest, Order, Market
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
-log.setLevel (log.INFO)
+log.setLevel (log.CRITICAL)
 
 ###### SIMULATOR Global switch ######
 simulator_on = True
@@ -137,8 +137,113 @@ class SIM_EXCH (exchanges.Exchange):
         
         #set whether primary or secondary
         market.primary = self.primary
+        
+        market.register_feed_processor(self._sim_exch_consume_feed)
         return market
+
+    def _sim_exch_consume_feed (self, market, msg):
+        ''' 
+        Feed Call back for SIM EXCH    
+        This is where we do all the useful stuff with Feed
+        '''
+        msg_type = msg['type']
+        #log.debug ("Feed received: msg:\n %s"%(json.dumps(msg, indent=4, sort_keys=True)))
+     
+        if (msg_type in ['pending', 'received' , 'open' , 'done' , 'change'] ):
+            self._consume_order_update_feed (market, msg)
+        elif (msg_type == 'error'):
+            log.error ("Feed: Error Msg received on Feed msg: %s"%(str(msg)))
+        else:
+            log.error ("Feed: Unknown Feed Msg Type (%s) msg: %s"%(msg['type'], str(msg)))
     
+    def _consume_order_update_feed (self, market, msg):
+        ''' 
+        Process the order status update feed msg 
+        '''
+        log.debug ("Order Status Update id:%s"%(msg.get('order_id')))
+        order = self._normalized_order(msg)
+        market.order_status_update (order)
+        
+    def _normalized_order (self, order):
+        '''
+        Desc:
+         Error Handle and Normalize the order json returned by gdax
+          to return the normalized order detail back to callers
+          Handles -
+          1. Initial Order Creation/Order Query
+          2. Order Update Feed Messages
+          Ref: https://docs.gdax.com/#the-code-classprettyprintfullcode-channel
+        Sample order:
+                {u'created_at': u'2018-01-10T09:49:02.639681Z',
+                 u'executed_value': u'0.0000000000000000',
+                 u'fill_fees': u'0.0000000000000000',
+                 u'filled_size': u'0.00000000',
+                 u'id': u'7150b013-62ca-49c7-aa28-4a9473778644',
+                 u'post_only': True,
+                 u'price': u'14296.99000000',
+                 u'product_id': u'BTC-USD',
+                 u'settled': False,
+                 u'side': u'buy',
+                 u'size': u'0.13988959',
+                 u'status': u'pending',
+                 u'stp': u'dc',
+                 u'time_in_force': u'GTC',
+                 u'type': u'limit'}    
+        Known Errors: 
+          1. {u'message': u'request timestamp expired'}
+          2. {u'message': u'Insufficient funds'}
+          3. {'status' : 'rejected', 'reject_reason': 'post-only'}
+        '''
+        error_status_codes = ['rejected']
+        
+        msg = order.get('message')
+        status = order.get('status')
+        if (msg or (status in error_status_codes)):
+            log.error("FAILED Order: error msg: %s status: %s"%(msg, status))
+            return None
+    
+        # Valid Order
+        product_id = order.get('product_id')
+        order_id   = order.get('id') or order.get('order_id')
+        order_type = order.get('type')
+        status_reason = order.get('reason') or order.get('done_reason')
+        status_type = order.get('status') 
+        if order_type in ['received', 'open', 'done', 'match', 'change', 'margin_profile_update', 'activate' ]:
+            # order status update message
+            status_type = order_type
+            order_type = order.get('order_type') #could be None
+        else:
+            pass
+        create_time = order.get('created_at') or None
+        update_time  = order.get('time') or order.get('done_at') or None
+        side = order.get('side') or None
+        # Money matters
+        price =   Decimal(order.get('price') or 0)
+        request_size  = Decimal(order.get('size') or  0)    
+        filled_size = Decimal(order.get('filled_size') or 0)
+        remaining_size  = Decimal(order.get('remaining_size') or 0)
+        funds = Decimal(order.get('funds') or order.get('specified_funds') or 0)
+        fees = Decimal(order.get('fees') or order.get('fill_fees') or 0)
+        if order.get('settled') == True:
+            total_val = Decimal(order.get('executed_value') or 0)
+            if total_val and filled_size and not price:
+                price = total_val/filled_size
+            if (funds == 0):
+                funds = total_val + fees
+                #log.debug ("calculated fill price: %g size: %g"%(price, filled_size))
+    #         if filled_size and remaining_size:
+    #             request_size = filled_size + remaining_size
+                        
+        if (request_size == 0):
+            request_size = remaining_size + filled_size
+            
+        log.debug ("price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g"%(
+            price, funds, request_size, filled_size, remaining_size, fees))
+        norm_order = Order (order_id, product_id, status_type, order_type=order_type, status_reason=status_reason,
+                            side=side, request_size=request_size, filled_size=filled_size, remaining_size=remaining_size,
+                             price=price, funds=funds, fees=fees, create_time=create_time, update_time=update_time)
+        return norm_order
+        
     def _set_initial_acc_values (self, market):
         #Setup the initial params
         market.fund.set_fee(0.25, 0.15)            

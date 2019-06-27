@@ -19,7 +19,7 @@ from market import feed_deQ, feed_Q_process_msg, get_market_list, flush_all_stat
                              market_init, market_setup, Order
 import db
 import exchanges
-import exchange_sim
+import sim_exchange
 from genetic import ga_main
 
 #from market.order import Order, TradeRequest
@@ -67,16 +67,16 @@ def do_backtesting ():
 #                     market.backtesting_idx, market.exchange_name, market.name))     
                 signal = market.generate_trade_signal (market.backtesting_idx)
                 market.consume_trade_signal (signal)
-                if (exchange_sim.simulator_on):
-                    exchange_sim.market_simulator_run (market)
+                if (sim_exchange.simulator_on):
+                    sim_exchange.market_simulator_run (market)
                 #if atleast one market is not done, we will continue
                 done = False
                 market.backtesting_idx += 1
             elif done == True:
                 finish_backtesting(market)
                 market.backtesting_idx = market.num_candles - 1
-                if (exchange_sim.simulator_on):
-                    exchange_sim.market_simulator_run (market)                
+                if (sim_exchange.simulator_on):
+                    sim_exchange.market_simulator_run (market)                
                 #let's do few iterations and make sure everything is really done!
                 all_done += 1 
                        
@@ -126,7 +126,7 @@ def market_backtesting_ga_hook (decisionConfig, tradingConfig=None):
     """
     global backtesting_on
     
-    exchange_sim.simulator_on = True
+    sim_exchange.simulator_on = True
     backtesting_on = True
     
     sim_ga_init (decisionConfig, tradingConfig)
