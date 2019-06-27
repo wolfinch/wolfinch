@@ -178,7 +178,21 @@ def market_backtesting_run ():
     log.info ("backtesting complete. ")
     show_stats ()
 
+def market_backtesting_ga_hook ():
+    """
+    market backtesting hook for ga
+    """
+    global simulator_on, backtesting_on
     
+    simulator_on = True
+    backtesting_on = True
+    
+    log.debug("starting backtesting")    
+    do_backtesting()
+    log.info ("backtesting complete. ")
+    show_stats ()
+    
+        
 def buy (trade_req) :
 #     return None
     

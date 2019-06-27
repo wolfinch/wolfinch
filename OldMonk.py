@@ -47,8 +47,7 @@ exchange_list = []
 # global Variables
 MAIN_TICK_DELAY    = 10        # 10 Sec
 
-def OldMonk_init():
-    global exchange_list
+def OldMonk_init(exchange_list, decisionConfig, tradingConfig):
     
     #1. Retrieve states back from Db
     db.init_order_db(Order)
@@ -255,6 +254,21 @@ def arg_parse ():
     
 #     log.debug("sims.backtesting_on: %d"%(sims.backtesting_on))
 #     exit(1)
+def ga_sim_main ():
+    global exchange_list, decisionConfig, tradingConfig
+    
+    try:
+        OldMonk_init(exchange_list, decisionConfig, tradingConfig)
+        stats = sims.market_backtesting_run ()
+        
+        OldMonk_end()
+        
+        return stats
+    except:
+        print ("Unexpected error",sys.exc_info())
+        OldMonk_end()
+        raise        
+    OldMonk_end()    
     
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
@@ -266,7 +280,7 @@ if __name__ == '__main__':
     print("Starting OldMonk..")
     
     try:
-        OldMonk_init()
+        OldMonk_init(exchange_list, decisionConfig, tradingConfig)
         
         if sims.import_only:
             log.info ("import only")
