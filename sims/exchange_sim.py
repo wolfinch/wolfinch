@@ -11,9 +11,11 @@ import time
 from datetime import datetime
 # from dateutil.tz import tzlocal
 import copy
+from decimal import Decimal
 
 from utils import getLogger
-from market import feed_enQ, TradeRequest, Order
+import exchanges
+from market import feed_enQ, TradeRequest, Order, Market
 
 
 __name__ = "EXCH-SIMS"
@@ -107,51 +109,109 @@ def market_simulator_run (market):
     log.debug ("Running SIM exchange for market: %s"%(market.product_id))
     do_trade (market)
         
-def buy (trade_req) :
-#     return None
-    
-    if not isinstance( trade_req, TradeRequest):
-        return None
-    log.debug ("BUY - Placing Order on SIM exchange --" )
-    
-    buy_order = Order(str(uuid.uuid1()), trade_req.product, "pending", order_type=trade_req.type, 
-                      status_reason=None, side='buy', request_size=trade_req.size,
-                   filled_size=0,  price=trade_req.price, funds=trade_req.fund,
-                 fees=0, create_time=time.ctime())
-    
-    open_orders_pvt = open_orders.get(trade_req.product) 
-    if open_orders_pvt == None:
-        open_orders[trade_req.product] = [buy_order]
-    else:
-        open_orders_pvt.append(buy_order)
-    
-    return buy_order
-    
-def sell (trade_req) :
-    if not isinstance(trade_req, TradeRequest):
-        return None
-    log.debug ("SELL - Placing Order on SIM exchange --" )
-    sell_order = Order(str(uuid.uuid1()), trade_req.product, "pending", order_type=trade_req.type, 
-                      status_reason=None, side='sell', request_size=trade_req.size,
-                   filled_size=0,  price=trade_req.price, funds=0,
-                 fees=0, create_time=time.ctime()) 
-    open_orders_pvt = open_orders.get(trade_req.product) 
-    if open_orders_pvt == None:
-        open_orders[trade_req.product] = [sell_order]
-    else:
-        open_orders_pvt.append(sell_order)
-    return sell_order
-    
-def get_order (order_id):
-#     open_orders_pvt = open_orders.get(market.product_id)
-#     for order in open_orders_pvt[:]:
-#         if (order.id == order_id):
-#             this_order = order_struct
-#             this_order['id'] = order.id
-#             this_order['type'] = "done"
-#             this_order['reason'] = 'filled'    
-#             this_order['settled'] = True
-#             this_order['side'] = order.side            
-    return None
+class SIM_EXCH (exchanges.Exchange):
+    products = []
+    primary = False
+    candle_interval = 0
+    def __init__(self, name, primary=True):
+        log.info('init SIM exchange')        
         
+        self.name = name
+        self.primary = True if primary else False
+        self.timeOffset = 0
+
+#         global products
+        prod = {"id": "BTC-USD", "display_name": "BTC/USD"}
+        self.products.append(prod)
+        
+    def market_init (self, product):
+
+        #Setup the initial params
+        market = Market(product=product, exchange=self)    
+        market.fund.set_fee(0.25, 0.15)        
+        
+        #Setup the initial params
+        market.fund.set_initial_value(Decimal(2000))
+    #     market.fund.set_hold_value(Decimal(100))
+        market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
+        market.fund.set_max_per_buy_fund_value(90)
+        market.asset.set_initial_size(Decimal(1))
+        market.asset.set_hold_size( Decimal(0.1))
+        market.asset.set_max_per_trade_size(Decimal(0.01))
+        
+        ## Init Exchange specific private state variables
+        market.O = market.H = market.L = market.C = market.V = 0
+        market.candle_interval = self.candle_interval = 300
+        
+        #set whether primary or secondary
+        market.primary = self.primary
+        return market
+    
+    def close (self):
+        log.debug("Closing SIM exchange...")
+        
+    def get_products(self):
+        """
+        Get registered products on this exchange
+        """
+        return self.products
+                          
+    def buy (self, trade_req) :
+    #     return None
+        
+        if not isinstance( trade_req, TradeRequest):
+            return None
+        log.debug ("BUY - Placing Order on SIM exchange --" )
+        
+        buy_order = Order(str(uuid.uuid1()), trade_req.product, "pending", order_type=trade_req.type, 
+                          status_reason=None, side='buy', request_size=trade_req.size,
+                       filled_size=0,  price=trade_req.price, funds=trade_req.fund,
+                     fees=0, create_time=time.ctime())
+        
+        open_orders_pvt = open_orders.get(trade_req.product) 
+        if open_orders_pvt == None:
+            open_orders[trade_req.product] = [buy_order]
+        else:
+            open_orders_pvt.append(buy_order)
+        
+        return buy_order
+        
+    def sell (self, trade_req) :
+        if not isinstance(trade_req, TradeRequest):
+            return None
+        log.debug ("SELL - Placing Order on SIM exchange --" )
+        sell_order = Order(str(uuid.uuid1()), trade_req.product, "pending", order_type=trade_req.type, 
+                          status_reason=None, side='sell', request_size=trade_req.size,
+                       filled_size=0,  price=trade_req.price, funds=0,
+                     fees=0, create_time=time.ctime()) 
+        open_orders_pvt = open_orders.get(trade_req.product) 
+        if open_orders_pvt == None:
+            open_orders[trade_req.product] = [sell_order]
+        else:
+            open_orders_pvt.append(sell_order)
+        return sell_order
+        
+    def get_order (self, order_id):
+    #     open_orders_pvt = open_orders.get(market.product_id)
+    #     for order in open_orders_pvt[:]:
+    #         if (order.id == order_id):
+    #             this_order = order_struct
+    #             this_order['id'] = order.id
+    #             this_order['type'] = "done"
+    #             this_order['reason'] = 'filled'    
+    #             this_order['settled'] = True
+    #             this_order['side'] = order.side            
+        return None
+
+    def cancel_order (self):
+        pass
+
+    def get_accounts (self):
+        pass     
+
+    def get_historic_rates (self):
+        pass        
+
+    def get_product_order_book (self):
+        pass 
 #EOF

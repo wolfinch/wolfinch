@@ -53,7 +53,7 @@ simulator:
    enabled : true
 
 genetic_optimizer: 
-   enabled : true
+   enabled : false
    config   :
       strategy : EMA_DEV   
 

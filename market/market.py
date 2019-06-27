@@ -351,11 +351,8 @@ class Market:
         reason = order.status_reason
         if side == 'buy':
             if msg_type == 'done':
-                #for an order done, get the order details
-                if (sims.simulator_on):
-                    order_det = sims.get_order(order.id)
-                else:                
-                    order_det = self.exchange.get_order(order.id)
+                #for an order done, get the order details             
+                order_det = self.exchange.get_order(order.id)
                 if (order_det):
                     order = order_det
                 if reason == 'filled':
@@ -371,11 +368,8 @@ class Market:
                 raise Exception("Unknown buy order status: %s"%(msg_type))
         elif side == 'sell':
             if msg_type == 'done':
-                #for an order done, get the order details
-                if (sims.simulator_on):
-                    order_det = sims.get_order(order.id)
-                else:                 
-                    order_det = self.exchange.get_order(order.id)
+                #for an order done, get the order details              
+                order_det = self.exchange.get_order(order.id)
                 if (order_det):
                     order = order_det                
                 if reason == 'filled':
@@ -422,11 +416,8 @@ class Market:
     def _buy_order_create (self, trade_req):
         
         self.num_buy_order += 1
-        log.info("BUY: %d sig: %s"%(self.num_buy_order, trade_req))        
-        if (sims.simulator_on):
-            order = sims.buy (trade_req)
-        else:
-            order = self.exchange.buy (trade_req)
+        log.info("BUY: %d sig: %s"%(self.num_buy_order, trade_req))
+        order = self.exchange.buy (trade_req)
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
             log.debug ("BUY Order Sent to exchange. ")
@@ -478,10 +469,7 @@ class Market:
     def _sell_order_create (self, trade_req):
         self.num_sell_order += 1
         log.info("SELL: %d sig: %s"%(self.num_sell_order, trade_req))
-        if (sims.simulator_on):
-            order = sims.sell (trade_req)
-        else:
-            order = self.exchange.sell (trade_req)
+        order = self.exchange.sell (trade_req)
         #update fund 
         order.buy_id = trade_req.id
         market_order  =  self.order_book.add_or_update_my_order(order)

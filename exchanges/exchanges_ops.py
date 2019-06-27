@@ -7,6 +7,7 @@
 
 from utils import getLogger
 from exchanges_config import all_exchanges
+import sims
 
 __name__ = "EXCH-OPS"
 log = getLogger (__name__)
@@ -17,6 +18,7 @@ exchange_list = []
 def init_exchanges (OldMonkConfig):
     global exchange_list
     
+
     #init exchanges 
     for exch_cls in all_exchanges:
         log.debug ("Initializing exchange (%s)"%(exch_cls.name))
@@ -26,7 +28,12 @@ def init_exchanges (OldMonkConfig):
                     role = v['role']
                     cfg = v['config']
                     log.debug ("initializing exchange(%s)"%name)
-                    exch_obj = exch_cls(config=cfg, primary=(role == 'primary'))
+                    if (sims.simulator_on):
+                        # If sim is on, init only sim exchange
+                        exch_obj = sims.SIM_EXCH(exch_cls.name)
+                        log.info ("SIM-EXCH initialized for EXCH(%s)"%(exch_cls.name))                        
+                    else:                    
+                        exch_obj = exch_cls(config=cfg, primary=(role == 'primary'))
                     if (exch_obj != None):
                         exchange_list.append(exch_obj)
                         #Market init
