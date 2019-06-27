@@ -25,7 +25,7 @@ from decimal import *
 import argparse
 
 import sims
-from exchanges import exchanges
+import exchanges
 from market import market_init, market_setup, get_market_list, feed_Q_process_msg, feed_deQ, Order
 from utils import getLogger
 import db
@@ -42,21 +42,20 @@ OldMonkConfig = None
 decisionConfig = {}
 tradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
                  "take_profit_enabled": False, 'take_profit_rate': 0} 
-exchange_list = []
 
 # global Variables
 MAIN_TICK_DELAY    = 10        # 10 Sec
 
-def OldMonk_init(exchange_list, decisionConfig, tradingConfig):
+def OldMonk_init(decisionConfig, tradingConfig):
     
     #1. Retrieve states back from Db
     db.init_order_db(Order)
     
     #2. Init Exchanges
-    init_exchanges()
+    exchanges.init_exchanges(OldMonkConfig)
     
     #3. Init markets
-    market_init (exchange_list, decisionConfig, tradingConfig)
+    market_init (exchanges.exchange_list, decisionConfig, tradingConfig)
     
     #4. Setup markets
     market_setup()
@@ -66,36 +65,10 @@ def OldMonk_init(exchange_list, decisionConfig, tradingConfig):
     
 def OldMonk_end():
     log.info ("Finalizing OldMonk")
-    close_exchanges ()
+    exchanges.close_exchanges ()
     
     # stop stats thread
     stats.stop()
-    
-def init_exchanges ():
-    global exchange_list, OldMonkConfig
-    
-    #init exchanges 
-    for exch_cls in exchanges:
-        log.debug ("Initializing exchange (%s)"%(exch_cls.name))
-        for exch in OldMonkConfig['exchanges']:
-            for name,v in exch.iteritems():
-                if name.lower() == exch_cls.name.lower():
-                    role = v['role']
-                    cfg = v['config']
-                    log.debug ("initializing exchange(%s)"%name)
-                    exch_obj = exch_cls(config=cfg, primary=(role == 'primary'))
-                    if (exch_obj != None):
-                        exchange_list.append(exch_obj)
-                        #Market init
-                    else:
-                        log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
-                
-def close_exchanges():
-    global exchange_list
-    #init exchanges 
-    for exchange in exchange_list:
-            log.info ("Closing exchange (%s)"%(exchange.name))
-            exchange.close()    
 
 def oldmonk_main ():
     """
@@ -267,10 +240,10 @@ def arg_parse ():
 #     log.debug("sims.backtesting_on: %d"%(sims.backtesting_on))
 #     exit(1)
 def ga_sim_main ():
-    global exchange_list, decisionConfig, tradingConfig
+    global decisionConfig, tradingConfig
     
     try:
-        OldMonk_init(exchange_list, decisionConfig, tradingConfig)
+        OldMonk_init(decisionConfig, tradingConfig)
         stats = sims.market_backtesting_run ()
         
         OldMonk_end()
@@ -298,7 +271,7 @@ if __name__ == '__main__':
             print ("finished running genetic backtesting optimizer")
             sys.exit()
                     
-        OldMonk_init(exchange_list, decisionConfig, tradingConfig)
+        OldMonk_init(decisionConfig, tradingConfig)
         
         if sims.import_only:
             log.info ("import only")

@@ -10,7 +10,6 @@ import uuid
 import time
 from datetime import datetime
 # from dateutil.tz import tzlocal
-from decimal import Decimal
 import copy
 
 from utils import getLogger
