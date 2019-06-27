@@ -187,7 +187,7 @@ def load_config (cfg_file):
                         sims.genetic_optimizer_on = False
                 elif ex_k == 'config':
                     sims.gaDecisionConfig ['model_config'] = ex_v
-                                                       
+                    sims.gaDecisionConfig ['model_type'] = 'simple'
                 
 #     print ("v: %s"%str(tradingConfig))
 #     exit(1)
@@ -239,21 +239,7 @@ def arg_parse ():
     
 #     log.debug("sims.backtesting_on: %d"%(sims.backtesting_on))
 #     exit(1)
-def ga_sim_main ():
-    global decisionConfig, tradingConfig
-    
-    try:
-        OldMonk_init(decisionConfig, tradingConfig)
-        stats = sims.market_backtesting_run ()
-        
-        OldMonk_end()
-        
-        return stats
-    except:
-        print ("Unexpected error",sys.exc_info())
-        OldMonk_end()
-        raise        
-    OldMonk_end()    
+
     
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
@@ -267,12 +253,10 @@ if __name__ == '__main__':
     try:
         if sims.genetic_optimizer_on:
             print ("starting genetic backtesting optimizer")
-            ga_sim_main ()
+            sims.ga_sim_main (OldMonkConfig, sims.gaDecisionConfig, tradingConfig)
             print ("finished running genetic backtesting optimizer")
             sys.exit()
-                    
         OldMonk_init(decisionConfig, tradingConfig)
-        
         if sims.import_only:
             log.info ("import only")
             raise SystemExit

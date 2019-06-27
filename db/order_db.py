@@ -39,7 +39,7 @@ def db_add_or_update_order (market, product_id, order):
 def db_del_order (market, product_id, order):
     log.debug ("Del order from db")    
     del(ORDER_DB[uuid.UUID(order.id)])
-    
+    #TODO: FIXME: Handle Db here ?? 
     
 def db_get_order (OrderCls, market, product_id, order_id):
     log.debug ("Get order from db")    
@@ -56,6 +56,11 @@ def db_get_order (OrderCls, market, product_id, order_id):
 #Get all orders from Db (Should be called part of startup)
 def init_order_db(OrderCls):
     global Db
+    
+    if ( sims.backtesting_on or sims.simulator_on):    
+        #don't do order db init for sim
+        return None
+    
     if not Db:
         Db = init_db()
         if not Db:

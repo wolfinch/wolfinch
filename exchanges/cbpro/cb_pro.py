@@ -55,6 +55,7 @@ class CBPRO (Exchange):
             log.fatal("Invalid Config file")            
             return None
     
+        return 
         for entry in backfill:
             if entry.get('enabled'):
                 self.gdax_conf['backfill_enabled'] = entry['enabled']

@@ -26,34 +26,41 @@ from deap import tools
 
 from utils import getLogger
 import ga_ops
+import eval_strategy
 
 # __name__ = "EA-BACKTEST"
 log = getLogger (__name__)
 log.setLevel (log.CRITICAL)
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-
-#TODO: FIXME: ideally, list should be a dict for strategy dict, working around some issues here. check ga_ops.py
-creator.create("Individual", dict, fitness=creator.FitnessMax)
-
-toolbox = base.Toolbox()
-
-
-toolbox.register("strat_gen", ga_ops.strategyGenerator)
-toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.strat_gen)
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-  
+def ga_init (evalfn = None):
     
-toolbox.register("evaluate", ga_ops.selectOneMax)
-toolbox.register("mate", ga_ops.createOffSpring)
-toolbox.register("mutate", ga_ops.createMutant, indpb=0.05)
-toolbox.register("select", tools.selTournament, tournsize=3)
+    eval_strategy.register_eval_hook (evalfn)
+    
+    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+    
+    #TODO: FIXME: ideally, list should be a dict for strategy dict, working around some issues here. check ga_ops.py
+    creator.create("Individual", dict, fitness=creator.FitnessMax)
+    
+    toolbox = base.Toolbox()
+    
+    toolbox.register("strat_gen", ga_ops.strategyGenerator)
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.strat_gen)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    
+    toolbox.register("evaluate", ga_ops.selectOneMax)
+    toolbox.register("mate", ga_ops.createOffSpring)
+    toolbox.register("mutate", ga_ops.createMutant, indpb=0.05)
+    toolbox.register("select", tools.selTournament, tournsize=3)
 
-def main():
+    return toolbox
+
+#### Public APIs ####
+def ga_main(evalfn = None):
     random.seed()
     
-    pop = toolbox.population(n=300)
+    toolbox = ga_init (evalfn)
+    
+    pop = toolbox.population(n=3)
     
     log.debug ("pop: %s"%pop)
     # Numpy equality function (operators.eq) between two arrays returns the
@@ -68,13 +75,14 @@ def main():
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
     
-    algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=100, stats=stats,
+    algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=10, stats=stats,
                         halloffame=hof)
 
     print ("stats:\n%s\nhof:\n%s"%(str(stats), str(hof)))
     return pop, stats, hof
 
 if __name__ == "__main__":
-    main()
+    ga_main()
+    
     
 #EOF    

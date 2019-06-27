@@ -32,7 +32,12 @@ strat_config = eval_strategy.get_strategy().config
 
 def selectOneMax(individual):
     log.debug (" individual: %s"%(individual))
-    return sum(individual.values()),
+    
+    fitnessVal = eval_strategy.eval_strategy_with_config(individual)
+    
+    log.debug ("fitnessVal: %d"%fitnessVal)
+    
+    return fitnessVal,
 
 def createOffSpring(indA, indB):
 

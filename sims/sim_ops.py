@@ -12,10 +12,16 @@ from datetime import datetime
 # from dateutil.tz import tzlocal
 from decimal import Decimal
 import copy
+import sys
 
 from utils import getLogger
-from market import feed_deQ, feed_Q_process_msg, get_market_list, flush_all_stats
+from market import feed_deQ, feed_Q_process_msg, get_market_list, flush_all_stats, get_all_market_stats, \
+                             market_init, market_setup, Order
+import db
+import exchanges
 import exchange_sim
+from genetic import ga_main
+
 #from market.order import Order, TradeRequest
 #from market import feed_enQ
 
@@ -88,6 +94,28 @@ def do_backtesting ():
 def show_stats ():
     flush_all_stats()
 
+def sim_ga_init (decisionConfig, tradingConfig=None):
+    global gConfig, gTradingConfig
+    
+    # TODO: FIXME: NOTE: add GA for trading config too
+    if tradingConfig == None:
+        tradingConfig = gTradingConfig
+        
+    #init 
+    #1. Retrieve states back from Db
+    db.init_order_db(Order)
+    
+    #2. Init Exchanges
+    exchanges.init_exchanges(gConfig)
+    
+    #3. Init markets
+    market_init (exchanges.exchange_list, decisionConfig, tradingConfig)
+    
+    #4. Setup markets
+    market_setup()
+    #init done    
+    
+    
 ############# Public APIs ######################
         
 def market_backtesting_run ():
@@ -97,11 +125,11 @@ def market_backtesting_run ():
     log.debug("starting backtesting")    
     do_backtesting()
     log.info ("backtesting complete. ")
-    show_stats ()
-
+    
 genetic_optimizer_on = False
 gaDecisionConfig = {}
-def market_backtesting_ga_hook ():
+gConfig = None
+def market_backtesting_ga_hook (decisionConfig, tradingConfig=None):
     """
     market backtesting hook for ga
     """
@@ -110,10 +138,30 @@ def market_backtesting_ga_hook ():
     exchange_sim.simulator_on = True
     backtesting_on = True
     
+    sim_ga_init (decisionConfig, tradingConfig)
+    
     log.debug("starting backtesting")    
     do_backtesting()
     log.info ("backtesting complete. ")
-    show_stats ()
     
+    
+    stats = get_all_market_stats ()
+    log.info ("Finalizing OldMonk")
+    exchanges.close_exchanges ()
+    
+    return stats
+    
+def ga_sim_main (gCfg, decisionConfig, tradingConfig):    
+    global gConfig, gaDecisionConfig, gTradingConfig
+    
+    gConfig, gaDecisionConfig, gTradingConfig = gCfg, decisionConfig, tradingConfig
+    
+    try:
+        # start the GA algorithm here:
+        ga_main (evalfn = market_backtesting_ga_hook)
+    except:
+        print ("Unexpected error", sys.exc_info())
+        raise        
+
 
 #EOF

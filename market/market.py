@@ -114,7 +114,7 @@ class Fund:
         log.debug ("fund: %s slice: %s signal: %s"%(fund, slice, strength))
         
         if self.current_value - (self.current_hold_value + fund) < rock_bottom:
-            log.critical ("**** No Funds to trade. signal(%d) ****"%(strength))
+            log.error ("**** No Funds to trade. signal(%d) ****"%(strength))
             return 0
         else:
             return fund
@@ -164,7 +164,7 @@ class Asset:
         if ((self.current_size - self.current_hold_size) >= (cur_size + self.hold_size)):
             return cur_size
         else:
-            log.critical("**** No Assets to trade. signal(%d) ****"%(strength))
+            log.error("**** No Assets to trade. signal(%d) ****"%(strength))
             return 0
 
     def __str__(self):
@@ -286,7 +286,7 @@ class Market:
 "asset":%s,
 "order_book":%s
 }"""%(
-                self.exchange_name, self.product_id,self.name, 
+                self.exchange_name, self.product_id, self.name, 
                 self.num_buy_req, self.num_buy_req_reject,
                 self.num_sell_req, self.num_sell_req_reject,
                 self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed, 
@@ -1045,6 +1045,11 @@ def market_setup ():
         else:
             log.info ("decision_setup completed for market: %s"%(market.name))
                         
+def get_all_market_stats ():
+    market_stats = {}
+    for market in OldMonk_market_list:        
+        market_stats[market.name] = json.loads(str(market))
+    return market_stats
 
 MARKET_STATS_FILE = "data/stats_market_%s_%s.json"
 TRADE_STATS_FILE = "data/stats_traded_orders_%s.json"

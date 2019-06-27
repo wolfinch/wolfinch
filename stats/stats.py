@@ -77,8 +77,9 @@ def clear_stats():
     os.system("rm -rf data/stats_*")
     
 def start ():
-    t = Thread(target=_stats_run)
-    t.start()
+    if not sims.backtesting_on:    
+        t = Thread(target=_stats_run)
+        t.start()
     
 def stop ():
     global _stop
