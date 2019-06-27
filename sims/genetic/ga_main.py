@@ -70,11 +70,23 @@ def ga_main(evalfn = None):
     pop = toolbox.population(n=1000)
     
     log.debug ("pop: %s"%pop)
+    
+    def decorateHofFn(fn, hof):
+        from functools import wraps
+        @wraps(fn)
+        def wrapper(*args, **kw):
+            ret = fn(*args, **kw)
+            with open ("hof.log", "w") as fp:
+                fp.write(str(hof))
+            return ret
+        return wrapper
+    
     # Numpy equality function (operators.eq) between two arrays returns the
     # equality element wise, which raises an exception in the if similar()
     # check of the hall of fame. Using a different equality function like
     # numpy.array_equal or numpy.allclose solve this issue.
     hof = tools.HallOfFame(4, similar=numpy.array_equal)
+    decorateHofFn (hof.update, hof)
     
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
