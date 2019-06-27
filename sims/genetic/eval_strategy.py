@@ -42,7 +42,7 @@ def eval_hook_remote (in_dict, out_dict):
     
     out_dict['return_vars'] = stats
     
-def eval_hook_call (config_kw):
+def eval_hook_mp_call (config_kw):
     
     ret_dict = g_mp_manager.dict()
     
@@ -57,6 +57,14 @@ def eval_hook_call (config_kw):
     
     return ret_dict['return_vars']
 
+def eval_hook_call (config_kw):
+    decision_cfg = {}
+    decision_cfg['model_config'] = {"strategy": "EMA_DEV", "params": config_kw}
+    decision_cfg['model_type'] = "simple"
+    
+    stats = g_eval_hook (decision_cfg)
+    return stats
+    
 def eval_strategy_with_config (config_kw):
     
     log.debug ("config: %s"%(str(config_kw)))

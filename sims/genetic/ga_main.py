@@ -23,6 +23,8 @@ from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
+from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
 
 from utils import getLogger
 import ga_ops
@@ -43,6 +45,11 @@ def ga_init (evalfn = None):
     
     toolbox = base.Toolbox()
     
+    pool = Pool()
+#     pool = ThreadPool(processes=1)
+    
+    toolbox.register("map", pool.map)    
+    
     toolbox.register("strat_gen", ga_ops.strategyGenerator)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.strat_gen)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -60,7 +67,7 @@ def ga_main(evalfn = None):
     
     toolbox = ga_init (evalfn)
     
-    pop = toolbox.population(n=3)
+    pop = toolbox.population(n=1000)
     
     log.debug ("pop: %s"%pop)
     # Numpy equality function (operators.eq) between two arrays returns the
@@ -75,7 +82,7 @@ def ga_main(evalfn = None):
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
     
-    algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=10, stats=stats,
+    algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=1000, stats=stats,
                         halloffame=hof)
 
     print ("stats:\n%s\nhof:\n%s"%(str(stats), str(hof)))
