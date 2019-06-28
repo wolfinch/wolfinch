@@ -65,17 +65,20 @@ def eval_hook_call (config_kw):
     stats = g_eval_hook (decision_cfg)
     return stats
     
-def eval_strategy_with_config (config_kw):
-    
-    log.debug ("config: %s"%(str(config_kw)))
-    stats = eval_hook_call (config_kw)
-    
-    log.debug ("stats: %s"%str(stats))
-    
-    cur_profit = 0
-    for _, k_v in stats.iteritems():
-        cur_profit += k_v['fund']['current_realized_profit']
-    
-    return cur_profit
+# def eval_strategy_with_config (config_kw):
+#     
+#     log.debug ("config: %s"%(str(config_kw)))
+#     stats = eval_hook_call (config_kw)
+#     
+#     log.debug ("stats: %s"%str(stats))
+#     
+#     cur_profit = 0
+#     for _, k_v in stats.iteritems():
+#         cur_profit += k_v['fund']['current_realized_profit']
+#     
+#     return cur_profit
 
+def eval_strategy_with_config (config_kw):
+    ## TEST ### 
+    return 1000
 #EOF    
