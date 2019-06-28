@@ -30,8 +30,8 @@ from utils import getLogger
 import ga_ops
 import eval_strategy
 
-N_GEN = 10
-N_POP = 10
+N_GEN = 1000
+N_POP = 1000
 HOF_FILE = "data/hof_ga.log"
 STATS_FILE = "data/stats_ga.log"
 
