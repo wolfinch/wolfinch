@@ -13,7 +13,7 @@ import talib
 # log = getLogger ('TA_EMA')
 # log.setLevel(log.DEBUG)
 
-class TA_EMA (Indicator):
+class EMA (Indicator):
     '''
     Exponential moving Average (EMA) market indicator implementation using TA library
     '''

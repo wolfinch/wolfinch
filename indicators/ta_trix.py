@@ -13,7 +13,7 @@ import talib
 # log = getLogger ('TA_TRIX')
 # log.setLevel(log.DEBUG)
 
-class TA_TRIX (Indicator):
+class TRIX (Indicator):
     '''
     TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA market indicator implementation using TA library
     '''

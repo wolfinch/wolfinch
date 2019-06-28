@@ -22,28 +22,23 @@ log.setLevel(log.CRITICAL)
 
 class Decision ():
     num_dec = 0
-    def __init__(self, market, market_list, *args):        
-        log.debug ("init decision for market(%s)"%(market.name))
+    def __init__(self, market, market_list, config=None):        
+        log.debug ("init decision for market(%s) config: %s"%(market.name, str(config)))
+        
+        if config == None:
+            log.critical("strategy not configured for simple decision")
+            raise ("strategy not configured for simple decision")
+        
+        for strategy in config.iterkeys():
+            self.strategy = strategy
+            ##TODO: TBD: do we need to support multi strategies here?? for now not supported
+            break
+    
         self.market = market
         self.market_list = market_list
                 
     def generate_signal(self, idx):
-        
-#         return self.market.market_strategies_data[idx]["MINMAX"] #<buy hold
-        
-        return self.market.market_strategies_data[idx]["EMA_DEV"] #~buy hold
-        
-
-        # simple decision uses the latest "EMA_RSI" strategy signal for now
-#         return self.market.market_strategies_data[idx]["EMA_RSI"] #<buy-hold, high fail%
-
-
-#         return self.market.market_strategies_data[idx]["TRIX_RSI"] #very low profit
-    
-#         return self.market.market_strategies_data[idx]["TREND_BOLLINGER"]
-    
-#         return self.market.market_strategies_data[idx]["TREND_RSI"] 
-    
+        return self.market.market_strategies_data[idx][self.strategy]
          
     def summary(self):
         pass

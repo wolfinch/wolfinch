@@ -37,6 +37,7 @@ from utils import *
 from order_book import OrderBook
 from order import TradeRequest
 from decision import Decision
+import decision
 import db
 import sims
 import indicators
@@ -54,6 +55,8 @@ log = getLogger ('MARKET')
 log.setLevel(log.CRITICAL)
 
 OldMonk_market_list = []
+TradingConfig = None
+DecisionConfig = None
 
 class OHLC(object): 
 #     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']    #sqlqlchemy mapper doesn't work with __slots__
@@ -111,7 +114,7 @@ class Fund:
         log.debug ("fund: %s slice: %s signal: %s"%(fund, slice, strength))
         
         if self.current_value - (self.current_hold_value + fund) < rock_bottom:
-            log.critical ("**** No Funds to trade. signal(%d) ****"%(strength))
+            log.error ("**** No Funds to trade. signal(%d) ****"%(strength))
             return 0
         else:
             return fund
@@ -161,7 +164,7 @@ class Asset:
         if ((self.current_size - self.current_hold_size) >= (cur_size + self.hold_size)):
             return cur_size
         else:
-            log.critical("**** No Assets to trade. signal(%d) ****"%(strength))
+            log.error("**** No Assets to trade. signal(%d) ****"%(strength))
             return 0
 
     def __str__(self):
@@ -214,24 +217,28 @@ class Market:
 #         self.price = Price
 #         
 #     '''    
-    primary = True
-    num_buy_req =0 
-    num_sell_req = 0
-    num_buy_req_reject = 0
-    num_sell_req_reject = 0
-    num_buy_order = 0
-    num_sell_order = 0    
-    num_buy_order_success = 0
-    num_sell_order_success = 0    
-    num_buy_order_failed = 0
-    num_sell_order_failed = 0
-    num_take_profit_hit = 0
-    num_stop_loss_hit = 0
-    num_success_trade = 0
-    num_failed_trade = 0
-    tradeConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
-                 "take_profit_enabled": False, 'take_profit_rate': 0}
     def __init__(self, product=None, exchange=None):
+        #init states:
+        self.primary = True
+        self.num_buy_req =0 
+        self.num_sell_req = 0
+        self.num_buy_req_reject = 0
+        self.num_sell_req_reject = 0
+        self.num_buy_order = 0
+        self.num_sell_order = 0    
+        self.num_buy_order_success = 0
+        self.num_sell_order_success = 0    
+        self.num_buy_order_failed = 0
+        self.num_sell_order_failed = 0
+        self.num_take_profit_hit = 0
+        self.num_stop_loss_hit = 0
+        self.num_success_trade = 0
+        self.num_failed_trade = 0
+        self.tradeConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
+                 "take_profit_enabled": False, 'take_profit_rate': 0}        
+        
+        
+        #config
         self.product_id = None if product == None else product['id']
         self.name = None if product == None else product['display_name']
         self.exchange_name = None if exchange == None else exchange.name
@@ -242,6 +249,7 @@ class Market:
         self.fund = Fund ()
         self.asset = Asset ()
         self.order_book = OrderBook(market=self)
+        decision.decision_config (DecisionConfig['model_type'], DecisionConfig['model_config'])      
         self.decision = None  #will setup later
         # Market Strategy related Data
         # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema': val, name:val...}]
@@ -250,8 +258,13 @@ class Market:
         self.cur_candle_time = 0
         self.num_candles        = 0
         self.candlesDb = db.CandlesDb (OHLC, self.exchange_name, self.product_id)
-        self.indicator_calculators     = indicators.Configure()
-        self.market_strategies     = strategy.Configure()
+
+        strategy_list = decision.get_strategy_list()
+        if strategy_list == None:
+            log.critical ("invalid strategy_list!!")
+            raise ("invalid strategy_list")
+        self.market_strategies     = strategy.Configure(strategy_list)
+        self.indicator_calculators = strategy.Configure_indicators()        
         self.new_candle = False
         self.candle_interval = 0
             
@@ -273,7 +286,7 @@ class Market:
 "asset":%s,
 "order_book":%s
 }"""%(
-                self.exchange_name, self.product_id,self.name, 
+                self.exchange_name, self.product_id, self.name, 
                 self.num_buy_req, self.num_buy_req_reject,
                 self.num_sell_req, self.num_sell_req_reject,
                 self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed, 
@@ -301,6 +314,9 @@ class Market:
             return self.market_indicators_data[self.backtesting_idx]['ohlc'].close
         else:        
             return self.current_market_rate       
+        
+    def register_feed_processor (self, feed_processor_cb):
+        self.consume_feed = feed_processor_cb
         
     def market_consume_feed(self, msg):
         if (self.consume_feed != None):
@@ -338,11 +354,8 @@ class Market:
         reason = order.status_reason
         if side == 'buy':
             if msg_type == 'done':
-                #for an order done, get the order details
-                if (sims.simulator_on):
-                    order_det = sims.get_order(order.id)
-                else:                
-                    order_det = self.exchange.get_order(order.id)
+                #for an order done, get the order details             
+                order_det = self.exchange.get_order(order.id)
                 if (order_det):
                     order = order_det
                 if reason == 'filled':
@@ -358,11 +371,8 @@ class Market:
                 raise Exception("Unknown buy order status: %s"%(msg_type))
         elif side == 'sell':
             if msg_type == 'done':
-                #for an order done, get the order details
-                if (sims.simulator_on):
-                    order_det = sims.get_order(order.id)
-                else:                 
-                    order_det = self.exchange.get_order(order.id)
+                #for an order done, get the order details              
+                order_det = self.exchange.get_order(order.id)
                 if (order_det):
                     order = order_det                
                 if reason == 'filled':
@@ -409,11 +419,8 @@ class Market:
     def _buy_order_create (self, trade_req):
         
         self.num_buy_order += 1
-        log.info("BUY: %d sig: %s"%(self.num_buy_order, trade_req))        
-        if (sims.simulator_on):
-            order = sims.buy (trade_req)
-        else:
-            order = self.exchange.buy (trade_req)
+        log.info("BUY: %d sig: %s"%(self.num_buy_order, trade_req))
+        order = self.exchange.buy (trade_req)
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
             log.debug ("BUY Order Sent to exchange. ")
@@ -465,10 +472,7 @@ class Market:
     def _sell_order_create (self, trade_req):
         self.num_sell_order += 1
         log.info("SELL: %d sig: %s"%(self.num_sell_order, trade_req))
-        if (sims.simulator_on):
-            order = sims.sell (trade_req)
-        else:
-            order = self.exchange.sell (trade_req)
+        order = self.exchange.sell (trade_req)
         #update fund 
         order.buy_id = trade_req.id
         market_order  =  self.order_book.add_or_update_my_order(order)
@@ -729,6 +733,7 @@ class Market:
             return
         
         log.debug ("re-Calculating all indicators for historic data #candles (%d)"%(hist_len))
+        log.info ("#indicators(%d) ind_list:%s"%(len(self.indicator_calculators), str(self.indicator_calculators)))        
         for idx in range (hist_len):
             self._calculate_all_indicators (idx)
         log.debug ("re-Calculated all indicators for historic data #candles (%d)"%(hist_len))            
@@ -748,6 +753,7 @@ class Market:
             return
         
         log.debug ("re-proessing all strategies for historic data #candles (%d)"%(hist_len))
+        log.info ("#strategies(%d) strat_list:%s"%(len(self.market_strategies), str(self.market_strategies)))
         for idx in range (hist_len):
             self._process_all_strategies (idx)
         log.debug ("re-proessed all strategies for historic data #candles (%d)"%(hist_len))            
@@ -791,8 +797,12 @@ class Market:
             log.info ("Import only")
             return
         
+        log.info ("calculating historic indicators")
         self._calculate_historic_indicators()
+        
+        log.info ("calculating historic strategies")
         self._process_historic_strategies()
+        
         num_candles = len(self.market_indicators_data)
         self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
         if sims.backtesting_on:
@@ -803,11 +813,11 @@ class Market:
         self._init_states()
         log.debug ("market (%s) setup done! num_candles(%d) cur_candle_time(%d)"%(
             self.name, num_candles, self.cur_candle_time))
+        log.info ("done setting up historic states")
         
-        
-    def decision_setup (self, market_list, cfg=None):
+    def decision_setup (self, market_list):
         log.debug ("decision setup for market (%s)"%(self.name))
-        self.decision = Decision(self, market_list, decision_type=cfg['model_type'], config_path=cfg['model_config'])
+        self.decision = Decision(self, market_list)
         if self.decision == None:
             log.error ("Failed to setup decision engine")
             return False
@@ -978,12 +988,15 @@ def get_market_by_product (exchange_name, product_id):
         if market.product_id == product_id and market.exchange_name == exchange_name:
             return market
         
-def market_init (exchange_list):
+def market_init (exchange_list, decisionConfig, tradingConfig):
     '''
     Initialize per exchange, per product data.
     This is where we want to keep all the run stats
     '''
-    global OldMonk_market_list
+    global OldMonk_market_list, TradeConfig, DecisionConfig
+    
+    TradeConfig = tradingConfig
+    DecisionConfig = decisionConfig    
     for exchange in exchange_list:
         products = exchange.get_products()
         if products:
@@ -996,14 +1009,13 @@ def market_init (exchange_list):
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))
                  
-def market_setup (decisionConfig, tradingConfig):
+def market_setup ():
     '''
     Setup market states.
     This is where we want to keep all the run stats
     '''
     global OldMonk_market_list
     for market in OldMonk_market_list:
-        market.tradeConfig = tradingConfig
         status = market.market_setup ()
         if (status == False):
             log.critical ("Market Init Failed for market: %s"%(market.name))
@@ -1017,13 +1029,18 @@ def market_setup (decisionConfig, tradingConfig):
                 
     log.info ("market setup complete for all markets, init decision engines now")
     for market in OldMonk_market_list:            
-        status = market.decision_setup (OldMonk_market_list, decisionConfig)
+        status = market.decision_setup (OldMonk_market_list)
         if (status == False):
             log.critical ("decision_setup Failed for market: %s"%(market.name))
             return False
         else:
             log.info ("decision_setup completed for market: %s"%(market.name))
                         
+def get_all_market_stats ():
+    market_stats = {}
+    for market in OldMonk_market_list:        
+        market_stats[market.name] = json.loads(str(market))
+    return market_stats
 
 MARKET_STATS_FILE = "data/stats_market_%s_%s.json"
 TRADE_STATS_FILE = "data/stats_traded_orders_%s.json"

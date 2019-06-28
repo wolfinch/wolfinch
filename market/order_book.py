@@ -344,7 +344,7 @@ class OrderBook():
             
         if (order_side == 'buy'):
             # insert/replace the order
-            self.add_or_update_pending_buy_order(order)           
+            self.add_or_update_pending_buy_order(order) 
             if (order_status == 'done'):
                 # a previously placed order is completed, remove from open order, add to completed orderlist
                 self.add_traded_buy_order(order)

@@ -169,7 +169,7 @@ class CBPRO (Exchange):
         market.asset.set_hold_size(self.asset_hold_size)
         
         ## Feed Cb
-        market.consume_feed = self._gdax_consume_feed
+        market.register_feed_processor(self._gdax_consume_feed)
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0

@@ -7,7 +7,7 @@
 from exchanges.cbpro import CBPRO
 from exchanges.binanceClient import Binance
 
-exchanges = [
+all_exchanges = [
         Binance,
         CBPRO
     ]

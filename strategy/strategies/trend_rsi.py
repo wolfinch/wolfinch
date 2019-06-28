@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from decimal import Decimal
-from strategy import Strategy
+from strategy_base import Strategy
 import numpy as np
 
 class TREND_RSI(Strategy):
@@ -48,6 +48,11 @@ class TREND_RSI(Strategy):
         self.trend = ''
         self.rsi_low = 0
         self.rsi_high = 0
+        
+        #CONFIGURE indicators
+        self.set_indicator("RSI", {14})
+        self.set_indicator("close")
+                
     def generate_signal (self, candles):
         '''
         Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
@@ -58,8 +63,10 @@ class TREND_RSI(Strategy):
         if len_candles < self.period:
             return 0
         
-        rsi = np.array(map(lambda c: c['RSI14'], candles[:]))
-        cur_rsi = rsi[-1]
+#         rsi = np.array(map(lambda c: c['RSI14'], candles[:]))
+#         cur_rsi = rsi[-1]
+        
+        cur_rsi = self.get_indicator_current(candles, 'RSI', 14)
         
         if cur_rsi == np.NaN:
             return 0

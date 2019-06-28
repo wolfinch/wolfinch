@@ -17,7 +17,7 @@
 # limitations under the License.
 
 from decimal import Decimal
-from strategy import Strategy
+from strategy_base import Strategy
 import numpy as np
 
 class EMA_RSI(Strategy):
@@ -28,6 +28,12 @@ class EMA_RSI(Strategy):
         #internal states
         self.position = ''
         self.signal = 0
+        
+        #configure required indicators
+        self.set_indicator("EMA", {21, 5, 13, 80})
+        self.set_indicator("RSI", {21})
+        self.set_indicator("close")
+                
     def generate_signal (self, candles):
         '''
         Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
@@ -40,11 +46,11 @@ class EMA_RSI(Strategy):
         
 #         rsi = np.array(map(lambda c: c['RSI21'], candles[:]))
 #         cur_rsi = rsi[-1]
-        rsi21 = candles[-1]['RSI21']
-        ema5 = candles[-1]['EMA5']
-        ema13 = candles[-1]['EMA13']
-        ema21 = candles[-1]['EMA21']
-        ema80 = candles[-1]['EMA80']
+        rsi21 = self.get_indicator_current(candles, 'RSI', 21)        
+        ema5 = self.get_indicator_current(candles, 'EMA', 5)
+        ema13 = self.get_indicator_current(candles, 'EMA', 13)
+        ema21 = self.get_indicator_current(candles, 'EMA', 21)
+        ema80 = self.get_indicator_current(candles, 'EMA', 80)
         
         if ema13 > ema21:
             self.trend = 'bullish'
