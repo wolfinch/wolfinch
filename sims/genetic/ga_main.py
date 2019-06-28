@@ -43,7 +43,7 @@ def ga_init (evalfn = None):
     
     #init stats
     with open (STATS_FILE, "w") as fp:
-        fp.write("OldMonk Genetica optimizer stats\ngen    nevals    avg     std    min     max\n")    
+        fp.write("OldMonk Genetica optimizer stats\n")    
         
                 
     eval_strategy.register_eval_hook (evalfn)
@@ -80,6 +80,8 @@ def log_hof (ngen, hof):
             fp.write(s)
             
 def log_stats (stats_stream):
+    s = stats_stream
+    print (s)
     with open (STATS_FILE, "a") as fp:
         fp.write (stats_stream+"\n")
 
@@ -159,7 +161,7 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
     record = stats.compile(population) if stats else {}
     logbook.record(gen=0, nevals=len(invalid_ind), **record)
     if verbose:
-        print logbook.stream
+        log_stats(logbook.stream)        
 
     # Begin the generational process
     for gen in range(1, ngen + 1):
@@ -187,9 +189,7 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
         record = stats.compile(population) if stats else {}
         logbook.record(gen=gen, nevals=len(invalid_ind), **record)
         if verbose:
-            stats_str = logbook.stream
-            print (stats_str)
-            log_stats(stats_str)
+            log_stats(logbook.stream)
 
     return population, logbook
 
