@@ -686,8 +686,12 @@ class Market:
         return cdl_list_exch[i:]
         
     def _import_historic_candles (self, local_only=False):
-#         self.market_indicators_data = []        
+#         self.market_indicators_data = []
+
+        log.debug ("%f : db_import before"%(time.time()))
         db_candle_list = self.candlesDb.db_get_all_candles()
+        log.debug ("%f : db_import after"%(time.time()))
+        
         if db_candle_list:        
             for candle in db_candle_list:
                 self.market_indicators_data.append({'ohlc': candle})
@@ -798,10 +802,14 @@ class Market:
             return
         
         log.info ("calculating historic indicators")
+        log.debug ("%f : _calculate_historic_indicators before "%(time.time()))
+        
         self._calculate_historic_indicators()
+        log.debug ("%f : _calculate_historic_indicators after "%(time.time()))
         
         log.info ("calculating historic strategies")
         self._process_historic_strategies()
+        log.debug ("%f : _process_historic_strategies aafter "%(time.time()))
         
         num_candles = len(self.market_indicators_data)
         self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
