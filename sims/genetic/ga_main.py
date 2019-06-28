@@ -24,14 +24,15 @@ from deap import base
 from deap import creator
 from deap import tools
 from multiprocessing import Pool
-from multiprocessing.pool import ThreadPool
+from contextlib import closing
 
 from utils import getLogger
 import ga_ops
 import eval_strategy
 
-N_GEN = 3
-N_POP = 3
+N_GEN = 100
+N_POP = 1000
+N_MP = 8  # num processes in parallel
 HOF_FILE = "data/hof_ga.log"
 STATS_FILE = "data/stats_ga.log"
 
@@ -58,7 +59,7 @@ def ga_init (evalfn = None):
     pool = Pool()
 #     pool = ThreadPool(processes=1)
     
-    toolbox.register("map", pool.map)    
+    toolbox.register("map", pool.imap_unordered)    
     
     toolbox.register("strat_gen", ga_ops.strategyGenerator)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.strat_gen)
@@ -92,9 +93,15 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
-    fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-    for ind, fit in zip(invalid_ind, fitnesses):
-        ind.fitness.values = fit
+    
+    with closing( Pool(N_MP) ) as p:    
+        fitnesses = p.imap_unordered(toolbox.evaluate, invalid_ind)
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+            
+#     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)            
+#     for ind, fit in zip(invalid_ind, fitnesses):
+#         ind.fitness.values = fit
 
     if halloffame is not None:
         halloffame.update(population)
@@ -115,9 +122,13 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
+        with closing( Pool(N_MP) ) as p:
+            fitnesses = p.imap_unordered(toolbox.evaluate, invalid_ind)
+            for ind, fit in zip(invalid_ind, fitnesses):
+                ind.fitness.values = fit        
+#         fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+#         for ind, fit in zip(invalid_ind, fitnesses):
+#             ind.fitness.values = fit
 
         # Update the hall of fame with the generated individuals
         if halloffame is not None:
