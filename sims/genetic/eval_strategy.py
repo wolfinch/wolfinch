@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from multiprocessing import Manager, Process
+# from multiprocessing import Manager, Process
 
 from strategy import EMA_DEV
 from utils import getLogger
@@ -34,28 +34,28 @@ def register_eval_hook (eval_hook):
     
     g_eval_hook = eval_hook
     
-    g_mp_manager = Manager()
+#     g_mp_manager = Manager()
 
-def eval_hook_remote (in_dict, out_dict):
-    
-    stats = g_eval_hook (in_dict)
-    
-    out_dict['return_vars'] = stats
-    
-def eval_hook_mp_call (config_kw):
-    
-    ret_dict = g_mp_manager.dict()
-    
-    decision_cfg = {}
-    decision_cfg['model_config'] = {"strategy": "EMA_DEV", "params": config_kw}
-    decision_cfg['model_type'] = "simple"
-
-    p = Process(target=eval_hook_remote, args=(decision_cfg, ret_dict))
-    
-    p.start()
-    p.join()
-    
-    return ret_dict['return_vars']
+# def eval_hook_remote (in_dict, out_dict):
+#     
+#     stats = g_eval_hook (in_dict)
+#     
+#     out_dict['return_vars'] = stats
+#     
+# def eval_hook_mp_call (config_kw):
+#     
+#     ret_dict = g_mp_manager.dict()
+#     
+#     decision_cfg = {}
+#     decision_cfg['model_config'] = {"strategy": "EMA_DEV", "params": config_kw}
+#     decision_cfg['model_type'] = "simple"
+# 
+#     p = Process(target=eval_hook_remote, args=(decision_cfg, ret_dict))
+#     
+#     p.start()
+#     p.join()
+#     
+#     return ret_dict['return_vars']
 
 def eval_hook_call (config_kw):
     decision_cfg = {}
