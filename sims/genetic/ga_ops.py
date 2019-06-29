@@ -108,7 +108,7 @@ def genParamVal (param_key):
         r_min = var['min']
         r_max = var['max']
         r_step = var.get('step')
-        val = random.uniform (r_min, r_max)
+        val = round(random.uniform (r_min, r_max), 2)
     elif tp == str:
         raise Exception("Unsupported var type str")
     else:

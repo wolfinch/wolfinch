@@ -39,10 +39,10 @@ decision:
    model    : simple
    config   :
       strategy : EMA_DEV
-      params : 
-         period: 120
-         ema_buy_s : 50
-         ema_buy_l : 120
+      params : {'ema_sell_s': 80, 'treshold_pct_buy_l': 1.1241586847418519, 'ema_buy_s': 125, 'period': 170, 'treshold_pct_sell_s': 0.009145746217821715, 'ema_buy_l': 30, 'treshold_pct_sell_l': 1.8668055789275229, 'treshold_pct_buy_s': 0.2122106716562029, 'ema_sell_l': 190}      
+#         period: 120
+#         ema_buy_s : 50
+#         ema_buy_l : 120
 # EMA_DEV ~buy n hold
 #"MINMAX" #<buy hold
 #"EMA_RSI" #<buy-hold, high fail%
@@ -53,7 +53,7 @@ simulator:
    enabled : true
 
 genetic_optimizer: 
-   enabled : true
+   enabled : false
    config   :
       strategy : EMA_DEV   
 

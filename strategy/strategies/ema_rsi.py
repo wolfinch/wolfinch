@@ -21,17 +21,29 @@ from strategy_base import Strategy
 import numpy as np
 
 class EMA_RSI(Strategy):
-    def __init__ (self, name, period=80):     
+    config = {
+        'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
+        'ema_s' : {'default': 5, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
+        'ema_m' : {'default': 13, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
+        'ema_l' : {'default': 21, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
+        'ema_ll' : {'default': 80, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
+        'rsi' : {'default': 21, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 1 }},        
+        }
+    def __init__ (self, name, period=80, ema_s=5, ema_m=13, ema_l=21, ema_ll=80, rsi=21):     
         self.name = name
         self.period = period
-    
+        self.ema_s = ema_s
+        self.ema_m = ema_m
+        self.ema_l = ema_l
+        self.ema_ll = ema_ll
+        self.rsi = rsi
         #internal states
         self.position = ''
         self.signal = 0
         
         #configure required indicators
-        self.set_indicator("EMA", {21, 5, 13, 80})
-        self.set_indicator("RSI", {21})
+        self.set_indicator("EMA", {self.ema_s, self.ema_m, self.ema_l, self.ema_ll})
+        self.set_indicator("RSI", {self.rsi})
         self.set_indicator("close")
                 
     def generate_signal (self, candles):
@@ -46,11 +58,11 @@ class EMA_RSI(Strategy):
         
 #         rsi = np.array(map(lambda c: c['RSI21'], candles[:]))
 #         cur_rsi = rsi[-1]
-        rsi21 = self.get_indicator_current(candles, 'RSI', 21)        
-        ema5 = self.get_indicator_current(candles, 'EMA', 5)
-        ema13 = self.get_indicator_current(candles, 'EMA', 13)
-        ema21 = self.get_indicator_current(candles, 'EMA', 21)
-        ema80 = self.get_indicator_current(candles, 'EMA', 80)
+        rsi21 = self.get_indicator_current(candles, 'RSI', self.rsi)        
+        ema5 = self.get_indicator_current(candles, 'EMA', self.ema_s)
+        ema13 = self.get_indicator_current(candles, 'EMA', self.ema_m)
+        ema21 = self.get_indicator_current(candles, 'EMA', self.ema_l)
+        ema80 = self.get_indicator_current(candles, 'EMA', self.ema_ll)
         
         if ema13 > ema21:
             self.trend = 'bullish'

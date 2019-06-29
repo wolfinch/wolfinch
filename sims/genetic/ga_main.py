@@ -91,6 +91,8 @@ def log_stats (stats_stream):
         fp.write (stats_stream+"\n")
 
 def eval_exec_async (eval_fn, ind_iter):
+    # this is an ugly logic to make multiprocessing memory efficient
+    # compared against mp.map,imap,imap_unordered, apply_async
     m = Manager()
     
     res_list = []

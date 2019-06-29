@@ -26,6 +26,7 @@ class EMA_DEV(Strategy):
         'ema_buy_l' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'ema_sell_s' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'ema_sell_l' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
+        'rsi' : {'default': 21, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 1 }},        
         'treshold_pct_buy_s' : {'default': 1, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
         'treshold_pct_buy_l' : {'default': 1.5, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
         'treshold_pct_sell_s' : {'default': 0.8, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
@@ -33,7 +34,7 @@ class EMA_DEV(Strategy):
         }
     
     def __init__ (self, name, period=120, ema_buy_s=50, ema_buy_l=120, ema_sell_s=50, ema_sell_l=120,
-                  treshold_pct_buy_s=1, treshold_pct_buy_l=1.5, treshold_pct_sell_s=0.8, treshold_pct_sell_l=1,
+                  treshold_pct_buy_s=1, rsi=21, treshold_pct_buy_l=1.5, treshold_pct_sell_s=0.8, treshold_pct_sell_l=1,
                   timeout_buy = 50, timeout_sell = 50):     
         self.name = name
         self.period = period
@@ -48,6 +49,7 @@ class EMA_DEV(Strategy):
         self.treshold_pct_sell_l = Decimal(treshold_pct_sell_l)
         self.timeout_buy = timeout_buy
         self.timeout_sell = timeout_sell
+        self.rsi = rsi
         #internal states
         self.position = ''
         self.signal = 0
@@ -56,7 +58,7 @@ class EMA_DEV(Strategy):
         
         #configure required indicators
         self.set_indicator("EMA", {ema_buy_s, ema_buy_l, ema_sell_s, ema_sell_l})
-        self.set_indicator("RSI", {21})
+        self.set_indicator("RSI", {rsi})
         self.set_indicator("close")
 
     def generate_signal (self, candles):
@@ -70,7 +72,7 @@ class EMA_DEV(Strategy):
             return 0
         
 #         cur_rsi = rsi[-1]
-        rsi21 = self.get_indicator_current(candles, 'RSI', 21)        
+        rsi21 = self.get_indicator_current(candles, 'RSI', self.rsi)        
         ema_buy_s = self.get_indicator_current(candles, 'EMA', self.ema_buy_s)
         ema_buy_l = self.get_indicator_current(candles, 'EMA', self.ema_buy_l)
         ema_sell_s = self.get_indicator_current(candles, 'EMA', self.ema_sell_s)
