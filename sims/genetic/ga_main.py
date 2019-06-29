@@ -25,6 +25,10 @@ from deap import creator
 from deap import tools
 from multiprocessing import Pool
 from contextlib import closing
+from multiprocessing import Process, Manager
+
+import time
+import copy
 
 from utils import getLogger
 import ga_ops
@@ -86,6 +90,54 @@ def log_stats (stats_stream):
     with open (STATS_FILE, "a") as fp:
         fp.write (stats_stream+"\n")
 
+def eval_exec_async (eval_fn, ind_iter):
+    m = Manager()
+    
+    res_list = []
+    p_num = 0
+    eval_num = 0
+    for ind in ind_iter:
+        result_dict = m.dict()
+        
+        eval_num += 1
+        result_dict ["res"] = 0
+        print ("started eval (%d) process (%d)"%(eval_num, p_num))
+        p = Process(target=eval_fn, args=(ind, result_dict))
+        p.start()
+        res_list.append ([True, p, result_dict, ind, None])
+        p_num += 1
+        
+        while (p_num >= N_MP):
+            print ("Max MP reached at time: %f"%(time.time()))
+            time.sleep (1)
+            for i in range(len(res_list)):
+                if res_list[i][0] == True:
+                    if not res_list[i][1].is_alive():
+                        res_list[i][0] = False
+                        res_list[i][4] = copy.deepcopy(res_list[i][2]["res"])
+                        print ("res i(%d) - %s"%(i, res_list[i][4]))
+                        p.join()
+    #                         del(res_list[i][2])                        
+                        p_num -= 1
+    while (p_num):
+        print ("Waiting to complete all jobs time: %f"%(time.time()))
+        time.sleep (1)
+        for i in range(len(res_list)):
+            if res_list[i][0] == True:
+                if not res_list[i][1].is_alive():
+                    res_list[i][0] = False
+                    res_list[i][4] = copy.deepcopy(res_list[i][2]["res"])
+                    print ("res i(%d) - %s"%(i, res_list[i][4]))
+                    p.join()
+#                         del(res_list[i][2])                        
+                    p_num -= 1                        
+    print ("all jobs evaluated res_num(%d)"%(len(res_list)))
+    fit_l = map (lambda x: x[4], res_list)
+    del(m)
+    del(res_list)
+    return fit_l
+    
+
 def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
              halloffame=None, verbose=__debug__):
     logbook = tools.Logbook()
@@ -94,10 +146,13 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
     
-    with closing( Pool(N_MP) ) as p:    
-        fitnesses = p.imap_unordered(toolbox.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
+    fitnesses = eval_exec_async(toolbox.evaluate, invalid_ind)  
+    for ind, fit in zip(invalid_ind, fitnesses):
+        ind.fitness.values = fit    
+#     with closing( Pool(N_MP) ) as p:    
+#         fitnesses = p.imap_unordered(toolbox.evaluate, invalid_ind)
+#         for ind, fit in zip(invalid_ind, fitnesses):
+#             ind.fitness.values = fit
             
 #     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)            
 #     for ind, fit in zip(invalid_ind, fitnesses):
@@ -122,10 +177,15 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        with closing( Pool(N_MP) ) as p:
-            fitnesses = p.imap_unordered(toolbox.evaluate, invalid_ind)
-            for ind, fit in zip(invalid_ind, fitnesses):
-                ind.fitness.values = fit        
+        
+        fitnesses = eval_exec_async(toolbox.evaluate, invalid_ind)
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit            
+        
+#         with closing( Pool(N_MP) ) as p:
+#             fitnesses = p.imap_unordered(toolbox.evaluate, invalid_ind)
+#             for ind, fit in zip(invalid_ind, fitnesses):
+#                 ind.fitness.values = fit        
 #         fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
 #         for ind, fit in zip(invalid_ind, fitnesses):
 #             ind.fitness.values = fit

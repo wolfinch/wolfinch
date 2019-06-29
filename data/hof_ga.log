@@ -1,0 +1,5 @@
+**** hall of fame: ngen (2) ****
+{'ema_sell_s': 180, 'treshold_pct_buy_l': 1.76488145643172, 'ema_buy_s': 135, 'period': 180, 'ema_sell_l': 165, 'ema_buy_l': 75, 'treshold_pct_sell_l': 1.5135458500857262, 'treshold_pct_buy_s': 1.2884527614576298, 'treshold_pct_sell_s': 0.33844416088479234}
+{'ema_sell_s': 110, 'treshold_pct_buy_l': 0.6696097410769304, 'ema_buy_s': 175, 'period': 180, 'treshold_pct_sell_s': 1.899910375249009, 'ema_buy_l': 190, 'treshold_pct_sell_l': 0.1894080705207255, 'treshold_pct_buy_s': 0.12921876081667505, 'ema_sell_l': 175}
+{'ema_sell_s': 145, 'treshold_pct_buy_l': 1.6168032828603844, 'ema_buy_s': 110, 'period': 185, 'ema_sell_l': 70, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.137867163548939, 'treshold_pct_buy_s': 1.5176391991412985, 'treshold_pct_sell_s': 1.3409449664064892}
+{'ema_sell_s': 110, 'treshold_pct_buy_l': 0.6696097410769304, 'ema_buy_s': 175, 'period': 35, 'ema_sell_l': 175, 'ema_buy_l': 190, 'treshold_pct_sell_l': 0.1894080705207255, 'treshold_pct_buy_s': 0.12921876081667505, 'treshold_pct_sell_s': 1.899910375249009}

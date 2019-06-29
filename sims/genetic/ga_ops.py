@@ -30,14 +30,15 @@ strat_config = eval_strategy.get_strategy().config
 #TODO: FIXME: lot of hacky code here to fix deap ind generator issue with strat dict
 
 
-def selectOneMax(individual):
+def selectOneMax(individual, res_dict):
     log.debug (" individual: %s"%(individual))
     
     fitnessVal = eval_strategy.eval_strategy_with_config(individual)
     
     log.debug ("fitnessVal: %d"%fitnessVal)
     
-    return fitnessVal,
+    res_dict["res"] = fitnessVal,
+#     return fitnessVal,
 
 def createOffSpring(indA, indB):
 

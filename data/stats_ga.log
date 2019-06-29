@@ -1,0 +1,5 @@
+OldMonk Genetica optimizer stats
+gen	nevals	avg    	std    	min    	max    
+0  	10    	1219.32	47.7156	1086.15	1255.68
+1  	7     	1241.88	17.3432	1194.53	1254.89
+2  	5     	1251.36	3.50554	1241.52	1254.89
