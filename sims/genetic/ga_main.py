@@ -32,8 +32,8 @@ from utils import getLogger
 import ga_ops
 import eval_strategy
 
-N_GEN = 1000
-N_POP = 100
+N_GEN = 2
+N_POP = 5
 N_MP = 10  # num processes in parallel, bit of over-subscription is fine (# for 8 cores)
 HOF_FILE = "data/ga_hof.log"
 STATS_FILE = "data/ga_stats.log"
@@ -139,16 +139,19 @@ def eval_exec_async (eval_fn, ind_iter):
     del(res_list)
     return fit_l
     
-def population_persist (pop_list):
+def population_persist (pop_list, ngen):
+    
     with open (POP_DATA_FILE, "w") as fp:
-        json.dump(pop_list, fp)
+        json.dump({"pop": pop_list, "ngen": ngen}, fp)
         
 def population_load ():
     with open (POP_DATA_FILE, "r") as fp:
-        return json.load(fp)
-    return None        
+        data = json.load(fp)
+        if data:
+            return data["pop"], data["ngen"]
+    return None, 0  
 
-def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
+def eaSimpleCustom(population, toolbox, cxpb, mutpb, sgen=1, ngen=0, stats=None,
              halloffame=None, verbose=__debug__):
     logbook = tools.Logbook()
     logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
@@ -162,15 +165,15 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
 
     if halloffame is not None:
         halloffame.update(population)
-        log_hof (0, halloffame)
+        log_hof (sgen, halloffame)
 
     record = stats.compile(population) if stats else {}
-    logbook.record(gen=0, nevals=len(invalid_ind), **record)
+    logbook.record(gen=sgen, nevals=len(invalid_ind), **record)
     if verbose:
         log_stats(logbook.stream)        
 
     # Begin the generational process
-    for gen in range(1, ngen + 1):
+    for gen in range(sgen, ngen + 1):
         # Select the next generation individuals
         offspring = toolbox.select(population, len(population))
 
@@ -191,7 +194,7 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
 
         # Replace the current population by the offspring
         population[:] = offspring
-        population_persist (population)
+        population_persist (population, gen)
         
         # Append the current generation statistics to the logbook
         record = stats.compile(population) if stats else {}
@@ -210,13 +213,14 @@ def ga_main(ga_cfg, restart=False, evalfn = None):
     toolbox = ga_init (ga_cfg, evalfn)
     
     pop = None
+    gen = 1
     if restart:
         print ("restarting ga from previous run state")
-        pop = population_load()
+        pop, gen = population_load()
     
     if pop == None:
         pop = toolbox.population(n=N_POP)
-        population_persist(pop)
+        population_persist(pop, 1)
     
 #     log.debug ("pop: %s"%pop)
     
@@ -232,7 +236,7 @@ def ga_main(ga_cfg, restart=False, evalfn = None):
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
     
-    eaSimpleCustom(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=N_GEN, stats=stats,
+    eaSimpleCustom(pop, toolbox, cxpb=0.5, mutpb=0.2, sgen=gen, ngen=N_GEN, stats=stats,
                         halloffame=hof)
 
     return pop, stats, hof
