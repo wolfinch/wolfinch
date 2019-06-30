@@ -18,11 +18,9 @@
 
 from __future__ import print_function
 import time
-import pkgutil
-import pprint
 import sys
-from decimal import *
 import argparse
+from decimal import getcontext
 
 import sims
 import exchanges
@@ -202,6 +200,7 @@ def arg_parse ():
     parser.add_argument("--config", help='OldMonk Global config file')
     parser.add_argument("--backtesting", help='do backtesting', action='store_true')
     parser.add_argument("--import_only", help='do import only', action='store_true')
+    parser.add_argument("--ga_restart", help='restart genetic analysis from previous state', action='store_true')
     
     args = parser.parse_args()
     
@@ -215,6 +214,13 @@ def arg_parse ():
     else:
         log.debug ("import_only disabled")       
         sims.import_only = False          
+        
+    if (args.ga_restart):              
+        log.debug ("ga_restart enabled")       
+        sims.ga_restart = True
+    else:
+        log.debug ("import_only disabled")       
+        sims.ga_restart = False           
         
     if (args.backtesting):              
         log.debug ("backtesting enabled")       

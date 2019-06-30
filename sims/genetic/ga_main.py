@@ -23,9 +23,10 @@ from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
-from multiprocessing import Pool
-from contextlib import closing
+# from multiprocessing import Pool
+# from contextlib import closing
 from multiprocessing import Process, Manager
+import json
 
 import time
 import copy
@@ -34,23 +35,25 @@ from utils import getLogger
 import ga_ops
 import eval_strategy
 
-N_GEN = 100
-N_POP = 1000
+N_GEN = 2
+N_POP = 5
 N_MP = 8  # num processes in parallel
-HOF_FILE = "data/hof_ga.log"
-STATS_FILE = "data/stats_ga.log"
+HOF_FILE = "data/ga_hof.log"
+STATS_FILE = "data/ga_stats.log"
+POP_DATA_FILE = "data/ga_pop.json"
 
 # __name__ = "EA-BACKTEST"
 log = getLogger (__name__)
 log.setLevel (log.CRITICAL)
 
-def ga_init (evalfn = None):
+def ga_init (ga_cfg, evalfn = None):
     
     #init stats
     with open (STATS_FILE, "w") as fp:
         fp.write("OldMonk Genetica optimizer stats\n")    
         
-                
+    eval_strategy.config_ga_strategy(ga_cfg)
+            
     eval_strategy.register_eval_hook (evalfn)
     
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
@@ -60,10 +63,10 @@ def ga_init (evalfn = None):
     
     toolbox = base.Toolbox()
     
-    pool = Pool()
+#     pool = Pool()
 #     pool = ThreadPool(processes=1)
     
-    toolbox.register("map", pool.imap_unordered)    
+    toolbox.register("map", map)    
     
     toolbox.register("strat_gen", ga_ops.strategyGenerator)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.strat_gen)
@@ -139,6 +142,14 @@ def eval_exec_async (eval_fn, ind_iter):
     del(res_list)
     return fit_l
     
+def population_persist (pop_list):
+    with open (POP_DATA_FILE, "w") as fp:
+        json.dump(pop_list, fp)
+        
+def population_load ():
+    with open (POP_DATA_FILE, "r") as fp:
+        return json.load(fp)
+    return None        
 
 def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
              halloffame=None, verbose=__debug__):
@@ -151,14 +162,6 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
     fitnesses = eval_exec_async(toolbox.evaluate, invalid_ind)  
     for ind, fit in zip(invalid_ind, fitnesses):
         ind.fitness.values = fit    
-#     with closing( Pool(N_MP) ) as p:    
-#         fitnesses = p.imap_unordered(toolbox.evaluate, invalid_ind)
-#         for ind, fit in zip(invalid_ind, fitnesses):
-#             ind.fitness.values = fit
-            
-#     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)            
-#     for ind, fit in zip(invalid_ind, fitnesses):
-#         ind.fitness.values = fit
 
     if halloffame is not None:
         halloffame.update(population)
@@ -184,14 +187,6 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit            
         
-#         with closing( Pool(N_MP) ) as p:
-#             fitnesses = p.imap_unordered(toolbox.evaluate, invalid_ind)
-#             for ind, fit in zip(invalid_ind, fitnesses):
-#                 ind.fitness.values = fit        
-#         fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-#         for ind, fit in zip(invalid_ind, fitnesses):
-#             ind.fitness.values = fit
-
         # Update the hall of fame with the generated individuals
         if halloffame is not None:
             halloffame.update(offspring)
@@ -199,7 +194,8 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
 
         # Replace the current population by the offspring
         population[:] = offspring
-
+        population_persist (population)
+        
         # Append the current generation statistics to the logbook
         record = stats.compile(population) if stats else {}
         logbook.record(gen=gen, nevals=len(invalid_ind), **record)
@@ -211,14 +207,21 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, ngen, stats=None,
 #### Public APIs ####
 
         
-def ga_main(evalfn = None):
+def ga_main(ga_cfg, restart=False, evalfn = None):
     random.seed()
     
-    toolbox = ga_init (evalfn)
+    toolbox = ga_init (ga_cfg, evalfn)
     
-    pop = toolbox.population(n=N_POP)
+    pop = None
+    if restart:
+        print ("restarting ga from previous run state")
+        pop = population_load()
     
-    log.debug ("pop: %s"%pop)
+    if pop == None:
+        pop = toolbox.population(n=N_POP)
+        population_persist(pop)
+    
+#     log.debug ("pop: %s"%pop)
     
     # Numpy equality function (operators.eq) between two arrays returns the
     # equality element wise, which raises an exception in the if similar()

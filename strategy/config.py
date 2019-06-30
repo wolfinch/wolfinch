@@ -36,7 +36,10 @@ def Configure (strategy_list={}):
         strategy = strategies_list.get(strategy_name)
         if not strategy:
             raise ("Unknown strategy(%s)"%(strategy_name))
-        market_strategies.append(strategy(strategy_name, **strategy_params))
+        if strategy_params:
+            market_strategies.append(strategy(strategy_name, **strategy_params))
+        else:
+            market_strategies.append(strategy(strategy_name))            
     
     #### Configure the Strategies - end ######
     init_done = True
@@ -50,6 +53,9 @@ def Configure_indicators():
         raise ("no strategies configured!!")
     req_indicators = market_strategies[-1]._indicator_list
     return indicators.Configure(req_indicators)
+
+def get_strategy_by_name (name):
+    return  strategies_list.get(name, None)
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':

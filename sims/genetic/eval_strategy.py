@@ -17,49 +17,40 @@
 
 # from multiprocessing import Manager, Process
 
-from strategy import EMA_DEV
+import strategy
 from utils import getLogger
 
 __name__ = "EA-EVAL"
 log = getLogger (__name__)
+log.setLevel(log.INFO)
+
 
 g_mp_manager = None
 g_eval_hook = None
+g_strategy_name, g_strategy_class = None, None
 
-def get_strategy ():
-    return EMA_DEV
+def get_strategy_vars ():
+    return g_strategy_class.config
+    
+def config_ga_strategy(ga_cfg):
+    global g_strategy_name, g_strategy_class
+    g_strategy_name = ga_cfg['model_config']['strategy']
+    log.info ("configuring GA for strategy - %s"%(g_strategy_name))
+    g_strategy_class = strategy.get_strategy_by_name(g_strategy_name)
+    
+    if g_strategy_class == None:
+        s = "Unable to configure strategy (%s)"%(g_strategy_name)
+        log.critical (s)
+        raise Exception(s)
     
 def register_eval_hook (eval_hook):
     global g_eval_hook, g_mp_manager
     
     g_eval_hook = eval_hook
-    
-#     g_mp_manager = Manager()
-
-# def eval_hook_remote (in_dict, out_dict):
-#     
-#     stats = g_eval_hook (in_dict)
-#     
-#     out_dict['return_vars'] = stats
-#     
-# def eval_hook_mp_call (config_kw):
-#     
-#     ret_dict = g_mp_manager.dict()
-#     
-#     decision_cfg = {}
-#     decision_cfg['model_config'] = {"strategy": "EMA_DEV", "params": config_kw}
-#     decision_cfg['model_type'] = "simple"
-# 
-#     p = Process(target=eval_hook_remote, args=(decision_cfg, ret_dict))
-#     
-#     p.start()
-#     p.join()
-#     
-#     return ret_dict['return_vars']
 
 def eval_hook_call (config_kw):
     decision_cfg = {}
-    decision_cfg['model_config'] = {"strategy": "EMA_DEV", "params": config_kw}
+    decision_cfg['model_config'] = {"strategy": g_strategy_name, "params": config_kw}
     decision_cfg['model_type'] = "simple"
     
     stats = g_eval_hook (decision_cfg)

@@ -25,7 +25,6 @@ from utils import getLogger
 log = getLogger (__name__)
 log.setLevel (log.CRITICAL)
 
-strat_config = eval_strategy.get_strategy().config
 
 #TODO: FIXME: lot of hacky code here to fix deap ind generator issue with strat dict
 
@@ -80,7 +79,7 @@ def strategyGenerator ():
     
     # TODO: TBD: NOTE: enhance initial pop generation logic. Right now pure random, We can use heuristics for better pop
     
-    conf = strat_config
+    conf = eval_strategy.get_strategy_vars()
     strat_gen = {}
     
     for param_key in conf.iterkeys():
@@ -91,7 +90,7 @@ def strategyGenerator ():
     return strat_gen
 
 def genParamVal (param_key):
-    conf = strat_config
+    conf = eval_strategy.get_strategy_vars()
         
     param_conf = conf[param_key]
     var = param_conf['var']
@@ -118,7 +117,7 @@ def genParamVal (param_key):
 
 if __name__ == "__main__":
     
-    print ("conf: %s"%(strat_config))
+    print ("conf: %s"%(eval_strategy.get_strategy_vars()))
     
     indA = strategyGenerator ()
     indB = strategyGenerator ()
