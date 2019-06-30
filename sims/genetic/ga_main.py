@@ -16,9 +16,7 @@
 # limitations under the License.
 
 import random
-
 import numpy
-
 from deap import algorithms
 from deap import base
 from deap import creator
@@ -27,7 +25,6 @@ from deap import tools
 # from contextlib import closing
 from multiprocessing import Process, Manager
 import json
-
 import time
 import copy
 
@@ -35,9 +32,9 @@ from utils import getLogger
 import ga_ops
 import eval_strategy
 
-N_GEN = 2
-N_POP = 5
-N_MP = 8  # num processes in parallel
+N_GEN = 1000
+N_POP = 100
+N_MP = 10  # num processes in parallel, bit of over-subscription is fine (# for 8 cores)
 HOF_FILE = "data/ga_hof.log"
 STATS_FILE = "data/ga_stats.log"
 POP_DATA_FILE = "data/ga_pop.json"
