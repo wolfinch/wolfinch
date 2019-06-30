@@ -121,6 +121,7 @@ genetic_optimizer_on = False
 ga_restart = False
 gaDecisionConfig = {}
 gConfig = None
+ga_config = {"GA_NPOP":0, "GA_NGEN": 0, "GA_NMP": 0}
 def market_backtesting_ga_hook (decisionConfig, tradingConfig=None):
     """
     market backtesting hook for ga
@@ -150,7 +151,7 @@ def ga_sim_main (gCfg, decisionConfig, tradingConfig):
     
     try:
         # start the GA algorithm here:
-        ga_main (gaDecisionConfig, ga_restart, evalfn = market_backtesting_ga_hook)
+        ga_main (ga_config, gaDecisionConfig, ga_restart, evalfn = market_backtesting_ga_hook)
     except:
         print ("Unexpected error", sys.exc_info())
         raise        

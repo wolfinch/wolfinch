@@ -186,6 +186,12 @@ def load_config (cfg_file):
                 elif ex_k == 'config':
                     sims.gaDecisionConfig ['model_config'] = ex_v
                     sims.gaDecisionConfig ['model_type'] = 'simple'
+                elif ex_k == 'N_POP':
+                    sims.ga_config["GA_NPOP"] = ex_v
+                elif ex_k == 'N_GEN':
+                    sims.ga_config["GA_NGEN"] = ex_v
+                elif ex_k == 'N_MP':
+                    sims.ga_config["GA_NMP"] = ex_v                                        
                 
 #     print ("v: %s"%str(tradingConfig))
 #     exit(1)

@@ -2,6 +2,7 @@
 *.yml
 data/*.db*
 data/*.json
+data/*.log
 config/*.yml
 .*
 #third_party/*

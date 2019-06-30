@@ -32,8 +32,8 @@ from utils import getLogger
 import ga_ops
 import eval_strategy
 
-N_GEN = 2
-N_POP = 5
+N_GEN = 1000
+N_POP = 100
 N_MP = 10  # num processes in parallel, bit of over-subscription is fine (# for 8 cores)
 HOF_FILE = "data/ga_hof.log"
 STATS_FILE = "data/ga_stats.log"
@@ -43,8 +43,23 @@ POP_DATA_FILE = "data/ga_pop.json"
 log = getLogger (__name__)
 log.setLevel (log.CRITICAL)
 
-def ga_init (ga_cfg, evalfn = None):
+def ga_init (ga_config, ga_cfg, evalfn = None):
+    global N_GEN, N_POP, N_MP
     
+    #init config:
+#     print (ga_config)
+    for ga_k, ga_v in ga_config.iteritems():
+        if ga_v > 0:
+            if ga_k == "GA_NGEN":
+                N_GEN = ga_v
+            if ga_k == "GA_NPOP":
+                N_POP = ga_v            
+            if ga_k == "GA_NMP":
+                N_MP = ga_v
+                    
+#     print ("N_GEN: %d N_POP: %d N_MP:%d"%(N_GEN, N_POP, N_MP))
+#     raise 
+
     #init stats
     with open (STATS_FILE, "w") as fp:
         fp.write("OldMonk Genetica optimizer stats\n")    
@@ -151,7 +166,7 @@ def population_load ():
             return data["pop"], data["ngen"]
     return None, 0  
 
-def eaSimpleCustom(population, toolbox, cxpb, mutpb, sgen=1, ngen=0, stats=None,
+def eaSimpleCustom(population, toolbox, cxpb, mutpb, sgen=1, ngen=1, stats=None,
              halloffame=None, verbose=__debug__):
     logbook = tools.Logbook()
     logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
@@ -207,10 +222,10 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, sgen=1, ngen=0, stats=None,
 #### Public APIs ####
 
         
-def ga_main(ga_cfg, restart=False, evalfn = None):
+def ga_main(ga_config, ga_cfg, restart=False, evalfn = None):
     random.seed()
     
-    toolbox = ga_init (ga_cfg, evalfn)
+    toolbox = ga_init (ga_config, ga_cfg, evalfn)
     
     pop = None
     gen = 1
