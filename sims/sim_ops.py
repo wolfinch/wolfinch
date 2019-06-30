@@ -62,7 +62,7 @@ def do_backtesting ():
         for market in get_market_list():
             market.update_market_states()
             # Trade only on primary markets
-            if (market.primary == True and (market.backtesting_idx < market.num_candles)):
+            if (market.primary == True and (market.backtesting_idx < market.num_candles - 1)):
 #                 log.info ("BACKTEST(%d): processing on market: exchange (%s) product: %s"%(
 #                     market.backtesting_idx, market.exchange_name, market.name))     
                 signal = market.generate_trade_signal (market.backtesting_idx)

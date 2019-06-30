@@ -64,6 +64,14 @@ class Position ():
             raise Exception ("Unknown position status(%s)"%(status))
     def get_profit(self):
         return self.profit
+    def update_stop_loss(self, market_rate, sl_rate):
+        new_sl = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 8))
+        if new_sl > self.stop_loss:
+            self.stop_loss = new_sl
+#             log.debug("Updated stop_loss (%f) for position. rate:%d"%(self.stop_loss, sl_rate))
+            return True
+        else:
+            return False
     def set_stop_loss(self, market_rate, sl_rate):
         self.stop_loss = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 8))
         log.debug("setting stop_loss (%f) for position. rate:%d"%(self.stop_loss, sl_rate))                
@@ -216,9 +224,12 @@ class OrderBook():
 #         log.debug ("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)\n pos:%s"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))              
         
-    def smart_stop_loss_update_positions(self):
-        pass
-        ## TODO: FIXME: implement        
+    def smart_stop_loss_update_positions(self, market_rate, sl_rate):
+#         return sl_pos_list
+        for pos in self.open_positions:
+            pos.update_stop_loss(market_rate, sl_rate)
+#             if pos.update_stop_loss(market_rate, sl_rate):
+#                 log.critical ("smart updated stop_loss(%f) for position market_rate(%f)"%(pos.get_stop_loss(), market_rate))
     def get_stop_loss_positions(self, market_rate):
         sl_pos_list = []
 #         return sl_pos_list

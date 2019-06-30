@@ -840,6 +840,10 @@ class Market:
               2. perform any pending trades (stop requests)
               3. Cancel/timeout any open orders if need be
         '''
+        
+        if self.tradeConfig["stop_loss_smart_rate"] == True:
+            self.order_book.smart_stop_loss_update_positions(self.get_market_rate(), self.tradeConfig["stop_loss_rate"])
+        
         if sims.backtesting_on == True:
             return        
         
@@ -1013,6 +1017,7 @@ def market_init (exchange_list, decisionConfig, tradingConfig):
                 if (market == None):
                     log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
                 else:
+                    market.tradeConfig = TradeConfig
                     OldMonk_market_list.append(market)
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))
