@@ -25,6 +25,7 @@ log.setLevel (log.CRITICAL)
 ###### SIMULATOR Global switch ######
 simulator_on = True
 import_only = False
+exch_obj = None
 
 '''
 Description: Exchange Simulation for papertrade/backtesting. 

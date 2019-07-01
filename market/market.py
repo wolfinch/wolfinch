@@ -355,7 +355,10 @@ class Market:
         if side == 'buy':
             if msg_type == 'done':
                 #for an order done, get the order details             
-                order_det = self.exchange.get_order(order.id)
+                if (sims.simulator_on):
+                    order_det = sims.exch_obj.get_order(order.id)
+                else:                
+                    order_det = self.exchange.get_order(order.id)
                 if (order_det):
                     order = order_det
                 if reason == 'filled':
@@ -420,7 +423,10 @@ class Market:
         
         self.num_buy_order += 1
         log.info("BUY: %d sig: %s"%(self.num_buy_order, trade_req))
-        order = self.exchange.buy (trade_req)
+        if (sims.simulator_on):
+            order = sims.exch_obj.buy (trade_req)
+        else:
+            order = self.exchange.buy (trade_req)
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
             log.debug ("BUY Order Sent to exchange. ")
@@ -472,7 +478,10 @@ class Market:
     def _sell_order_create (self, trade_req):
         self.num_sell_order += 1
         log.info("SELL: %d sig: %s"%(self.num_sell_order, trade_req))
-        order = self.exchange.sell (trade_req)
+        if (sims.simulator_on):
+            order = sims.exch_obj.sell (trade_req)
+        else:
+            order = self.exchange.sell (trade_req)
         #update fund 
         order.buy_id = trade_req.id
         market_order  =  self.order_book.add_or_update_my_order(order)

@@ -29,17 +29,25 @@ def init_exchanges (OldMonkConfig):
                     cfg = v['config']
                     log.debug ("initializing exchange(%s)"%name)
                     if (sims.simulator_on):
-                        # If sim is on, init only sim exchange
-                        exch_obj = sims.SIM_EXCH(exch_cls.name)
-                        log.info ("SIM-EXCH initialized for EXCH(%s)"%(exch_cls.name))                        
-                    else:                    
-                        exch_obj = exch_cls(config=cfg, primary=(role == 'primary'))
+                        sims.exch_obj = sims.SIM_EXCH(exch_cls.name)
+                        log.info ("SIM-EXCH initialized for EXCH(%s)"%(exch_cls.name))
+                        if sims.backtesting_on:
+                            # If backtesting is on, init only sim exchange   
+                            if (sims.exch_obj != None):
+                                exchange_list.append(sims.exch_obj)
+                                #Market init
+                                return
+                            else:
+                                log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
+                                raise Exception()                            
+                                                            
+                    exch_obj = exch_cls(config=cfg, primary=(role == 'primary'))
                     if (exch_obj != None):
                         exchange_list.append(exch_obj)
                         #Market init
                     else:
                         log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
-                
+                        raise Exception()
 def close_exchanges():
     global exchange_list
     #init exchanges 

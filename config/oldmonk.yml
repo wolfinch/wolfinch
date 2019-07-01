@@ -21,7 +21,7 @@ exchanges:
 #    - interval : '5m'  #5m 
 
 stop_loss:
-   enabled: true
+   enabled: false
    smart: false #track price movement and update stop_loss
    rate : 3 #-3%
   
@@ -39,7 +39,7 @@ decision:
    model    : simple
    config   :
       strategy : EMA_DEV
-      params : {'ema_sell_s': 80, 'treshold_pct_buy_l': 1.1241586847418519, 'ema_buy_s': 125, 'period': 170, 'treshold_pct_sell_s': 0.009145746217821715, 'ema_buy_l': 30, 'treshold_pct_sell_l': 1.8668055789275229, 'treshold_pct_buy_s': 0.2122106716562029, 'ema_sell_l': 190}      
+      params : {'ema_sell_s': 65, 'treshold_pct_buy_l': 0.076, 'ema_buy_s': 125, 'period': 170, 'ema_sell_l': 190, 'ema_buy_l': 35, 'treshold_pct_sell_l': 1.87, 'treshold_pct_buy_s': 0.15, 'treshold_pct_sell_s': 0.00}      
 #         period: 120 #EMA_DEV- 
 #         ema_buy_s : 50
 #         ema_buy_l : 120
