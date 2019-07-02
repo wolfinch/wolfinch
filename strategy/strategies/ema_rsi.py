@@ -29,6 +29,7 @@ class EMA_RSI(Strategy):
         'ema_ll' : {'default': 80, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
         'rsi' : {'default': 21, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 1 }},        
         }
+    # best: {'rsi': 64, 'ema_s': 30, 'period': 38, 'ema_m': 200, 'ema_l': 120, 'ema_ll': 60}
     def __init__ (self, name, period=80, ema_s=5, ema_m=13, ema_l=21, ema_ll=80, rsi=21):     
         self.name = name
         self.period = period

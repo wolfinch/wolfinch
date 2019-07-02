@@ -850,10 +850,9 @@ class Market:
               3. Cancel/timeout any open orders if need be
         '''
         
-        if self.tradeConfig["stop_loss_smart_rate"] == True:
-            self.order_book.smart_stop_loss_update_positions(self.get_market_rate(), self.tradeConfig["stop_loss_rate"])
-        
         if sims.backtesting_on == True:
+            if self.tradeConfig["stop_loss_smart_rate"] == True:
+                self.order_book.smart_stop_loss_update_positions(self.get_market_rate(), self.tradeConfig["stop_loss_rate"])            
             return        
         
         now = time.time()
@@ -886,6 +885,11 @@ class Market:
         self.num_candles += 1
         self.cur_candle_time = candle.time   
         
+        
+        # bit of conservative approach for smart-SL. update SL only on candle time
+        if self.tradeConfig["stop_loss_smart_rate"] == True:
+            self.order_book.smart_stop_loss_update_positions(self.get_market_rate(), self.tradeConfig["stop_loss_rate"])
+                    
         self.O = self.V = self.H = self.L = self.C = 0
 
         #save to db

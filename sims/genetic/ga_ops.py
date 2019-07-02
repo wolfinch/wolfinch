@@ -60,19 +60,67 @@ def createOffSpring(indA, indB):
     indB= ind2
     return indA, indB
     
-def createMutant(individual, indpb):
-    
-    ind = individual
-    
-    log.debug ("original: %s"%(ind))
-    for key in ind.iterkeys():
+def createMutantStrategy(indS, indpb):
+        
+    log.debug ("original: %s"%(indS))
+    for key in indS.iterkeys():
         rand = random.random()
         if rand < indpb:
-            ind [key] = genParamVal(key)
+            indS [key] = genParamVal(key)
 #             raise Exception("rand: %f %s"%(rand, ind))
-    individual = ind
-    log.debug ("mutant: %s"%(ind))    
+    individual = indS
+    log.debug ("mutant: %s"%(indS))    
     return individual,  
+
+def createMutantTradecfg(indT, indpb):
+        
+    log.debug ("original: %s"%(indT))
+    for key in indT.iterkeys():
+        rand = random.random()
+        if rand < indpb:
+            indT [key] = genParamVal(key)
+#             raise Exception("rand: %f %s"%(rand, ind))
+    individual = indT
+    log.debug ("mutant: %s"%(indT))    
+    return individual,  
+
+def createMutant (individual, indpb):
+    
+    individual["strategy_cfg"] = createMutantStrategy(individual["strategy_cfg"])
+    individual["trading_cfg"] = createMutantTradecfg(individual["trading_cfg"])
+    
+    return individual
+
+def configGenerator ():
+    return {"strategy_cfg": strategyGenerator(), "trading_cfg": tradingcfgGenerator()}
+    
+TradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
+                 "take_profit_enabled": False, 'take_profit_rate': 0}
+TradingConfig = {
+        'stop_loss_enabled' : {'default': True, 'var': {'type': bool}},
+        'stop_loss_smart_rate' : {'default': True, 'var': {'type': bool}},
+        'stop_loss_rate' : {'default': 5, 'var': {'type': int, 'min': 1, 'max': 10, 'step': 1 }},
+        'take_profit_enabled' : {'default': True, 'var': {'type': bool}},
+        'take_profit_rate' : {'default': 10, 'var': {'type': int, 'min': 2, 'max': 20, 'step': 1 }}
+        }
+def tradingcfgGenerator ():
+    cfg_gen = {}
+    
+    for param_key, param_val in TradingConfig.iterkeys():
+        if param_key == "stop_loss_enabled" or param_key == "stop_loss_smart_rate" or param_key == "take_profit_rate":
+            cfg_gen[param_key] = random.choice([False, True])
+        elif param_key == "stop_loss_smart_rate" or param_key == "take_profit_rate":
+            var = param_val['var']
+            tp = var['type']
+            if tp == int:
+                r_min = var['min']
+                r_max = var['max']
+                r_step = var.get('step')
+                #get val
+                cfg_gen[param_key] = random.randrange (r_min, r_max+1, r_step)     
+            else:
+                raise ("Unknown trading config param type")
+    return cfg_gen
 
 def strategyGenerator ():
     #strat_confg = { 'period' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 100, 'step': 1 }},}
@@ -119,8 +167,8 @@ if __name__ == "__main__":
     
     print ("conf: %s"%(eval_strategy.get_strategy_vars()))
     
-    indA = strategyGenerator ()
-    indB = strategyGenerator ()
+    indA = configGenerator ()
+    indB = configGenerator ()
     
     print ("indA: %s \n indB:%s "%(indA, indB))
     offA, offB = createOffSpring (indA, indB)

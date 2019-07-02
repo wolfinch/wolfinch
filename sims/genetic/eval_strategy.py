@@ -25,7 +25,6 @@ log = getLogger (__name__)
 log.setLevel(log.INFO)
 
 
-g_mp_manager = None
 g_eval_hook = None
 g_strategy_name, g_strategy_class = None, None
 
@@ -44,16 +43,16 @@ def config_ga_strategy(ga_cfg):
         raise Exception(s)
     
 def register_eval_hook (eval_hook):
-    global g_eval_hook, g_mp_manager
+    global g_eval_hook
     
     g_eval_hook = eval_hook
 
 def eval_hook_call (config_kw):
     decision_cfg = {}
-    decision_cfg['model_config'] = {"strategy": g_strategy_name, "params": config_kw}
+    decision_cfg['model_config'] = {"strategy": g_strategy_name, "params": config_kw["strategy_cfg"]}
     decision_cfg['model_type'] = "simple"
     
-    stats = g_eval_hook (decision_cfg)
+    stats = g_eval_hook (decision_cfg, config_kw["trading_cfg"])
     return stats
     
 def eval_strategy_with_config (config_kw):
@@ -65,7 +64,7 @@ def eval_strategy_with_config (config_kw):
      
     cur_profit = 0
     for _, k_v in stats.iteritems():
-        cur_profit += k_v['fund']['current_realized_profit']
+        cur_profit += round(k_v['fund']['current_realized_profit'], 2)
      
     return cur_profit
 

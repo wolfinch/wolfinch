@@ -67,8 +67,8 @@ class Position ():
     def update_stop_loss(self, market_rate, sl_rate):
         new_sl = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 8))
         if new_sl > self.stop_loss:
+            log.critical("Updated stop_loss new(%f) old(%f) for position. rate:%d"%(new_sl, self.stop_loss, sl_rate))
             self.stop_loss = new_sl
-#             log.debug("Updated stop_loss (%f) for position. rate:%d"%(self.stop_loss, sl_rate))
             return True
         else:
             return False

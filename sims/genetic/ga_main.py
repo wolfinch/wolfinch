@@ -80,7 +80,7 @@ def ga_init (ga_config, ga_cfg, evalfn = None):
     
     toolbox.register("map", map)    
     
-    toolbox.register("strat_gen", ga_ops.strategyGenerator)
+    toolbox.register("strat_gen", ga_ops.configGenerator)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.strat_gen)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     
