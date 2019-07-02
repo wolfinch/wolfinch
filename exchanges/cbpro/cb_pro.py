@@ -187,6 +187,9 @@ class CBPRO (Exchange):
         if (self.ws_client):
             log.debug("Closing WebSocket Client")
             self.ws_client.close ()
+        
+        log.critical ("exch being closed")
+        raise 
 
     def add_candle(self, market):
         # close the current candle period and start a new candle period
@@ -389,7 +392,8 @@ class CBPRO (Exchange):
 #         '''
 #         global self.gdax_conf
 #         log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
-            
+        
+        log.debug ("consuming ticker feed")
         price = Decimal(msg.get('price'))
         last_size = msg.get('last_size')
         if (price == 0 or not last_size):
@@ -425,6 +429,7 @@ class CBPRO (Exchange):
         #TODO: FIXME: jork: might need to rate-limit the logic here after
         market.set_market_rate (price)
 #         market.update_market_states()
+    
         
     ###################### WebSocket Impl : end #############################
         

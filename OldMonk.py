@@ -32,7 +32,7 @@ from dateparser import conf
 import stats
 
 log = getLogger ('OldMonk')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 # Global Config 
 OldMonkConfig = None
@@ -297,8 +297,8 @@ if __name__ == '__main__':
     except (KeyboardInterrupt, SystemExit):
         OldMonk_end()
         sys.exit()
-    except:
-        print ("Unexpected error: ",sys.exc_info())
+    except Exception as e:
+        print ("Unexpected error: %s exception: %s"%(sys.exc_info(), e))
         OldMonk_end()
         raise
     #'''Not supposed to reach here'''
