@@ -54,8 +54,8 @@ simulator:
 
 genetic_optimizer: 
    enabled : true
-   N_POP : 1000
-   N_GEN : 100
+   N_POP : 2
+   N_GEN : 3
    N_MP : 10
    config   :
       strategy : EMA_RSI   

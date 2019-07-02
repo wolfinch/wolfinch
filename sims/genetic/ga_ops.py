@@ -98,7 +98,7 @@ def createMutantStrategy(indS, indpb):
 #             raise Exception("rand: %f %s"%(rand, ind))
     individual = indS
     log.debug ("mutant: %s"%(indS))    
-    return individual,  
+    return individual
 
 def createMutantTradecfg(indT, indpb):
     conf = TradingConfig
@@ -110,6 +110,7 @@ def createMutantTradecfg(indT, indpb):
             indT [key] = genParamVal(conf, key)
 #             raise Exception("rand: %f %s"%(rand, ind))
 
+    indT = police_tradingcfg_gen (indT)
     if (indT["stop_loss_enabled"] == False):
         indT["stop_loss_smart_rate"] = False
         indT["stop_loss_rate"] = 0
@@ -119,14 +120,14 @@ def createMutantTradecfg(indT, indpb):
 
     individual = indT
     log.debug ("mutant: %s"%(indT))    
-    return individual,  
+    return individual
 
 def createMutant (individual, indpb):
     
-    individual["strategy_cfg"] = createMutantStrategy(individual["strategy_cfg"])
-    individual["trading_cfg"] = createMutantTradecfg(individual["trading_cfg"])
+    individual["strategy_cfg"] = createMutantStrategy(individual["strategy_cfg"], indpb)
+    individual["trading_cfg"] = createMutantTradecfg(individual["trading_cfg"], indpb)
     
-    return individual
+    return individual,
 
 def configGenerator ():
     return {"strategy_cfg": strategyGenerator(), "trading_cfg": tradingcfgGenerator()}
@@ -152,6 +153,8 @@ def tradingcfgGenerator ():
     print "tC %s"%(TradingConfig)
     for param_key in TradingConfig.iterkeys():
         cfg_gen [param_key] = genParamVal(TradingConfig, param_key)
+        
+    cfg_gen = police_tradingcfg_gen(cfg_gen)
 
     if (cfg_gen["stop_loss_enabled"] == False):
         cfg_gen["stop_loss_smart_rate"] = False
