@@ -43,9 +43,6 @@ decision:
       #Hall of Fame
       #EMA_RSI: {'rsi': 64, 'ema_s': 30, 'period': 38, 'ema_m': 200, 'ema_l': 120, 'ema_ll': 60}
       #EMA_DEV{'ema_sell_s': 80, 'treshold_pct_buy_l': 1.12, 'ema_buy_s': 125, 'period': 170, 'treshold_pct_sell_s': 0.00, 'ema_buy_l': 30, 'treshold_pct_sell_l': 1.86, 'treshold_pct_buy_s': 0.21, 'ema_sell_l': 190}      
-#         period: 120 #EMA_DEV- 
-#         ema_buy_s : 50
-#         ema_buy_l : 120
 # EMA_DEV ~buy n hold
 #"MINMAX" #<buy hold
 #"EMA_RSI" #<buy-hold, high fail%
@@ -62,6 +59,6 @@ genetic_optimizer:
    N_MP : 10
    config   :
       strategy : EMA_RSI   
-
+      trading : {stop_loss: {enabled: true}}
 #EOF
 

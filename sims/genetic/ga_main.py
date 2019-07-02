@@ -43,7 +43,7 @@ POP_DATA_FILE = "data/ga_pop.json"
 log = getLogger (__name__)
 log.setLevel (log.CRITICAL)
 
-def ga_init (ga_config, ga_cfg, evalfn = None):
+def ga_init (ga_config, ga_cfg, ga_tradecfg, evalfn = None):
     global N_GEN, N_POP, N_MP
     
     #init config:
@@ -64,6 +64,7 @@ def ga_init (ga_config, ga_cfg, evalfn = None):
     with open (STATS_FILE, "w") as fp:
         fp.write("OldMonk Genetica optimizer stats\n")    
         
+    ga_ops.GaTradingConfig = ga_tradecfg
     eval_strategy.config_ga_strategy(ga_cfg)
             
     eval_strategy.register_eval_hook (evalfn)
@@ -222,10 +223,10 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, sgen=1, ngen=1, stats=None,
 #### Public APIs ####
 
         
-def ga_main(ga_config, ga_cfg, restart=False, evalfn = None):
+def ga_main(ga_config, ga_cfg, ga_tradeconf, restart=False, evalfn = None):
     random.seed()
     
-    toolbox = ga_init (ga_config, ga_cfg, evalfn)
+    toolbox = ga_init (ga_config, ga_cfg, ga_tradeconf, evalfn)
     
     pop = None
     gen = 1

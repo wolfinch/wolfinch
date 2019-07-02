@@ -138,6 +138,14 @@ TradingConfig = {
         'take_profit_enabled' : {'default': True, 'var': {'type': bool}},
         'take_profit_rate' : {'default': 10, 'var': {'type': int, 'min': 2, 'max': 20, 'step': 1 }}
         }
+GaTradingConfig = {}
+
+def police_tradingcfg_gen (t_cfg):
+    for param_key, param_val in GaTradingConfig.iterkeys():
+        t_cfg [param_key] = param_val
+    
+    return t_cfg
+    
 def tradingcfgGenerator ():
     cfg_gen = {}
     

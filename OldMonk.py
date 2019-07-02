@@ -184,8 +184,23 @@ def load_config (cfg_file):
                         log.debug ("genetic_optimizer_on disabled")
                         sims.genetic_optimizer_on = False
                 elif ex_k == 'config':
-                    sims.gaDecisionConfig ['model_config'] = ex_v
+                    sims.gaDecisionConfig ['model_config'] = {"strategy": ex_v["strategy"]} 
                     sims.gaDecisionConfig ['model_type'] = 'simple'
+                    for t_k, t_v in ex_v.get("trading", {}).iteritems():
+                        if t_k == 'stop_loss':
+                            for ex_tk, ex_tv in t_v.iteritems():
+                                if ex_tk == 'enabled':
+                                    sims.gaTradingConfig ['stop_loss_enabled'] = ex_tv
+                                elif ex_tk == 'smart':
+                                    sims.gaTradingConfig ['stop_loss_smart_rate'] = ex_tv
+                                elif ex_tk == 'rate':
+                                    sims.gaTradingConfig ['stop_loss_rate'] = ex_v                    
+                        elif t_k == 'take_profit':
+                            for ex_tk, ex_tv in t_v.iteritems():
+                                if ex_tk == 'enabled':
+                                    sims.gaTradingConfig ['take_profit_enabled'] = ex_tv
+                                elif ex_tk == 'rate':
+                                    sims.gaTradingConfig ['take_profit_rate'] = ex_tv                       
                 elif ex_k == 'N_POP':
                     sims.ga_config["GA_NPOP"] = ex_v
                 elif ex_k == 'N_GEN':
@@ -265,7 +280,7 @@ if __name__ == '__main__':
     try:
         if sims.genetic_optimizer_on:
             print ("starting genetic backtesting optimizer")
-            sims.ga_sim_main (OldMonkConfig, sims.gaDecisionConfig, tradingConfig)
+            sims.ga_sim_main (OldMonkConfig, sims.gaDecisionConfig, sims.gaTradingConfig)
             print ("finished running genetic backtesting optimizer")
             sys.exit()
         OldMonk_init(decisionConfig, tradingConfig)
