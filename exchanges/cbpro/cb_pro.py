@@ -286,7 +286,7 @@ class CBPRO (Exchange):
             products += p.keys()
             
         channels = [
-                "level2",
+#                 "level2",
                 "heartbeat",
                 "ticker",
                 "user"         #Receive details about our orders only
