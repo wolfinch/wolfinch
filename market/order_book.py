@@ -20,24 +20,48 @@ import sys
 # import json
 from bintrees import RBTree
 from decimal import Decimal
-
+from sortedcontainers import sorteddict 
 from utils import getLogger
 import stats
 
 log = getLogger('ORDER-BOOK')
 log.setLevel(log.CRITICAL)
 
-class Position ():
+class StopLoss ():
     
-    buy     = None
-    sell    = None
-    profit = Decimal(0)
-    stop_loss = Decimal(0)
-    take_profit = Decimal(0)
-    open_time = None
-    closed_time = None
-    status = ''  #'open'|closed|close_pending
+    def __init__ (self):
+        self.tree = sorteddict.SortedDict()
+    
+    def add_stop_for_position (self, stop_price, position):
+        pos_list = self.tree.get(stop_price, None)
+        if pos_list == None:
+            pos_list = []
+            self.tree[stop_price] = pos_list
+        pos_list.append(position)
+        
+    def add_stop_for_position_list (self, stop_price, position_l):
+        pos_list = self.tree.get(stop_price, None)
+        if pos_list == None:
+            pos_list = []
+            self.tree[stop_price] = pos_list
+        pos_list+=position_l      
+    
+    def remove_all_positions_at_stop (self, stop_price):
+        return self.tree.pop(stop_price, None)
+    
+    def update_stop_loss (self):
+        pass
+
+class Position ():
     def __init__(self, buy=None, sell=None):
+        self.buy     = None
+        self.sell    = None
+        self.profit = Decimal(0)
+        self.stop_loss = Decimal(0)
+        self.take_profit = Decimal(0)
+        self.open_time = None
+        self.closed_time = None
+        self.status = ''  #'open'|closed|close_pending        
         self.add_buy(buy)
         self.add_sell(sell)
         
@@ -225,6 +249,12 @@ class OrderBook():
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))              
         
     def smart_stop_loss_update_positions(self, market_rate, sl_rate):
+        new_sl = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 8))
+        
+        for key in tree.irange(minimum=new_sl, inclusive=(False, False)):
+            pos_list = tree.pop(key)
+            add_stop_for_position_list (new_sl, pos_list)
+        
 #         return sl_pos_list
         for pos in self.open_positions:
             pos.update_stop_loss(market_rate, sl_rate)
