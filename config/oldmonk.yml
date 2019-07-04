@@ -21,9 +21,9 @@ exchanges:
 #    - interval : '5m'  #5m 
 
 stop_loss:
-   enabled: false
+   enabled: true
    smart: false #track price movement and update stop_loss
-   rate : 8 #-3%
+   rate : 3 #-3%
   
 take_profit:
    enabled: false
@@ -53,7 +53,7 @@ simulator:
    enabled : true
 
 genetic_optimizer: 
-   enabled : true
+   enabled : false
    N_POP : 2
    N_GEN : 3
    N_MP : 10
