@@ -21,8 +21,8 @@ exchanges:
 #    - interval : '5m'  #5m 
 
 stop_loss:
-   enabled: true
-   smart: true #track price movement and update stop_loss
+   enabled: false
+   smart: false #track price movement and update stop_loss
    rate : 8 #-3%
   
 take_profit:

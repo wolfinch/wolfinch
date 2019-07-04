@@ -13,6 +13,7 @@ from time import sleep
 import time
 from dateutil.tz import tzlocal
 from threading import Thread
+import threading
 
 # import gdax as CBPRO #Official version seems to be old, doesn't support auth websocket client
 import cbpro
@@ -64,28 +65,28 @@ class CBPRO (Exchange):
             if entry.get('interval'):
                 self.gdax_conf['backfill_interval'] = int(entry['interval'])            
         
-        key = self.gdax_conf.get('apiKey')
-        b64secret = self.gdax_conf.get('apiSecret')
-        passphrase = self.gdax_conf.get('apiPassphrase')
-        api_base = self.gdax_conf.get ('apiBase')
-        feed_base = self.gdax_conf.get ('wsFeed')
+        self.key = self.gdax_conf.get('apiKey')
+        self.b64secret = self.gdax_conf.get('apiSecret')
+        self.passphrase = self.gdax_conf.get('apiPassphrase')
+        self.api_base = self.gdax_conf.get ('apiBase')
+        self.feed_base = self.gdax_conf.get ('wsFeed')
         
         self.max_fund_liquidity_percent = self.gdax_conf.get ('fundMaxLiquidity')
         self.max_per_buy_fund_val = self.gdax_conf.get ('fundMaxPerBuyValue')
         self.max_per_trade_asset_size = self.gdax_conf.get ('assetMaxPerTradeSize')
         self.asset_hold_size = self.gdax_conf.get ('assetHoldSize')
         
-        self.public_client = cbpro.PublicClient(api_url=api_base)
+        self.public_client = cbpro.PublicClient(api_url=self.api_base)
         if (self.public_client) == None :
             log.critical("gdax public client init failed")
             return None
                         
-        if ((key and b64secret and passphrase and api_base ) == False):
+        if ((self.key and self.b64secret and self.passphrase and self.api_base ) == False):
             log.critical ("Invalid API Credentials in cbpro Config!! ")
             return None
         
-        self.auth_client = cbpro.AuthenticatedClient(key, b64secret, passphrase,
-                                      api_url=api_base)
+        self.auth_client = cbpro.AuthenticatedClient(self.key, self.b64secret, self.passphrase,
+                                      api_url=self.api_base)
         
         if self.auth_client == None:
             log.critical("Unable to Authenticate with cbpro exchange. Abort!!")
@@ -134,9 +135,19 @@ class CBPRO (Exchange):
                         log.debug ("Interested Account Found for Currency: "+account['currency'])
                         self.gdax_accounts[account['currency']] = account
                         break
+
+        self.start_webfeed ()
+
+        self.candle_interval = int(self.gdax_conf.get('backfill_interval'))
+        log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
+                        pprint.pformat(self.gdax_products, 4), pprint.pformat(self.gdax_accounts, 4)))
+            
         
+        
+    def start_webfeed(self):
         # register websocket feed 
-        self.ws_client = self._register_feed (api_key=key, api_secret=b64secret, api_passphrase=passphrase, url=feed_base)
+        self.ws_client = self._register_feed (api_key=self.key, api_secret=self.b64secret,
+                                               api_passphrase=self.passphrase, url=self.feed_base)
         if self.ws_client == None:
             log.critical("Unable to get websocket feed. Abort!!")
             return None
@@ -145,10 +156,6 @@ class CBPRO (Exchange):
         if (self.ws_client != None):
             log.debug ("Starting Websocket Feed... ")
             self.ws_client.start()
-                
-        self.candle_interval = int(self.gdax_conf.get('backfill_interval'))
-        log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
-                        pprint.pformat(self.gdax_products, 4), pprint.pformat(self.gdax_accounts, 4)))
      
     def market_init (self, product):
 #         global ws_client
@@ -588,6 +595,52 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
 #     __init__(self, url="wss://ws-feed.gdax.com", products=None, message_type="subscribe", mongo_collection=None,
 #                  should_print=True, auth=False, api_key="", api_secret="", api_passphrase="", channels=None):
         name = EXHANGE_NAME
+        def start(self):
+            log.info ("starting cbproWebsocketClient")
+            def _go():
+                self._connect()
+                self._listen()
+                self._disconnect()
+    
+            self.stop = False
+            self.on_open()
+            self.thread = Thread(target=_go)
+            self.thread.start()        
+            
+            self.hearbeat_time = time.time()
+            self.keepalive_thread = Thread(target=self._keepalive)
+            self.keepalive_thread.start()
+        
+        
+        def restart (self):
+            log.info ("restarting cbproWebsocketClient")
+            def _go():
+                self._connect()
+                self._listen()
+                self._disconnect()
+    
+            self._disconnect()
+            self.stop = False            
+            self.on_open()
+            self.thread = Thread(target=_go)
+            self.thread.start()              
+            
+        def _keepalive(self, interval=10):
+            while not self.stop:
+                #TODO: FIXME: potential race
+                if self.hearbeat_time < (time.time() - 30):
+                    #heartbeat failured
+                    log.error ("Heartbeat failed!! last_hb_time: %d cur_time: %d \
+                    potential websocket death, restarting"%(self.hearbeat_time, time.time()))
+                    if (self.stop):
+                        log.info ("websocket attempt close intentionally")
+                        break
+                    log.debug ("before ws restart. active thread count: %d"% threading.active_count())                     
+                    self.restart()
+                    log.debug ("after ws restart. active thread count: %d"% threading.active_count())                                         
+                    
+                time.sleep(interval)            
+            
         def on_open(self):
             #self.url = "wss://ws-feed.gdax.com/"
             self.message_count = 0
@@ -635,28 +688,22 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
                 log.debug ("Feed Thread: Match msg : IGNORED")
             elif (msg_type == 'heartbeat'):
                 log.debug ("Feed Thread: Heartbeat: IGNORED")
+                self.hearbeat_time = time.time()
             elif (msg_type == 'subscriptions'):          
                 log.debug ("Feed: Subscribed to WS feed %s"%(json.dumps(msg, indent=4, sort_keys=True)))
             elif (msg_type == 'error'):
                 log.error ("Feed Thread: Error Msg received on Feed msg: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
             else:
                 log.error ("Feed Thread: Unknown Feed Msg Type (%s)"%(msg['type']))
-    
-        def _keepalive(self, interval=30):
-            while not self.stop:
-                if self.ws:
-                    self.ws.ping('keepalive')
-                time.sleep(interval)
         #to fix the connection drop bug
         def _listen(self):
-            Thread(target=self._keepalive).start()
             while not self.stop:
                 try:
-    #                 start_t = 0
-    #                 if time.time() - start_t >= 30:
-    #                     # Set a 30 second ping to keep connection alive
-    #                     self.ws.ping("keepalive")
-    #                     start_t = time.time()
+                    start_t = 0
+                    if time.time() - start_t >= 30:
+                        # Set a 30 second ping to keep connection alive
+                        self.ws.ping("keepalive")
+                        start_t = time.time()
                     data = self.ws.recv()
                     msg = json.loads(data)
                 except ValueError as e:
@@ -664,5 +711,8 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
                 except Exception as e:
                     self.on_error(e)
                 else:
-                    self.on_message(msg) 
+                    self.on_message(msg)
+            if (self.stop): 
+                log.info ("ws listen finished. waiting to finish keepalive thread")
+                self.keepalive_thread.join()
 #EOF    
