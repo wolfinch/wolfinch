@@ -610,28 +610,35 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
             self.thread.start()        
             
             self.hearbeat_time = time.time()
-#             self.keepalive_thread = Thread(target=self._keepalive)
-#             self.keepalive_thread.start()
-        
+            self.keepalive_thread = Thread(target=self._keepalive)
+            self.keepalive_thread.start()
         
         def restart (self):
+            self.thread.join()
             log.info ("restarting cbproWebsocketClient")
             def _go():
                 self._connect()
                 self._listen()
                 self._disconnect()
     
-            self._disconnect()
-            self.stop = False            
+            self.stop = False          
+            self.ws_error = False            
             self.on_open()
             self.thread = Thread(target=_go)
-            self.thread.start()              
-            
+            self.thread.start()
+        def close(self):
+            log.info ("closing ws and keep alive threads")
+            self.stop = True
+            self.thread.join()
+            log.debug ("waiting to close alive threads")            
+            self.keepalive_thread.join()
+            log.debug ("closed ws and keep alive threads")     
+                    
         def _keepalive(self, interval=10):
             while not self.stop :
                 #TODO: FIXME: potential race
-                if self.hearbeat_time < (time.time() - 30):
-                    #heartbeat failured
+                if self.hearbeat_time + 30 < (time.time()):
+                    #heartbeat failed
                     log.error ("Heartbeat failed!! last_hb_time: %d cur_time: %d \
                     potential websocket death, restarting"%(self.hearbeat_time, time.time()))
                     if (self.stop):
@@ -674,7 +681,7 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
                     data = self.ws.recv()
                     msg = json.loads(data)
                     
-                    if self.time + 20 > time.time ():
+                    if self.time + 120 < time.time ():
                         log.critical (">>>>>>>>>>>>>>test: timeout exceed <<<<<<<<<<<<")
                         self.on_error(Exception(">>>>>>>>>>>>>>test: timeout exceed <<<<<<<<<<<<"))
                     
