@@ -193,10 +193,8 @@ class CBPRO (Exchange):
 #         global self.ws_client
         if (self.ws_client):
             log.debug("Closing WebSocket Client")
-            self.ws_client.close ()
-        
+            self.ws_client.close ()        
         log.critical ("exch being closed")
-        raise 
 
     def add_candle(self, market):
         # close the current candle period and start a new candle period
