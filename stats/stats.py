@@ -34,6 +34,7 @@ POSITION_STATS_FILE = "data/stats_positions_%s_%s.json"
 MARKET_STATS_FILE = "data/stats_market_%s_%s.json"
 STATS_INTERVAL = 10
 _stop = False
+g_stats_thread = None
 
 #TODO: FIXME: enhance. This is a super basic impl.
 # Dumping the whole order db doesn't scale in long run
@@ -77,13 +78,14 @@ def clear_stats():
     os.system("rm -rf data/stats_*")
     
 def start ():
+    global g_stats_thread
     if not sims.backtesting_on:    
-        t = Thread(target=_stats_run)
-        t.start()
+        g_stats_thread = Thread(target=_stats_run)
+        g_stats_thread.start()
     
 def stop ():
-    global _stop
+    global _stop, g_stats_thread
     _stop = True
-    
+    g_stats_thread.join()
 
 #EOF

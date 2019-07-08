@@ -66,7 +66,10 @@ def OldMonk_end():
     exchanges.close_exchanges ()
     
     # stop stats thread
+    log.info ("waiting to stop stats thread")
     stats.stop()
+    log.info ("all cleanup done.")
+    
 
 def oldmonk_main ():
     """
