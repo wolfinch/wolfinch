@@ -141,8 +141,6 @@ class CBPRO (Exchange):
         self.candle_interval = int(self.gdax_conf.get('backfill_interval'))
         log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
                         pprint.pformat(self.gdax_products, 4), pprint.pformat(self.gdax_accounts, 4)))
-            
-        
         
     def start_wsfeed(self):
         # register websocket feed 
@@ -678,11 +676,6 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
                         start_t = time.time()
                     data = self.ws.recv()
                     msg = json.loads(data)
-                    
-                    if self.time + 120 < time.time ():
-                        log.critical (">>>>>>>>>>>>>>test: timeout exceed <<<<<<<<<<<<")
-                        self.on_error(Exception(">>>>>>>>>>>>>>test: timeout exceed <<<<<<<<<<<<"))
-                    
                 except ValueError as e:
                     self.on_error(e)
                 except Exception as e:
