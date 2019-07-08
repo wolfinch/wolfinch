@@ -22,11 +22,11 @@ exchanges:
 
 stop_loss:
    enabled: true
-   smart: false #track price movement and update stop_loss
+   smart: true #track price movement and update stop_loss
    rate : 3 #-3%
   
 take_profit:
-   enabled: false
+   enabled: true
    rate: 10 # 10percent
 
 #decision engine

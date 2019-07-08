@@ -70,9 +70,9 @@ class Position ():
                      
     def get_stop_loss(self):
         return self.stop_loss      
-    def set_take_profit(self, market_rate, tp_rate):
-        self.take_profit = Decimal(round(market_rate*(1 + tp_rate*Decimal(.01)), 8))
-        log.debug("setting take_profit(%f) for position. rate:%d"%(self.take_profit, tp_rate))                        
+    def set_take_profit(self, take_profit):
+        self.take_profit = take_profit
+        log.debug("setting take_profit(%f) for position."%(self.take_profit))                        
     def get_take_profit(self):
         return self.take_profit        
     def __str__(self):
@@ -112,7 +112,10 @@ class OrderBook():
         self.closed_positions = []
         
         #stop loss handling
-        self.sl_dict = sorteddict.SortedDict()        
+        self.sl_dict = sorteddict.SortedDict()
+        
+        #take profit handling 
+        self.tp_dict = sorteddict.SortedDict()        
         
         #trade Reqs
         self.pending_trade_req = []  # TODO: FIXME: jork: this better be a nice AVL tree of sort
@@ -132,9 +135,9 @@ class OrderBook():
 #         log.debug ("open_position order: %s"%(buy_order))
         position = Position(buy=buy_order)
         if self.market.tradeConfig["stop_loss_enabled"]:
-            self.add_stop_for_position(position, buy_order.get_price(), self.market.tradeConfig["stop_loss_rate"])
+            self.add_stop_loss_position(position, buy_order.get_price(), self.market.tradeConfig["stop_loss_rate"])
         if self.market.tradeConfig["take_profit_enabled"]:
-            position.set_take_profit(buy_order.get_price(), self.market.tradeConfig["take_profit_rate"])
+            self.add_take_profit_position(position, buy_order.get_price(), self.market.tradeConfig["take_profit_rate"])
                 
         self.all_positions.append(position)
         self.open_positions.append(position)        
@@ -147,14 +150,25 @@ class OrderBook():
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
         pos = None
         if len(self.open_positions):
-            pos = self.pop_stop_loss_position()
+            if self.market.tradeConfig["stop_loss_enabled"]:
+                pos = self.pop_stop_loss_position()
+                log.debug ("Found closable position from _stop_loss_ pool. pos: %s"%(str(pos)))                                    
             if pos == None:
-                pos = self.open_positions.pop()
+                try:
+                    pos = self.open_positions.pop()
+                except IndexError:
+                    log.error ("unable to find open position to close")
+                    return None
+                log.debug ("Found closable position from _regular_ pool. pos: %s"%(str(pos)))
             else:
                 self.open_positions.remove(pos)
             if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
                 log.critical("Position already close pending \npos:%s"%pos)
                 raise ("Duplicate close pending position")            
+            
+            if self.market.tradeConfig["take_profit_enabled"]:
+                self.pop_take_profit_position(pos)
+                  
             self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
 #         log.debug ("\n\n\n***get_closable_position: open(%d) closed(%d) close_pend(%d) \n pos: %s"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), pos))
@@ -203,6 +217,8 @@ class OrderBook():
             position.sell = None
             self.close_pending_positions.pop(id, None)
             self.open_positions.append(position)
+            if self.market.tradeConfig["stop_loss_enabled"]:
+                self.add_stop_loss_position(position, position.buy_order.get_price(), self.market.tradeConfig["stop_loss_rate"])            
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id)) 
     def close_position (self, sell_order):
@@ -224,7 +240,7 @@ class OrderBook():
 #         log.debug ("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)\n pos:%s"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))              
             
-    def add_stop_for_position (self, position, market_rate, sl_rate):
+    def add_stop_loss_position (self, position, market_rate, sl_rate):
         stop_price = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 2))
         
         position.set_stop_loss(stop_price)
@@ -234,99 +250,121 @@ class OrderBook():
             pos_list = []
             self.sl_dict[stop_price] = pos_list
         pos_list.append(position)
-        log.critical ("\n\n>>>>>>>>>>>: %s"%(self.sl_dict))
         
         
-    def add_stop_for_position_list (self, stop_price, position_l):
-        
+    def add_stop_loss_position_list (self, stop_price, position_l):
         [pos.set_stop_loss (stop_price) for pos in position_l]
-        
         pos_list = self.sl_dict.get(stop_price, None)
         if pos_list == None:
             pos_list = []
-            self.tree[stop_price] = pos_list
+            self.sl_dict[stop_price] = pos_list
         pos_list+=position_l      
     
     def remove_all_positions_at_stop (self, stop_price):
-        return self.sl_dict.pop(stop_price, None)
+        return self.sl_dict.pop(stop_price, None)        
            
     def smart_stop_loss_update_positions(self, market_rate, sl_rate):
         new_sl = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 2))
         
-        for key in self.sl_dict.irange(minimum=new_sl, inclusive=(False, False)):
-            pos_list = self.sl_dict.pop(key)
-            self.add_stop_for_position_list (new_sl, pos_list)
+        key_list = list (self.sl_dict.irange(minimum=new_sl, inclusive=(False, False)))
         
-#         return sl_pos_list
-#         for pos in self.open_positions:
-#             pos.update_stop_loss(market_rate, sl_rate)
-#             if pos.update_stop_loss(market_rate, sl_rate):
-#                 log.critical ("smart updated stop_loss(%f) for position market_rate(%f)"%(pos.get_stop_loss(), market_rate))
-
-    def pop_stop_loss_position (self):
+        for key in key_list:
+            pos_list = self.sl_dict.pop(key)
+            self.add_stop_loss_position_list (new_sl, pos_list)
+        
+    def pop_stop_loss_position (self, pos=None):
         try:
-            sl_price, pos_list = self.sl_dict.peekitem(0)
-            log.critical ("pop position at sl_price:%d"%(sl_price))
+            sl_price, pos_list = 0, None
+            if pos :
+                sl_price = pos.get_stop_loss()
+                pos_list = self.sl_dict.get(sl_price)
+            else:
+                sl_price, pos_list = self.sl_dict.peekitem(0)
+#             log.debug ("pop position at sl_price:%d"%(sl_price))
             if len(pos_list):
-                return pos_list.pop()
+                if pos:
+                    pos_list.remove(pos)
+                else:
+                    pos = pos_list.pop()
+                if len (pos_list) == 0:
+                    del(self.sl_dict[sl_price])                        
+                return pos    
         except IndexError:
             return None
     def get_stop_loss_positions(self, market_rate):
         sl_pos_list = []
         
-        k = self.sl_dict.keys()
-        for kk in k:
-            log.critical ("\n\n<<<<<<<<: %s"%(str(kk)))
+        key_list = list(self.sl_dict.irange(minimum=market_rate, inclusive=(True, True)))        
+#         log.critical ("slPrice: %d"%market_rate)
+#         log.critical ("key_list :%s"%(key_list))
         
-        log.critical ("slPrice: %d"%market_rate)
-        key_list = []
-        for key in self.sl_dict.irange(minimum=market_rate, inclusive=(True, True)):
-#             pos_list = self.sl_dict.pop(key)
-            pos_list = self.sl_dict[key]
-            key_list.append(key)
-            log.critical ("\n\nSL Key <<<<<<<<: %s len pos: %d pos: %s"%(str(kk), len(pos_list), str(pos_list)))                        
+        for key in key_list:
+            pos_list = self.sl_dict.pop(key)
             sl_pos_list += pos_list
             for pos in pos_list:
-                self.open_positions.remove(pos)
-                log.critical ("POS: i: %s"%(str(pos)))
-                
+                self.open_positions.remove(pos)                
                 if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
                     log.critical("Position already close pending \npos:%s"%pos)
                     raise ("Duplicate close pending position")            
                 self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
+                # remove pos from take profit points
+                self.pop_take_profit_position(pos)
+        self.market.num_stop_loss_hit += len(sl_pos_list)
         
-        log.critical ("key_list :%s"%(key_list))
-        for key in key_list:
-            del(self.sl_dict[key])
         return sl_pos_list
-#         
-#         sl_pos_list = []
-# #         return sl_pos_list
-#         for pos in self.open_positions[:]:
-#             if pos.get_stop_loss() >= market_rate:
-#                 log.debug ("Found a position hit stop_loss(%f) market_rate(%f)"%(pos.get_stop_loss(),market_rate))
-#                 self.market.num_stop_loss_hit += 1
-#                 sl_pos_list.append(pos)
-#                 self.open_positions.remove(pos)
-#                 if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
-#                     log.critical("Position already close pending \npos:%s"%pos)
-#                     raise ("Duplicate close pending position")            
-#                 self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
-#         return sl_pos_list
+
     def get_take_profit_positions(self, market_rate):
         tp_pos_list = []
-        for pos in self.open_positions[:]:
-            if pos.get_take_profit() <= market_rate:
-                log.info ("Found a position hit take_profit")
-                self.market.num_take_profit_hit += 1
-                tp_pos_list.append(pos)
-                self.open_positions.remove(pos)
+        
+        key_list = list(self.tp_dict.irange(maximum=market_rate, inclusive=(True, True)))        
+        
+        for key in key_list:
+            pos_list = self.tp_dict.pop(key)
+            tp_pos_list += pos_list
+            for pos in pos_list:
+                self.open_positions.remove(pos)                
                 if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
                     log.critical("Position already close pending \npos:%s"%pos)
                     raise ("Duplicate close pending position")            
                 self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
+                # remove pos from take profit points
+                self.pop_stop_loss_position(pos)                
+                
+        self.market.num_take_profit_hit += len(tp_pos_list)
         return tp_pos_list
             
+            
+    def add_take_profit_position(self, position, market_rate, tp_rate):
+        new_tp = Decimal(round(market_rate*(1 + tp_rate*Decimal(.01)), 2))
+        
+        position.set_take_profit(new_tp)
+        pos_list = self.tp_dict.get(new_tp, None)
+        if pos_list == None:
+            pos_list = []
+            self.tp_dict[new_tp] = pos_list
+        pos_list.append(position)
+        log.debug ("add take profit (%d) market_rate:(%d)"%(new_tp, market_rate))
+        
+    def pop_take_profit_position (self, pos=None):
+        try:
+            tp_price, pos_list = 0, None
+            if pos :
+                tp_price = pos.get_take_profit()
+                pos_list = self.tp_dict.get(tp_price)
+            else:
+                tp_price, pos_list = self.tp_dict.peekitem(0)
+#             log.debug ("pop position at sl_price:%d"%(sl_price))
+            if len(pos_list):
+                if pos:
+                    pos_list.remove(pos)
+                else:
+                    pos = pos_list.pop()
+                if len (pos_list) == 0:
+                    del(self.tp_dict[tp_price])                        
+                return pos    
+        except IndexError:
+            return None        
+                
     def add_or_update_pending_buy_order(self, order):
         id = uuid.UUID(order.id)
         if not self.pending_buy_orders_db.get(id):

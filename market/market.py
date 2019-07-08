@@ -649,7 +649,7 @@ class Market:
                                        Price=round(Decimal(0), 8),
                                        Stop=0, id=uuid.UUID(position.buy.id)))
                 else:
-                    log.critical ("Unable to generate SELL request for signal (%d)."
+                    log.error ("Unable to generate SELL request for signal (%d)."
                      "Unable to get open positions to sell"%(signal))
                     self.num_sell_req_reject += 1                                
                     return trade_req_l
@@ -707,7 +707,7 @@ class Market:
                 self.market_strategies_data.append({})
                 #log.debug('ohlc: %s'%(candle))
                 log.debug ("retrieving candle:%s "%str(candle))
-        log.debug ("Imported Historic rates #num Candles (%s)", len(self.market_indicators_data))
+        log.critical ("Imported Historic rates #num Candles (%s)", len(self.market_indicators_data))
         
         if local_only:
             log.info ("import local only, skipping history import from exchange.")
@@ -804,21 +804,21 @@ class Market:
         # do not import candles from exch while backtesting.
         self._import_historic_candles(local_only=sims.backtesting_on)
         
-        log.info ("import complete")
+        log.critical ("import complete")
         
         if sims.import_only:
             log.info ("Import only")
             return
         
         log.info ("calculating historic indicators")
-        log.debug ("%f : _calculate_historic_indicators before "%(time.time()))
+        log.critical ("%f : _calculate_historic_indicators before "%(time.time()))
         
         self._calculate_historic_indicators()
-        log.debug ("%f : _calculate_historic_indicators after "%(time.time()))
+        log.critical ("%f : _calculate_historic_indicators after "%(time.time()))
         
-        log.info ("calculating historic strategies")
+        log.critical ("calculating historic strategies")
         self._process_historic_strategies()
-        log.debug ("%f : _process_historic_strategies aafter "%(time.time()))
+        log.critical ("%f : _process_historic_strategies aafter "%(time.time()))
         
         num_candles = len(self.market_indicators_data)
         self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
