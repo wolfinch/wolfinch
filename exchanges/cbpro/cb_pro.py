@@ -136,7 +136,7 @@ class CBPRO (Exchange):
                         self.gdax_accounts[account['currency']] = account
                         break
 
-        self.start_webfeed ()
+        self.start_wsfeed ()
 
         self.candle_interval = int(self.gdax_conf.get('backfill_interval'))
         log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
@@ -144,7 +144,7 @@ class CBPRO (Exchange):
             
         
         
-    def start_webfeed(self):
+    def start_wsfeed(self):
         # register websocket feed 
         self.ws_client = self._register_feed (api_key=self.key, api_secret=self.b64secret,
                                                api_passphrase=self.passphrase, url=self.feed_base)
@@ -597,19 +597,21 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
         name = EXHANGE_NAME
         def start(self):
             log.info ("starting cbproWebsocketClient")
+            
             def _go():
                 self._connect()
                 self._listen()
                 self._disconnect()
     
             self.stop = False
+            self.ws_error = False            
             self.on_open()
             self.thread = Thread(target=_go)
             self.thread.start()        
             
             self.hearbeat_time = time.time()
-            self.keepalive_thread = Thread(target=self._keepalive)
-            self.keepalive_thread.start()
+#             self.keepalive_thread = Thread(target=self._keepalive)
+#             self.keepalive_thread.start()
         
         
         def restart (self):
@@ -626,7 +628,7 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
             self.thread.start()              
             
         def _keepalive(self, interval=10):
-            while not self.stop:
+            while not self.stop :
                 #TODO: FIXME: potential race
                 if self.hearbeat_time < (time.time() - 30):
                     #heartbeat failured
@@ -653,6 +655,39 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
 
         def on_close(self):
             print("\n-- Goodbye! --")
+            
+        def on_error(self, e, data=None):
+            self.error = e
+            self.ws_error = True
+            log.critical('error: %s - data: %s'%(e, data))
+               
+        #to fix the connection drop bug
+        def _listen(self):
+            self.time = time.time()
+            while not self.stop and not self.ws_error:
+                try:
+                    start_t = 0
+                    if time.time() - start_t >= 30:
+                        # Set a 30 second ping to keep connection alive
+                        self.ws.ping("keepalive")
+                        start_t = time.time()
+                    data = self.ws.recv()
+                    msg = json.loads(data)
+                    
+                    if self.time + 20 > time.time ():
+                        log.critical (">>>>>>>>>>>>>>test: timeout exceed <<<<<<<<<<<<")
+                        self.on_error(Exception(">>>>>>>>>>>>>>test: timeout exceed <<<<<<<<<<<<"))
+                    
+                except ValueError as e:
+                    self.on_error(e)
+                except Exception as e:
+                    self.on_error(e)
+                else:
+                    self.on_message(msg)
+#             if (self.stop): 
+#                 log.info ("ws listen finished. waiting to finish keepalive thread")
+#                 self.keepalive_thread.join()
+                            
         def feed_enQ_msg (self, msg):
             #print("Feed MSG: %s"%(json.dumps(msg, indent=4, sort_keys=True)))     
             msg_type = msg.get('type') 
@@ -695,24 +730,4 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
                 log.error ("Feed Thread: Error Msg received on Feed msg: %s"%(json.dumps(msg, indent=4, sort_keys=True)))
             else:
                 log.error ("Feed Thread: Unknown Feed Msg Type (%s)"%(msg['type']))
-        #to fix the connection drop bug
-        def _listen(self):
-            while not self.stop:
-                try:
-                    start_t = 0
-                    if time.time() - start_t >= 30:
-                        # Set a 30 second ping to keep connection alive
-                        self.ws.ping("keepalive")
-                        start_t = time.time()
-                    data = self.ws.recv()
-                    msg = json.loads(data)
-                except ValueError as e:
-                    self.on_error(e)
-                except Exception as e:
-                    self.on_error(e)
-                else:
-                    self.on_message(msg)
-            if (self.stop): 
-                log.info ("ws listen finished. waiting to finish keepalive thread")
-                self.keepalive_thread.join()
 #EOF    
