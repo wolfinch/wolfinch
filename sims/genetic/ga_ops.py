@@ -150,7 +150,6 @@ def police_tradingcfg_gen (t_cfg):
 def tradingcfgGenerator ():
     cfg_gen = {}
     
-    print "tC %s"%(TradingConfig)
     for param_key in TradingConfig.iterkeys():
         cfg_gen [param_key] = genParamVal(TradingConfig, param_key)
         

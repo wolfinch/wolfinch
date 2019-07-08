@@ -281,14 +281,14 @@ class OrderBook():
             else:
                 sl_price, pos_list = self.sl_dict.peekitem(0)
 #             log.debug ("pop position at sl_price:%d"%(sl_price))
-            if len(pos_list):
+            if pos_list and len(pos_list):
                 if pos:
                     pos_list.remove(pos)
                 else:
                     pos = pos_list.pop()
                 if len (pos_list) == 0:
                     del(self.sl_dict[sl_price])                        
-                return pos    
+            return pos    
         except IndexError:
             return None
     def get_stop_loss_positions(self, market_rate):
@@ -354,14 +354,14 @@ class OrderBook():
             else:
                 tp_price, pos_list = self.tp_dict.peekitem(0)
 #             log.debug ("pop position at sl_price:%d"%(sl_price))
-            if len(pos_list):
+            if pos_list and len(pos_list):
                 if pos:
                     pos_list.remove(pos)
                 else:
                     pos = pos_list.pop()
                 if len (pos_list) == 0:
                     del(self.tp_dict[tp_price])                        
-                return pos    
+            return pos    
         except IndexError:
             return None        
                 
