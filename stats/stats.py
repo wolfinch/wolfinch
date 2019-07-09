@@ -86,6 +86,7 @@ def start ():
 def stop ():
     global _stop, g_stats_thread
     _stop = True
-    g_stats_thread.join()
+    if g_stats_thread:
+        g_stats_thread.join()
 
 #EOF

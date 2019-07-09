@@ -21,13 +21,13 @@ exchanges:
 #    - interval : '5m'  #5m 
 
 stop_loss:
-   enabled: true
-   smart: true #track price movement and update stop_loss
+   enabled: false
+   smart: false #track price movement and update stop_loss
    rate : 3 #-3%
   
 take_profit:
-   enabled: true
-   rate: 10 # 10percent
+   enabled: false
+   rate: 19 # 10percent
 
 #decision engine
 
@@ -39,9 +39,9 @@ decision:
    model    : simple
    config   :
       strategy : EMA_RSI
-      params : {'rsi': 64, 'ema_s': 30, 'period': 38, 'ema_m': 200, 'ema_l': 120, 'ema_ll': 60}
+      params : {'rsi': 64, 'ema_s': 44, 'period': 38, 'ema_m': 184, 'ema_l': 156, 'ema_ll': 64}
       #Hall of Fame
-      #EMA_RSI: {'rsi': 64, 'ema_s': 30, 'period': 38, 'ema_m': 200, 'ema_l': 120, 'ema_ll': 60}
+      #EMA_RSI: {'rsi': 64, 'ema_s': 44, 'period': 38, 'ema_m': 184, 'ema_l': 156, 'ema_ll': 64}
       #EMA_DEV{'ema_sell_s': 80, 'treshold_pct_buy_l': 1.12, 'ema_buy_s': 125, 'period': 170, 'treshold_pct_sell_s': 0.00, 'ema_buy_l': 30, 'treshold_pct_sell_l': 1.86, 'treshold_pct_buy_s': 0.21, 'ema_sell_l': 190}      
 # EMA_DEV ~buy n hold
 #"MINMAX" #<buy hold
@@ -53,12 +53,12 @@ simulator:
    enabled : true
 
 genetic_optimizer: 
-   enabled : false
+   enabled : true
    N_POP : 1000
    N_GEN : 100
    N_MP : 10
    config   :
-      strategy : EMA_RSI   
+      strategy : EMA_DEV  
       trading : {}
 #EOF
 
