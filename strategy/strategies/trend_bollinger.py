@@ -18,6 +18,11 @@
 from strategy_base import Strategy
 
 class TREND_BOLLINGER(Strategy):
+    config = {
+        'period' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
+        'upper_bound_pct' : {'default': 0, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},
+        'lower_bound_pct' : {'default': 0, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},      
+        }       
     def __init__ (self, name, period=50, upper_bound_pct=0, lower_bound_pct=0):     
         self.name = name
         self.period = period

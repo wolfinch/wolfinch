@@ -20,6 +20,12 @@ from decimal import Decimal
 from strategy_base import Strategy
 
 class MINMAX(Strategy):
+    config = {
+        'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
+        'timeout_buy' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
+        'timeout_sell' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},      
+        }    
+    
     def __init__ (self, name, period=120,
                   timeout_buy = 50, timeout_sell = 50):     
         self.name = name

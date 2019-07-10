@@ -26,9 +26,18 @@ from strategy_base import Strategy
 # log.setLevel(log.CRITICAL)
 
 class TRIX_RSI(Strategy):
-    def __init__ (self, name, period=80, rsi_overbought_level=70, rsi_oversold_level=30):     
+    config = {
+        'period' : {'default': 80, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
+        'rsi' : {'default': 21, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 2 }},
+        'trix' : {'default': 30, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 2 }},        
+        'rsi_overbought_level' : {'default': 70, 'var': {'type': int, 'min': 50, 'max': 100, 'step': 2 }},
+        'rsi_oversold_level' : {'default': 30, 'var': {'type': int, 'min': 20, 'max': 70, 'step': 2 }},      
+        }       
+    def __init__ (self, name, period=80, rsi=21, trix=30, rsi_overbought_level=70, rsi_oversold_level=30):     
         self.name = name
         self.period = period
+        self.rsi = rsi
+        self.trix = trix        
         self.rsi_overbought = rsi_overbought_level
         self.rsi_oversold = rsi_oversold_level
     
@@ -38,8 +47,8 @@ class TRIX_RSI(Strategy):
         self.acted_on_trend = False
         
         #Configure indicators
-        self.set_indicator("RSI", {21})
-        self.set_indicator("TRIX", {30})
+        self.set_indicator("RSI", {self.rsi})
+        self.set_indicator("TRIX", {self.trix})
                 
     def generate_signal (self, candles):
         '''
@@ -51,8 +60,8 @@ class TRIX_RSI(Strategy):
         if len_candles < self.period:
             return 0
         
-        rsi21 = self.get_indicator_current(candles, 'RSI', 21)
-        trix30 = round(self.get_indicator_current(candles, 'TRIX', 30), 2)
+        rsi21 = self.get_indicator_current(candles, 'RSI', self.rsi)
+        trix30 = round(self.get_indicator_current(candles, 'TRIX', self.trix), 2)
 
         if trix30 > 0:
             #'up' trend

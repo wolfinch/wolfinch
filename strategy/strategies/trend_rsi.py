@@ -20,6 +20,16 @@ from strategy_base import Strategy
 import numpy as np
 
 class TREND_RSI(Strategy):
+    config = {
+        'period' : {'default': 20, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 2 }},
+        'min_periods' : {'default': 52, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 2 }},
+        'rsi_periods' : {'default': 14, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 2 }},    
+        'oversold_rsi' : {'default': 30, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 2 }},
+        'overbought_rsi' : {'default': 82, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 2 }},
+        'rsi_recover' : {'default': 3, 'var': {'type': int, 'min': 1, 'max': 10, 'step': 1 }},
+        'rsi_drop' : {'default': 0, 'var': {'type': int, 'min': 1, 'max': 10, 'step': 1 }},
+        'rsi_divisor' : {'default': 2, 'var': {'type': int, 'min': 1, 'max': 10, 'step': 1 }},          
+        }       
     def __init__ (self, name, period=20,
                   min_periods=52, rsi_periods=14, oversold_rsi=30, overbought_rsi=82,
                   rsi_recover=3, rsi_drop=0, rsi_divisor=2):
@@ -50,7 +60,7 @@ class TREND_RSI(Strategy):
         self.rsi_high = 0
         
         #CONFIGURE indicators
-        self.set_indicator("RSI", {14})
+        self.set_indicator("RSI", {self.rsi_periods})
         self.set_indicator("close")
                 
     def generate_signal (self, candles):
@@ -66,7 +76,7 @@ class TREND_RSI(Strategy):
 #         rsi = np.array(map(lambda c: c['RSI14'], candles[:]))
 #         cur_rsi = rsi[-1]
         
-        cur_rsi = self.get_indicator_current(candles, 'RSI', 14)
+        cur_rsi = self.get_indicator_current(candles, 'RSI', self.rsi_periods)
         
         if cur_rsi == np.NaN:
             return 0

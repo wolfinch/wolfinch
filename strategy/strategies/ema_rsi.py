@@ -21,6 +21,7 @@ from strategy_base import Strategy
 import numpy as np
 
 class EMA_RSI(Strategy):
+    #HoF -       #EMA_RSI: {'rsi': 64, 'ema_s': 44, 'period': 38, 'ema_m': 184, 'ema_l': 156, 'ema_ll': 64}
     config = {
         'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
         'ema_s' : {'default': 5, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
