@@ -40,15 +40,12 @@ from decision import Decision
 import decision
 import db
 import sims
-import indicators
 import strategy
-import stats
 
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 
 from decimal import Decimal
-import db
 
 Base = declarative_base()
 
@@ -861,7 +858,6 @@ class Market:
         now = time.time()
         if now >= self.cur_candle_time + self.candle_interval:
             self.exchange.add_candle (self)
-            stats.stats_update_order_bulk(self)
               
         #1.update market states
         if (self.order_book.book_valid == False):

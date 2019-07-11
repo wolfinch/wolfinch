@@ -107,6 +107,7 @@ def process_market (market):
         market.consume_trade_signal (signal)
         if (sims.simulator_on):
             sims.market_simulator_run (market)
+        stats.stats_update_order_bulk(market)            
     
 def clean_states ():
     log.info ("Clearing Db")
