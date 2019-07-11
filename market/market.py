@@ -52,7 +52,7 @@ import db
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 OldMonk_market_list = []
 TradingConfig = None
@@ -946,7 +946,7 @@ class Market:
         #get manual trade reqs if any
         trade_req_list = self._get_manual_trade_req ()
         # Now generate auto trade req list
-        log.debug ("Trade Signal strength:"+str(signal))
+        log.info ("Trade Signal strength:"+str(signal))
         trade_req_list += self._generate_trade_request( signal)
         #validate the trade Req
         if (len(trade_req_list)):

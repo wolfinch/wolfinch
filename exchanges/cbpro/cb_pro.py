@@ -25,7 +25,7 @@ from exchanges import Exchange
 
 EXHANGE_NAME = "CBPRO"
 log = getLogger (EXHANGE_NAME)
-log.setLevel(log.DEBUG)
+log.setLevel(log.INFO)
 
 
 #CBPRO CONFIG FILE
@@ -197,7 +197,7 @@ class CBPRO (Exchange):
     def add_candle(self, market):
         # close the current candle period and start a new candle period
         candle = OHLC(long(time.time()), market.O, market.H, market.L, market.get_market_rate(), market.V)
-        log.debug ("New candle identified %s"%(candle))        
+        log.info ("New candle identified %s"%(candle))
         market.add_new_candle (candle)   
    
     def _normalized_order (self, order):
