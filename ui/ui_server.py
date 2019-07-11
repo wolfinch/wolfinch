@@ -44,7 +44,7 @@ def server_main ():
     @app.route('/js/<path:path>')
     def send_js(path):
         return send_from_directory('js', path)
-    @app.route('/')
+    @app.route('/oldmonk')
     def root():
         return app.send_static_file('index.html')
     @app.route('/api/order_data')
@@ -73,7 +73,7 @@ def server_main ():
     log.debug("static_dir: %s root: %s"%(static_file_dir, app.root_path))
     
     log.debug ("starting server..")
-    app.run(host='0.0.0.0', debug=False)
+    app.run(host='0.0.0.0', port=80, debug=False)
     log.error ("server finished!")
         
 def arg_parse ():
