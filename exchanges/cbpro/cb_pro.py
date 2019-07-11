@@ -568,8 +568,8 @@ class CBPRO (Exchange):
     
     def sell (self, trade_req) :
         #TODO: FIXME: Implement Market/STOP orders        
-        log.debug ("SELL - Placing Order on exchange --" )    
-        order = self.auth_client.buy(product_id=trade_req.product, order_type=trade_req.type,
+        log.debug ("SELL - Placing Order on exchange --" )
+        order = self.auth_client.sell(product_id=trade_req.product, order_type=trade_req.type,
                         price=trade_req.price, #USD
                         size=trade_req.size, #BTC
                         post_only='True'

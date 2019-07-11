@@ -42,7 +42,7 @@ tradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'sto
                  "take_profit_enabled": False, 'take_profit_rate': 0} 
 
 # global Variables
-MAIN_TICK_DELAY    = 10        # 10 Sec
+MAIN_TICK_DELAY    = 0.500 #500 milli
 
 def OldMonk_init(decisionConfig, tradingConfig):
     

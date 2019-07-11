@@ -42,6 +42,7 @@ import db
 import sims
 import indicators
 import strategy
+import stats
 
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
@@ -52,7 +53,7 @@ import db
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.INFO)
+log.setLevel(log.CRITICAL)
 
 OldMonk_market_list = []
 TradingConfig = None
@@ -256,6 +257,7 @@ class Market:
         self.market_indicators_data     = []
         self.market_strategies_data     = []
         self.cur_candle_time = 0
+        self.cur_candle_vol = 0
         self.num_candles        = 0
         self.candlesDb = db.CandlesDb (OHLC, self.exchange_name, self.product_id)
 
@@ -274,7 +276,8 @@ class Market:
 #                     self.fund.initial_value, self.fund.fund_liquidity_percent, self.start_market_rate))
         return """
 {
-"exchange_name": "%s", "product_id": "%s","name": "%s",
+"exchange_name": "%s", "product_id": "%s","name": "%s", "current_market_rate": %d,
+"cur_candle_time": %d, "cur_candle_vol": %f, "num_candles": %d,
 "num_buy_req": %s, "num_buy_req_reject": %s,
 "num_sell_req": %s, "num_sell_req_reject": %s,
 "num_buy_order": %s, "num_buy_order_success": %s, "num_buy_order_failed": %s,                   
@@ -286,7 +289,8 @@ class Market:
 "asset":%s,
 "order_book":%s
 }"""%(
-                self.exchange_name, self.product_id, self.name, 
+                self.exchange_name, self.product_id, self.name, self.current_market_rate,
+                self.cur_candle_time, self.cur_candle_vol, self.num_candles, 
                 self.num_buy_req, self.num_buy_req_reject,
                 self.num_sell_req, self.num_sell_req_reject,
                 self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed, 
@@ -857,6 +861,7 @@ class Market:
         now = time.time()
         if now >= self.cur_candle_time + self.candle_interval:
             self.exchange.add_candle (self)
+            stats.stats_update_order_bulk(self)
               
         #1.update market states
         if (self.order_book.book_valid == False):
@@ -882,7 +887,8 @@ class Market:
         self._calculate_all_indicators(self.num_candles)
         self._process_all_strategies(self.num_candles)
         self.num_candles += 1
-        self.cur_candle_time = candle.time   
+        self.cur_candle_time = candle.time
+        self.cur_candle_vol = candle.volume
         
         
         # bit of conservative approach for smart-SL. update SL only on candle time

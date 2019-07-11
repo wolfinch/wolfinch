@@ -506,7 +506,7 @@ class OrderBook():
             raise Exception("Invalid order :%s" % (order))            
             return None
 #         log.debug ("Order: %s\n"%(str(order)))
-        stats.stats_update (self.market, order)
+        stats.stats_update_order (self.market, order)
         return order
     
     ######### L2 Order book for Exchange, product ########

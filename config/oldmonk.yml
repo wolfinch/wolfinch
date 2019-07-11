@@ -53,7 +53,7 @@ decision:
 #TREND_BOLLINGER"
 #TREND_RSI"
 simulator:
-   enabled : true
+   enabled : false
 
 genetic_optimizer: 
    enabled : false
@@ -61,7 +61,7 @@ genetic_optimizer:
    N_GEN : 100
    N_MP : 10
    config   :
-      strategy : TREND_RSI  
+      strategy : EMA_DEV  
       trading : {}
 #EOF
 

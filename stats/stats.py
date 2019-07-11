@@ -41,8 +41,8 @@ g_stats_thread = None
 
 # Stats Q routines
 statsQ = Queue.Queue()
-def _stats_enQ (market, msg):
-    obj = {"market":market, "msg":msg}
+def _stats_enQ (stats_type, market=None, msg=None):
+    obj = (stats_type, market, msg)
     statsQ.put(obj)
     
 def _stats_deQ (timeout):
@@ -61,19 +61,27 @@ def _stats_run ():
     while (not _stop):
         msg = _stats_deQ (STATS_INTERVAL)
         if msg != None:
-            m = msg['market']
-            with open(MARKET_STATS_FILE%(m.exchange_name, m.product_id), "w") as fd:
-                st = str(m)
+            _process_stats_update(msg)
+            
+def _process_stats_update(stats_obj):
+    stats_type, market, msg = stats_obj[0], stats_obj[1], stats_obj[2]
+    if stats_type == "order_book_incr" or stats_type == "order_book_bulk" :
+            with open(MARKET_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
+                st = str(market)
                 fd.write(st)              
-            with open(POSITION_STATS_FILE%(m.exchange_name, m.product_id), "w") as fd:
-                m.order_book.dump_positions(fd)            
-                
+            with open(POSITION_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
+                market.order_book.dump_positions(fd)         
+    
 ######### ******** MAIN ****** #########
                 
-def stats_update(market, order):
+def stats_update_order(market, order):
     if not sims.backtesting_on:
-        _stats_enQ(market, order)
+        _stats_enQ("order_book_incr", market, order)
 
+def stats_update_order_bulk(market):
+    if not sims.backtesting_on:
+        _stats_enQ("order_book_bulk", market)    
+    
 def clear_stats():
     os.system("rm -rf data/stats_*")
     

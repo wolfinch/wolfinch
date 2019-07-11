@@ -20,8 +20,11 @@ from decimal import Decimal
 from strategy_base import Strategy
 
 class EMA_DEV(Strategy):
-    #HoF :       #EMA_DEV{'ema_sell_s': 80, 'rsi': 90, 'treshold_pct_buy_l': 0.23, 'ema_buy_s': 130, 'period': 190, 'ema_sell_l': 85, 'ema_buy_l': 115, 'treshold_pct_sell_l': 1.08, 'treshold_pct_buy_s': 1.02, 'treshold_pct_sell_s': 0.65}
-
+    #HoF :       #EMA_DEV{'strategy_cfg': {'ema_sell_s': 45, 'timeout_sell': 66, 'rsi': 34,
+    # 'treshold_pct_buy_l': 1.71, 'ema_buy_s': 135, 'timeout_buy': 2, 'period': 110, 'treshold_pct_sell_s': 0.38,
+    # 'ema_buy_l': 75, 'treshold_pct_sell_l': 0.49, 'treshold_pct_buy_s': 1.42, 'ema_sell_l': 95},
+    # 'trading_cfg': {'take_profit_enabled': True, 'stop_loss_smart_rate': False, 'take_profit_rate': 20,
+    # 'stop_loss_enabled': False, 'stop_loss_rate': 0}}
     config = {
         'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'ema_buy_s' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
