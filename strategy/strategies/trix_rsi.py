@@ -25,6 +25,8 @@ from strategy_base import Strategy
 # log = getLogger ('decision_simple')
 # log.setLevel(log.CRITICAL)
 
+# Hof 
+# {'strategy_cfg': {'rsi_oversold_level': 66, 'period': 76, 'trix': 10, 'rsi': 24, 'rsi_overbought_level': 78}, 'trading_cfg': {'take_profit_rate': 0, 'stop_loss_smart_rate': False, 'take_profit_enabled': False, 'stop_loss_enabled': False, 'stop_loss_rate': 0}}
 class TRIX_RSI(Strategy):
     config = {
         'period' : {'default': 80, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},

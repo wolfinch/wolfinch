@@ -266,9 +266,10 @@ class OrderBook():
     def smart_stop_loss_update_positions(self, market_rate, sl_rate):
         new_sl = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 2))
         
-        key_list = list (self.sl_dict.irange(minimum=new_sl, inclusive=(False, False)))
+        key_list = list (self.sl_dict.irange(maximum=new_sl, inclusive=(False, False)))
         
         for key in key_list:
+#             log.critical("new_sl: %d key: %d"%(new_sl, key))
             pos_list = self.sl_dict.pop(key)
             self.add_stop_loss_position_list (new_sl, pos_list)
         
@@ -310,6 +311,9 @@ class OrderBook():
                 # remove pos from take profit points
                 self.pop_take_profit_position(pos)
         self.market.num_stop_loss_hit += len(sl_pos_list)
+        
+#         if len(sl_pos_list):
+#             log.critical ("num_stop_loss_hit: %d slPrice: %d"%(len(sl_pos_list), market_rate))
         
         return sl_pos_list
 

@@ -585,7 +585,7 @@ class Market:
         trade_pos_l = []
         #1. if stop loss enabled, get stop loss hit positions
         if self.tradeConfig["stop_loss_enabled"]:
-            log.debug ("find pos hit stop loss")    
+            log.debug ("find pos hit stop loss")
             trade_pos_l += self.order_book.get_stop_loss_positions(self.get_market_rate())
         
         #2. if take profit enabled, get TP hit positions
@@ -608,8 +608,8 @@ class Market:
                                Stop=0, id=uuid.UUID(pos.buy.id)))
         
         #3. do regular trade req based on signal
-        abs_sig = abs(signal)        
-        while (abs_sig):
+        abs_sig = abs(signal)  
+        while (abs_sig):  
             abs_sig -= 1
             if signal > 0 :
                 #BUY
@@ -628,14 +628,14 @@ class Market:
                 else:
                     log.debug ("Unable to generate BUY request for signal (%d). Too low fund"%(signal))
                     self.num_buy_req_reject += 1                
-                    return trade_req_l            
+#                     return trade_req_l
             elif signal < 0:
                 # SELL
                 self.num_sell_req += 1                            
 #                 asset_size = self.asset.get_asset_to_trade (1)
                 position = self.order_book.get_closable_position()
                 if position:
-                    log.debug ("pos: %s"%(str(position)))                    
+#                     log.debug ("pos: %s"%(str(position)))
                     asset_size = position.buy.get_asset()
                     if (asset_size <= 0):
                         log.critical ("Invalid open position for closing: pos: %s"%str(position))
@@ -652,8 +652,7 @@ class Market:
                     log.error ("Unable to generate SELL request for signal (%d)."
                      "Unable to get open positions to sell"%(signal))
                     self.num_sell_req_reject += 1                                
-                    return trade_req_l
-    
+#                     return trade_req_l
             else:
                 #signal 0 - hold signal
                 return trade_req_l
@@ -959,10 +958,10 @@ class Market:
         trade_req_l = []
         while (True):
             position = self.order_book.get_closable_position()            
-            self.num_sell_req += 1                            
 #                 asset_size = self.asset.get_asset_to_trade (1)
                 
             if position:
+#                 self.num_sell_req += 1                                     
                 log.debug ("position: %s"%(str(position)))                    
                 asset_size = position.buy.get_asset()
                 if (asset_size <= 0):

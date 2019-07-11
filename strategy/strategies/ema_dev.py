@@ -32,7 +32,9 @@ class EMA_DEV(Strategy):
         'treshold_pct_buy_s' : {'default': 1, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
         'treshold_pct_buy_l' : {'default': 1.5, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
         'treshold_pct_sell_s' : {'default': 0.8, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
-        'treshold_pct_sell_l' : {'default': 1, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},        
+        'treshold_pct_sell_l' : {'default': 1, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},     
+        'timeout_buy' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},
+        'timeout_sell' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},             
         }
     
     def __init__ (self, name, period=120, ema_buy_s=50, ema_buy_l=120, ema_sell_s=50, ema_sell_l=120,
@@ -62,8 +64,13 @@ class EMA_DEV(Strategy):
         self.set_indicator("EMA", {ema_buy_s, ema_buy_l, ema_sell_s, ema_sell_l})
         self.set_indicator("RSI", {rsi})
         self.set_indicator("close")
+        
+#         self.num_buy = 0
+#         self.num_sell = 0
+#         self.num_cdl = 0
 
     def generate_signal (self, candles):
+#         self.num_cdl += 1
         '''
         Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
         '''
@@ -95,14 +102,21 @@ class EMA_DEV(Strategy):
             self.cur_timeout_sell = self.timeout_sell
         elif ((cur_close <= ema_buy_s *(1 + (1 * self.treshold_pct_buy_s/100))) and 
             (cur_close <= ema_buy_l  * (1 + (1 * self.treshold_pct_buy_l/100))) and 
-            (self.cur_timeout_sell < 0 )):
+            (self.cur_timeout_buy < 0 )):
             
             signal = 3 # buy
             self.cur_timeout_buy = self.timeout_buy
         else:
             self.cur_timeout_buy -= 1
             self.cur_timeout_sell -= 1
-        
+            
+#         if signal < 0:
+#             self.num_sell += abs(signal)
+#         else:
+#             self.num_buy += abs(signal)
+            
+#         print ("num_buy: %d num_sell: %d num_cdl: %d self.timeout_buy: %d"%(
+#             self.num_buy, self.num_sell, self.num_cdl, self.cur_timeout_buy))
         return signal
     
 #EOF
