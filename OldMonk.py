@@ -98,7 +98,7 @@ def process_market (market):
     """ 
     processing routine for one exchange
     """
-    log.info ("processing Market: exchange (%s) product: %s"%( market.exchange_name, market.name))
+    log.debug ("processing Market: exchange (%s) product: %s"%( market.exchange_name, market.name))
     market.update_market_states()
     
     # Trade only on primary markets
