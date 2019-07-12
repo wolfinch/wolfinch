@@ -545,9 +545,6 @@ class Market:
         if(market_order): #Valid order
             self.asset.current_hold_size -= market_order.remaining_size
             self.asset.current_size += market_order.remaining_size
-
-    def _save_order (self, trade_req, order):
-        db.db_add_or_update_order (self, trade_req.product, order)
         
     def _get_manual_trade_req (self):
         exchange_name = self.exchange.name
@@ -675,8 +672,6 @@ class Market:
                 if (order == None):
                     log.error ("Placing Order Failed!")
                     return
-                #Add the successful order to the db
-                self._save_order (trade_req, order)
             elif (trade_req.type == 'stop'):
                 #  Stop order, add to pending list
                 log.debug("pending(stop) trade_req %s"%(str(trade_req)))

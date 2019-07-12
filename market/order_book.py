@@ -23,6 +23,7 @@ from decimal import Decimal
 from sortedcontainers import sorteddict 
 from utils import getLogger
 import stats
+import db
 
 log = getLogger('ORDER-BOOK')
 log.setLevel(log.INFO)
@@ -507,6 +508,9 @@ class OrderBook():
             raise Exception("Invalid order :%s" % (order))            
             return None
 #         log.debug ("Order: %s\n"%(str(order)))
+        
+        #Add the successful order to the db
+        db.db_add_or_update_order(self.market, order.product_id, order)
         stats.stats_update_order (self.market, order)
         return order
     

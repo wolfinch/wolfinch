@@ -18,11 +18,12 @@
 from utils import getLogger
 from db import init_db
 import sims
+# import sys
 
 import uuid
 
 log = getLogger ('ORDER-DB')
-log.setLevel (log.CRITICAL)
+log.setLevel (log.INFO)
 
 # Order db is currently a dictionary, keyed with order.id (UUID)
 ORDER_DB = {}
@@ -32,7 +33,8 @@ def db_add_or_update_order (market, product_id, order):
     log.debug ("Adding order to db")
     ORDER_DB [uuid.UUID(order.id)] = order
     
-    if not ( sims.backtesting_on or sims.simulator_on):
+#     if not ( sims.backtesting_on or sims.simulator_on):
+    if not (sims.simulator_on):
         order.DbSave()
     
     
@@ -57,7 +59,8 @@ def db_get_order (OrderCls, market, product_id, order_id):
 def init_order_db(OrderCls):
     global Db
     
-    if ( sims.backtesting_on or sims.simulator_on):    
+#     if ( sims.backtesting_on or sims.simulator_on):    
+    if (sims.simulator_on):
         #don't do order db init for sim
         return None
      
@@ -75,7 +78,8 @@ def init_order_db(OrderCls):
         if results:
             for order in results:
                 log.info ("inserting order: %s in cache"%(order.id))
-                ORDER_DB[uuid.UUID(order.id)] = order            
+                ORDER_DB[uuid.UUID(order.id)] = order
+#             sys.exit()
             return results
     except Exception, e:
         print(e.message)
