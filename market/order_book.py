@@ -25,7 +25,7 @@ from utils import getLogger
 import stats
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 class Position ():
     def __init__(self, buy=None, sell=None):
@@ -77,7 +77,7 @@ class Position ():
         return self.take_profit        
     def __str__(self):
         buy_str = str(self.buy) if self.buy else "null"
-        sell_str = str(self.buy) if self.sell else "null"        
+        sell_str = str(self.sell) if self.sell else "null"        
         return """{\n"status": "%s", "open_time":"%s", "closed_time":"%s", "profit": %f, "stop_loss": %f, "take_profit":%f,
 "buy":%s\n,"sell":%s\n}"""%(self.status, self.open_time, self.closed_time, self.profit, self.stop_loss, self.take_profit,
                             buy_str, sell_str)
@@ -402,6 +402,7 @@ class OrderBook():
         #TODO: TBD: more checks required??
         if order.status_reason == "filled":
             log.debug("closed position order: %s"%(order.id))
+            
             self.close_position(order)
         else:
             log.critical("closed position failed order: %s"%(order))            

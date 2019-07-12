@@ -53,7 +53,7 @@ decision:
 #TREND_BOLLINGER"
 #TREND_RSI"
 simulator:
-   enabled : true
+   enabled : false
 
 genetic_optimizer: 
    enabled : false

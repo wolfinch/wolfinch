@@ -50,7 +50,7 @@ from decimal import Decimal
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 OldMonk_market_list = []
 TradingConfig = None
