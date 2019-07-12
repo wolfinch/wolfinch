@@ -28,8 +28,9 @@ import db
 log = getLogger('ORDER-BOOK')
 log.setLevel(log.INFO)
 
-class Position ():
+class Position (object):
     def __init__(self, buy=None, sell=None):
+        self.id     = buy.id
         self.buy     = None
         self.sell    = None
         self.profit = Decimal(0)
@@ -112,6 +113,8 @@ class OrderBook():
         self.close_pending_positions = {}
         self.closed_positions = []
         
+        self.positionsDb = db.PositionDb (Position, market.exchange_name, market.product_id)        
+        
         #stop loss handling
         self.sl_dict = sorteddict.SortedDict()
         
@@ -142,7 +145,8 @@ class OrderBook():
                 
         self.all_positions.append(position)
         self.open_positions.append(position)        
-#         log.debug ("\n\n\n***open_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
+#         log.debug ("\n\n\n***open_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))
+        self.positionsDb.db_save_position(position)  
           
     def get_closable_position(self):
         log.debug ("get_closable_position ")    

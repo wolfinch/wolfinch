@@ -53,8 +53,8 @@ class PositionDb(object):
             class T (positionCls):
                 def __init__ (self, c):
                     self.id = c.id
-                    self.buy = c.buy
-                    self.sell = c.sell
+                    self.buy = c.buy.id  if c.buy else ''
+                    self.sell = c.sell.id if c.sell else ''
                     self.profit = c.profit
                     self.stop_loss = c.stop_loss
                     self.take_profit = c.take_profit
