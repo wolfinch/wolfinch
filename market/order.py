@@ -1,7 +1,7 @@
 
 '''
  OldMonk Auto trading Bot
- Desc: Order Class and TradeRequest class - implementation
+ Desc: Order Class and TradeRequest and order class - implementation
  (c) OldMonk Bot
 '''
 from sqlalchemy import *
