@@ -805,6 +805,10 @@ class Market:
             log.info ("Import only")
             return
         
+        # restore market states
+        log.info ("restoring order book from DB")
+        self.order_book.restore_order_book()
+        
         log.info ("calculating historic indicators")
         log.critical ("%f : _calculate_historic_indicators before "%(time.time()))
         

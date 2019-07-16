@@ -25,11 +25,15 @@ log = getLogger ('POSITION-DB')
 log.setLevel (log.CRITICAL)
 
 class PositionDb(object):
-    def __init__ (self, positionCls, exchange_name, product_id):
+    def __init__ (self, positionCls, market):
 #         self.positionCls = positionCls
         self.db = init_db()
+        self.market = market
+        self.exchange_name = market.exchange_name
+        self.product_id = market.product_id
+        
         log.info ("init positionsdb")
-        self.table_name = "position_%s_%s"%(exchange_name, product_id)
+        self.table_name = "position_%s_%s"%(self.exchange_name, self.product_id)
         if not self.db.engine.dialect.has_table(self.db.engine, self.table_name):  # If table don't exist, Create.
             # Create a table with the appropriate Columns
             log.info ("creating table: %s"%(self.table_name))
@@ -103,7 +107,7 @@ class PositionDb(object):
         self.db.session.commit()        
         
         
-    def db_get_all_positions (self, OrderCls, market, product_id):
+    def db_get_all_positions (self, OrderCls):
         log.debug ("retrieving positions from db")
         try:
 #             query = select([self.table])
@@ -116,10 +120,9 @@ class PositionDb(object):
                 return None
             for pos in ResultSet:
                 if pos.buy:
-                    pos.buy = order_db.db_get_order(OrderCls, market, product_id, pos.buy)
+                    pos.buy = order_db.db_get_order(OrderCls, self.market, self.product_id, pos.buy)
                 if pos.sell:
-                    pos.sell = order_db.db_get_order(OrderCls, market, product_id, pos.sell)                    
-                
+                    pos.sell = order_db.db_get_order(OrderCls, self.market, self.product_id, pos.sell)
             return ResultSet
         except Exception, e:
             print(e.message)        

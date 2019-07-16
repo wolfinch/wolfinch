@@ -85,6 +85,9 @@ def init_order_db(OrderCls):
         print(e.message)
     return None
 
+def get_all_orders ():
+    return ORDER_DB.values()
+
 def clear_order_db (OrderCls):
     global Db
     if not Db:

@@ -113,7 +113,7 @@ class OrderBook():
         self.close_pending_positions = {}
         self.closed_positions = []
         
-        self.positionsDb = db.PositionDb (Position, market.exchange_name, market.product_id)        
+        self.positionsDb = db.PositionDb (Position, market)        
         
         #stop loss handling
         self.sl_dict = sorteddict.SortedDict()
@@ -430,7 +430,11 @@ class OrderBook():
         
         #1. Retrieve states back from Db
         from order import Order
-        order_list = db.init_order_db(Order)        
+        order_list = db.get_all_orders()
+        
+        if not order_list:
+            log.info ("no orders to restore")
+            return
         
         # restore orders
         for order in order_list:
@@ -447,7 +451,24 @@ class OrderBook():
                 self.traded_sell_orders_db.append(order)
                 
         # restore positions
-        db_get_all_positions
+        pos_list = self.positionsDb.db_get_all_positions(Order)
+        if not pos_list:
+            log.info ("no positions to restore")
+            return 
+        
+        for pos in pos_list:
+            log.debug ("restoring position (%s)"%(pos.id))
+            self.all_positions.append(pos)            
+            if pos.status == "open":
+                self.open_positions.append(pos)
+                if self.market.tradeConfig["stop_loss_enabled"]:
+                    self.add_stop_loss_position(pos, pos.buy.get_price(), self.market.tradeConfig["stop_loss_rate"])
+                if self.market.tradeConfig["take_profit_enabled"]:
+                    self.add_take_profit_position(pos, pos.buy.get_price(), self.market.tradeConfig["take_profit_rate"])
+            else:
+                self.closed_positions.append(pos)
+        
+        log.info ("all positions and orders are restored")
                            
                 
     def dump_traded_orders (self, fd=sys.stdout):
