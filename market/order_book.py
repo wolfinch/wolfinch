@@ -146,6 +146,7 @@ class OrderBook():
         self.all_positions.append(position)
         self.open_positions.append(position)        
 #         log.debug ("\n\n\n***open_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))
+        # save pos to db
         self.positionsDb.db_save_position(position)  
           
     def get_closable_position(self):
@@ -167,19 +168,20 @@ class OrderBook():
                 log.debug ("Found closable position from _regular_ pool. pos: %s"%(str(pos)))
             else:
                 self.open_positions.remove(pos)
-            if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
+            if (self.close_pending_positions.get(uuid.UUID(pos.id))):
                 log.critical("Position already close pending \npos:%s"%pos)
                 raise ("Duplicate close pending position")            
             
             if self.market.tradeConfig["take_profit_enabled"]:
                 self.pop_take_profit_position(pos)
                   
-            self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
+            self.close_pending_positions[uuid.UUID(pos.id)] = pos
 #         log.debug ("\n\n\n***get_closable_position: open(%d) closed(%d) close_pend(%d) \n pos: %s"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), pos))
         return pos
         
     def close_position_pending(self, sell_order):
+        # Intentionally _not_ updating the pos_db here. Yes, There is a case of wrong pos state if we go down come back during this state 
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
         log.debug ("close_position_pending order:%s"%(sell_order.id))
 #         log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)\n"%(
@@ -200,9 +202,10 @@ class OrderBook():
 #             log.debug ("pos:\n%s"%(pos))
             if pos.sell == None:
                 pos.add_sell(sell_order)
-                pos.update_state("closed")                
+                pos.update_state("close_pending")                
                 del(self.close_pending_positions[k])
                 self.close_pending_positions[uuid.UUID(sell_order.id)] = pos
+
 #                 log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))                  
                 return pos
             else:
@@ -240,6 +243,9 @@ class OrderBook():
             else:
                 self.market.num_failed_trade += 1
             self.closed_positions.append(position)
+                
+                #update position
+            self.positionsDb.db_save_position(position)            
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))
 #         log.debug ("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)\n pos:%s"%(
@@ -419,6 +425,31 @@ class OrderBook():
         if (bids):            
             self.add_bids (bids)
                 
+    def restore_order_book(self):
+        # TODO: FIXME:  Not considering pending state orders
+        
+        #1. Retrieve states back from Db
+        from order import Order
+        order_list = db.init_order_db(Order)        
+        
+        # restore orders
+        for order in order_list:
+#             id = uuid.UUID(order.id)            
+#             order_status = order.status_type
+            order_side = order.side            
+            
+            log.info ("restorind order: %s side: %s"%(order.id, order_side))
+            
+            self.total_order_count += 1          
+            if order_side == 'buy':
+                self.traded_buy_orders_db.append(order)
+            else:
+                self.traded_sell_orders_db.append(order)
+                
+        # restore positions
+        db_get_all_positions
+                           
+                
     def dump_traded_orders (self, fd=sys.stdout):
         traded = str(self.traded_buy_orders_db + self.traded_sell_orders_db)
         fd.write(traded)
@@ -429,6 +460,7 @@ class OrderBook():
 #         self.reset_book()
 #         print('Error: messages missing ({} - {}). Re-initializing  book at sequence.'.format(
 #             gap_start, gap_end, self._sequence))
+
 
 ####### Public API #######
         

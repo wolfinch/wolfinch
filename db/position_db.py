@@ -19,6 +19,7 @@ from utils import getLogger
 from db import init_db
 from sqlalchemy import *
 from sqlalchemy.orm import mapper 
+import order_db
 
 log = getLogger ('POSITION-DB')
 log.setLevel (log.CRITICAL)
@@ -96,13 +97,13 @@ class PositionDb(object):
             self.db.session.merge (c)
         self.db.session.commit()
         
-    def db_delete_positiono(self, position):
+    def db_delete_position(self, position):
         c = self.positionCls(position)
         self.db.session.delete (c)
         self.db.session.commit()        
         
         
-    def db_get_all_positions (self):
+    def db_get_all_positions (self, OrderCls, market, product_id):
         log.debug ("retrieving positions from db")
         try:
 #             query = select([self.table])
@@ -111,6 +112,14 @@ class PositionDb(object):
             ResultSet = self.db.session.query(self.mapping).order_by(self.positionCls.time).all()
             log.info ("Retrieved %d positions for table: %s"%(len(ResultSet), self.table_name))
 #             log.debug ("Res: %s"%str(ResultSet))
+            if not ResultSet:
+                return None
+            for pos in ResultSet:
+                if pos.buy:
+                    pos.buy = order_db.db_get_order(OrderCls, market, product_id, pos.buy)
+                if pos.sell:
+                    pos.sell = order_db.db_get_order(OrderCls, market, product_id, pos.sell)                    
+                
             return ResultSet
         except Exception, e:
             print(e.message)        
