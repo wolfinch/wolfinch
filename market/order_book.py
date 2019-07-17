@@ -25,6 +25,7 @@ from utils import getLogger
 import stats
 import db
 import sims
+from order import Order
 
 log = getLogger('ORDER-BOOK')
 log.setLevel(log.DEBUG)
@@ -114,8 +115,8 @@ class OrderBook():
         self.close_pending_positions = {}
         self.closed_positions = []
         
+        self.orderDb    = db.OrderDb(Order, market)        
         self.positionsDb = db.PositionDb (Position, market)        
-        
         #stop loss handling
         self.sl_dict = sorteddict.SortedDict()
         
@@ -435,8 +436,7 @@ class OrderBook():
         log.info ("Restoring positions and orders")
         
         #1. Retrieve states back from Db
-        from order import Order
-        order_list = db.get_all_orders()
+        order_list = self.orderDb.get_all_orders()
         
         if not order_list:
             log.info ("no orders to restore")
@@ -459,7 +459,7 @@ class OrderBook():
                 self.traded_sell_orders_db.append(order)
                 
         # restore positions
-        pos_list = self.positionsDb.db_get_all_positions(Order)
+        pos_list = self.positionsDb.db_get_all_positions(self.orderDb)
         log.critical("mapping: %s"%(str(self.positionsDb.mapping)))
         if not pos_list:
             log.info ("no positions to restore")
@@ -576,7 +576,7 @@ class OrderBook():
 #         log.debug ("Order: %s\n"%(str(order)))
         
         #Add the successful order to the db
-        db.db_add_or_update_order(self.market, order.product_id, order)
+        self.orderDb.db_add_or_update_order(order)
         stats.stats_update_order (self.market, order)
         return order
     

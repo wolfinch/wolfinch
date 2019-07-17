@@ -93,7 +93,7 @@ def sim_ga_init (decisionConfig, tradingConfig=None):
         
     #init 
     #1. Retrieve states back from Db
-    db.init_order_db(Order)
+#     db.init_order_db(Order)
     
     #2. Init Exchanges
     exchanges.init_exchanges(gConfig)

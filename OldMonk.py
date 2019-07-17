@@ -47,7 +47,7 @@ MAIN_TICK_DELAY    = 0.500 #500 milli
 def OldMonk_init(decisionConfig, tradingConfig):
     
     #1. Retrieve states back from Db
-    db.init_order_db(Order)
+#     db.init_order_db(Order)
     
     #2. Init Exchanges
     exchanges.init_exchanges(OldMonkConfig)
