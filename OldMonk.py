@@ -302,7 +302,7 @@ if __name__ == '__main__':
         OldMonk_end()
         sys.exit()
     except Exception as e:
-        print ("Unexpected error: %s exception: %s"%(sys.exc_info(), e))
+        print ("Unexpected error: %s exception: %s"%(sys.exc_info(), e.message))
         OldMonk_end()
         raise
     #'''Not supposed to reach here'''

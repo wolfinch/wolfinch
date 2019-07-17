@@ -484,7 +484,7 @@ class Market:
         else:
             order = self.exchange.sell (trade_req)
         #update fund 
-        order.buy_id = trade_req.id
+        order.pos_id = trade_req.id
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
             log.debug ("SELL Order Sent to exchange. ")      
@@ -603,7 +603,7 @@ class Market:
                                Fund=round(Decimal(0), 8),                                   
                                Type="market",
                                Price=round(Decimal(0), 8),
-                               Stop=0, id=uuid.UUID(pos.buy.id)))
+                               Stop=0, id=uuid.UUID(pos.id)))
         
         #3. do regular trade req based on signal
         abs_sig = abs(signal)  
@@ -645,7 +645,7 @@ class Market:
                                        Fund=round(Decimal(0), 8),                                   
                                        Type="market",
                                        Price=round(Decimal(0), 8),
-                                       Stop=0, id=uuid.UUID(position.buy.id)))
+                                       Stop=0, id=uuid.UUID(position.id)))
                 else:
                     log.error ("Unable to generate SELL request for signal (%d)."
                      "Unable to get open positions to sell"%(signal))

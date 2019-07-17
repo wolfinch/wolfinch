@@ -12,7 +12,7 @@ import db
 
 Db = None #db.init_db()
 log = getLogger ('ORDER')
-log.setLevel (log.CRITICAL)
+log.setLevel (log.DEBUG)
 
 Base = declarative_base()
 
@@ -98,6 +98,7 @@ class Order (Base):
         self.update_time = update_time
         
     def __str__ (self):
+        return "id:"+self.id
         return ("""{"id":"%s", "product_id":"%s", "side":"%s", "order_type":"%s",
 "status_type":"%s", "status_reason":"%s", "request_size":%f,
 "filled_size":%f, "remaining_size":%f, "price":%f, "funds":%f,
@@ -121,8 +122,9 @@ class Order (Base):
         global Db
         if not Db:
             Db = db.init_db()
-        log.info ("save order to db")
+        log.info ("save order to db order:%s"%(str(self)))
         Db.session.merge(self)
+        log.critical("mapping: %s"%(str(Db.session.mapping)))                
         Db.session.commit()
         
     def DbDelete (self):
@@ -131,7 +133,7 @@ class Order (Base):
             Db = db.init_db()
         log.info ("save order to db")
         Db.session.delete(self)
-        Db.session.commit()        
+        Db.session.commit()
         
     @classmethod        
     def DbGet (cls, order_id):

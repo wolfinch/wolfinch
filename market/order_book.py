@@ -24,9 +24,10 @@ from sortedcontainers import sorteddict
 from utils import getLogger
 import stats
 import db
+import sims
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.INFO)
+log.setLevel(log.DEBUG)
 
 class Position (object):
     def __init__(self, buy=None, sell=None):
@@ -183,19 +184,18 @@ class OrderBook():
     def close_position_pending(self, sell_order):
         # Intentionally _not_ updating the pos_db here. Yes, There is a case of wrong pos state if we go down come back during this state 
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
-        log.debug ("close_position_pending order:%s"%(sell_order.id))
-#         log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)\n"%(
+        log.debug (" order:%s"%(sell_order.id))
+#         log.debug ("\n\n\n***: open(%d) closed(%d) close_pend(%d)\n"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
         pos = self.close_pending_positions.get(uuid.UUID(sell_order.id))
         if pos:
-            log.debug ("close_position_pending: sell order(%s) already in pending_list. do nothing"%(sell_order.id))
+            log.debug (": sell order(%s) already in pending_list. do nothing"%(sell_order.id))
             return pos
         #find a close_pending pos without sell attached.
-#         for k, pos in self.close_pending_positions.iteritems():
-        k = sell_order.buy_id
+        k = sell_order.pos_id
         if not k:
-            log.critical("Invalid buy_id attached to order:%s"%(sell_order.id))
-            raise Exception("Invalid buy_id attached to order")            
+            log.critical("Invalid pos_id attached to order:%s"%(sell_order.id))
+            raise Exception("Invalid pos_id attached to order")            
         pos = self.close_pending_positions.get(k)
         if pos:
             #find the pos without sell attached. and reinsert after attach
@@ -206,7 +206,7 @@ class OrderBook():
                 del(self.close_pending_positions[k])
                 self.close_pending_positions[uuid.UUID(sell_order.id)] = pos
 
-#                 log.debug ("\n\n\n***close_position_pending: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))                  
+#                 log.debug ("\n\n\n***: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))                  
                 return pos
             else:
                 log.critical("Wrong sell attached to pos:%s"%(pos))
@@ -428,6 +428,12 @@ class OrderBook():
     def restore_order_book(self):
         # TODO: FIXME:  Not considering pending state orders
         
+        if (sims.simulator_on):
+            #don't do order db init for sim
+            return None        
+        
+        log.info ("Restoring positions and orders")
+        
         #1. Retrieve states back from Db
         from order import Order
         order_list = db.get_all_orders()
@@ -437,12 +443,14 @@ class OrderBook():
             return
         
         # restore orders
+        log.info ("Restoring %d orders"%(len(order_list)))        
         for order in order_list:
 #             id = uuid.UUID(order.id)            
 #             order_status = order.status_type
             order_side = order.side            
             
-            log.info ("restorind order: %s side: %s"%(order.id, order_side))
+            log.info ("restoring order: %s side: %s"%(order.id, order_side))
+            log.info (">>>>>>>> order: %s "%(order))
             
             self.total_order_count += 1          
             if order_side == 'buy':
@@ -452,10 +460,12 @@ class OrderBook():
                 
         # restore positions
         pos_list = self.positionsDb.db_get_all_positions(Order)
+        log.critical("mapping: %s"%(str(self.positionsDb.mapping)))
         if not pos_list:
             log.info ("no positions to restore")
             return 
         
+        log.info ("Restoring %d positions"%(len(pos_list)))
         for pos in pos_list:
             log.debug ("restoring position (%s)"%(pos.id))
             self.all_positions.append(pos)            
@@ -468,8 +478,7 @@ class OrderBook():
             else:
                 self.closed_positions.append(pos)
         
-        log.info ("all positions and orders are restored")
-                           
+        log.info ("all positions and orders are restored")                           
                 
     def dump_traded_orders (self, fd=sys.stdout):
         traded = str(self.traded_buy_orders_db + self.traded_sell_orders_db)

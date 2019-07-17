@@ -40,7 +40,7 @@ class PositionDb(object):
             self.table = Table(self.table_name, self.db.metadata,   
                 Column('id', String(64), index=True, nullable=False, primary_key=True),
                 Column('buy', String(64), index=True, nullable=False),
-                Column('sell', String(64), index=True, nullable=False),
+                Column('sell', String(64), index=True, nullable=True),
                 Column('profit', Numeric, default=0),
                 Column('stop_loss', Numeric, default=0),
                 Column('take_profit', Numeric, default=0),    
@@ -58,8 +58,8 @@ class PositionDb(object):
             class T (positionCls):
                 def __init__ (self, c):
                     self.id = c.id
-                    self.buy = c.buy.id  if c.buy else ''
-                    self.sell = c.sell.id if c.sell else ''
+                    self.buy = c.buy.id  if c.buy else None
+                    self.sell = c.sell.id if c.sell else None
                     self.profit = c.profit
                     self.stop_loss = c.stop_loss
                     self.take_profit = c.take_profit
@@ -79,23 +79,14 @@ class PositionDb(object):
 
     def db_save_position (self, position):
         log.debug ("Adding position to db")
-#         self.db.connection.execute(self.table.insert(), {'close':position.close, 'high':position.high,
-#                                                               'low':position.low, 'open':position.open, 
-#                                                               'time':position.time, 'volume':position.volume})
+
         c = self.positionCls(position)
         self.db.session.merge (c)
         self.db.session.commit()
         
     def db_save_positions (self, positions):
         log.debug ("Adding position list to db")
-#         self.db.connection.execute(self.table.insert(), map(lambda cdl: 
-#                                                             {'close':cdl.close, 'high':cdl.high,
-#                                                               'low':cdl.low, 'open':cdl.open, 
-#                                                               'time':cdl.time, 'volume':cdl.volume}, positions))
-#         cdl_list = map(lambda cdl: 
-#                                         {'close':cdl.close, 'high':cdl.high,
-#                                             'low':cdl.low, 'open':cdl.open, 
-#                                             'time':cdl.time, 'volume':cdl.volume}, positions)
+
         for cdl in positions:
             c = self.positionCls(cdl)
             self.db.session.merge (c)
@@ -110,21 +101,22 @@ class PositionDb(object):
     def db_get_all_positions (self, OrderCls):
         log.debug ("retrieving positions from db")
         try:
-#             query = select([self.table])
-#             ResultProxy = self.db.connection.execute(query)
-#             ResultSet = ResultProxy.fetchall()
-            ResultSet = self.db.session.query(self.mapping).order_by(self.positionCls.time).all()
+            ResultSet = self.db.session.query(self.mapping).all()
             log.info ("Retrieved %d positions for table: %s"%(len(ResultSet), self.table_name))
 #             log.debug ("Res: %s"%str(ResultSet))
             if not ResultSet:
                 return None
             for pos in ResultSet:
+                if pos.buy == null or pos.buy == '':
+                    pos.buy = None
+                if pos.sell == null or pos.sell == '':
+                    pos.sell = None                    
                 if pos.buy:
                     pos.buy = order_db.db_get_order(OrderCls, self.market, self.product_id, pos.buy)
                 if pos.sell:
                     pos.sell = order_db.db_get_order(OrderCls, self.market, self.product_id, pos.sell)
             return ResultSet
         except Exception, e:
-            print(e.message)        
+            log.critical(e.message)        
    
 # EOF

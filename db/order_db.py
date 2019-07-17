@@ -23,7 +23,7 @@ import sims
 import uuid
 
 log = getLogger ('ORDER-DB')
-log.setLevel (log.INFO)
+log.setLevel (log.DEBUG)
 
 # Order db is currently a dictionary, keyed with order.id (UUID)
 ORDER_DB = {}
