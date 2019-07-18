@@ -15,7 +15,7 @@ import logging
 #             
 def getLogger (name):
 #     FORMAT = "[%(levelname)s:%(name)s:%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-    FORMAT = "[%(asctime)s %(levelname)s:%(name)s - %(funcName)20s() ] %(message)s"
+    FORMAT = "[%(asctime)s %(levelname)s:%(name)s - %(funcName)20s(%(lineno)d) ] %(message)s"
 
 #     logging.basicConfig(filename='oldmonk.log', filemode='a', level=logging.DEBUG, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')   
     logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')     

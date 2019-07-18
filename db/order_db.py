@@ -50,20 +50,21 @@ class OrderDb(object):
         if not self.db.engine.dialect.has_table(self.db.engine, self.table_name):  # If table don't exist, Create.
             # Create a table with the appropriate Columns
             log.info ("creating table: %s"%(self.table_name))
-            self.table = Table(self.table_name, self.db.metadata,   
+            self.table = Table(self.table_name, self.db.metadata,  
+#                 Column('Id', Integer, primary_key=True),
                 Column('id', String(64), index=True, nullable=False, primary_key=True),
-                Column('product_id', String(64), index=True, nullable=False),
-                Column('order_type', String(64), index=True, nullable=True),
-                Column('status_type', String(64), index=True, nullable=True),
-                Column('status_reason', String(64), index=True, nullable=True),   
-                Column('side', String(64), index=True, nullable=False),
+                Column('product_id', String(64)),
+                Column('order_type', String(64)),
+                Column('status_type', String(64)),
+                Column('status_reason', String(64)),   
+                Column('side', String(64)),
                 Column('request_size', Numeric, default=0),
                 Column('filled_size', Numeric, default=0),
                 Column('remaining_size', Numeric, default=0),    
                 Column('price', Numeric, default=0),
                 Column('funds', Numeric, default=0),
                 Column('fees', Numeric, default=0),                   
-                Column('create_time', String(64), nullable=True),
+                Column('create_time', String(64)),
                 Column('update_time', String(64)))
             # Implement the creation
             self.db.metadata.create_all(self.db.engine, checkfirst=True)   
@@ -72,9 +73,10 @@ class OrderDb(object):
             self.table = self.db.metadata.tables[self.table_name]
         try:
             # HACK ALERT: to support multi-table with same class on sqlalchemy mapping
-            class T (orderCls):
+            class OT (orderCls):
                 def __init__ (self, c):
-                    self.id = c.id
+                    log.info (">>>>>>>>>>>>> t: %s ta: %s id: %s ids: %s"%(type(c.id), type(c.id.encode("utf-8")),  c.id, str(c.id)))
+                    self.id = c.id.encode("utf-8")
                     self.product_id = c.product_id
                     self.order_type = c.order_type
                     self.status_type = c.status_type
@@ -88,11 +90,11 @@ class OrderDb(object):
                     self.fees = c.fees                    
                     self.create_time = c.create_time
                     self.update_time = c.update_time                                  
-            self.orderCls = T
+            self.orderCls = OT
             self.mapping = mapper(self.orderCls, self.table)
             
             log.debug ("retrieve order list from db")
-            results = self.db.session.query(self.orderCls).all()
+            results = self.db.session.query(self.mapping).all()
             log.info ("retrieving %d order entries"%(len(results)))
             if results:
                 for order in results:
@@ -100,16 +102,20 @@ class OrderDb(object):
                     self.ORDER_DB[uuid.UUID(order.id)] = order
     #             sys.exit()
         except Exception as e:
-            log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(e))
+            log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(e.message))
             raise e
                     
-    def __str__ (self):
-        return "****** Not-Implemented ******"
+#     def __str__ (self):
+#         return "****** Not-Implemented ******"
     
     def _db_save_order (self, order):
-        log.debug ("Adding order to db")
 
+#         import random
+#         order.id = str(random.randint(1, 2999))
+        
         c = self.orderCls(order)
+        log.debug ("Adding order to db t:%s \n\n o:%s \n\n m:%s \n\n c: %s"%(type(order), order, str(self.mapping), str(c)))
+        
         self.db.session.merge (c)
         self.db.session.commit()
         
