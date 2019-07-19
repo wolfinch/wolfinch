@@ -36,6 +36,7 @@ log.setLevel(log.INFO)
 
 # Global Config 
 OldMonkConfig = None
+gRestart = False
 
 decisionConfig = {}
 tradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
@@ -56,7 +57,7 @@ def OldMonk_init(decisionConfig, tradingConfig):
     market_init (exchanges.exchange_list, decisionConfig, tradingConfig)
     
     #4. Setup markets
-    market_setup()
+    market_setup(restart=gRestart)
     
     #5. start stats thread
     stats.start()
@@ -218,6 +219,7 @@ def load_config (cfg_file):
     return True
         
 def arg_parse ():
+    global gRestart
     parser = argparse.ArgumentParser(description='OldMonk Auto Trading Bot')
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
@@ -225,6 +227,7 @@ def arg_parse ():
     parser.add_argument("--config", help='OldMonk Global config file')
     parser.add_argument("--backtesting", help='do backtesting', action='store_true')
     parser.add_argument("--import_only", help='do import only', action='store_true')
+    parser.add_argument("--restart", help='restart from the previous state', action='store_true')        
     parser.add_argument("--ga_restart", help='restart genetic analysis from previous state', action='store_true')
     
     args = parser.parse_args()
@@ -240,6 +243,13 @@ def arg_parse ():
         log.debug ("import_only disabled")       
         sims.import_only = False          
         
+    if (args.restart):              
+        log.debug ("restart enabled")       
+        gRestart = True
+    else:
+        log.debug ("restart disabled")       
+        gRestart = False  
+                
     if (args.ga_restart):              
         log.debug ("ga_restart enabled")       
         sims.ga_restart = True

@@ -93,20 +93,9 @@ class OrderDb(object):
                     self.funds = c.funds
                     self.fees = c.fees                    
                     self.create_time = c.create_time
-                    self.update_time = c.update_time                                  
+                    self.update_time = c.update_time
             self.orderCls = OT
             self.mapping = mapper(self.orderCls, self.table)
-
-            log.debug ("retrieve order list from db")
-            results = self.db.session.query(self.mapping).all()
-            if results:
-                log.info ("retrieving %d order entries"%(len(results)))
-                for order in results:
-                    log.info ("inserting order: %s in cache"%(str(order.id)))
-                    self.ORDER_DB[order.id] = order
-            
-            #clear cache now
-            self.db.session.expire_all()
         except Exception as e:
             log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(e.message))
             raise e
@@ -137,10 +126,14 @@ class OrderDb(object):
         try:
             ResultSet = self.db.session.query(self.mapping).all()
             log.info ("Retrieved %d orders for table: %s"%(len(ResultSet), self.table_name))
+
+            if ResultSet:
+                log.info ("#%d order entries"%(len(ResultSet)))
+                for order in ResultSet:
+                    log.info ("inserting order: %s in cache"%(str(order.id)))
+                    self.ORDER_DB[order.id] = order     
             #clear cache now
-            self.db.session.expire_all()
-            if not ResultSet:
-                return None
+            self.db.session.expire_all()                           
             return ResultSet
         except Exception, e:
             log.critical(e.message)
@@ -188,50 +181,13 @@ class OrderDb(object):
         return order
         
     def get_all_orders (self):
+        self._db_get_all_orders()
         return self.ORDER_DB.values()
             
-#     #Get all orders from Db (Should be called part of startup)
-#     def init_order_db(OrderCls):
-#         global Db
-#         
-#     #     if ( sims.backtesting_on or sims.simulator_on):    
-#         if (sims.simulator_on):
-#             #don't do order db init for sim
-#             return None
-#          
-#         if not Db:
-#             Db = init_db()
-#             if not Db:
-#                 log.critical ("Unable to get Db instance")
-#                 return None
-#             log.info ("init order_db table")
-#             OrderCls.DbCreateTable()
-#         try:
-#             log.debug ("retrieve order list from db")
-#             results = Db.session.query(OrderCls).all()
-#             log.info ("retrieving %d order entries"%(len(results)))
-#             if results:
-#                 for order in results:
-#                     log.info ("inserting order: %s in cache"%(order.id))
-#                     self.ORDER_DB[uuid.UUID(order.id)] = order
-#     #             sys.exit()
-#                 return results
-#         except Exception, e:
-#             print(e.message)
-#         return None
-#     def clear_order_db (self, OrderCls):
-#         global Db
-#         if not Db:
-#             Db = init_db()
-#             if not Db:
-#                 log.critical ("Unable to get Db instance")
-#                 return None
-#         try:
-#             log.info ("clear order_db table")
-#             OrderCls.DbDropTable()
-#         except Exception, e:
-#             print(e.message)
-#         return None    
-           
+    def clear_order_db(self):
+        log.info ("clearing order db")
+        self.ORDER_DB = {}
+        self.table.drop(checkfirst=True)
+        self.db.session.commit()        
 
 # EOF

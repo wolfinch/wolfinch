@@ -425,6 +425,11 @@ class OrderBook():
             self.add_asks (asks)
         if (bids):            
             self.add_bids (bids)
+            
+    def clear_order_book (self):
+        log.info ("clearing older states")
+        self.orderDb.clear_order_db()
+        self.positionsDb.clear_position_db()
                 
     def restore_order_book(self):
         # TODO: FIXME:  Not considering pending state orders

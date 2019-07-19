@@ -46,6 +46,7 @@ from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 
 from decimal import Decimal
+from mock.mock import self
 
 Base = declarative_base()
 
@@ -787,7 +788,7 @@ class Market:
         
     ##########################################
     ############## Public APIs ###############
-    def market_setup (self):
+    def market_setup (self, restart=False):
         ''' 
         Restore the market states for our work
         WHenver possible, restore from the local db
@@ -806,8 +807,9 @@ class Market:
             return
         
         # restore market states
-        log.info ("restoring order book from DB")
-        self.order_book.restore_order_book()
+        if restart:
+            log.info ("restoring order book from DB")
+            self._restore_states ()
         
         log.info ("calculating historic indicators")
         log.critical ("%f : _calculate_historic_indicators before "%(time.time()))
@@ -830,6 +832,55 @@ class Market:
         log.debug ("market (%s) setup done! num_candles(%d) cur_candle_time(%d)"%(
             self.name, num_candles, self.cur_candle_time))
         log.info ("done setting up historic states")
+    
+    def _restore_states(self):
+        log.info ("restoring market states")
+        self.load_market_from_stats()
+        
+        log.info ("restoring order_book")
+        self.order_book.restore_order_book()
+        
+#         
+#                 self.exchange_name, self.product_id, self.name, self.current_market_rate,
+#                 self.cur_candle_time, self.cur_candle_vol, self.num_candles, 
+#                 self.num_buy_req, self.num_buy_req_reject,
+#                 self.num_sell_req, self.num_sell_req_reject,
+#                 self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed, 
+#                 self.num_sell_order, self.num_sell_order_success, self.num_sell_order_failed,
+#                 self.num_take_profit_hit, self.num_stop_loss_hit,
+#                 self.num_success_trade, self.num_failed_trade,
+#                 (self.get_market_rate() - self.start_market_rate)*(
+#                     self.fund.initial_value*Decimal(0.01)*self.fund.fund_liquidity_percent/self.start_market_rate),
+#                 str(self.fund), str(self.asset), str(self.order_book)) 
+#                 
+#                 finally:
+#             self.initial_value, self.current_value, self.current_hold_value,
+#              self.total_traded_value, self.fee_accrued, self.current_realized_profit, 
+#              self.current_unrealized_profit, self.total_profit, self.current_avg_buy_price, 
+#              self.latest_buy_price, self.fund_liquidity_percent, self.max_per_buy_fund_value )                    
+#                 
+#             self.initial_size, self.current_size, self.hold_size, self.current_hold_size,
+#             self.max_per_trade_size, self.latest_traded_size, self.total_traded_size)                
+                        
+    def load_market_from_stats (self):
+        mstats = None
+        with open(MARKET_STATS_FILE%(self.exchange_name, self.product_id), "r") as fd:
+            mstats = json.load(fd)
+        
+        #restore the stats selectively.
+        self.num_buy_req, self.num_buy_req_reject = mstats['num_buy_req'], mstats['num_buy_req_reject']
+        self.num_sell_req, self.num_sell_req_reject = mstats['num_sell_req'], mstats['num_sell_req_reject']
+        self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed = \
+                                mstats['num_buy_order'], mstats['num_buy_order_success'], mstats['num_buy_order_failed']
+        self.num_sell_order, self.num_sell_order_success, self.num_sell_order_failed = \
+                                mstats['num_sell_order'], mstats['num_sell_order_success'], mstats['num_sell_order_failed']
+        self.num_take_profit_hit, self.num_stop_loss_hit = mstats['num_take_profit_hit'], mstats['num_stop_loss_hit']
+        self.num_success_trade, self.num_failed_trade = mstats['num_success_trade'], mstats['num_failed_trade']
+        
+        
+    def _clear_states (self):
+        log.info ("clearing market states")
+        self.order_book.clear_order_book()
         
     def decision_setup (self, market_list):
         log.debug ("decision setup for market (%s)"%(self.name))
@@ -1035,14 +1086,14 @@ def market_init (exchange_list, decisionConfig, tradingConfig):
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))
                  
-def market_setup ():
+def market_setup (restart=False):
     '''
     Setup market states.
     This is where we want to keep all the run stats
     '''
     global OldMonk_market_list
     for market in OldMonk_market_list:
-        status = market.market_setup ()
+        status = market.market_setup (restart)
         if (status == False):
             log.critical ("Market Init Failed for market: %s"%(market.name))
             return False
@@ -1070,7 +1121,8 @@ def get_all_market_stats ():
 
 MARKET_STATS_FILE = "data/stats_market_%s_%s.json"
 TRADE_STATS_FILE = "data/stats_traded_orders_%s.json"
-POSITION_STATS_FILE = "data/stats_positions_%s_%s.json"
+POSITION_STATS_FILE = "data/stats_positions_%s_%s.json"        
+
 def display_market_stats (fd = sys.stdout):
     global OldMonk_market_list
     if sys.stdout != fd:

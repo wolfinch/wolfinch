@@ -126,6 +126,11 @@ class PositionDb(object):
             self.db.session.expire_all()                    
             return ResultSet
         except Exception, e:
-            log.critical(e.message)        
+            log.critical(e.message)
+            
+    def clear_position_db(self):
+        log.info ("clearing position db")
+        self.table.drop(checkfirst=True)
+        self.db.session.commit()  
    
 # EOF
