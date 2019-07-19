@@ -21,11 +21,18 @@ from sqlalchemy import *
 from sqlalchemy.orm import mapper 
 
 log = getLogger ('POSITION-DB')
-log.setLevel (log.CRITICAL)
+log.setLevel (log.INFO)
+
+# import logging
+# logging.basicConfig()
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+# logging.getLogger('sqlalchemy.orm').setLevel(logging.DEBUG)
+# logging.getLogger('sqlalchemy').setLevel(logging.DEBUG)
 
 class PositionDb(object):
     def __init__ (self, positionCls, market):
 #         self.positionCls = positionCls
+#         return
         self.db = init_db()
         self.market = market
         self.exchange_name = market.exchange_name
@@ -75,8 +82,8 @@ class PositionDb(object):
         return "{id: %s, buy: %g, sell: %g, profit: %g, stop_loss: %g, take_profit: %g, status: %g, open_time: %s, closed_time: %s}"%(
             self.id, self.buy, self.sell, self.profit, self.stop_loss, self.take_profit, self.status, self.open_time, self.closed_time)
 
-
     def db_save_position (self, position):
+#         return
         log.debug ("Adding position to db")
 
         c = self.positionCls(position)
@@ -84,6 +91,7 @@ class PositionDb(object):
         self.db.session.commit()
         
     def db_save_positions (self, positions):
+#         return
         log.debug ("Adding position list to db")
 
         for cdl in positions:
@@ -96,8 +104,8 @@ class PositionDb(object):
         self.db.session.delete (c)
         self.db.session.commit()        
         
-        
     def db_get_all_positions (self, order_db):
+#         return []
         log.debug ("retrieving positions from db")
         try:
             ResultSet = self.db.session.query(self.mapping).all()
@@ -114,6 +122,8 @@ class PositionDb(object):
                     pos.buy = order_db.db_get_order(pos.buy)
                 if pos.sell:
                     pos.sell = order_db.db_get_order(pos.sell)
+            #clear cache now
+            self.db.session.expire_all()                    
             return ResultSet
         except Exception, e:
             log.critical(e.message)        

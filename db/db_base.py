@@ -17,7 +17,7 @@ class DbBase:
         pass
     
     def __str__ (self):
-        return "{Message: Indicator Abstract Class}"
+        return "{Message: Db Abstract Class}"
     
     @abstractmethod
     def clear_db (self):

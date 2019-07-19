@@ -28,7 +28,7 @@ import sims
 from order import Order
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.DEBUG)
+log.setLevel(log.INFO)
 
 class Position (object):
     def __init__(self, buy=None, sell=None):
@@ -440,27 +440,24 @@ class OrderBook():
         
         if not order_list:
             log.info ("no orders to restore")
-            return
-        
-        # restore orders
-        log.info ("Restoring %d orders"%(len(order_list)))        
-        for order in order_list:
-#             id = uuid.UUID(order.id)            
-#             order_status = order.status_type
-            order_side = order.side            
-            
-            log.info ("restoring order: %s side: %s"%(order.id, order_side))
-            log.info (">>>>>>>> order: %s "%(order))
-            
-            self.total_order_count += 1          
-            if order_side == 'buy':
-                self.traded_buy_orders_db.append(order)
-            else:
-                self.traded_sell_orders_db.append(order)
+        else:
+            # restore orders
+            log.info ("Restoring %d orders"%(len(order_list)))        
+            for order in order_list:
+    #             id = uuid.UUID(order.id)            
+    #             order_status = order.status_type
+                order_side = order.side
+                
+                log.info ("restoring order: %s side: %s"%(order.id, order_side))                
+                self.total_order_count += 1          
+                if order_side == 'buy':
+                    self.traded_buy_orders_db.append(order)
+                else:
+                    self.traded_sell_orders_db.append(order)
                 
         # restore positions
         pos_list = self.positionsDb.db_get_all_positions(self.orderDb)
-        log.critical("mapping: %s"%(str(self.positionsDb.mapping)))
+#         log.critical("mapping: %s"%(str(self.positionsDb.mapping)))
         if not pos_list:
             log.info ("no positions to restore")
             return 
@@ -478,7 +475,8 @@ class OrderBook():
             else:
                 self.closed_positions.append(pos)
         
-        log.info ("all positions and orders are restored")                           
+        log.info ("all positions and orders are restored")                   
+#         sys.exit()        
                 
     def dump_traded_orders (self, fd=sys.stdout):
         traded = str(self.traded_buy_orders_db + self.traded_sell_orders_db)

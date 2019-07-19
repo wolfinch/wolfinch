@@ -100,7 +100,8 @@ class CandlesDb(object):
 #             ResultSet = ResultProxy.fetchall()
             ResultSet = self.db.session.query(self.mapping).order_by(self.ohlcCls.time).all()
             log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
-#             log.debug ("Res: %s"%str(ResultSet))
+            #clear cache now
+            self.db.session.expire_all()
             return ResultSet
         except Exception, e:
             print(e.message)        
