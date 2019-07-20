@@ -448,6 +448,7 @@ class Market:
             self.fund.current_hold_value -= order_cost
             self.fund.latest_buy_price = market_order.price
             self.fund.total_traded_value += order_cost
+            self.fund.fee_accrued += market_order.fees            
             #avg cost
             curr_new_asset_size = (self.asset.current_hold_size + self.asset.current_size - self.asset.initial_size)
             self.fund.current_avg_buy_price = (((self.fund.current_avg_buy_price *
@@ -524,6 +525,7 @@ class Market:
             order_cost = (market_order.filled_size*market_order.price)        
             #fund
             self.fund.current_value += order_cost
+            self.fund.fee_accrued += market_order.fees
             #asset
             self.asset.current_hold_size -= (market_order.filled_size + market_order.remaining_size)
             self.asset.current_size += market_order.remaining_size
@@ -838,29 +840,7 @@ class Market:
         self.load_market_from_stats()
         
         log.info ("restoring order_book")
-        self.order_book.restore_order_book()
-        
-#         
-#                 self.exchange_name, self.product_id, self.name, self.current_market_rate,
-#                 self.cur_candle_time, self.cur_candle_vol, self.num_candles, 
-#                 self.num_buy_req, self.num_buy_req_reject,
-#                 self.num_sell_req, self.num_sell_req_reject,
-#                 self.num_buy_order, self.num_buy_order_success, self.num_buy_order_failed, 
-#                 self.num_sell_order, self.num_sell_order_success, self.num_sell_order_failed,
-#                 self.num_take_profit_hit, self.num_stop_loss_hit,
-#                 self.num_success_trade, self.num_failed_trade,
-#                 (self.get_market_rate() - self.start_market_rate)*(
-#                     self.fund.initial_value*Decimal(0.01)*self.fund.fund_liquidity_percent/self.start_market_rate),
-#                 str(self.fund), str(self.asset), str(self.order_book)) 
-#                 
-#                 finally:
-#             self.initial_value, self.current_value, self.current_hold_value,
-#              self.total_traded_value, self.fee_accrued, self.current_realized_profit, 
-#              self.current_unrealized_profit, self.total_profit, self.current_avg_buy_price, 
-#              self.latest_buy_price, self.fund_liquidity_percent, self.max_per_buy_fund_value )                    
-#                 
-#             self.initial_size, self.current_size, self.hold_size, self.current_hold_size,
-#             self.max_per_trade_size, self.latest_traded_size, self.total_traded_size)                
+        self.order_book.restore_order_book()            
                         
     def load_market_from_stats (self):
         mstats = None

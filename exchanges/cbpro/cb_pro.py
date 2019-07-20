@@ -231,7 +231,7 @@ class CBPRO (Exchange):
           3. {'status' : 'rejected', 'reject_reason': 'post-only'}
         '''
         error_status_codes = ['rejected']
-        log.debug ("Order msg:\n%s"%(pprint.pformat(order, 4)))
+#         log.debug ("Order msg:\n%s"%(pprint.pformat(order, 4)))
         
         msg = order.get('message')
         status = order.get('status')
