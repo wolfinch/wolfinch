@@ -867,6 +867,7 @@ class Market:
         with open(MARKET_STATS_FILE%(self.exchange_name, self.product_id), "r") as fd:
             mstats = json.load(fd)
         
+        log.info ("loading market stats")
         #restore the stats selectively.
         self.num_buy_req, self.num_buy_req_reject = mstats['num_buy_req'], mstats['num_buy_req_reject']
         self.num_sell_req, self.num_sell_req_reject = mstats['num_sell_req'], mstats['num_sell_req_reject']
@@ -876,6 +877,30 @@ class Market:
                                 mstats['num_sell_order'], mstats['num_sell_order_success'], mstats['num_sell_order_failed']
         self.num_take_profit_hit, self.num_stop_loss_hit = mstats['num_take_profit_hit'], mstats['num_stop_loss_hit']
         self.num_success_trade, self.num_failed_trade = mstats['num_success_trade'], mstats['num_failed_trade']
+        
+        #restore fund states
+        log.info ("loading fund stats")        
+        mf = self.fund
+        sf = mstats['fund']
+        mf.initial_value = Decimal(sf['initial_value'])
+        mf.current_hold_value = Decimal(sf['current_hold_value'])
+        mf.total_traded_value = Decimal(sf['total_traded_value'])
+        mf.fee_accrued = Decimal(sf['fee_accrued'])
+        mf.current_realized_profit = Decimal(sf['current_realized_profit'])
+        mf.current_unrealized_profit = Decimal(sf['current_unrealized_profit'])
+        mf.total_profit = Decimal(sf['total_profit'])
+        mf.current_avg_buy_price = Decimal(sf['current_avg_buy_price'])
+        mf.latest_buy_price = Decimal(sf['latest_buy_price'])
+        
+        #restore asset
+        log.info ("loading asset stats")
+        ma = self.asset
+        sa = mstats['asset'] 
+        ma.initial_size = Decimal(sa['initial_size'])
+        ma.hold_size = Decimal(sa['hold_size'])
+        ma.current_hold_size = Decimal(sa['current_hold_size'])
+        ma.latest_traded_size = Decimal(sa['latest_traded_size'])
+        ma.total_traded_size = Decimal(sa['total_traded_size'])
         
         
     def _clear_states (self):
