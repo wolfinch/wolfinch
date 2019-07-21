@@ -44,9 +44,15 @@ def server_main ():
     @app.route('/js/<path:path>')
     def send_js(path):
         return send_from_directory('js', path)
+    @app.route('/oldmonk/stylesheet.css')
+    def stylesheet():
+        return app.send_static_file('stylesheet.css')
+    @app.route('/oldmonk/chart.html')
+    def chart():
+        return app.send_static_file('chart.html')
     @app.route('/oldmonk')
     def root():
-        return app.send_static_file('index.html')
+        return app.send_static_file('index.html')        
     @app.route('/api/order_data')
     def trade_data():
         try:

@@ -159,8 +159,8 @@ class OrderBook():
         pos = None
         if len(self.open_positions):
             if self.market.tradeConfig["stop_loss_enabled"]:
+                log.debug ("Finding closable position from _stop_loss_ pool.")                                                                    
                 pos = self.pop_stop_loss_position()
-                log.debug ("Found closable position from _stop_loss_ pool. pos: %s"%(str(pos)))                                    
             if pos == None:
                 try:
                     pos = self.open_positions.pop()
@@ -169,6 +169,7 @@ class OrderBook():
                     return None
                 log.debug ("Found closable position from _regular_ pool. pos: %s"%(str(pos)))
             else:
+                log.debug ("Found closable position from _stop_loss_ pool. pos: %s"%(str(pos)))                                                    
                 self.open_positions.remove(pos)
             if (self.close_pending_positions.get(uuid.UUID(pos.id))):
                 log.critical("Position already close pending \npos:%s"%pos)
