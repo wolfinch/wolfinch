@@ -1,0 +1,182 @@
+<html lang="en">
+
+<head>
+<title>OldMonk Trading Bot</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+</head>
+
+<!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<script
+	src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+	integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+	crossorigin="anonymous"></script> -->
+
+<link href="stylesheet.css" rel="stylesheet">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+	integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+	crossorigin="anonymous"></script>
+
+
+<link rel="stylesheet" type="text/css"
+	href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+
+<script type="text/javascript" charset="utf8"
+	src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+	
+<script src="http://d3js.org/d3.v4.min.js"></script>
+<script src="http://techanjs.org/techan.min.js"></script>
+<script>
+
+    var margin = {top: 20, right: 20, bottom: 30, left: 50},
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+    var parseDate = d3.timeParse("%d-%b-%y");
+
+    var x = techan.scale.financetime()
+            .range([0, width]);
+
+    var y = d3.scaleLinear()
+            .range([height, 0]);
+
+    var candlestick = techan.plot.candlestick()
+            .xScale(x)
+            .yScale(y);
+
+    var xAxis = d3.axisBottom()
+            .scale(x);
+
+    var yAxis = d3.axisLeft()
+            .scale(y);
+
+    var svg = d3.select("chart").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    //d3.csv("data.csv", load_data);
+    
+    var d = [{Date: "9-Jun-14", Open:62.3, High: 63.34, Low: 61.79, Close: 62.88, Volume: 37617413}];
+    var err = 0;
+    
+    load_data(err, d);
+
+/*     (function(window, d3, techanSite) {
+        d3.select('div#chart').call();
+        window.onresize = function() {
+            d3.select('div#chart').call(techanSite.bigchart.resize);
+        };
+    })(window, d3, techanSite); */
+    
+    function load_data(error, data) {
+    	
+        var accessor = candlestick.accessor();
+		
+        console.log ("here");
+        
+        data = data.slice(0, 200).map(function(d) {
+        	console.log(d)
+            return {
+                date: parseDate(d.Date),
+                open: +d.Open,
+                high: +d.High,
+                low: +d.Low,
+                close: +d.Close,
+                volume: +d.Volume
+            };
+        }).sort(function(a, b) { return d3.ascending(accessor.d(a), accessor.d(b)); });
+
+        svg.append("g")
+                .attr("class", "candlestick");
+
+        svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")");
+
+        svg.append("g")
+                .attr("class", "y axis")
+                .append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 6)
+                .attr("dy", ".71em")
+                .style("text-anchor", "end")
+                .text("Price ($)");
+
+        console.log ("here2"+data);
+        // Data to display initially
+        draw(data.slice(0, data.length-20));
+        
+        console.log ("here3");
+        
+        // Only want this button to be active if the data has loaded
+        d3.select("button").on("click", function() { draw(data); }).style("display", "inline");
+    }
+    
+    function draw(data) {
+    	console.log("plotting")
+        x.domain(data.map(candlestick.accessor().d));
+        y.domain(techan.scale.plot.ohlc(data, candlestick.accessor()).domain());
+
+        svg.selectAll("g.candlestick").datum(data).call(candlestick);
+        svg.selectAll("g.x.axis").call(xAxis);
+        svg.selectAll("g.y.axis").call(yAxis);
+    }
+
+</script>	
+
+
+<body>
+
+	<div class="row align-items-start">
+		<div class="col-12">
+			<div class="navbar navbar-inverse navbar-static-top">
+				<div class="container">
+					<header class="clearfix">
+						<h3 class="brand">
+							<a href="/">OldMonk</a>
+						</h3>
+						<ul class="nav masthead-nav">
+							<li><a href="../oldmonk"> Home</a></li>
+							<li class="active"><a href="chart.html">Charts </a></li>
+							<li><a href="/"> Trading</a></li>
+							<li><a href="/"> Documentation</a></li>
+						</ul>
+					</header>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="jumbotron jumbotron-fluid">
+		<div class="container">
+			<div id="chart"></div>
+		</div>
+	</div>
+
+	<footer class="footer">
+		<div class="container">
+			<p>
+				<small>
+					<div class="row">
+						<em>&copy; 2017-2019 OldMonk Bot</em>
+					</div>
+				</small>
+
+			</p>
+		</div>
+	</footer>
+</body>
+</html>
