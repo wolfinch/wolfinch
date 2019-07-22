@@ -25,6 +25,7 @@ from decimal import *
 import argparse
 import os
 
+import json
 import db
 from market import Position, OHLC, Order
 
@@ -44,15 +45,39 @@ cdl_db, order_db, position_db = None, None, None
 def init ():
     global cdl_db, order_db, position_db
     
-    cdl_db = db.CandlesDb(OHLC, EXCH_NAME, PRODUCT_ID)
-    order_db = db.OrderDb(Order, EXCH_NAME, PRODUCT_ID)
-    position_db = db.PositionDb(Position, EXCH_NAME, PRODUCT_ID)
+    cdl_db = db.CandlesDb(OHLC, EXCH_NAME, PRODUCT_ID, read_only=True)
+    order_db = db.OrderDb(Order, EXCH_NAME, PRODUCT_ID, read_only=True)
+    position_db = db.PositionDb(Position, EXCH_NAME, PRODUCT_ID, read_only=True)
 
-
+    if not (cdl_db and position_db and order_db):
+        log.error ("db init failed")
+        return False
+    
+    log.info ("db_events init success")
+    return True 
 
 def get_all_candles():
     
     log.debug("ENTER")
-    return cdl_db.db_get_all_candles()
+    cdl_li = cdl_db.db_get_all_candles()
+    if cdl_li:
+        log.info ("got (%d) candles"%(len(cdl_li)))
+        cdl_s = str(cdl_li)
+        return cdl_s
+    else:
+        log.error ("unable to get candles")
+        return ""
 
+def get_all_positions():
+    log.debug ("ENTER")
+    
+    pos_li = position_db.db_get_all_positions(order_db)
+    
+    if pos_li:
+        log.info ("got (%d) positions"%(len(pos_li)))
+        pos_s = str(pos_li)
+        return pos_s
+    else:
+        log.error ("unable to get positions")
+        return ""
 #EOF

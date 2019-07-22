@@ -31,18 +31,17 @@ log = getLogger('ORDER-BOOK')
 log.setLevel(log.INFO)
 
 class Position (object):
-    def __init__(self, buy=None, sell=None):
-        self.id     = buy.id
-        self.buy     = None
-        self.sell    = None
-        self.profit = Decimal(0)
-        self.stop_loss = Decimal(0)
-        self.take_profit = Decimal(0)
-        self.open_time = None
-        self.closed_time = None
-        self.status = ''  #'open'|closed|close_pending        
-        self.add_buy(buy)
-        self.add_sell(sell)
+    def __init__(self, id=None, buy=None, sell=None, profit=0, stop_loss=0,
+                  take_profit=0, open_time=None, closed_time=None, status=""):
+        self.id     = id
+        self.buy     = buy
+        self.sell    = sell
+        self.profit = profit
+        self.stop_loss = stop_loss
+        self.take_profit = take_profit
+        self.open_time = open_time
+        self.closed_time = closed_time
+        self.status = status  #'open'|closed|close_pending        
         
     def add_buy(self, order):
         if order == None:
@@ -115,8 +114,8 @@ class OrderBook():
         self.close_pending_positions = {}
         self.closed_positions = []
         
-        self.orderDb    = db.OrderDb(Order, market)        
-        self.positionsDb = db.PositionDb (Position, market)        
+        self.orderDb    = db.OrderDb(Order, market.exchange_name, market.product_id)        
+        self.positionsDb = db.PositionDb (Position, market.exchange_name, market.product_id)        
         #stop loss handling
         self.sl_dict = sorteddict.SortedDict()
         
@@ -139,7 +138,8 @@ class OrderBook():
     def open_position (self, buy_order):
         #open positions with buy orders only (we don't support 'short' now)
 #         log.debug ("open_position order: %s"%(buy_order))
-        position = Position(buy=buy_order)
+        position = Position(id=buy_order.id)
+        position.add_buy(buy_order)
         if self.market.tradeConfig["stop_loss_enabled"]:
             self.add_stop_loss_position(position, buy_order.get_price(), self.market.tradeConfig["stop_loss_rate"])
         if self.market.tradeConfig["take_profit_enabled"]:

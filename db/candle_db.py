@@ -24,9 +24,9 @@ log = getLogger ('CANDLE-DB')
 log.setLevel (log.CRITICAL)
 
 class CandlesDb(object):
-    def __init__ (self, ohlcCls, exchange_name, product_id):
+    def __init__ (self, ohlcCls, exchange_name, product_id, read_only=True):
 #         self.ohlcCls = ohlcCls
-        self.db = init_db()
+        self.db = init_db(read_only)
         log.info ("init candlesdb")
         self.table_name = "candle_%s_%s"%(exchange_name, product_id)
         if not self.db.engine.dialect.has_table(self.db.engine, self.table_name):  # If table don't exist, Create.

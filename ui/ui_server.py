@@ -31,6 +31,7 @@ from utils import getLogger
 from utils.readconf import readConf
 from dateparser import conf
 
+import db_events
 log = getLogger ('UI')
 log.setLevel(log.DEBUG)
 
@@ -39,6 +40,12 @@ POSITION_STATS_FILE = "stats_positions_%s_%s.json"%("CBPRO", "BTC-USD")
 MARKET_STATS = "stats_market_%s_%s.json"%("CBPRO", "BTC-USD")
 TRADED_STATS_FILE = "stats_traded_orders_%s_%s.json"%("CBPRO", "BTC-USD")
 def server_main ():
+    
+    # init db_events
+    if not db_events.init():
+        log.error ("db_events init failure")
+        return
+    
     app = Flask(__name__, static_folder='web/', static_url_path='/web/')
 
     @app.route('/js/<path:path>')
@@ -76,6 +83,14 @@ def server_main ():
         except Exception:
             return "{}"
             
+    @app.route('/api/cdl_list')
+    def candle_list():
+        return db_events.get_all_candles()
+        
+    @app.route('/api/position_list')
+    def position_list():
+        return db_events.get_all_positions()        
+        
     log.debug("static_dir: %s root: %s"%(static_file_dir, app.root_path))
     
     log.debug ("starting server..")

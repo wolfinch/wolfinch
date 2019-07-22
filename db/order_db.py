@@ -35,7 +35,7 @@ log.setLevel (log.INFO)
 # Order db is currently a dictionary, keyed with order.id (UUID)
 
 class OrderDb(object):
-    def __init__ (self, orderCls, market):
+    def __init__ (self, orderCls, exchange_name, product_id, read_only=True):
 #         self.orderCls = orderCls
 
         self.ORDER_DB = {}
@@ -45,10 +45,10 @@ class OrderDb(object):
             log.info ("sim on, skip db init")
             return    
         
-        self.db = init_db()
-        self.market = market
-        self.exchange_name = market.exchange_name
-        self.product_id = market.product_id
+        self.db = init_db(read_only)
+#         self.market = market
+        self.exchange_name = exchange_name
+        self.product_id = product_id
         
         log.info ("init ordersdb")
         self.table_name = "order_%s_%s"%(self.exchange_name, self.product_id)
@@ -167,9 +167,9 @@ class OrderDb(object):
             try:
                 result = self.db.session.query(self.mapping).filter_by(id=order_id)
                 if result:
-                    log.info ("got order from db")                
                     order = result.first()
                 if order != None:
+                    log.info ("got order from db ")                    
                     self.ORDER_DB [order.id] = order
                 else:
                     log.error ("order_id:%s not in Db"%(order_id))
@@ -177,7 +177,6 @@ class OrderDb(object):
                 self.db.session.expire_all()                             
             except Exception, e:
                 print(e.message)
-
         return order
         
     def get_all_orders (self):

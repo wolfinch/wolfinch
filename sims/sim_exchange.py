@@ -23,7 +23,7 @@ log = getLogger (__name__)
 log.setLevel (log.CRITICAL)
 
 ###### SIMULATOR Global switch ######
-simulator_on = True
+simulator_on = False
 import_only = False
 exch_obj = None
 

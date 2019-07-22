@@ -26,10 +26,15 @@ log.setLevel (log.CRITICAL)
 
 
 class SqliteDb (DbBase):    
-    def __init__ (self):
+    def __init__ (self, read_only = False):
         '''
             Db Init
         '''
+        def abort_ro(*args, **kwargs):
+            # disable flush in readonly
+            log.error( "No writing allowed, tsk! ")
+            return 
+                
         self.engine = db.create_engine('sqlite:///data/OldMonk.sqlite.db')       
 #         self.base = declarative_base()
         if self.engine == None :
@@ -39,12 +44,15 @@ class SqliteDb (DbBase):
             self.connection = self.engine.connect()
             self.metadata = db.MetaData(bind=self.connection, reflect=True)           
             self.session = sessionmaker(bind=self.engine)()
+            
+            if read_only == True:
+                self.session.flush = abort_ro
+                
             if self.connection == None or self.metadata == None or self.session == None:
                 log.error ("db connection or metadata init failed")
                 return None
             else:
-                log.info ("Sqlite Init Done")
-                
+                log.info ("Sqlite Init Done")    
                         
     def clear_db (self):
         

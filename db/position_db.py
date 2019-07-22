@@ -21,7 +21,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import mapper 
 
 log = getLogger ('POSITION-DB')
-log.setLevel (log.INFO)
+log.setLevel (log.DEBUG)
 
 # import logging
 # logging.basicConfig()
@@ -30,13 +30,13 @@ log.setLevel (log.INFO)
 # logging.getLogger('sqlalchemy').setLevel(logging.DEBUG)
 
 class PositionDb(object):
-    def __init__ (self, positionCls, market):
-#         self.positionCls = positionCls
+    def __init__ (self, positionCls, exchange_name, product_id, read_only=True):
+        self.PositionCls = positionCls
 #         return
-        self.db = init_db()
-        self.market = market
-        self.exchange_name = market.exchange_name
-        self.product_id = market.product_id
+        self.db = init_db(read_only)
+#         self.market = market
+        self.exchange_name = exchange_name
+        self.product_id = product_id
         
         log.info ("init positionsdb")
         self.table_name = "position_%s_%s"%(self.exchange_name, self.product_id)
@@ -79,9 +79,11 @@ class PositionDb(object):
             raise e
                     
     def __str__ (self):
-        return "{id: %s, buy: %g, sell: %g, profit: %g, stop_loss: %g, take_profit: %g, status: %g, open_time: %s, closed_time: %s}"%(
+        return "{id: %s, buy: %s, sell: %s, profit: %g, stop_loss: %g, take_profit: %g, status: %g, open_time: %s, closed_time: %s}"%(
             self.id, self.buy, self.sell, self.profit, self.stop_loss, self.take_profit, self.status, self.open_time, self.closed_time)
-
+    def __repr__(self):
+        self.__str__()
+        
     def db_save_position (self, position):
 #         return
         log.debug ("Adding position to db")
@@ -107,24 +109,27 @@ class PositionDb(object):
     def db_get_all_positions (self, order_db):
 #         return []
         log.debug ("retrieving positions from db")
+        res_list = []
         try:
             ResultSet = self.db.session.query(self.mapping).all()
             log.info ("Retrieved %d positions for table: %s"%(len(ResultSet), self.table_name))
 #             log.debug ("Res: %s"%str(ResultSet))
             if not ResultSet:
-                return None
-            for pos in ResultSet:
-                if pos.buy == null or pos.buy == '':
-                    pos.buy = None
-                if pos.sell == null or pos.sell == '':
-                    pos.sell = None                    
-                if pos.buy:
-                    pos.buy = order_db.db_get_order(pos.buy)
-                if pos.sell:
-                    pos.sell = order_db.db_get_order(pos.sell)
+                return res_list
+            for posT in ResultSet:
+                sell, buy = None, None
+                if (posT.buy != null and posT.buy != ''):
+                    buy = order_db.db_get_order(posT.buy)
+                    
+                if (posT.sell != null and posT.sell != ''):
+                    sell = order_db.db_get_order(posT.sell)
+                                    
+                pos = self.PositionCls(id=posT.id, buy=buy, sell=sell, profit=posT.profit, stop_loss=posT.stop_loss,
+                  take_profit=posT.take_profit, open_time=posT.open_time, closed_time=posT.closed_time, status=posT.status)
+                res_list.append(pos)
             #clear cache now
             self.db.session.expire_all()                    
-            return ResultSet
+            return res_list
         except Exception, e:
             log.critical(e.message)
             

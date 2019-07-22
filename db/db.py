@@ -9,11 +9,11 @@ from sqlite import SqliteDb
 
 DB = None
 
-def init_db ():
+def init_db (read_only = False):
     global DB
     if DB == None:
         #use sqlite now
-        DB = SqliteDb()
+        DB = SqliteDb(read_only)
     return DB
     
 def clear_db ():

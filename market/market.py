@@ -67,10 +67,11 @@ class OHLC(object):
         self.close = Decimal(close)
         self.volume = Decimal(volume)
     def __str__ (self):
-        return "{time: %s, open: %g, high: %g, low: %g, close: %g, volume: %g}"%(
+        return '{"time": "%s", "open": %g, "high": %g, "low": %g, "close": %g, "volume": %g}'%(
             str(self.time), self.open, self.high, self.low, self.close, self.volume)
+    def __repr__ (self):
+        return self.__str__()
      
-
 class Fund:
     def __init__(self):
         self.initial_value = Decimal(0.0)
