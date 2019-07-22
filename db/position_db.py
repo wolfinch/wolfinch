@@ -30,7 +30,7 @@ log.setLevel (log.DEBUG)
 # logging.getLogger('sqlalchemy').setLevel(logging.DEBUG)
 
 class PositionDb(object):
-    def __init__ (self, positionCls, exchange_name, product_id, read_only=True):
+    def __init__ (self, positionCls, exchange_name, product_id, read_only=False):
         self.PositionCls = positionCls
 #         return
         self.db = init_db(read_only)

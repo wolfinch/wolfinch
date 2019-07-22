@@ -24,7 +24,7 @@ log = getLogger ('CANDLE-DB')
 log.setLevel (log.CRITICAL)
 
 class CandlesDb(object):
-    def __init__ (self, ohlcCls, exchange_name, product_id, read_only=True):
+    def __init__ (self, ohlcCls, exchange_name, product_id, read_only=False):
 #         self.ohlcCls = ohlcCls
         self.db = init_db(read_only)
         log.info ("init candlesdb")

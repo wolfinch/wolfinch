@@ -35,7 +35,7 @@ log.setLevel (log.INFO)
 # Order db is currently a dictionary, keyed with order.id (UUID)
 
 class OrderDb(object):
-    def __init__ (self, orderCls, exchange_name, product_id, read_only=True):
+    def __init__ (self, orderCls, exchange_name, product_id, read_only=False):
 #         self.orderCls = orderCls
 
         self.ORDER_DB = {}
