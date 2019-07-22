@@ -83,11 +83,11 @@ def server_main ():
         except Exception:
             return "{}"
             
-    @app.route('/api/cdl_list')
+    @app.route('/api/candles')
     def candle_list():
         return db_events.get_all_candles()
         
-    @app.route('/api/position_list')
+    @app.route('/api/positions')
     def position_list():
         return db_events.get_all_positions()        
         

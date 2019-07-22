@@ -35,7 +35,7 @@ class SqliteDb (DbBase):
             log.error( "No writing allowed, tsk! ")
             return 
                 
-        self.engine = db.create_engine('sqlite:///data/OldMonk.sqlite.db')       
+        self.engine = db.create_engine('sqlite:///data/OldMonk.sqlite.db', connect_args={'check_same_thread': False})       
 #         self.base = declarative_base()
         if self.engine == None :
             log.error ("sqlite or sqlalchemy init failed")

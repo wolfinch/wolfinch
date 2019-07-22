@@ -66,7 +66,7 @@ def get_all_candles():
         return cdl_s
     else:
         log.error ("unable to get candles")
-        return ""
+        return "[]"
 
 def get_all_positions():
     log.debug ("ENTER")
@@ -79,5 +79,5 @@ def get_all_positions():
         return pos_s
     else:
         log.error ("unable to get positions")
-        return ""
+        return "[]"
 #EOF

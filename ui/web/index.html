@@ -145,7 +145,7 @@
 			"processing" : true,
 			pageLength : 25,
 			ajax : {
-				url : "/api/order_data?abcd=1",
+				url : "/api/positions?abcd=1",
 				dataSrc : ''
 			},
 
@@ -154,7 +154,14 @@
 				data : "status"
 			}, {
 				title : "buy price",
-				data : "buy.price"
+				data : null,
+				render : function(data, type, row) {
+					if (data.sell != undefined) {
+						return data.buy.price;
+					} else {
+						return "-";
+					}
+				}
 			}, {
 				title : "sell price",
 				data : null,
@@ -177,13 +184,34 @@
 				data : "profit"
 			}, {
 				title : "type",
-				data : "buy.order_type"
+				data : null,
+				render : function(data, type, row) {
+					if (data.sell != undefined) {
+						return data.buy.order_type;
+					} else {
+						return "-";
+					}
+				}
 			}, {
 				title : "request size",
-				data : "buy.request_size"
+				data : null,
+				render : function(data, type, row) {
+					if (data.sell != undefined) {
+						return data.buy.request_size;
+					} else {
+						return "-";
+					}
+				}
 			}, {
 				title : "buy filled size",
-				data : "buy.filled_size"
+				data : null,
+				render : function(data, type, row) {
+					if (data.sell != undefined) {
+						return data.buy.filled_size;
+					} else {
+						return "-";
+					}
+				}
 			}, {
 				title : "sell filled size",
 				data : null,
@@ -196,10 +224,24 @@
 				}
 			}, {
 				title : "remaining size",
-				data : "buy.remaining_size"
+				data : null,
+				render : function(data, type, row) {
+					if (data.sell != undefined) {
+						return data.buy.remaining_size;
+					} else {
+						return "-";
+					}
+				}
 			}, {
 				title : "funds ",
-				data : "buy.funds"
+				data : null,
+				render : function(data, type, row) {
+					if (data.sell != undefined) {
+						return data.buy.funds;
+					} else {
+						return "-";
+					}
+				}
 			}, {
 				title : "open time",
 				data : "open_time",

@@ -68,12 +68,12 @@
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    //d3.csv("data.csv", load_data);
+    d3.json("../api/candles", load_data);
     
-    var d = [{Date: "9-Jun-14", Open:62.3, High: 63.34, Low: 61.79, Close: 62.88, Volume: 37617413}];
+    //var d = [{Date: "9-Jun-14", Open:62.3, High: 63.34, Low: 61.79, Close: 62.88, Volume: 37617413}];
     var err = 0;
     
-    load_data(err, d);
+    //load_data(err, d);
 
 /*     (function(window, d3, techanSite) {
         d3.select('div#chart').call();
@@ -89,7 +89,7 @@
         console.log ("here");
         
         data = data.slice(0, 200).map(function(d) {
-        	console.log(d)
+        	//console.log(d)
             return {
                 date: parseDate(d.Date),
                 open: +d.Open,
@@ -116,7 +116,7 @@
                 .style("text-anchor", "end")
                 .text("Price ($)");
 
-        console.log ("here2"+data);
+        //console.log ("here2"+data);
         // Data to display initially
         draw(data.slice(0, data.length-20));
         
