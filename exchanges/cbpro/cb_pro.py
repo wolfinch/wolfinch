@@ -25,7 +25,7 @@ from exchanges import Exchange
 
 EXHANGE_NAME = "CBPRO"
 log = getLogger (EXHANGE_NAME)
-log.setLevel(log.INFO)
+log.setLevel(log.DEBUG)
 
 
 #CBPRO CONFIG FILE

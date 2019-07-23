@@ -23,7 +23,7 @@ exchanges:
 stop_loss:
    enabled: true
    smart: false #track price movement and update stop_loss
-   rate : 5 #-3%
+   rate : 6 #-3%
   
 take_profit:
    enabled: false
@@ -53,7 +53,7 @@ decision:
 #TREND_BOLLINGER"
 #TREND_RSI"
 simulator:
-   enabled : true
+   enabled : false
 
 genetic_optimizer: 
    enabled : false

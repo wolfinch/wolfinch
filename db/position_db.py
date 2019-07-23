@@ -24,8 +24,6 @@ import sims
 log = getLogger ('POSITION-DB')
 log.setLevel (log.DEBUG)
 
-g_db_on = False
-
 # import logging
 # logging.basicConfig()
 # logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
@@ -34,13 +32,17 @@ g_db_on = False
 
 class PositionDb(object):
     def __init__ (self, positionCls, exchange_name, product_id, read_only=False):
+        self.db_enable = False        
         self.PositionCls = positionCls
-        if (sims.simulator_on and not g_db_on):
+        
+        if sims.simulator_on:
             # skip db init
             log.info ("sim on, skip db init")
-            return         
+            self.db_enable = False            
+            return
+        else:
+            self.db_enable = True
         
-#         return
         self.db = init_db(read_only)
 #         self.market = market
         self.exchange_name = exchange_name
@@ -93,7 +95,7 @@ class PositionDb(object):
         self.__str__()
         
     def db_save_position (self, position):
-        if (sims.simulator_on and not g_db_on):
+        if (not self.db_enable):
             log.info ("sim on, skip db op")
             return  
 
@@ -104,7 +106,7 @@ class PositionDb(object):
         self.db.session.commit()
         
     def db_save_positions (self, positions):
-        if (sims.simulator_on and not g_db_on):
+        if (not self.db_enable):
             log.info ("sim on, skip db op")
             return  
         log.debug ("Adding position list to db")
@@ -115,7 +117,7 @@ class PositionDb(object):
         self.db.session.commit()
         
     def db_delete_position(self, position):
-        if (sims.simulator_on):
+        if (not self.db_enable):
             log.info ("sim on, skip db op")
             return  
         
@@ -124,7 +126,7 @@ class PositionDb(object):
         self.db.session.commit()        
         
     def db_get_all_positions (self, order_db):
-        if (sims.simulator_on and not g_db_on):
+        if (not self.db_enable):
             log.info ("sim on, skip db op")
             return  
         log.debug ("retrieving positions from db")
@@ -153,7 +155,7 @@ class PositionDb(object):
             log.critical(e.message)
             
     def clear_position_db(self):
-        if (sims.simulator_on and not g_db_on):
+        if (not self.db_enable):
             log.info ("sim on, skip db op")
             return  
         

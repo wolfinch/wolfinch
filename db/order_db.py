@@ -26,7 +26,6 @@ from sqlalchemy.orm import mapper
 log = getLogger ('ORDER-DB')
 log.setLevel (log.INFO)
 
-g_db_on = False
 # import logging
 # logging.basicConfig()
 # logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
@@ -37,14 +36,15 @@ g_db_on = False
 
 class OrderDb(object):
     def __init__ (self, orderCls, exchange_name, product_id, read_only=False):
-#         self.orderCls = orderCls
-
+        self.db_enable = False
         self.ORDER_DB = {}
         
-        if (sims.simulator_on and not g_db_on):
+        if sims.simulator_on:
             # skip db init
             log.info ("sim on, skip db init")
-            return    
+            return
+        else:
+            self.db_enable = True
         
         self.db = init_db(read_only)
 #         self.market = market
@@ -143,7 +143,7 @@ class OrderDb(object):
         log.debug ("Adding order to db")
         self.ORDER_DB [order.id] = order
         
-        if (sims.simulator_on and not g_db_on):
+        if (not self.db_enable):
             return
         self._db_save_order(order)
         
@@ -153,7 +153,7 @@ class OrderDb(object):
         del(self.ORDER_DB[order.id])
         #TODO: FIXME: Handle Db here ??
          
-        if (sims.simulator_on and not g_db_on):
+        if (not self.db_enable):
             return
         self._db_delete_order(order)
         
@@ -161,7 +161,7 @@ class OrderDb(object):
         log.debug ("Get order from db")
         order = self.ORDER_DB.get(order_id)  
         
-        if (sims.simulator_on and not g_db_on):
+        if (not self.db_enable):
             #skip Db
             return order
         
@@ -183,15 +183,15 @@ class OrderDb(object):
         return order
         
     def get_all_orders (self):
-        if (sims.simulator_on and not g_db_on):
+        if (not self.db_enable):
             #skip Db
-            return         
+            return self.ORDER_DB.values()
         self._db_get_all_orders()
         return self.ORDER_DB.values()
             
     def clear_order_db(self):
         log.info ("clearing order db")
-        if (sims.simulator_on and not g_db_on):
+        if (not self.db_enable):
             #skip Db
             return         
         self.ORDER_DB = {}
