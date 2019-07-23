@@ -19,9 +19,12 @@ from utils import getLogger
 from db import init_db
 from sqlalchemy import *
 from sqlalchemy.orm import mapper 
+import sims
 
 log = getLogger ('POSITION-DB')
 log.setLevel (log.DEBUG)
+
+g_db_on = False
 
 # import logging
 # logging.basicConfig()
@@ -32,6 +35,11 @@ log.setLevel (log.DEBUG)
 class PositionDb(object):
     def __init__ (self, positionCls, exchange_name, product_id, read_only=False):
         self.PositionCls = positionCls
+        if (sims.simulator_on and not g_db_on):
+            # skip db init
+            log.info ("sim on, skip db init")
+            return         
+        
 #         return
         self.db = init_db(read_only)
 #         self.market = market
@@ -85,7 +93,10 @@ class PositionDb(object):
         self.__str__()
         
     def db_save_position (self, position):
-#         return
+        if (sims.simulator_on and not g_db_on):
+            log.info ("sim on, skip db op")
+            return  
+
         log.debug ("Adding position to db")
 
         c = self.positionCls(position)
@@ -93,7 +104,9 @@ class PositionDb(object):
         self.db.session.commit()
         
     def db_save_positions (self, positions):
-#         return
+        if (sims.simulator_on and not g_db_on):
+            log.info ("sim on, skip db op")
+            return  
         log.debug ("Adding position list to db")
 
         for cdl in positions:
@@ -102,12 +115,18 @@ class PositionDb(object):
         self.db.session.commit()
         
     def db_delete_position(self, position):
+        if (sims.simulator_on):
+            log.info ("sim on, skip db op")
+            return  
+        
         c = self.positionCls(position)
         self.db.session.delete (c)
         self.db.session.commit()        
         
     def db_get_all_positions (self, order_db):
-#         return []
+        if (sims.simulator_on and not g_db_on):
+            log.info ("sim on, skip db op")
+            return  
         log.debug ("retrieving positions from db")
         res_list = []
         try:
@@ -134,6 +153,10 @@ class PositionDb(object):
             log.critical(e.message)
             
     def clear_position_db(self):
+        if (sims.simulator_on and not g_db_on):
+            log.info ("sim on, skip db op")
+            return  
+        
         log.info ("clearing position db")
         self.table.drop(checkfirst=True)
         self.db.session.commit()  

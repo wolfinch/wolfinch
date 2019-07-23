@@ -26,6 +26,7 @@ from sqlalchemy.orm import mapper
 log = getLogger ('ORDER-DB')
 log.setLevel (log.INFO)
 
+g_db_on = False
 # import logging
 # logging.basicConfig()
 # logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
@@ -40,7 +41,7 @@ class OrderDb(object):
 
         self.ORDER_DB = {}
         
-        if (sims.simulator_on):
+        if (sims.simulator_on and not g_db_on):
             # skip db init
             log.info ("sim on, skip db init")
             return    
@@ -121,7 +122,7 @@ class OrderDb(object):
         self.db.session.delete (c)
         self.db.session.commit()
         
-    def _db_get_all_orders (self):
+    def _db_get_all_orders (self):        
         log.debug ("retrieving orders from db")
         try:
             ResultSet = self.db.session.query(self.mapping).all()
@@ -138,27 +139,29 @@ class OrderDb(object):
         except Exception, e:
             log.critical(e.message)
 
-    def db_add_or_update_order (self, order):
+    def db_add_or_update_order (self, order):     
         log.debug ("Adding order to db")
         self.ORDER_DB [order.id] = order
         
-        if not (sims.simulator_on):
-            self._db_save_order(order)
+        if (sims.simulator_on and not g_db_on):
+            return
+        self._db_save_order(order)
         
         
-    def db_del_order (self, order):
+    def db_del_order (self, order):       
         log.debug ("Del order from db")    
         del(self.ORDER_DB[order.id])
         #TODO: FIXME: Handle Db here ??
          
-        if not (sims.simulator_on):        
-            self._db_delete_order(order)
+        if (sims.simulator_on and not g_db_on):
+            return
+        self._db_delete_order(order)
         
     def db_get_order (self, order_id):
         log.debug ("Get order from db")
         order = self.ORDER_DB.get(order_id)  
         
-        if (sims.simulator_on):        
+        if (sims.simulator_on and not g_db_on):
             #skip Db
             return order
         
@@ -180,11 +183,17 @@ class OrderDb(object):
         return order
         
     def get_all_orders (self):
+        if (sims.simulator_on and not g_db_on):
+            #skip Db
+            return         
         self._db_get_all_orders()
         return self.ORDER_DB.values()
             
     def clear_order_db(self):
         log.info ("clearing order db")
+        if (sims.simulator_on and not g_db_on):
+            #skip Db
+            return         
         self.ORDER_DB = {}
         self.table.drop(checkfirst=True)
         self.db.session.commit()        

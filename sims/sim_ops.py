@@ -31,6 +31,7 @@ log.setLevel (log.CRITICAL)
 
 ###### SIMULATOR Global switch ######
 backtesting_on = False
+simulator_on = False
 import_only = False
 
 ####### Private #########
@@ -42,7 +43,7 @@ def finish_backtesting(market):
     market.close_all_positions()
     return True
     
-def do_backtesting ():
+def do_backtesting (simulator_on=False):
     # don't sleep for backtesting    
     sleep_time = 0
     done = False
@@ -61,13 +62,15 @@ def do_backtesting ():
             msg = feed_deQ(0)        
         for market in get_market_list():
             market.update_market_states()
+            market.cur_candle_time = market.market_indicators_data[market.backtesting_idx]['ohlc'].time
             # Trade only on primary markets
             if (market.primary == True and (market.backtesting_idx < market.num_candles - 1)):
 #                 log.info ("BACKTEST(%d): processing on market: exchange (%s) product: %s"%(
 #                     market.backtesting_idx, market.exchange_name, market.name))     
                 signal = market.generate_trade_signal (market.backtesting_idx)
                 market.consume_trade_signal (signal)
-                if (sim_exchange.simulator_on):
+                
+                if (simulator_on):
                     sim_exchange.market_simulator_run (market)
                 #if atleast one market is not done, we will continue
                 done = False
@@ -75,7 +78,7 @@ def do_backtesting ():
             elif done == True:
                 finish_backtesting(market)
                 market.backtesting_idx = market.num_candles - 1
-                if (sim_exchange.simulator_on):
+                if (simulator_on):
                     sim_exchange.market_simulator_run (market)                
                 #let's do few iterations and make sure everything is really done!
                 all_done += 1 
@@ -108,12 +111,12 @@ def sim_ga_init (decisionConfig, tradingConfig=None):
     
 ############# Public APIs ######################
         
-def market_backtesting_run ():
+def market_backtesting_run (sim_on=False):
     """
     market backtesting 
     """
     log.debug("starting backtesting")    
-    do_backtesting()
+    do_backtesting(sim_on)
     log.info ("backtesting complete. ")
     show_stats ()
     
@@ -127,15 +130,15 @@ def market_backtesting_ga_hook (decisionConfig, tradingConfig=None):
     """
     market backtesting hook for ga
     """
-    global backtesting_on
+    global backtesting_on, simulator_on
     
-    sim_exchange.simulator_on = True
+    simulator_on = True
     backtesting_on = True
     
     sim_ga_init (decisionConfig, tradingConfig)
     
     log.debug("starting backtesting")    
-    do_backtesting()
+    do_backtesting(simulator_on)
     log.info ("backtesting complete. ")
     
     

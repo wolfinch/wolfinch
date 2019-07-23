@@ -23,8 +23,6 @@ log = getLogger (__name__)
 log.setLevel (log.CRITICAL)
 
 ###### SIMULATOR Global switch ######
-simulator_on = False
-import_only = False
 exch_obj = None
 
 '''
@@ -73,7 +71,7 @@ def do_trade (market):
         market.order_status_update (order)
         #now trade
         this_order = copy.deepcopy(order_struct) # Note: this at the top
-        this_order['created_at'] = datetime.now().isoformat()
+        this_order['created_at'] = datetime.utcfromtimestamp(market.cur_candle_time).isoformat()
         this_order['product_id'] = market.product_id
         this_order['id'] = order.id
         this_order['type'] = "done"

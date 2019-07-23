@@ -179,6 +179,7 @@ def load_config (cfg_file):
                     else:
                         log.debug ("backtesting disabled")       
                         sims.backtesting_on = False
+
         elif k == 'genetic_optimizer':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'enabled':
@@ -260,7 +261,7 @@ def arg_parse ():
     if (args.backtesting):              
         log.debug ("backtesting enabled")       
         sims.backtesting_on = True
-        sims.simulator_on = True
+        #sims.simulator_on = True
     else:
         log.debug ("backtesting disabled")       
         sims.backtesting_on = False        
@@ -303,7 +304,7 @@ if __name__ == '__main__':
             raise SystemExit
         
         if (sims.backtesting_on):
-            sims.market_backtesting_run ()
+            sims.market_backtesting_run (sims.simulator_on)
             raise SystemExit
         else:
             log.debug ("Starting Main forever loop")
