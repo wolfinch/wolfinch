@@ -156,7 +156,7 @@
 				title : "buy price",
 				data : null,
 				render : function(data, type, row) {
-					if (data.sell != undefined) {
+					if (data.buy != undefined) {
 						return data.buy.price;
 					} else {
 						return "-";
@@ -186,7 +186,7 @@
 				title : "type",
 				data : null,
 				render : function(data, type, row) {
-					if (data.sell != undefined) {
+					if (data.buy != undefined) {
 						return data.buy.order_type;
 					} else {
 						return "-";
@@ -196,7 +196,7 @@
 				title : "request size",
 				data : null,
 				render : function(data, type, row) {
-					if (data.sell != undefined) {
+					if (data.buy != undefined) {
 						return data.buy.request_size;
 					} else {
 						return "-";
@@ -206,7 +206,7 @@
 				title : "buy filled size",
 				data : null,
 				render : function(data, type, row) {
-					if (data.sell != undefined) {
+					if (data.buy != undefined) {
 						return data.buy.filled_size;
 					} else {
 						return "-";
@@ -226,7 +226,7 @@
 				title : "remaining size",
 				data : null,
 				render : function(data, type, row) {
-					if (data.sell != undefined) {
+					if (data.buy != undefined) {
 						return data.buy.remaining_size;
 					} else {
 						return "-";
@@ -236,7 +236,7 @@
 				title : "funds ",
 				data : null,
 				render : function(data, type, row) {
-					if (data.sell != undefined) {
+					if (data.buy != undefined) {
 						return data.buy.funds;
 					} else {
 						return "-";

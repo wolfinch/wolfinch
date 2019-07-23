@@ -236,10 +236,25 @@ def arg_parse ():
     if (args.clean):
         clean_states ()
         exit (0)
+                 
+    if (args.config):
+        log.debug ("config file: %s"%args.config)
+        if False == load_config (args.config):
+            log.critical ("Config parse error!!")
+            parser.print_help()
+            exit(1)
+        else:
+            log.debug ("config loaded successfully!")
+#             exit (0)
+    else:
+        parser.print_help()
+        exit(1)
         
     if (args.import_only):              
         log.debug ("import_only enabled")       
         sims.import_only = True
+        sims.genetic_optimizer_on = False        
+        sims.backtesting_on = False
     else:
         log.debug ("import_only disabled")       
         sims.import_only = False          
@@ -265,19 +280,7 @@ def arg_parse ():
     else:
         log.debug ("backtesting disabled")       
         sims.backtesting_on = False        
-                 
-    if (args.config):
-        log.debug ("config file: %s"%args.config)
-        if False == load_config (args.config):
-            log.critical ("Config parse error!!")
-            parser.print_help()
-            exit(1)
-        else:
-            log.debug ("config loaded successfully!")
-#             exit (0)
-    else:
-        parser.print_help()
-        exit(1)
+
     
 #     log.debug("sims.backtesting_on: %d"%(sims.backtesting_on))
 #     exit(1)
