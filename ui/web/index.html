@@ -4,8 +4,6 @@
 <title>OldMonk Trading Bot</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet"
 	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
 <script
@@ -255,7 +253,7 @@
 
 		setInterval(function() {
 			table.ajax.reload(null, false); // user paging is not reset on reload
-		}, 30000);
+		}, 120000);
 	});
 </script>
 
@@ -287,15 +285,13 @@
 	</div>
 
 	<div class="container-fluid">
-		<div>
-			<div>
-				<table border="0" style="border-collapse: collapse; width: 100%;"
-					class="display">
+		<div class="row">
+			<div class="col-sm-12 col-md-12 col-lg-10 col-xl-9">
+				<table >
 					<tbody style="vertical-align: top">
 						<tr style="height: 60px;">
 							<td style="width: 45%; height: 60px;">
-								<table style="margin: false; height: 60px;" border="1"
-									height="49">
+								<table style="margin: false; height: 60px;" border="1">
 									<tbody>
 										<tr style="background-color: rgba(0, 0, 0, 0.1);">
 											<td align="center" style="border: 0;" colspan="16">
@@ -392,7 +388,7 @@
 							<td style="width: 33%;"></td>
 						</tr>
 						<tr style="width: 100%; height: 23px;" align="center">
-							<td style="width: 75%; height: 23px; border-collapse: collapse;"
+							<td style="width: 65%; height: 23px; border-collapse: collapse;"
 								colspan="1">
 								<table id="statsTable" class="display compact"
 									style="vertical-align: top; height: 100%;">
@@ -422,7 +418,7 @@
 							<td style="width: 35%; padding-right: 20px;">
 								<div>
 
-									<table border="0" style="border-collapse: collapse;"
+									<table border="0" style="border-collapse: collapse; width: 100%;"
 										class="display">
 										<tbody>
 											<tr style="background-color: rgba(0, 0, 0, 0.1);">

@@ -58,7 +58,7 @@ TradingConfig = None
 DecisionConfig = None
 
 class OHLC(object): 
-#     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']    #sqlqlchemy mapper doesn't work with __slots__
+    __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']
     def __init__ (self, time=0, open=0, high=0, low=0, close =0, volume =0):
         self.time = time
         self.open = Decimal(open)

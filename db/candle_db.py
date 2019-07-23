@@ -25,7 +25,7 @@ log.setLevel (log.CRITICAL)
 
 class CandlesDb(object):
     def __init__ (self, ohlcCls, exchange_name, product_id, read_only=False):
-#         self.ohlcCls = ohlcCls
+        self.OHLCCls = ohlcCls
         self.db = init_db(read_only)
         log.info ("init candlesdb")
         self.table_name = "candle_%s_%s"%(exchange_name, product_id)
@@ -100,9 +100,12 @@ class CandlesDb(object):
 #             ResultSet = ResultProxy.fetchall()
             ResultSet = self.db.session.query(self.mapping).order_by(self.ohlcCls.time).all()
             log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
+            
+            if (len(ResultSet)):
+                res_list = map (lambda c: self.OHLCCls(c.time, c.open, c.high, c.low, c.close, c.volume), ResultSet)
             #clear cache now
             self.db.session.expire_all()
-            return ResultSet
+            return res_list
         except Exception, e:
             print(e.message)        
    
