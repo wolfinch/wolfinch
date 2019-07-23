@@ -164,8 +164,8 @@ path.candle.down {
     stroke: #FF0000;
 }
 
-.close.annotation.up path {
-	fill: #00AA00;
+.closeValue.annotation.up path {
+    fill: #00AA00;
 }
 
 path.volume {
