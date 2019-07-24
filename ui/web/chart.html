@@ -134,7 +134,7 @@
 
 		console.log("data len: " + data.length);
 
-		data = data.slice(data.length - 201, data.length - 1);
+		data = data.slice(data.length - 2001, data.length - 1);
 
 		data = data.map(function(d) {
 
@@ -242,7 +242,7 @@
 
 		function zoomed() {
 
-			console.log("zoomed");
+			//console.log("zoomed");
 			x.zoomable().domain(
 					d3.event.transform.rescaleX(zoomableInit).domain());
 			y.domain(d3.event.transform.rescaleY(yInit).domain());
@@ -258,7 +258,17 @@
 			if (data.length == 0)
 				return;
 
-			var svg = selection.append("svg"), defs = svg.append("defs");
+			
+			var svg = selection.select("svg"), defs = svg.append("defs");
+
+			if (svg.node() != null) {
+				console.log("remove old svg");
+				svg.remove();
+			} 
+			
+			svg = selection.append("svg");			
+			
+			
 			/* 
 			 svg.append('text')
 			 .attr("class", "version")
@@ -318,11 +328,12 @@
 			svg.append("g").attr("class", "tradearrow").attr("clip-path",
 					"url(#ohlcClip)");
 
-			var accessor = candlestick.accessor(), indicatorPreRoll = g_big_data.preroll, postRollData = data
-					.slice(indicatorPreRoll); // Don't show where indicators don't have data 
+			var accessor = candlestick.accessor(), indicatorPreRoll = g_big_data.preroll,
+				postRollData = data.slice(indicatorPreRoll); // Don't show where indicators don't have data 
 
 			x.domain(techan.scale.plot.time(data).domain());
 			y.domain(techan.scale.plot.ohlc(postRollData).domain());
+			
 			yPercent.domain(techan.scale.plot.percent(y,
 					accessor(data[indicatorPreRoll])).domain());
 			yVolume.domain(techan.scale.plot.volume(postRollData).domain());
@@ -333,7 +344,8 @@
 			yInit = y.copy();
 			yPercentInit = yPercent.copy();
 
-			x.zoomable().domain([ indicatorPreRoll, data.length ]); // Zoom in a little to hide indicator preroll
+			//x.zoomable().domain([ indicatorPreRoll, data.length ]); // Zoom in a little to hide indicator preroll
+			
 			resize(selection);
 
 			svg.select("g.candlestick").datum(data).call(candlestick);
@@ -397,6 +409,8 @@
 		}
 
 		function draw(selection) {
+			console.log("draw");
+			
 			var svg = selection.select("svg");
 			svg.select("g.x.axis.bottom").call(xAxis);
 			svg.select("g.x.axis.top").call(xAxisTop);
