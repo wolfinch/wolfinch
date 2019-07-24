@@ -96,7 +96,7 @@ class PositionDb(object):
         
     def db_save_position (self, position):
         if (not self.db_enable):
-            log.info ("sim on, skip db op")
+            log.debug ("sim on, skip db op")
             return  
 
         log.debug ("Adding position to db")
@@ -107,7 +107,7 @@ class PositionDb(object):
         
     def db_save_positions (self, positions):
         if (not self.db_enable):
-            log.info ("sim on, skip db op")
+            log.debug ("sim on, skip db op")
             return  
         log.debug ("Adding position list to db")
 
@@ -118,7 +118,7 @@ class PositionDb(object):
         
     def db_delete_position(self, position):
         if (not self.db_enable):
-            log.info ("sim on, skip db op")
+            log.debug ("sim on, skip db op")
             return  
         
         c = self.positionCls(position)
@@ -127,9 +127,9 @@ class PositionDb(object):
         
     def db_get_all_positions (self, order_db):
         if (not self.db_enable):
-            log.info ("sim on, skip db op")
+            log.debug ("sim on, skip db op")
             return  
-        log.debug ("retrieving positions from db")
+        log.info ("retrieving positions from db")
         res_list = []
         try:
             ResultSet = self.db.session.query(self.mapping).all()
@@ -156,7 +156,7 @@ class PositionDb(object):
             
     def clear_position_db(self):
         if (not self.db_enable):
-            log.info ("sim on, skip db op")
+            log.debug ("sim on, skip db op")
             return  
         
         log.info ("clearing position db")

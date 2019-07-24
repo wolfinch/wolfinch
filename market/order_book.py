@@ -28,7 +28,7 @@ import sims
 from order import Order
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.INFO)
+log.setLevel(log.CRITICAL)
 
 class Position (object):
     def __init__(self, id=None, buy=None, sell=None, profit=0, stop_loss=0,
