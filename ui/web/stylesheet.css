@@ -308,7 +308,7 @@ path.middle, path.zero {
 }
 
 .tradearrow path.sell {
-	fill: #9900FF;
+	fill: #c2f23d;
 }
 
 .tradearrow path.highlight {
@@ -321,5 +321,5 @@ path.middle, path.zero {
 }
 
 .tradearrow path.highlight.sell {
-	stroke: #9900FF;
+	stroke: #c2f23d;
 }

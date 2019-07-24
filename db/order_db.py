@@ -24,7 +24,7 @@ from sqlalchemy.orm import mapper
 # import sqlalchemy
 
 log = getLogger ('ORDER-DB')
-log.setLevel (log.INFO)
+log.setLevel (log.ERROR)
 
 # import logging
 # logging.basicConfig()
@@ -42,6 +42,7 @@ class OrderDb(object):
         if sims.simulator_on:
             # skip db init
             log.info ("sim on, skip db init")
+#             self.db_enable = True
             return
         else:
             self.db_enable = True

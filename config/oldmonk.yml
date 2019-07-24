@@ -22,12 +22,12 @@ exchanges:
 
 stop_loss:
    enabled: true
-   smart: false #track price movement and update stop_loss
+   smart: true #track price movement and update stop_loss
    rate : 6 #-3%
   
 take_profit:
-   enabled: false
-   rate: 12 # 10percent
+   enabled: true
+   rate: 16 # 10percent
 
 #decision engine
 
@@ -41,7 +41,7 @@ decision:
       #strategy: TRIX_RSI
       #params : {'rsi_oversold_level': 66, 'period': 76, 'trix': 10, 'rsi': 24, 'rsi_overbought_level': 78}
       strategy: EMA_DEV
-      params : {'ema_sell_s': 80, 'rsi': 90, 'treshold_pct_buy_l': 0.23, 'ema_buy_s': 130, 'period': 190, 'ema_sell_l': 85, 'ema_buy_l': 115, 'treshold_pct_sell_l': 1.08, 'treshold_pct_buy_s': 1.02, 'treshold_pct_sell_s': 0.65}
+      params : {'ema_sell_s': 85, 'timeout_sell': 40, 'rsi': 24, 'treshold_pct_buy_l': 1.0, 'ema_buy_s': 185, 'timeout_buy': 14, 'period': 165, 'treshold_pct_sell_s': 0.92, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.35, 'treshold_pct_buy_s': 0.39, 'ema_sell_l': 25}
       #strategy : EMA_RSI
       #params : {'rsi': 64, 'ema_s': 44, 'period': 38, 'ema_m': 184, 'ema_l': 156, 'ema_ll': 64}
       #Hall of Fame
@@ -53,10 +53,10 @@ decision:
 #TREND_BOLLINGER"
 #TREND_RSI"
 simulator:
-   enabled : true
+   enabled : false
 
 genetic_optimizer: 
-   enabled : true
+   enabled : false
    N_POP : 1000
    N_GEN : 100
    N_MP : 10

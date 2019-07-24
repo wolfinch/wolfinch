@@ -22,7 +22,7 @@ from sqlalchemy.orm import mapper
 import sims
 
 log = getLogger ('POSITION-DB')
-log.setLevel (log.DEBUG)
+log.setLevel (log.INFO)
 
 # import logging
 # logging.basicConfig()
@@ -38,7 +38,7 @@ class PositionDb(object):
         if sims.simulator_on:
             # skip db init
             log.info ("sim on, skip db init")
-            self.db_enable = False            
+#             self.db_enable = True            
             return
         else:
             self.db_enable = True
