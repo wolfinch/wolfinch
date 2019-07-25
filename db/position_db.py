@@ -139,10 +139,10 @@ class PositionDb(object):
                 return res_list
             for posT in ResultSet:
                 sell, buy = None, None
-                if (posT.buy != null and posT.buy != ''):
+                if (posT.buy != null and posT.buy != '' and posT.buy != None and posT.buy != "None"):
                     buy = order_db.db_get_order(posT.buy)
                     
-                if (posT.sell != null and posT.sell != ''):
+                if (posT.sell != null and posT.sell != '' and posT.sell != None and posT.sell != "None"):
                     sell = order_db.db_get_order(posT.sell)
                                     
                 pos = self.PositionCls(id=posT.id, buy=buy, sell=sell, profit=posT.profit, stop_loss=posT.stop_loss,
