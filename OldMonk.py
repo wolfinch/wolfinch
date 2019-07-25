@@ -260,7 +260,8 @@ def arg_parse ():
         sims.import_only = False          
         
     if (args.restart):              
-        log.debug ("restart enabled")       
+        log.debug ("restart enabled")
+        print ("Restarting from previous state")
         gRestart = True
     else:
         log.debug ("restart disabled")       
