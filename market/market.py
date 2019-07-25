@@ -51,7 +51,7 @@ from mock.mock import self
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 OldMonk_market_list = []
 TradingConfig = None
@@ -811,7 +811,7 @@ class Market:
         
         # restore market states
         if restart:
-            log.critical ("restoring order book from DB")
+            log.info ("restoring order book from DB")
             self._restore_states ()
         
         log.info ("calculating historic indicators")
