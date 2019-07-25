@@ -92,6 +92,21 @@ class CandlesDb(object):
             self.db.session.merge (c)
         self.db.session.commit()
         
+    def db_get_candles_after_time(self, after):
+        log.debug ("retrieving candles after time: %d from db"%(after))
+        try:
+            ResultSet = self.db.session.query(self.mapping).filter(self.ohlcCls.time >= after).order_by(self.ohlcCls.time).all()
+            log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
+            
+            if (len(ResultSet)):
+                res_list = map (lambda c: self.OHLCCls(c.time, c.open, c.high, c.low, c.close, c.volume), ResultSet)
+            #clear cache now
+            self.db.session.expire_all()
+            return res_list
+        except Exception, e:
+            print(e.message)          
+        
+        
     def db_get_all_candles (self):
         log.debug ("retrieving candles from db")
         try:

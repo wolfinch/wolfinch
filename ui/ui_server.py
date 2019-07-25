@@ -24,6 +24,8 @@ import sys
 from decimal import *
 import argparse
 import os
+from flask import request
+
 
 from flask import Flask, request, send_from_directory
 
@@ -85,7 +87,8 @@ def server_main ():
             
     @app.route('/api/candles')
     def candle_list():
-        return db_events.get_all_candles()
+        period = request.args.get('period', default = 1, type = int)
+        return db_events.get_all_candles(period)
         
     @app.route('/api/positions')
     def position_list():

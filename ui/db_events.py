@@ -56,10 +56,16 @@ def init ():
     log.info ("db_events init success")
     return True 
 
-def get_all_candles():
+def get_all_candles(period=1):
     
-    log.debug("ENTER")
-    cdl_li = cdl_db.db_get_all_candles()
+    log.debug("ENTER ")
+    
+    #time calc - cur_time - sec in perd
+    after = int(time.time()) - period * 60 * 60 * 24
+    
+    log.debug ("period: %d cdl_first_time: %d"%(period, after))
+    
+    cdl_li = cdl_db.db_get_candles_after_time(after)
     if cdl_li:
         log.info ("got (%d) candles"%(len(cdl_li)))
         cdl_s = str(cdl_li)

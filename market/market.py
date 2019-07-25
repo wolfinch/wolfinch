@@ -811,7 +811,7 @@ class Market:
         
         # restore market states
         if restart:
-            log.info ("restoring order book from DB")
+            log.critical ("restoring order book from DB")
             self._restore_states ()
         
         log.info ("calculating historic indicators")

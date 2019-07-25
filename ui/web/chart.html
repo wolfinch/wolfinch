@@ -42,7 +42,7 @@
 		name : "BTC-USD",
 		ohlc : [],
 		positions : [],
-		preroll : 33
+		preroll : 0
 	};
 
 	var g_big_chart;
@@ -62,6 +62,8 @@
 		setInterval(loadPositions, 120000);
 		setInterval(loadCandles, 120000);
 	});
+	
+    var dateFormat = d3.timeFormat("%c"), valueFormat = d3.format(',.2f');
 
 	var parseDate = function(utcSeconds) {
 		var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
@@ -73,7 +75,7 @@
 		console.log("load positions");
 		$.ajax({
 			type : 'GET',
-			url : '../api/positions',
+			url : '../api/positions?period='+g_chart_period,
 			data : {
 				get_param : 'value'
 			},
@@ -86,7 +88,7 @@
 		console.log("load candles");
 		$.ajax({
 			type : 'GET',
-			url : '../api/candles',
+			url : '../api/candles?period='+g_chart_period,
 			data : {
 				get_param : 'value'
 			},
@@ -134,7 +136,7 @@
 
 		console.log("data len: " + data.length);
 
-		data = data.slice(data.length - 2001, data.length - 1);
+		//data = data.slice(data.length - 201, data.length - 1);
 
 		data = data.map(function(d) {
 
@@ -182,9 +184,22 @@
 			}
 		};
 
-		var x = techan.scale.financetime(), y = d3.scaleLinear(), yPercent = y
-				.copy(), yVolume = d3.scaleLinear();
+		var x = techan.scale.financetime();
+		var y = d3.scaleLinear();
+		var yPercent = y.copy();
+		var yVolume = d3.scaleLinear();
 		var candlestick = techan.plot.candlestick().xScale(x).yScale(y);
+
+		function zoomed() {
+
+			console.log("zoomed");
+			x.zoomable().domain(
+					d3.event.transform.rescaleX(zoomableInit).domain());
+			y.domain(d3.event.transform.rescaleY(yInit).domain());
+			yPercent.domain(d3.event.transform.rescaleY(yPercentInit).domain());
+
+			draw(d3.select("#chart"));
+		}
 
 		var zoom = d3.zoom().on("zoom", zoomed);
 		var yInit, yPercentInit, zoomableInit;
@@ -199,57 +214,53 @@
 						return y(d.high) - 5;
 					else
 						return y(d.price);
-				});
-		/* 		.orient(function(d) { return d.type.startsWith("buy") ? "up" : "down"; })
+				})
+				.orient(function(d) { return d.type.startsWith("buy") ? "up" : "down"; })
 		 .on("mouseenter", enter)
 		 .on("mouseout", out);
+ 		
 		 function enter(d) {
-		 valueText.style("display", "inline");
+			 d3.select("text.coords").style("display", "inline");
 		 refreshText(d);
 		 }
 
 		 function out() {
-		 valueText.style("display", "none");
-		 } */
+			 d3.select("text.coords").style("display", "none");
+		 }
 
 		function refreshText(d) {
-			valueText.text("Trade: " + dateFormat(d.date) + ", " + d.type
+			d3.select("text.coords").text("Trade: " + dateFormat(d.date) + ", " + d.type
 					+ ", " + valueFormat(d.price));
 		}
 
 		var volume = techan.plot.volume().accessor(candlestick.accessor())
 				.xScale(x).yScale(yVolume);
-		var xAxis = d3.axisBottom(x), xAxisTop = d3.axisTop(x), timeAnnotation = techan.plot
-				.axisannotation().orient('bottom').axis(xAxis).format(
-						d3.timeFormat('%Y-%m-%d')).width(65), timeAnnotationTop = techan.plot
-				.axisannotation().orient('top').axis(xAxisTop).format(
-						d3.timeFormat('%Y-%m-%d')).width(65), yAxis = d3
-				.axisRight(y), ohlcAnnotation = techan.plot.axisannotation()
-				.orient('right').axis(yAxis).format(d3.format(',.2f')), closeAnnotation = techan.plot
-				.axisannotation().orient('right').accessor(
-						candlestick.accessor()).axis(yAxis).format(
-						d3.format(',.2f')), percentAxis = d3.axisLeft(yPercent)
-				.tickFormat(d3.format('+.1%')), percentAnnotation = techan.plot
-				.axisannotation().orient('left').axis(percentAxis), volumeAxis = d3
-				.axisRight(yVolume).ticks(3).tickFormat(d3.format(',.3s')), volumeAnnotation = techan.plot
-				.axisannotation().orient('right').axis(volumeAxis).width(35), ohlcCrosshair = techan.plot
+		var xAxis = d3.axisBottom(x);
+		var xAxisTop = d3.axisTop(x);
+		var timeAnnotation = techan.plot.axisannotation().orient('bottom')
+				.axis(xAxis).format(d3.timeFormat('%Y-%m-%d')).width(65);
+		var timeAnnotationTop = techan.plot.axisannotation().orient('top')
+				.axis(xAxisTop).format(d3.timeFormat('%Y-%m-%d')).width(65);
+		var yAxis = d3.axisRight(y);
+		var ohlcAnnotation = techan.plot.axisannotation().orient('right').axis(
+				yAxis).format(d3.format(',.2f'));
+		var closeAnnotation = techan.plot.axisannotation().orient('right')
+				.accessor(candlestick.accessor()).axis(yAxis).format(
+						d3.format(',.2f'));
+		var percentAxis = d3.axisLeft(yPercent).tickFormat(d3.format('+.1%'));
+		var percentAnnotation = techan.plot.axisannotation().orient('left')
+				.axis(percentAxis);
+		var volumeAxis = d3.axisRight(yVolume).ticks(3).tickFormat(
+				d3.format(',.3s'));
+		var volumeAnnotation = techan.plot.axisannotation().orient('right')
+				.axis(volumeAxis).width(35);
+		var ohlcCrosshair = techan.plot
 				.crosshair()
 				.xScale(x)
 				.yScale(y)
 				.xAnnotation([ timeAnnotation, timeAnnotationTop ])
 				.yAnnotation(
 						[ ohlcAnnotation, percentAnnotation, volumeAnnotation ]);
-
-		function zoomed() {
-
-			//console.log("zoomed");
-			x.zoomable().domain(
-					d3.event.transform.rescaleX(zoomableInit).domain());
-			y.domain(d3.event.transform.rescaleY(yInit).domain());
-			yPercent.domain(d3.event.transform.rescaleY(yPercentInit).domain());
-
-			draw(d3.select("#chart"));
-		}
 
 		function bigchart(selection) {
 
@@ -258,17 +269,15 @@
 			if (data.length == 0)
 				return;
 
-			
 			var svg = selection.select("svg"), defs = svg.append("defs");
 
 			if (svg.node() != null) {
 				console.log("remove old svg");
 				svg.remove();
-			} 
-			
-			svg = selection.append("svg");			
-			
-			
+			}
+
+			svg = selection.append("svg");
+
 			/* 
 			 svg.append('text')
 			 .attr("class", "version")
@@ -289,12 +298,12 @@
 
 			svg.append("g").attr("class", "x axis top");
 
-			/* 		    var valueText = svg.append('text')
+ 		    svg.append('text')
 			 .style("text-anchor", "end")
 			 .attr("class", "coords")
-			 .attr("x", width - 5)
-			 .attr("y", 15); 
-			 */
+			 .attr("x", 5)
+			 .attr("y", 35); 
+			 
 
 			var ohlcSelection = svg.append("g").attr("class", "ohlc").attr(
 					"transform", "translate(0,0)");
@@ -328,31 +337,34 @@
 			svg.append("g").attr("class", "tradearrow").attr("clip-path",
 					"url(#ohlcClip)");
 
-			var accessor = candlestick.accessor(), indicatorPreRoll = g_big_data.preroll,
-				postRollData = data.slice(indicatorPreRoll); // Don't show where indicators don't have data 
+			var accessor = candlestick.accessor();
+			var indicatorPreRoll = g_big_data.preroll;
+			var postRollData = data.slice(indicatorPreRoll); // Don't show where indicators don't have data 
 
 			x.domain(techan.scale.plot.time(data).domain());
 			y.domain(techan.scale.plot.ohlc(postRollData).domain());
-			
+
 			yPercent.domain(techan.scale.plot.percent(y,
 					accessor(data[indicatorPreRoll])).domain());
 			yVolume.domain(techan.scale.plot.volume(postRollData).domain());
 
 			// Stash for zooming
-			zoomableInit = x.zoomable().domain(
-					[ indicatorPreRoll, data.length ]).copy(); // Zoom in a little to hide indicator preroll
+			//zoomableInit = x.zoomable().domain(
+			//		[ indicatorPreRoll, data.length ]).copy(); // Zoom in a little to hide indicator preroll
+			zoomableInit = x.copy();
 			yInit = y.copy();
 			yPercentInit = yPercent.copy();
 
 			//x.zoomable().domain([ indicatorPreRoll, data.length ]); // Zoom in a little to hide indicator preroll
-			
+
 			resize(selection);
 
 			svg.select("g.candlestick").datum(data).call(candlestick);
 			svg.select("g.closeValue.annotation").datum(
 					[ data[data.length - 1] ]).call(closeAnnotation);
 			svg.select("g.volume").datum(data).call(volume);
-			svg.select("g.crosshair.ohlc").call(ohlcCrosshair);
+			svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
+			//svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
 
 			selection.call(draw);
 		}
@@ -390,6 +402,9 @@
 
 			selection.select("svg").attr("width", dim.width).attr("height",
 					dim.height);
+			
+			selection.select("text.coords").attr("x", dim.plot.width - 30);
+			 
 			/* 
 			 selection.select("text.version").attr("x", dim.width - 5).attr("y",
 			 dim.height); */
@@ -410,7 +425,7 @@
 
 		function draw(selection) {
 			console.log("draw");
-			
+
 			var svg = selection.select("svg");
 			svg.select("g.x.axis.bottom").call(xAxis);
 			svg.select("g.x.axis.top").call(xAxisTop);
@@ -420,7 +435,6 @@
 
 			svg.select("g.tradearrow").datum(g_big_data.positions).call(
 					tradearrow);
-			svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
 
 			// We know the data does not change, a simple refresh that does not perform data joins will suffice.
 			svg.select("g.candlestick").call(candlestick.refresh);
@@ -433,7 +447,45 @@
 
 		return bigchart;
 	}
+	
+	var g_chart_period = 1;
+	
+	function btn_onclick(id) {
+		
+		d3.select("#btn"+g_chart_period).node().classList.remove("btn-success");
+		d3.select("#btn"+g_chart_period).node().classList.add("btn-primary");		
+		switch (id) {
+		case "btn1":
+			g_chart_period = 1;
+			break;
+		case "btn3":
+			g_chart_period = 3;
+			break;			
+		case "btn7":
+			g_chart_period = 7;
+			break;
+		case "btn30":
+			g_chart_period = 30;
+			break;
+		default:
+			console.log("Unknown button");
+		break;
+		}
+		d3.select("#btn"+g_chart_period).node().classList.remove("btn-primary");		
+		d3.select("#btn"+g_chart_period).node().classList.add("btn-success");
+		console.log("btn clicked: "+id+" new period:"+g_chart_period);
+		
+		console.log("load stats");
+		loadPositions();
+		loadCandles();		
+	}
 </script>
+
+<style>
+.btn {
+	position: initial;
+}
+</style>
 
 <body>
 
@@ -456,8 +508,27 @@
 			</div>
 		</div>
 	</div>
+
 	<div class="jumbotron jumbotron-fluid">
-		<div class="chartcontainer" id="chart"></div>
+		<div class="container">
+			<div class="row"  style="margin-left: 1em;">
+				<div class="col-sm-12" style="position: relative">
+					<button id="btn1" onclick="btn_onclick(this.id)" class="btn btn-success btn-xs ">1
+						Day</button>
+					<button id="btn3" onclick="btn_onclick(this.id)" class="btn btn-primary btn-xs ">3
+						Day</button>						
+					<button id="btn7" onclick="btn_onclick(this.id)" class="btn btn-primary btn-xs ">7
+						Days</button>
+					<button id="btn30" onclick="btn_onclick(this.id)" class="btn btn-primary btn-xs ">30
+						Days</button>
+				</div>
+			</div>
+			<div class="row">
+
+				<div class="chartcontainer" id="chart"></div>
+			</div>
+
+		</div>
 	</div>
 
 	<footer class="footer">

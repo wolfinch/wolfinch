@@ -28,10 +28,11 @@ class EMA_RSI(Strategy):
         'ema_m' : {'default': 13, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
         'ema_l' : {'default': 21, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
         'ema_ll' : {'default': 80, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 2 }},
-        'rsi' : {'default': 21, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 1 }},        
+        'rsi' : {'default': 21, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 1 }},   
+        'rsi_bullish_mark' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 100, 'step': 2 }},                     
         }
     # best: {'rsi': 64, 'ema_s': 30, 'period': 38, 'ema_m': 200, 'ema_l': 120, 'ema_ll': 60}
-    def __init__ (self, name, period=80, ema_s=5, ema_m=13, ema_l=21, ema_ll=80, rsi=21):     
+    def __init__ (self, name, period=80, ema_s=5, ema_m=13, ema_l=21, ema_ll=80, rsi=21, rsi_bullish_mark=50):     
         self.name = name
         self.period = period
         self.ema_s = ema_s
@@ -39,6 +40,7 @@ class EMA_RSI(Strategy):
         self.ema_l = ema_l
         self.ema_ll = ema_ll
         self.rsi = rsi
+        self.rsi_bullish_mark = rsi_bullish_mark
         #internal states
         self.position = ''
         self.signal = 0
@@ -71,7 +73,7 @@ class EMA_RSI(Strategy):
         else:
             self.trend = 'bearish'
             
-        if rsi21 > 50: #bullish market
+        if rsi21 > self.rsi_bullish_mark: #bullish market
             if self.position == 'sell': #trend reversal, cancel position #TODO: FIXME: implement closing position
                 self.position = '' 
                 self.signal = 0
