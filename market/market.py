@@ -51,7 +51,7 @@ from mock.mock import self
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.INFO)
+log.setLevel(log.CRITICAL)
 
 OldMonk_market_list = []
 TradingConfig = None

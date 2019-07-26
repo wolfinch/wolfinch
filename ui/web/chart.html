@@ -433,7 +433,21 @@
 			svg.select("g.volume.axis").call(volumeAxis);
 			svg.select("g.percent.axis").call(percentAxis);
 
-			svg.select("g.tradearrow").datum(g_big_data.positions).call(
+			var i =0;
+			var pos_list = [];
+			if (g_big_data.ohlc.length > 0 && g_big_data.positions.length > 0) {
+				for (i = 0; i<g_big_data.positions.length; i++) {
+					if (g_big_data.positions[i].date >= g_big_data.ohlc[0].date)
+						break;
+				}
+				
+				//console.log("pos len"+g_big_data.positions.length+"i:"+i);
+				pos_list = g_big_data.positions.slice(i);
+				
+			}
+			
+			console.log ("positions in perspective: "+pos_list.length);
+			svg.select("g.tradearrow").datum(pos_list).call(
 					tradearrow);
 
 			// We know the data does not change, a simple refresh that does not perform data joins will suffice.

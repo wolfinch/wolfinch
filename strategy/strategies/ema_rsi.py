@@ -77,7 +77,8 @@ class EMA_RSI(Strategy):
             if self.position == 'sell': #trend reversal, cancel position #TODO: FIXME: implement closing position
                 self.position = '' 
                 self.signal = 0
-                return self.signal
+#                 return self.signal
+                return -3
             if self.position == 'buy' and ema5 < ema13 and ema5 < ema21: #close buy position
                 self.position = '' 
                 self.signal = 0
