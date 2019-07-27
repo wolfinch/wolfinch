@@ -56,7 +56,7 @@ simulator:
    enabled : true
 
 genetic_optimizer: 
-   enabled : true
+   enabled : false
    N_POP : 1000
    N_GEN : 100
    N_MP : 10
