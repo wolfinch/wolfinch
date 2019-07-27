@@ -69,8 +69,8 @@ def _process_stats_update(stats_obj):
             with open(MARKET_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
                 st = str(market)
                 fd.write(st)              
-            with open(POSITION_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
-                market.order_book.dump_positions(fd)         
+            #with open(POSITION_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
+            #    market.order_book.dump_positions(fd)         
     
 ######### ******** MAIN ****** #########
                 

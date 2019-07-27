@@ -22,7 +22,7 @@ from sqlalchemy.orm import mapper
 import sims
 
 log = getLogger ('POSITION-DB')
-log.setLevel (log.INFO)
+log.setLevel (log.ERROR)
 
 # import logging
 # logging.basicConfig()

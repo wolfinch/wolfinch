@@ -36,6 +36,7 @@ log.setLevel (log.ERROR)
 
 class OrderDb(object):
     def __init__ (self, orderCls, exchange_name, product_id, read_only=False):
+        self.OrderCls = orderCls
         self.db_enable = False
         self.ORDER_DB = {}
         
@@ -125,6 +126,7 @@ class OrderDb(object):
         
     def _db_get_all_orders (self):        
         log.debug ("retrieving orders from db")
+        res_list = []
         try:
             ResultSet = self.db.session.query(self.mapping).all()
             log.info ("Retrieved %d orders for table: %s"%(len(ResultSet), self.table_name))
@@ -133,13 +135,39 @@ class OrderDb(object):
                 log.info ("#%d order entries"%(len(ResultSet)))
                 for order in ResultSet:
                     log.info ("inserting order: %s in cache"%(str(order.id)))
-                    self.ORDER_DB[order.id] = order     
+                    o = self.OrderCls(order.id, order.product_id, order.status_type, order_type=order.order_type,
+                                       status_reason=order.status_reason, side=order.side,
+                  request_size=order.request_size, filled_size=order.filled_size,
+                  remaining_size=order.remaining_size, price=order.price, funds=order.funds,
+                 fees=order.fees, create_time=order.create_time, update_time=order.update_time)
+                    res_list.append(o)
             #clear cache now
             self.db.session.expire_all()                           
-            return ResultSet
+            return res_list
         except Exception, e:
             log.critical(e.message)
 
+    def _db_get_order(self, order_id):
+        order = None
+        try:
+            result = self.db.session.query(self.mapping).filter_by(id=order_id)
+            if result:
+                db_order = result.first()
+            if db_order != None:
+                log.info ("got order from db ")     
+                order = self.OrderCls(db_order.id, db_order.product_id, db_order.status_type, order_type=db_order.order_type,
+                                       status_reason=db_order.status_reason, side=db_order.side,
+                  request_size=db_order.request_size, filled_size=db_order.filled_size,
+                  remaining_size=db_order.remaining_size, price=db_order.price, funds=db_order.funds,
+                 fees=db_order.fees, create_time=db_order.create_time, update_time=db_order.update_time)
+            else:
+                log.error ("order_id:%s not in Db"%(order_id))
+            #clear cache now
+            self.db.session.expire_all()                             
+        except Exception, e:
+            print(e.message)
+        return order
+                        
     def db_add_or_update_order (self, order):     
         log.debug ("Adding order to db")
         self.ORDER_DB [order.id] = order
@@ -167,27 +195,21 @@ class OrderDb(object):
             return order
         
         if order == None:
-            log.info ("order_id:%s not in cache"%(order_id))
-            try:
-                result = self.db.session.query(self.mapping).filter_by(id=order_id)
-                if result:
-                    order = result.first()
-                if order != None:
-                    log.info ("got order from db ")                    
-                    self.ORDER_DB [order.id] = order
-                else:
-                    log.error ("order_id:%s not in Db"%(order_id))
-                #clear cache now
-                self.db.session.expire_all()                             
-            except Exception, e:
-                print(e.message)
+            log.info ("order_id:%s not in cache, trying to get from db"%(order_id))
+            order = self._db_get_order(order_id)
+            if order:
+                self.ORDER_DB [order.id] = order
         return order
         
     def get_all_orders (self):
         if (not self.db_enable):
             #skip Db
             return self.ORDER_DB.values()
-        self._db_get_all_orders()
+        res_list = self._db_get_all_orders()
+        if res_list:
+            for order in res_list:
+                log.info ("inserting order: %s in cache"%(str(order.id)))
+                self.ORDER_DB[order.id] = order          
         return self.ORDER_DB.values()
             
     def clear_order_db(self):
