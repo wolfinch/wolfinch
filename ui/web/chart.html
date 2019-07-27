@@ -127,14 +127,14 @@
 			}
 		}
 
-		g_big_data.positions = trades;
+		g_big_data.positions = []; //trades;
 	}
 
 	function load_candles(data) {
 
 		//var accessor = candlestick.accessor();
 
-		console.log("data len: " + data.length);
+		console.log("candles data len: " + data.length);
 
 		//data = data.slice(data.length - 201, data.length - 1);
 
@@ -432,6 +432,9 @@
 			svg.select("g.ohlc .axis").call(yAxis);
 			svg.select("g.volume.axis").call(volumeAxis);
 			svg.select("g.percent.axis").call(percentAxis);
+			
+			if (g_big_data.ohlc.length == 0)
+				return;
 
 			var i =0;
 			var pos_list = [];
@@ -447,8 +450,10 @@
 			}
 			
 			console.log ("positions in perspective: "+pos_list.length);
-			svg.select("g.tradearrow").datum(pos_list).call(
+			if (pos_list.length) {
+				svg.select("g.tradearrow").datum(pos_list).call(
 					tradearrow);
+			}
 
 			// We know the data does not change, a simple refresh that does not perform data joins will suffice.
 			svg.select("g.candlestick").call(candlestick.refresh);
