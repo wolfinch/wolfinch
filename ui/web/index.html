@@ -34,7 +34,7 @@
 <script type="text/javascript" charset="utf8"
 	src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
 
-
+<script src="https://momentjs.com/downloads/moment.min.js"></script>
 <script type="text/javascript">
 	/* 
 	 $(document).ready( function () {
@@ -267,7 +267,21 @@
 													},
 													{
 														title : "open time",
-														data : "open_time",
+														//data : "open_time",
+														data : null,
+														render : function(data,
+																type, row) {
+															if (data.open_time != undefined
+																	&& data.open_time != 'None'
+																	&& data.open_time != null) {
+																date = moment(data.open_time);
+																//console.log(date.fromNow());
+																return date.fromNow();
+																//return data.open_time;
+															} else {
+																return "-";
+															}
+														}														
 													},
 													{
 														title : "closed time",
@@ -277,7 +291,10 @@
 															if (data.closed_time != undefined
 																	&& data.closed_time != 'None'
 																	&& data.closed_time != null) {
-																return data.closed_time;
+																date = moment(data.closed_time);
+																//console.log(date.fromNow());
+																return date.fromNow();
+																//return data.closed_time;
 															} else {
 																return "-";
 															}

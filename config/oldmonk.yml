@@ -14,7 +14,7 @@ exchanges:
       role: 'primary'
       config: 'config/cbpro.yml'
   
-# TODO: exchanges specific config should follow a common timing, should be driven by global config  
+# TODO: exchanges specific config should follow a common timing, should be driven by global config
 #  backfill:
 #    - enabled  : Yes  
 #    - period   : 3  #in Days
@@ -44,6 +44,8 @@ decision:
       params : {'ema_sell_s': 85, 'timeout_sell': 40, 'rsi': 24, 'treshold_pct_buy_l': 1.0, 'ema_buy_s': 185, 'timeout_buy': 14, 'period': 165, 'treshold_pct_sell_s': 0.92, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.35, 'treshold_pct_buy_s': 0.39, 'ema_sell_l': 25}
       #strategy : EMA_RSI
       #params : {'rsi_bullish_mark': 36, 'rsi': 14, 'ema_s': 84, 'period': 124, 'ema_m': 180, 'ema_l': 152, 'ema_ll': 126}
+      #strategy: EMA_RSI_SLOW
+      #params : {'rsi_bullish_mark': 30, 'buy_pause_time': 0, 'rsi': 38, 'ema_s': 68, 'period': 104, 'sell_pause_time': 28, 'ema_m': 72, 'ema_l': 170, 'ema_ll': 136}
       #Hall of Fame
       #EMA_RSI: {'rsi': 64, 'ema_s': 44, 'period': 38, 'ema_m': 184, 'ema_l': 156, 'ema_ll': 64}
       #EMA_DEV{'ema_sell_s': 80, 'rsi': 90, 'treshold_pct_buy_l': 0.23, 'ema_buy_s': 130, 'period': 190, 'ema_sell_l': 85, 'ema_buy_l': 115, 'treshold_pct_sell_l': 1.08, 'treshold_pct_buy_s': 1.02, 'treshold_pct_sell_s': 0.65}
@@ -61,7 +63,7 @@ genetic_optimizer:
    N_GEN : 100
    N_MP : 10
    config   :
-      strategy : EMA_RSI  
+      strategy : EMA_RSI_SLOW
       trading : {}
 #EOF
 
