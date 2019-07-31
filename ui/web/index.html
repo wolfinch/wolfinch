@@ -276,8 +276,14 @@
 																	&& data.open_time != null) {
 																date = moment(data.open_time);
 																//console.log(date.fromNow());
-																return date.fromNow();
-																//return data.open_time;
+																
+																if (type == "sort") {
+																	//console.log(date.unix());																	
+																	return date.unix();
+																} else {
+																	return date.fromNow();
+																//return data.closed_time;
+																}
 															} else {
 																return "-";
 															}
@@ -293,8 +299,12 @@
 																	&& data.closed_time != null) {
 																date = moment(data.closed_time);
 																//console.log(date.fromNow());
-																return date.fromNow();
+																if (type == "sort") {																	
+																	return date.unix();
+																} else {
+																	return date.fromNow();
 																//return data.closed_time;
+																}
 															} else {
 																return "-";
 															}

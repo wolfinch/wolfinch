@@ -107,7 +107,7 @@ class EMA_DEV(Strategy):
             (cur_close <= ema_buy_l  * (1 + (1 * self.treshold_pct_buy_l/100))) and 
             (self.cur_timeout_buy < 0 )):
             
-            signal = 3 # buy
+            signal = 1 # buy
             self.cur_timeout_buy = self.timeout_buy
         else:
             self.cur_timeout_buy -= 1
