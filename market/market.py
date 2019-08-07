@@ -350,6 +350,7 @@ class Market:
         log.debug ("ORDER UPDATE: %s"%(str(order)))        
         
         if order == None:
+            log.error ("Invalid order, skip update")
             return None
         
         side = order.side
@@ -599,8 +600,8 @@ class Market:
             asset_size = pos.buy.get_asset()
             if (asset_size <= 0):
                 log.critical ("Invalid open position for closing: pos: %s"%str(pos))
-                raise Exception("Invalid open position for closing")            
-            log.debug ("Generating watermark SELL trade_req with asset size: %s"%(str(asset_size)))       
+                raise Exception("Invalid open position for closing")
+            log.debug ("Generating watermark SELL trade_req with asset size: %s"%(str(asset_size)))   
             trade_req_l.append(TradeRequest(Product=self.product_id,
                               Side="SELL",
                                Size=round(Decimal(asset_size),8),

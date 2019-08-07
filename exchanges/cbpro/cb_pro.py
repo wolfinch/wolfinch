@@ -274,6 +274,12 @@ class CBPRO (Exchange):
         if (request_size == 0):
             request_size = remaining_size + filled_size
             
+        # validate the order deets before creating one
+        if (request_size == 0 and request_size == 0 and filled_size == 0 and remaining_size == 0 ) :
+            log.debug ("Invalid order details: price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g"%(
+            price, funds, request_size, filled_size, remaining_size, fees))
+            return None        
+            
         log.debug ("price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g"%(
             price, funds, request_size, filled_size, remaining_size, fees))
         norm_order = Order (order_id, product_id, status_type, order_type=order_type, status_reason=status_reason,
