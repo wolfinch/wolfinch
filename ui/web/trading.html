@@ -1,0 +1,144 @@
+<html lang="en">
+
+<head>
+<title>OldMonk Trading Bot</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+</head>
+<!-- 
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<script
+	src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+	integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+	crossorigin="anonymous"></script> 
+
+ -->
+<link href="stylesheet.css" rel="stylesheet">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+	integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+	crossorigin="anonymous"></script>
+
+<link rel="stylesheet" type="text/css"
+	href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+
+<script type="text/javascript" charset="utf8"
+	src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+
+<script src="https://momentjs.com/downloads/moment.min.js"></script>
+
+
+<script type="text/javascript">
+	/* 
+	 $(document).ready( function () {
+	 $('#statsTable').DataTable();
+	 } );
+	 */
+
+	var table;
+	$(document).ready(function() {
+
+		console.log("load stats");
+
+	});
+</script>
+
+
+<body>
+
+	<div class="row align-items-start">
+		<div class="col-12">
+			<div class="navbar navbar-inverse navbar-static-top">
+				<div class="container">
+					<header class="clearfix">
+						<h3 class="brand">
+							<a href="/">OldMonk</a>
+						</h3>
+						<ul class="nav masthead-nav">
+							<li><a href="../oldmonk"> Home</a></li>
+							<li><a href="chart.html">Charts </a></li>
+							<li class="active"><a href="rading.html"> Trading</a></li>
+							<li><a href="/"> Documentation</a></li>
+						</ul>
+					</header>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="jumbotron jumbotron-fluid">
+		<div class="container">
+			<div class="table-responsive">
+				<table>
+					<tbody style="vertical-align: top">
+						<tr style="width: auto; height: auto;">
+							<td style="width: auto; height: auto">
+								<div class="table-responsive">
+
+									<table
+										style="margin: false; height: auto; color: rgba(255, 255, 255, .75);"
+										border="1">
+										<tbody>
+											<tr
+												style="background-color: rgba(fff, 0, 0, .90); width: 9.2em; height: 20vh;">
+												<td align="center" style="font-size: 2vw; border: 0;"
+													colspan="16"><b>Trade Positions</b></td>
+											</tr>
+											<tr
+												style="margin: 0; background-color: rgba(0, 0, 0, 0.1); width: 9.2em; height: 20vh;">
+												<td align="center" colspan="3"
+													style="font-size: 1vw; border: 0;">
+													<div class="col-sm-12" style="position: relative">
+														<p class="lead">
+															<button id="btn1" onclick="btn_onclick(this.id)"
+																class="btn btn-primary btn-lg">Buy</button>
+														</p>
+													</div>
+												</td>
+												<td align="center" style="font-size: 1vw; border: 0;">Requests</td>
+											</tr>
+
+											<tr
+												style="border-top: 0em solid #555; width: 9.2em; height: 20vh;">
+												<td
+													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Exchange</td>
+												<td id="exch"
+													style="font-size: 1vw; border: 0; width: 9.2em; height: auto;">0</td>
+											</tr>
+
+
+										</tbody>
+									</table>
+
+								</div>
+							</td>
+							<td style="width: 33%;"></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<footer class="footer">
+		<div class="container">
+			<p>
+				<small>
+					<div class="row">
+						<em>&copy; 2017-2019 OldMonk Bot</em>
+					</div>
+				</small>
+			</p>
+		</div>
+	</footer>
+</body>
+</html>
