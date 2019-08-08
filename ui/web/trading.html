@@ -76,70 +76,50 @@
 	</div>
 
 	<div class="jumbotron jumbotron-fluid">
-		<div class="container">
-			<div class="table-responsive">
-				<table>
-					<tbody style="vertical-align: top">
-						<tr style="width: auto; height: auto;">
-							<td style="width: auto; height: auto">
-								<div class="table-responsive">
+		<div class="container"
+			style="margin: false; width: 30vw; height: auto; color: rgba(255, 255, 255, .75); 
+			background-color: rgba(0, 0, 0, 0.1);"
+			border="0">
+			<div class="row"
+				style="background-color: rgba(fff, 0, 0, .90); width: 30vw; height: 8vh;">
+				<div class="col-sm-12" align="center"
+					style="font-size: 2vw; border: 0;">
+					<b>Trade Positions</b>
+				</div>
+			</div>
+			<div class="row"
+				style="margin: 0;  width: 30vw; height: auto;">
 
-									<table
-										style="margin: false; height: auto; color: rgba(255, 255, 255, .75);"
-										border="1">
-										<tbody>
-											<tr
-												style="background-color: rgba(fff, 0, 0, .90); width: 9.2em; height: 20vh;">
-												<td align="center" style="font-size: 2vw; border: 0;"
-													colspan="16"><b>Trade Positions</b></td>
-											</tr>
-											<tr
-												style="margin: 0; background-color: rgba(0, 0, 0, 0.1); width: 9.2em; height: 20vh;">
-
-												<td>
-													<div class="form-group">
-														<label for="usr">Number</label> <input type="number"
-															class="form-control" id="number"
-															style="margin: 0; width: 4em; height: 2vh;">
-													</div>
-												</td>
+				<div class="col-sm-6" align="center"
+					style="font-size: 1vw; border: 0;">
+					<div class="form-group">
+						<label for="usr">Number</label> <input type="number"
+							class="form-control" id="number"
+							style="margin: 0; width: 4em; height: 2vh;">
+					</div>
+				</div>
 
 
-												<td align="center" style="font-size: 1vw; border: 0;">
-													<div class="form-group">
-														<label for="usr">Code</label> <input type="text"
-															class="form-control" id="code"
-															style="margin: 0; width: 8em; height: 2vh;">
-													</div>
-												</td>
-											</tr>
+				<div class="col-sm-6" align="center"
+					style="font-size: 1vw; border: 0;">
+					<div class="form-group">
+						<label for="usr">Code</label> <input type="text"
+							class="form-control" id="code"
+							style="margin: 0; width: 8em; height: 2vh;">
+					</div>
+				</div>
+			</div>
 
-											<tr class="row"
-												style="border-top: 0em solid #555; width: 100%; height: 20vh;">
-
-												<td align="center" style="font-size: 1vw; border: 0;">
-													<div class="col-sm-12" style="position: relative">
-														<button id="btn_buy" onclick="btn_onclick(this.id)"
-															class="btn btn-primary btn-lg">Buy</button>
-													</div>
-												</td>
-												<td align="center" style="font-size: 1vw; border: 0;">
-													<div class="col-sm-12" style="position: relative">
-														<button id="btn_sell" onclick="btn_onclick(this.id)"
-															class="btn btn-danger btn-lg">Sell</button>
-													</div>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-
-								</div>
-							</td>
-<!-- 							
-<td style="width: 33%;"></td>
- -->						</tr>
-					</tbody>
-				</table>
+			<div class="row" style="border-top: 0em solid #555; width: 30vw; height: 7vh; display: flex;
+  						flex-direction: row; align-items: center;">
+				<div class="col-sm-6  text-center" style="vertical-align: middle;">
+					<div id="btn_buy" onclick="btn_onclick(this.id)"
+						class="btn btn-primary btn-lg">Buy</div>
+				</div>
+				<div class="col-sm-6 text-center" >
+					<div id="btn_sell" onclick="btn_onclick(this.id)"
+						class="btn btn-danger btn-lg">Sell</div>
+				</div>
 			</div>
 		</div>
 	</div>
