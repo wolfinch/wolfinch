@@ -95,34 +95,49 @@
 											</tr>
 											<tr
 												style="margin: 0; background-color: rgba(0, 0, 0, 0.1); width: 9.2em; height: 20vh;">
-												<td align="center" colspan="3"
-													style="font-size: 1vw; border: 0;">
-													<div class="col-sm-12" style="position: relative">
-														<p class="lead">
-															<button id="btn1" onclick="btn_onclick(this.id)"
-																class="btn btn-primary btn-lg">Buy</button>
-														</p>
+
+												<td>
+													<div class="form-group">
+														<label for="usr">Number</label> <input type="number"
+															class="form-control" id="number"
+															style="margin: 0; width: 4em; height: 2vh;">
 													</div>
 												</td>
-												<td align="center" style="font-size: 1vw; border: 0;">Requests</td>
+
+
+												<td align="center" style="font-size: 1vw; border: 0;">
+													<div class="form-group">
+														<label for="usr">Code</label> <input type="text"
+															class="form-control" id="code"
+															style="margin: 0; width: 8em; height: 2vh;">
+													</div>
+												</td>
 											</tr>
 
-											<tr
-												style="border-top: 0em solid #555; width: 9.2em; height: 20vh;">
-												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Exchange</td>
-												<td id="exch"
-													style="font-size: 1vw; border: 0; width: 9.2em; height: auto;">0</td>
+											<tr class="row"
+												style="border-top: 0em solid #555; width: 100%; height: 20vh;">
+
+												<td align="center" style="font-size: 1vw; border: 0;">
+													<div class="col-sm-12" style="position: relative">
+														<button id="btn_buy" onclick="btn_onclick(this.id)"
+															class="btn btn-primary btn-lg">Buy</button>
+													</div>
+												</td>
+												<td align="center" style="font-size: 1vw; border: 0;">
+													<div class="col-sm-12" style="position: relative">
+														<button id="btn_sell" onclick="btn_onclick(this.id)"
+															class="btn btn-danger btn-lg">Sell</button>
+													</div>
+												</td>
 											</tr>
-
-
 										</tbody>
 									</table>
 
 								</div>
 							</td>
-							<td style="width: 33%;"></td>
-						</tr>
+<!-- 							
+<td style="width: 33%;"></td>
+ -->						</tr>
 					</tbody>
 				</table>
 			</div>
