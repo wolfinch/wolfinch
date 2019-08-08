@@ -361,14 +361,22 @@ class Market:
                 #for an order done, get the order details             
                 if (sims.simulator_on):
                     order_det = sims.exch_obj.get_order(order.id)
+                    if (order_det):
+                        order = order_det                    
                 else:                
                     order_det = self.exchange.get_order(order.id)
-                if (order_det):
-                    order = order_det
+                    if (order_det):
+                        order = order_det
+                    else:
+                        # Unknown error here. We should keep trying for the pending order tracking.
+                        log.critical ("unable to get order details for done order(%s)"%(order.id))
+                        return None
                 if reason == 'filled':
                     self._buy_order_filled ( order)
                 elif reason == 'canceled':
                     self._buy_order_canceled (order)
+                else:
+                    log.error ("unknown order done reason(%s)"%(reason))                    
             elif msg_type == 'received':
                 self._buy_order_received(order)
             elif (msg_type in ['open', 'match', 'change', 'margin_profile_update', 'activate' ]):
@@ -379,13 +387,24 @@ class Market:
         elif side == 'sell':
             if msg_type == 'done':
                 #for an order done, get the order details              
-                order_det = self.exchange.get_order(order.id)
-                if (order_det):
-                    order = order_det                
+                if (sims.simulator_on):
+                    order_det = sims.exch_obj.get_order(order.id)
+                    if (order_det):
+                        order = order_det                    
+                else:                
+                    order_det = self.exchange.get_order(order.id)
+                    if (order_det):
+                        order = order_det
+                    else:
+                        # Unknown error here. We should keep trying for the pending order tracking.
+                        log.critical ("unable to get order details for done order(%s)"%(order.id))
+                        return None               
                 if reason == 'filled':
                     self._sell_order_filled ( order)
                 elif reason == 'canceled':
                     self._sell_order_canceled (order)
+                else:
+                    log.error ("unknown order done reason(%s)"%(reason))
             elif msg_type == 'received':
                 self._sell_order_received(order)
             elif (msg_type in ['open', 'match', 'change', 'margin_profile_update', 'activate']):

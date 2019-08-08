@@ -231,7 +231,7 @@ class CBPRO (Exchange):
           3. {'status' : 'rejected', 'reject_reason': 'post-only'}
         '''
         error_status_codes = ['rejected']
-#         log.debug ("Order msg:\n%s"%(pprint.pformat(order, 4)))
+        log.debug ("Order msg:\n%s"%(pprint.pformat(order, 4)))
         
         msg = order.get('message')
         status = order.get('status')
@@ -272,13 +272,7 @@ class CBPRO (Exchange):
     #             request_size = filled_size + remaining_size
                         
         if (request_size == 0):
-            request_size = remaining_size + filled_size
-            
-        # validate the order deets before creating one
-        if (request_size == 0 and request_size == 0 and filled_size == 0 and remaining_size == 0 ) :
-            log.debug ("Invalid order details: price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g"%(
-            price, funds, request_size, filled_size, remaining_size, fees))
-            return None        
+            request_size = remaining_size + filled_size  
             
         log.debug ("price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g"%(
             price, funds, request_size, filled_size, remaining_size, fees))
