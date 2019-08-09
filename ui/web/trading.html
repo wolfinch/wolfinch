@@ -62,6 +62,7 @@
 		if (req_number <= 0 || req_code == "") {
 			
 			console.log ("invalid input");
+			alert("invalid request!");
 			return false;
 		} 
 
@@ -137,7 +138,7 @@
 				style="margin: 0; background-color: rgba(fff, 0, 0, .90); width: 30vw; height: 8vh;">
 				<div class="col-sm-12" align="center"
 					style="font-size: 2vw; border: 0;">
-					<b>Trade Positions</b>
+					<b style="font-weight: 300; ">Trade Positions</b>
 				</div>
 			</div>
 			<div class="row"
@@ -146,7 +147,7 @@
 				<div class="col-sm-6" align="center"
 					style="font-size: 1vw; border: 0;">
 					<div class="form-group">
-						<label for="usr">Number</label> <input type="number" defaultValue="0"
+						<label for="usr">#Positions</label> <input type="number" defaultValue="0"
 							class="form-control" id="req_number"
 							style="margin: 0; width: 6em; height: 2vh;">
 					</div>
