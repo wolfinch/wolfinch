@@ -75,7 +75,7 @@
 		console.log("load positions");
 		$.ajax({
 			type : 'GET',
-			url : '../api/positions?period='+g_chart_period,
+			url : '/api/positions?period='+g_chart_period,
 			data : {
 				get_param : 'value'
 			},
@@ -88,7 +88,7 @@
 		console.log("load candles");
 		$.ajax({
 			type : 'GET',
-			url : '../api/candles?period='+g_chart_period,
+			url : '/api/candles?period='+g_chart_period,
 			data : {
 				get_param : 'value'
 			},
@@ -519,7 +519,7 @@
 						<ul class="nav masthead-nav">
 							<li><a href="../oldmonk"> Home</a></li>
 							<li class="active"><a href="chart.html">Charts </a></li>
-							<li><a href="/"> Trading</a></li>
+							<li><a href="trading.html"> Trading</a></li>
 							<li><a href="/"> Documentation</a></li>
 						</ul>
 					</header>

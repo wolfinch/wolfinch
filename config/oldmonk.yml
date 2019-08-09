@@ -65,5 +65,9 @@ genetic_optimizer:
    config   :
       strategy : EMA_RSI_SLOW
       trading : {}
+      
+ui:
+   enabled : true
+   port : 80
+   
 #EOF
-

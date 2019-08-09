@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #
 # OldMonk Auto trading Bot
-# Desc: Main File implements Bot
+# Desc: UI db ops impl
 # Copyright 2018, OldMonk Bot. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,36 +18,22 @@
 
 from __future__ import print_function
 import time
-import pkgutil
-import pprint
-import sys
-from decimal import *
-import argparse
-import os
-
-import json
 import db
 from market import Position, OHLC, Order
-
 from utils import getLogger
-from utils.readconf import readConf
-from dateparser import conf
 
 log = getLogger ('UI-DB')
 log.setLevel(log.DEBUG)
 
-EXCH_NAME = "CBPRO"
-PRODUCT_ID = "BTC-USD"
-
 cdl_db, order_db, position_db = None, None, None
 
 
-def init ():
+def init (exch_name, prod_id):
     global cdl_db, order_db, position_db
     
-    cdl_db = db.CandlesDb(OHLC, EXCH_NAME, PRODUCT_ID, read_only=True)
-    order_db = db.OrderDb(Order, EXCH_NAME, PRODUCT_ID, read_only=True)
-    position_db = db.PositionDb(Position, EXCH_NAME, PRODUCT_ID, read_only=True)
+    cdl_db = db.CandlesDb(OHLC, exch_name, prod_id, read_only=True)
+    order_db = db.OrderDb(Order, exch_name, prod_id, read_only=True)
+    position_db = db.PositionDb(Position, exch_name, prod_id, read_only=True)
 
     if not (cdl_db and position_db and order_db):
         log.error ("db init failed")

@@ -1015,17 +1015,21 @@ class Market:
             -- To ignore a product
                add an empty file with name "<exchange_name>_<product>.ignore"
         """
-        exchange_name = self.exchange.name
-        ignore_file = "override/%s_%s.ignore"%(exchange_name, self.product_id)
-        #Override file name = override/TRADE_<exchange_name>.<product>
-        if (os.path.isfile(ignore_file)):
-            log.info("Ignore file present for product. Skip processing! "+ignore_file)
-            return
+        trade_req_list = []        
+#         exchange_name = self.exchange.name
+#         ignore_file = "override/%s_%s.ignore"%(exchange_name, self.product_id)
+#         #Override file name = override/TRADE_<exchange_name>.<product>
+#         if (os.path.isfile(ignore_file)):
+#             log.info("Ignore file present for product. Skip processing! "+ignore_file)
+#             return
+
+
         #get manual trade reqs if any
-        trade_req_list = self._get_manual_trade_req ()
+        #trade_req_list = self._get_manual_trade_req ()
+        
         # Now generate auto trade req list
         log.info ("Trade Signal strength:"+str(signal))
-        trade_req_list += self._generate_trade_request( signal)
+        trade_req_list += self._generate_trade_request(signal)
         #validate the trade Req
         if (len(trade_req_list)):
             self._execute_market_trade(trade_req_list)
