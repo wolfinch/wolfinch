@@ -68,6 +68,6 @@ genetic_optimizer:
       
 ui:
    enabled : true
-   
+   port : 80
    
 #EOF
