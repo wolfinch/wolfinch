@@ -24,12 +24,13 @@ from decimal import getcontext
 
 import sims
 import exchanges
-from market import market_init, market_setup, get_market_list, feed_Q_process_msg, feed_deQ, Order
+from market import market_init, market_setup, get_market_list, feed_Q_process_msg, feed_deQ, Order, get_market_by_product
 from utils import getLogger
 import db
 from utils.readconf import readConf
 from dateparser import conf
 import stats
+import ui
 
 log = getLogger ('OldMonk')
 log.setLevel(log.INFO)
@@ -49,6 +50,14 @@ def OldMonk_init(decisionConfig, tradingConfig):
     
     #1. Retrieve states back from Db
 #     db.init_order_db(Order)
+
+    # setup ui if required
+    if ui.integrated_ui:
+        ui.ui_conn_pipe = ui.ui_mp_init()
+        if ui.ui_conn_pipe == None :
+            log.critical ("unable to setup ui!! ")
+            print ("unable to setup UI!!")
+            sys.exit(1)
     
     #2. Init Exchanges
     exchanges.init_exchanges(OldMonkConfig)
@@ -69,6 +78,8 @@ def OldMonk_end():
     # stop stats thread
     log.info ("waiting to stop stats thread")
     stats.stop()
+    
+    ui.ui_mp_end()
     log.info ("all cleanup done.")
     
 
@@ -76,16 +87,24 @@ def oldmonk_main ():
     """
     Main Function for OldMonk
     """
+    feed_deQ_fn = feed_deQ
+    feed_Q_process_msg_fn = feed_Q_process_msg
+    
+    integrated_ui = ui.integrated_ui
+    ui_conn_pipe = ui.ui_conn_pipe
+    
     sleep_time = MAIN_TICK_DELAY
     while (True) : 
         cur_time = time.time()
 #         log.critical("Current (%d) Sleep time left:%s"%(cur_time, str(sleep_time)))         
         # check for the msg in the feed Q and process, with timeout
-        msg = feed_deQ(sleep_time) 
+        msg = feed_deQ_fn(sleep_time) 
 #         log.critical("Current (%d)"%(time.time()))
         while (msg != None):
-            feed_Q_process_msg (msg)
-            msg = feed_deQ(0)        
+            feed_Q_process_msg_fn (msg)
+            msg = feed_deQ_fn(0)
+        if integrated_ui == True:
+            process_ui_msgs (ui_conn_pipe)
         for market in get_market_list():
             process_market (market)
         '''Make sure each iteration take exactly LOOP_DELAY time'''
@@ -109,6 +128,29 @@ def process_market (market):
         if (sims.simulator_on):
             sims.market_simulator_run (market)
         stats.stats_update_order_bulk(market)            
+    
+def process_ui_msgs(ui_conn_pipe):
+    try:
+        while ui_conn_pipe.poll():
+            msg = ui_conn_pipe.recv()
+            err = msg.get("error", None)
+            if  err != None:
+                log.error ("error in the pipe, ui finished: msg:%s"%(err))
+                raise Exception("UI error - %s"%(err))
+            else:
+                exch = msg.get("exchange")
+                product = msg.get("product")
+                side = msg.get("side")
+                signal = msg.get("signal")
+                log.info ("Manual Order: exch: %s prod: %s side: %s signal: %s"%(exch, product, side, str(signal)))
+                m = get_market_by_product (exch, product)
+                if not m:
+                    log.error ("Unknown exchange/product exch: %s prod: %s"%(exch, product))
+                else:
+                    m.consume_trade_signal(signal)
+    except Exception as e:
+        log.critical ("exception %s on ui"%(e))
+        raise e
     
 def clean_states ():
     log.info ("Clearing Db")
@@ -213,6 +255,15 @@ def load_config (cfg_file):
                     sims.ga_config["GA_NGEN"] = ex_v
                 elif ex_k == 'N_MP':
                     sims.ga_config["GA_NMP"] = ex_v                                        
+        elif k == 'ui':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'enabled':
+                    if ex_v == True:
+                        log.debug ("ui enabled")
+                        ui.integrated_ui = True
+                    else:
+                        log.debug ("ui disabled")
+                        ui.integrated_ui = False                
                 
 #     print ("v: %s"%str(tradingConfig))
 #     exit(1)
@@ -317,9 +368,10 @@ if __name__ == '__main__':
         OldMonk_end()
         sys.exit()
     except Exception as e:
+        log.critical ("Unexpected error: %s exception: %s"%(sys.exc_info(), e.message))        
         print ("Unexpected error: %s exception: %s"%(sys.exc_info(), e.message))
         OldMonk_end()
-        raise
+        #raise
     #'''Not supposed to reach here'''
     print("\nOldMonk end")
     

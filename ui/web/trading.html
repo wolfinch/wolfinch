@@ -77,7 +77,6 @@
 			console.log("Unknown button");
 			break;
 		}
-		
 
 		var txt = cmd + " "+req_number+ " with code '"+req_code+"'?";
 		
@@ -90,9 +89,9 @@
 		console.log("call api to "+cmd);
 		$.ajax({
 			type : 'GET',
-			url : '/api/manual_order?cmd='+cmd+"&req_number="+req_number+"&req_code="+req_code,
+			url : '/api/manual_order?cmd='+cmd+"&req_number="+req_number,
 			data : {
-				get_param : 'value'
+				req_code : req_code
 			},
 			dataType : 'json',
 			success : function(data) {

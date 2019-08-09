@@ -26,7 +26,6 @@ import argparse
 import os
 from flask import request
 
-
 from flask import Flask, request, send_from_directory
 
 from utils import getLogger
@@ -41,7 +40,7 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 POSITION_STATS_FILE = "stats_positions_%s_%s.json"%("CBPRO", "BTC-USD")
 MARKET_STATS = "stats_market_%s_%s.json"%("CBPRO", "BTC-USD")
 TRADED_STATS_FILE = "stats_traded_orders_%s_%s.json"%("CBPRO", "BTC-USD")
-def server_main ():
+def server_main (mp_pipe=None):
     
     # init db_events
     if not db_events.init():
@@ -95,13 +94,52 @@ def server_main ():
         
     @app.route('/api/positions')
     def position_list():
-        return db_events.get_all_positions()        
+        return db_events.get_all_positions()
+    
+    @app.route('/api/manual_order')
+    def exec_manual_order():
+        cmd = request.args.get('cmd', default = "buy", type = str)
+        req_number = request.args.get('req_number', default = 0, type = int)
+        req_code = request.args.get('req_code', default = "", type = str)
         
+        log.info ("manual order: type: %s req_number: %d req_code: %s"%(cmd, req_number, req_code))
+        
+        #TODO: FIXME: do code validation
+        
+        err = "success"
+        if abs(req_number) > 3 or req_number == 0:
+            err = "error: invalid req_number: %s"%(str(req_number))
+            log.error (err)
+            return err
+        
+        signal = 0
+        if cmd == "sell":
+            signal = -req_number
+        elif cmd == "buy":
+            signal = req_number
+        else:
+            err = "error: invalid cmd: %s"%(cmd)
+            log.error (err)
+            return err
+        
+        msg = {"exchange": "CBPRO", "product": "BTC-USD", "side": cmd, "signal": signal}
+        if mp_pipe:
+            mp_pipe.send(msg)
+        return err      
+            
     log.debug("static_dir: %s root: %s"%(static_file_dir, app.root_path))
     
     log.debug ("starting server..")
     app.run(host='0.0.0.0', port=80, debug=False)
     log.error ("server finished!")
+        
+def ui_main (mp_conn_pipe):
+    try:
+        server_main(mp_conn_pipe)
+    except Exception as e:
+        log.critical("ui excpetion e: %s"%(e))
+        mp_conn_pipe.send({"error": "exception: %s"%(e)})
+        mp_conn_pipe.close()
         
 def arg_parse ():
     parser = argparse.ArgumentParser(description='OldMonk Auto Trading Bot UI Server')
