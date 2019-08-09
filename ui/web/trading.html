@@ -97,10 +97,12 @@
 			dataType : 'json',
 			success : function(data) {
 				console.log("manual_order success!");
-			}
-/* 			error: function (data) {
-				console.log("manual_order failed!");				
-			} */
+				alert(data);
+			},
+ 			error: function(xhr, error) {
+				console.log("manual_order failed!");
+				alert(error);
+			} 
 		});
 		
 	}

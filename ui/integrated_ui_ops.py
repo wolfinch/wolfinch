@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #
 # OldMonk Auto trading Bot
-# Desc: Main File implements Bot
+# Desc: integrated UI impl.
 # Copyright 2018, OldMonk Bot. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,6 @@ import ui_server
 log = getLogger ('UI-OPS')
 log.setLevel(log.DEBUG)
 
-EXCH_NAME = "CBPRO"
-PRODUCT_ID = "BTC-USD"
 g_p = None
 
 def ui_mp_init ():

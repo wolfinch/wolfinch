@@ -75,7 +75,7 @@
 		console.log("load positions");
 		$.ajax({
 			type : 'GET',
-			url : '../api/positions?period='+g_chart_period,
+			url : '/api/positions?period='+g_chart_period,
 			data : {
 				get_param : 'value'
 			},
@@ -88,7 +88,7 @@
 		console.log("load candles");
 		$.ajax({
 			type : 'GET',
-			url : '../api/candles?period='+g_chart_period,
+			url : '/api/candles?period='+g_chart_period,
 			data : {
 				get_param : 'value'
 			},

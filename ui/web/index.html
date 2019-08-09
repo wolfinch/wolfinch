@@ -70,7 +70,7 @@
 				$("#success_trades").text(data.num_success_trade)
 				$("#failed_trades").text(data.num_failed_trade)
 				$("#buyn_hold_profit").text(data.cur_buy_and_hold_profit)
-				$("#cur_candle_time").text(data.cur_candle_time)
+				$("#cur_candle_time").text(moment(data.cur_candle_time*1000).fromNow())
 				$("#cur_candle_vol").text(data.cur_candle_vol)
 				$("#num_candles").text(data.num_candles)
 				$("#cur_market_rate").text(data.current_market_rate)
@@ -407,7 +407,7 @@
 												<td align="center" id="success_trades"
 													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
 												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Cur
+													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">
 													Time</td>
 												<td align="center" id="cur_candle_time"
 													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
