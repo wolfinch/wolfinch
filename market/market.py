@@ -806,7 +806,7 @@ class Market:
         # This may not be the actual avg buy price. 
         # But from our life-cycle perspective, this is good ( or the best we can do.)
         #TODO: Validate: This??
-        self.fund.current_avg_buy_price = 0 #self.get_indicator_list()[0]['ohlc'].close
+#         self.fund.current_avg_buy_price = 0 #self.get_indicator_list()[0]['ohlc'].close
         log.debug ("_init_states: current_avg_buy_price: %d"%(self.fund.current_avg_buy_price))
         
     ##########################################
