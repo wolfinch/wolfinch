@@ -50,6 +50,60 @@
 		console.log("load stats");
 
 	});
+	
+	function btn_onclick(id) {
+		
+
+		var req_number = document.getElementById("req_number").value;
+		var req_code = document.getElementById("req_code").value;
+		
+		console.log ("number: "+req_number+" req_code: "+req_code);
+		
+		if (req_number <= 0 || req_code == "") {
+			
+			console.log ("invalid input");
+			return false;
+		} 
+
+
+		switch (id) {
+		case "btn_buy":
+			cmd = "buy";
+			break;
+		case "btn_sell":
+			cmd = "sell";
+			break;
+		default:
+			console.log("Unknown button");
+			break;
+		}
+		
+
+		var txt = cmd + " "+req_number+ " with code '"+req_code+"'?";
+		
+		if (!confirm(txt)) {
+			console.log ("cancel");
+			return true;
+		} 
+		
+		// call api to buy/sell
+		console.log("call api to "+cmd);
+		$.ajax({
+			type : 'GET',
+			url : '/api/manual_order?cmd='+cmd+"&req_number="+req_number+"&req_code="+req_code,
+			data : {
+				get_param : 'value'
+			},
+			dataType : 'json',
+			success : function(data) {
+				console.log("manual_order success!");
+			}
+/* 			error: function (data) {
+				console.log("manual_order failed!");				
+			} */
+		});
+		
+	}
 </script>
 
 
@@ -81,7 +135,7 @@
 			background-color: rgba(0, 0, 0, 0.1);"
 			border="0">
 			<div class="row"
-				style="background-color: rgba(fff, 0, 0, .90); width: 30vw; height: 8vh;">
+				style="margin: 0; background-color: rgba(fff, 0, 0, .90); width: 30vw; height: 8vh;">
 				<div class="col-sm-12" align="center"
 					style="font-size: 2vw; border: 0;">
 					<b>Trade Positions</b>
@@ -93,24 +147,22 @@
 				<div class="col-sm-6" align="center"
 					style="font-size: 1vw; border: 0;">
 					<div class="form-group">
-						<label for="usr">Number</label> <input type="number"
-							class="form-control" id="number"
-							style="margin: 0; width: 4em; height: 2vh;">
+						<label for="usr">Number</label> <input type="number" defaultValue="0"
+							class="form-control" id="req_number"
+							style="margin: 0; width: 6em; height: 2vh;">
 					</div>
 				</div>
-
-
 				<div class="col-sm-6" align="center"
 					style="font-size: 1vw; border: 0;">
 					<div class="form-group">
 						<label for="usr">Code</label> <input type="text"
-							class="form-control" id="code"
+							class="form-control" id="req_code"
 							style="margin: 0; width: 8em; height: 2vh;">
 					</div>
 				</div>
 			</div>
 
-			<div class="row" style="border-top: 0em solid #555; width: 30vw; height: 7vh; display: flex;
+			<div class="row" style="margin: 0; border-top: 0em solid #555; width: 30vw; height: 7vh; display: flex;
   						flex-direction: row; align-items: center;">
 				<div class="col-sm-6  text-center" style="vertical-align: middle;">
 					<div id="btn_buy" onclick="btn_onclick(this.id)"
