@@ -21,6 +21,7 @@ import time
 import sys
 import argparse
 from decimal import getcontext
+import random
 
 import sims
 import exchanges
@@ -48,6 +49,9 @@ MAIN_TICK_DELAY    = 0.500 #500 milli
 
 def OldMonk_init(decisionConfig, tradingConfig):
     
+    #seed random
+    random.seed()
+        
     #1. Retrieve states back from Db
 #     db.init_order_db(Order)
 
@@ -107,7 +111,7 @@ def oldmonk_main ():
             process_ui_msgs (ui_conn_pipe)
         for market in get_market_list():
             process_market (market)
-        '''Make sure each iteration take exactly LOOP_DELAY time'''
+        # '''Make sure each iteration take exactly LOOP_DELAY time'''
         sleep_time = (MAIN_TICK_DELAY - (time.time() - cur_time))
 #         if sleep_time < 0 :
 #             log.critical ("******* TIMING SKEWED (%f) ******"%(sleep_time))
@@ -115,10 +119,11 @@ def oldmonk_main ():
     #end While(true)
     
 def process_market (market):
-    """ 
-    processing routine for one exchange
-    """
+#     """ 
+#     processing routine for one exchange
+#     """
     log.debug ("processing Market: exchange (%s) product: %s"%( market.exchange_name, market.name))
+    #update various market states on tick
     market.update_market_states()
     
     # Trade only on primary markets
@@ -128,6 +133,12 @@ def process_market (market):
         if (sims.simulator_on):
             sims.market_simulator_run (market)
         stats.stats_update_order_bulk(market)            
+    
+    #check pending trades periodically and takes actions (this logic is rate-limited)
+    market.watch_pending_orders()
+    
+    # commit market states to the db periodically (this logic is rate-limited)
+    market.lazy_commit_market_states()
     
 def process_ui_msgs(ui_conn_pipe):
     try:

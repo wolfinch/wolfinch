@@ -32,6 +32,7 @@ import itertools
 import talib
 from datetime import datetime
 import time
+import random
 
 from utils import *
 from order_book import OrderBook
@@ -268,6 +269,9 @@ class Market:
         self.indicator_calculators = strategy.Configure_indicators()        
         self.new_candle = False
         self.candle_interval = 0
+        
+        self._pending_order_track_time = 0
+        self._db_commit_time = 0
             
     def __str__(self):
 #         log.critical ("get_market_rate:%f start_market_rate:%f initial_value:%f fund_liquidity_percent:%f start_market_rate:%f"%(
@@ -325,12 +329,22 @@ class Market:
         if (self.consume_feed != None):
             self.consume_feed(self, msg)
             
-    def _handle_pending_trades (self):
+    def _handle_take_profit (self):
+ 
+        trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())
+                
+        #validate the trade Req
+        if (len(trade_pos_l)):
+            log.info ("pos hit take profit")            
+            self._execute_market_trade(trade_pos_l)
+                
+    def _handle_pending_trade_reqs (self):
         #TODO: FIXME:jork: Might need to extend
-        log.debug("(%d) Pending Trade Reqs "%(len(self.order_book.pending_trade_req)))
 
         if 0 == len(self.order_book.pending_trade_req):
             return 
+        log.debug("(%d) Pending Trade Reqs "%(len(self.order_book.pending_trade_req)))        
+        
         market_price = self.get_market_rate()
         for trade_req in self.order_book.pending_trade_req[:]:
             if (trade_req.side == 'BUY'):
@@ -345,9 +359,11 @@ class Market:
                     self.order_book.remove_pending_trade_req(trade_req)     
                 else:
                     log.debug("STOP SELL: market(%g) lower than STOP (%g)"%(self.get_market_rate(), trade_req.stop))                                   
-            
+    
     def order_status_update (self, order):
-        log.debug ("ORDER UPDATE: %s"%(str(order)))        
+        log.debug ("ORDER UPDATE: %s"%(str(order)))
+        
+        ### TODO: if order pending for too long (cfg), cancel order
         
         if order == None:
             log.error ("Invalid order, skip update")
@@ -507,7 +523,7 @@ class Market:
         else:
             order = self.exchange.sell (trade_req)
         #update fund 
-        order.pos_id = trade_req.id
+        order._pos_id = trade_req.id
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
             log.debug ("SELL Order Sent to exchange. ")      
@@ -918,7 +934,40 @@ class Market:
             log.info ("done setup decision engine")
             return True
         
+    def lazy_commit_market_states(self):
+        now = time.time()
+        if self._db_commit_time > now:
+            return
         
+        log.critical ("commit positions to db")
+        self.order_book.db_commit_dirty_positions()
+        
+        #setup next commit time, some time between 3min to 5min
+        self._db_commit_time = int(now) + random.randrange(180, 300)
+        
+    def watch_pending_orders(self):
+        now = time.time()
+        if self._pending_order_track_time > now:
+            return
+        
+        log.critical ("watching pending orders")
+        pending_order_list = self.order_book.get_all_pending_orders()
+        pending_num = len(pending_order_list)
+        if not pending_num:
+            return
+        else:
+            log.debug ("(%d) pending orders to watch"%(pending_num))
+        for order in pending_order_list:
+            if not (sims.simulator_on):              
+                order_det = self.exchange.get_order(order.id)
+                if (order_det):
+                    self.order_status_update(order_det)
+                else:
+                    # Unknown error here. We should keep trying for the pending order tracking.
+                    log.critical ("unable to get order details for pending order(%s)"%(order.id))        
+        #setup next commit time, some time between 3min to 5min
+        self._pending_order_track_time = int(now) + random.randrange(120, 200)
+                    
     def update_market_states (self):
         '''
         Desc: 1. Update/refresh the various market states (rate, etc.)
@@ -931,16 +980,21 @@ class Market:
                 self.order_book.smart_stop_loss_update_positions(self.get_market_rate(), self.tradeConfig["stop_loss_rate"])            
             return        
         
+        #1.take profit handling, this is aggressive take profit, not waiting for candle period
+        if self.tradeConfig["take_profit_enabled"]:           
+            self._handle_take_profit ()
+                
         now = time.time()
         if now >= self.cur_candle_time + self.candle_interval:
             self.exchange.add_candle (self)
-              
-        #1.update market states
+            
+        #2.update market states
         if (self.order_book.book_valid == False):
             log.debug ("Re-Construct the Order Book")
             self.order_book.reset_book()     
-        #2.pending trades
-        self._handle_pending_trades ()
+        #3.pending trades
+        self._handle_pending_trade_reqs ()
+
         
     def add_new_candle (self, candle):
         """

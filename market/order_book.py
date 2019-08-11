@@ -41,7 +41,8 @@ class Position (object):
         self.take_profit = take_profit
         self.open_time = open_time
         self.closed_time = closed_time
-        self.status = status  #'open'|closed|close_pending        
+        self.status = status  #'open'|closed|close_pending
+        self._dirty = True
         
     def add_buy(self, order):
         if order == None:
@@ -69,6 +70,7 @@ class Position (object):
     
     def set_stop_loss(self, stop_loss):
         self.stop_loss = stop_loss
+        self._dirty = True
         log.debug("setting stop_loss (%f) for position."%(stop_loss))
                      
     def get_stop_loss(self):
@@ -194,9 +196,9 @@ class OrderBook():
             log.debug (": sell order(%s) already in pending_list. do nothing"%(sell_order.id))
             return pos
         #find a close_pending pos without sell attached.
-        k = sell_order.pos_id
+        k = sell_order._pos_id
         if not k:
-            log.critical("Invalid pos_id attached to order:%s"%(sell_order.id))
+            log.critical("*****Invalid pos_id attached to order:%s**** \n may be an outside order"%(sell_order.id))
             raise Exception("Invalid pos_id attached to order")            
         pos = self.close_pending_positions.get(k)
         if pos:
@@ -285,6 +287,18 @@ class OrderBook():
 #             log.critical("new_sl: %d key: %d"%(new_sl, key))
             pos_list = self.sl_dict.pop(key)
             self.add_stop_loss_position_list (new_sl, pos_list)
+
+    def db_commit_dirty_positions(self):
+        dirty_pos_list = []
+        for pos in self.all_positions:
+            if pos._dirty == True:
+                pos._dirty = False
+                dirty_pos_list.append(pos)
+        
+        if len(dirty_pos_list):
+            log.debug ("commit positions to db")
+            # save pos to db
+            self.positionsDb.db_save_positions(dirty_pos_list)  
         
     def pop_stop_loss_position (self, pos=None):
         try:
@@ -383,6 +397,12 @@ class OrderBook():
         except IndexError:
             return None        
                 
+    def get_all_pending_orders(self):
+        pending_order_list = []
+        pending_order_list += self.pending_buy_orders_db.values()
+        pending_order_list += self.pending_sell_orders_db.values()
+        return pending_order_list
+        
     def add_or_update_pending_buy_order(self, order):
         id = uuid.UUID(order.id)
         if not self.pending_buy_orders_db.get(id):
@@ -572,7 +592,7 @@ class OrderBook():
                 self.close_position_pending(order)
             else:
                 log.critical("UNKNOWN sell order status: %s" % (order_status))
-                raise Exception("UNKNOWN buy order status: %s" % (order_status))                
+                raise Exception("UNKNOWN buy order status: %s" % (order_status))
                 return None
         else:
             log.critical("Invalid order :%s" % (order))

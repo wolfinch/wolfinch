@@ -94,6 +94,7 @@ class Order (object):
         self.fees = Decimal(fees)
         self.create_time = create_time
         self.update_time = update_time
+        self._pos_id = 0
         
     def __str__ (self):
         return ("""{"id":"%s", "product_id":"%s", "side":"%s", "order_type":"%s",

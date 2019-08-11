@@ -396,7 +396,7 @@ class CBPRO (Exchange):
 #         global self.gdax_conf
 #         log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
         
-        log.debug ("consuming ticker feed")
+        #log.debug ("consuming ticker feed")
         price = Decimal(msg.get('price'))
         last_size = msg.get('last_size')
         if (price == 0 or not last_size):
@@ -718,9 +718,10 @@ class cbproWebsocketClient (cbpro.WebsocketClient):
                     return                  
                 feed_enQ(market, msg)
             elif (msg_type == 'match'):
-                log.debug ("Feed Thread: Match msg : IGNORED")
+                #log.debug ("Feed Thread: Match msg : IGNORED")
+                pass
             elif (msg_type == 'heartbeat'):
-                log.debug ("Feed Thread: Heartbeat: IGNORED")
+                #log.debug ("Feed Thread: Heartbeat: IGNORED")
                 self.hearbeat_time = time.time()
             elif (msg_type == 'subscriptions'):          
                 log.debug ("Feed: Subscribed to WS feed %s"%(json.dumps(msg, indent=4, sort_keys=True)))
