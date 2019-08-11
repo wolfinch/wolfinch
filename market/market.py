@@ -537,7 +537,7 @@ class Market:
 #         log.critical ("SELL RECV: %s"%(json.dumps(order, indent=4, sort_keys=True)))
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
-            log.info ("SELL RECV>>> filled_size:%s price:%s"%(
+            log.info ("SELL RECV>>> request_size:%s price:%s"%(
                 round(market_order.request_size, 4), round(market_order.price, 4)))            
             #update fund 
             order_type = market_order.order_type
@@ -938,17 +938,22 @@ class Market:
         now = time.time()
         if self._db_commit_time > now:
             return
+        else:
+            #setup next commit time, some time between 3min to 5min
+            self._db_commit_time = int(now) + random.randrange(180, 300)            
         
         log.debug ("commit positions to db")
         self.order_book.db_commit_dirty_positions()
         
-        #setup next commit time, some time between 3min to 5min
-        self._db_commit_time = int(now) + random.randrange(180, 300)
+
         
     def watch_pending_orders(self):
         now = time.time()
         if self._pending_order_track_time > now:
-            return
+            return 
+        else:
+            #setup next commit time, some time between 3min to 5min
+            self._pending_order_track_time = int(now) + random.randrange(120, 200)            
         
         log.debug ("watching pending orders")
         pending_order_list = self.order_book.get_all_pending_orders()
@@ -964,9 +969,7 @@ class Market:
                     self.order_status_update(order_det)
                 else:
                     # Unknown error here. We should keep trying for the pending order tracking.
-                    log.critical ("unable to get order details for pending order(%s)"%(order.id))        
-        #setup next commit time, some time between 3min to 5min
-        self._pending_order_track_time = int(now) + random.randrange(120, 200)
+                    log.critical ("unable to get order details for pending order(%s)"%(order.id))
                     
     def update_market_states (self):
         '''

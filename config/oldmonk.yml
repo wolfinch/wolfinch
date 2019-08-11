@@ -23,7 +23,7 @@ exchanges:
 stop_loss:
    enabled: true
    smart: true #track price movement and update stop_loss
-   rate : 7 #-3%
+   rate : 6 #-3%
   
 take_profit:
    enabled: true
@@ -41,11 +41,11 @@ decision:
       #strategy: TRIX_RSI
       #params : {'rsi_oversold_level': 66, 'period': 76, 'trix': 10, 'rsi': 24, 'rsi_overbought_level': 78}
       strategy: EMA_DEV
-      params : {'ema_sell_s': 85, 'timeout_sell': 40, 'rsi': 24, 'treshold_pct_buy_l': 1.0, 'ema_buy_s': 185, 'timeout_buy': 14, 'period': 165, 'treshold_pct_sell_s': 0.92, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.35, 'treshold_pct_buy_s': 0.39, 'ema_sell_l': 25}
+      params : {'ema_sell_s': 85, 'timeout_sell': 14, 'rsi': 24, 'treshold_pct_buy_l': 1.0, 'ema_buy_s': 185, 'timeout_buy': 14, 'period': 165, 'treshold_pct_sell_s': 0.92, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.35, 'treshold_pct_buy_s': 0.39, 'ema_sell_l': 25}
       #strategy : EMA_RSI
       #params : {'rsi_bullish_mark': 36, 'rsi': 14, 'ema_s': 84, 'period': 124, 'ema_m': 180, 'ema_l': 152, 'ema_ll': 126}
       #strategy: EMA_RSI_SLOW
-      #params : {'rsi_bullish_mark': 30, 'buy_pause_time': 0, 'rsi': 38, 'ema_s': 68, 'period': 104, 'sell_pause_time': 28, 'ema_m': 72, 'ema_l': 170, 'ema_ll': 136}
+      #params : {'rsi_bullish_mark': 24, 'buy_pause_time': 12, 'rsi': 40, 'ema_s': 98, 'period': 54, 'sell_pause_time': 52, 'ema_m': 106, 'ema_l': 136, 'ema_ll': 140}
       #Hall of Fame
       #EMA_RSI: {'rsi': 64, 'ema_s': 44, 'period': 38, 'ema_m': 184, 'ema_l': 156, 'ema_ll': 64}
       #EMA_DEV{'ema_sell_s': 80, 'rsi': 90, 'treshold_pct_buy_l': 0.23, 'ema_buy_s': 130, 'period': 190, 'ema_sell_l': 85, 'ema_buy_l': 115, 'treshold_pct_sell_l': 1.08, 'treshold_pct_buy_s': 1.02, 'treshold_pct_sell_s': 0.65}
@@ -63,7 +63,7 @@ genetic_optimizer:
    N_GEN : 100
    N_MP : 10
    config   :
-      strategy : EMA_RSI_SLOW
+      strategy : EMA_DEV
       trading : {}
       
 ui:
