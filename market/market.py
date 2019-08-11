@@ -939,7 +939,7 @@ class Market:
         if self._db_commit_time > now:
             return
         
-        log.critical ("commit positions to db")
+        log.debug ("commit positions to db")
         self.order_book.db_commit_dirty_positions()
         
         #setup next commit time, some time between 3min to 5min
@@ -950,7 +950,7 @@ class Market:
         if self._pending_order_track_time > now:
             return
         
-        log.critical ("watching pending orders")
+        log.debug ("watching pending orders")
         pending_order_list = self.order_book.get_all_pending_orders()
         pending_num = len(pending_order_list)
         if not pending_num:
