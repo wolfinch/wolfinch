@@ -107,8 +107,8 @@ class OrderBook():
         self.total_open_order_count = 0        
         self.pending_buy_orders_db = {}
         self.pending_sell_orders_db = {}
-        self.traded_buy_orders_db = []
-        self.traded_sell_orders_db = []
+        self.traded_buy_orders_db = {}
+        self.traded_sell_orders_db = {}
         
         # positions
         self.all_positions = []
@@ -230,7 +230,7 @@ class OrderBook():
             self.close_pending_positions.pop(id, None)
             self.open_positions.append(position)
             if self.market.tradeConfig["stop_loss_enabled"]:
-                self.add_stop_loss_position(position, position.buy_order.get_price(), self.market.tradeConfig["stop_loss_rate"])            
+                self.add_stop_loss_position(position, position.buy.get_price(), self.market.tradeConfig["stop_loss_rate"])            
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id)) 
     def close_position (self, sell_order):
@@ -414,11 +414,12 @@ class OrderBook():
     def add_traded_buy_order(self, order):
         self.total_open_order_count -= 1
         del (self.pending_buy_orders_db[uuid.UUID(order.id)])
-        self.traded_buy_orders_db.append(order)
+        self.traded_buy_orders_db[uuid.UUID(order.id)] = order
         #if this is a successful order, we have a new position open
         if order.status_reason == "filled":
             self.open_position(order)
-
+    def get_traded_buy_order(self, order_id):
+        return self.traded_buy_orders_db.get (order_id)
     def add_or_update_pending_sell_order(self, order):
         id = uuid.UUID(order.id)
         if not self.pending_sell_orders_db.get(id):
@@ -431,7 +432,7 @@ class OrderBook():
     def add_traded_sell_order(self, order):
         del (self.pending_sell_orders_db[uuid.UUID(order.id)])
         self.total_open_order_count -= 1
-        self.traded_sell_orders_db.append(order)
+        self.traded_sell_orders_db[uuid.UUID(order.id)] = order
         #close/reopen position
         #TODO: TBD: more checks required??
         if order.status_reason == "filled":
@@ -441,7 +442,9 @@ class OrderBook():
         else:
             log.critical("closed position failed order: %s"%(order))            
             self.close_position_failed(order)
-        
+    def get_traded_sell_order(self, order_id):
+        return self.traded_sell_orders_db.get (order_id)
+            
     def add_order_list (self, bids, asks):
         if (asks):
             self.add_asks (asks)
@@ -478,9 +481,9 @@ class OrderBook():
                 log.info ("restoring order: %s side: %s"%(order.id, order_side))                
                 self.total_order_count += 1          
                 if order_side == 'buy':
-                    self.traded_buy_orders_db.append(order)
+                    self.traded_buy_orders_db[uuid.UUID(order.id)] = order
                 else:
-                    self.traded_sell_orders_db.append(order)
+                    self.traded_sell_orders_db[uuid.UUID(order.id)] = order
                 
         # restore positions
         pos_list = self.positionsDb.db_get_all_positions(self.orderDb)
@@ -506,7 +509,7 @@ class OrderBook():
 #         sys.exit()        
                 
     def dump_traded_orders (self, fd=sys.stdout):
-        traded = str(self.traded_buy_orders_db + self.traded_sell_orders_db)
+        traded = str(self.traded_buy_orders_db.values() + self.traded_sell_orders_db.values())
         fd.write(traded)
     def dump_positions (self, fd=sys.stdout):
         fd.write (str(self.all_positions))
@@ -538,6 +541,18 @@ class OrderBook():
         else:
             current_order = self.get_pending_sell_order(order_id)
             
+        #TODO: FIXME: redo order state machine generically, this is all a patchwork
+        if current_order == None and order_status != "done":
+            # see if this is a late/mixed up state msg for an already done order. What we do here, may not be correct
+            if (order_side == 'buy'):
+                current_order = self.get_traded_buy_order(order_id)
+            else:
+                current_order = self.get_traded_sell_order(order_id)
+            
+            if current_order:
+                log.critical ("******** (%s) order done already, but (%s) state msg recvd, ignore for now, FIXME: FIXME:"%(order_side, order_status))
+                return current_order    
+            
         if current_order != None:
             # Copy whatever available, new gets precedence
             # money, asset
@@ -552,6 +567,7 @@ class OrderBook():
             order.update_time = order.update_time or current_order.update_time
             order.order_type = order.order_type or current_order.order_type
             order.product_id = order.product_id or current_order.product_id
+            order._pos_id = order._pos_id or current_order._pos_id
         else:
             # this is a new order for us (not necessary placed by us, hence need this logic here)
             log.debug ("New Order Entry To be Inserted: total_order_count: %d "
@@ -570,7 +586,7 @@ class OrderBook():
                                                        len(self.traded_buy_orders_db)))
             elif (order_status in ['pending', 'open', 'received', 'match']):
                 # Nothing much to do for us here
-                log.info ("Buy order_id(%s) Status: %s" % (str(order_id), order_status))       
+                log.info ("Buy order_id(%s) Status: %s" % (str(order_id), order_status))
             else:
                 log.critical("UNKNOWN buy order status: %s" % (order_status))
                 raise Exception("UNKNOWN buy order status: %s" % (order_status))

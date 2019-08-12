@@ -509,12 +509,6 @@ class Market:
             self.fund.current_hold_value -= order_cost
             self.fund.current_value += order_cost
     
-    def open_position(self):
-        pass
-    
-    def close_position(self):
-        pass
-    
     def _sell_order_create (self, trade_req):
         self.num_sell_order += 1
         log.info("SELL: %d sig: %s"%(self.num_sell_order, trade_req))
