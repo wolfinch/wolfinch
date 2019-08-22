@@ -211,15 +211,16 @@ class CBPRO (Exchange):
           Ref: https://docs.gdax.com/#the-code-classprettyprintfullcode-channel
         Sample order:
                 {u'created_at': u'2018-01-10T09:49:02.639681Z',
-                 u'executed_value': u'0.0000000000000000',
                  u'fill_fees': u'0.0000000000000000',
                  u'filled_size': u'0.00000000',
+                 u'executed_value': u'29.9998711699000000',                 
                  u'id': u'7150b013-62ca-49c7-aa28-4a9473778644',
                  u'post_only': True,
                  u'price': u'14296.99000000',
                  u'product_id': u'BTC-USD',
                  u'settled': False,
                  u'side': u'buy',
+                 u'funds': u'2959.4764175800000000',                 
                  u'size': u'0.13988959',
                  u'status': u'pending',
                  u'stp': u'dc',
@@ -256,10 +257,10 @@ class CBPRO (Exchange):
         side = order.get('side') or None
         # Money matters
         price =   Decimal(order.get('price') or 0)
-        request_size  = Decimal(order.get('size') or  0)    
+        request_size  = Decimal(order.get('size') or  0)
         filled_size = Decimal(order.get('filled_size') or 0)
         remaining_size  = Decimal(order.get('remaining_size') or 0)
-        funds = Decimal(order.get('funds') or order.get('specified_funds') or 0)
+        funds = Decimal(order.get('executed_value') or order.get('funds') or order.get('specified_funds') or 0)
         fees = Decimal(order.get('fees') or order.get('fill_fees') or 0)
         if order.get('settled') == True:
             total_val = Decimal(order.get('executed_value') or 0)
