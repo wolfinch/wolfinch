@@ -58,7 +58,7 @@
 
 		console.log("load stats");
 		loadPositions();
-		loadCandles();
+		setTimeout(loadCandles, 1000);
 		setInterval(loadPositions, 120000);
 		setInterval(loadCandles, 120000);
 	});

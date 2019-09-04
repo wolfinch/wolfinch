@@ -107,12 +107,11 @@ class Fund:
         self.taker_fee_rate = taker_fee          
 
     def get_fund_to_trade (self, strength):
-        slice = self.max_per_buy_fund_value / Decimal(3) #max strength
         liquid_fund = self.initial_value *  self.fund_liquidity_percent / Decimal(100)
         rock_bottom = self.initial_value - liquid_fund
         
-        fund = slice * strength
-        log.debug ("fund: %s slice: %s signal: %s"%(fund, slice, strength))
+        fund = self.max_per_buy_fund_value * strength
+        log.debug ("fund: %s slice: %s signal: %s"%(fund, self.max_per_buy_fund_value, strength))
         
         if self.current_value - (self.current_hold_value + fund) < rock_bottom:
             log.error ("**** No Funds to trade. signal(%d) ****"%(strength))
