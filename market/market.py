@@ -650,14 +650,19 @@ class Market:
                 fund = self.fund.get_fund_to_trade(1)
                 if fund > 0:
                     size = fund / self.get_market_rate()
-                    log.debug ("Generating BUY trade_req with fund: %d size: %d for signal: %d"%(fund, size, signal))
+                    #normalize size
+                    size_norm = round(Decimal((size - size % self.asset.min_per_trade_size)), 8)
+                    if size_norm == 0 :
+                        log.critical ("buy size too small min_size: %f size: %f", self.asset.min_per_trade_size, size)
+                        continue
+                    log.debug ("Generating BUY trade_req with fund: %d size: %d for signal: %d"%(fund, size_norm, signal))
                     trade_req_l.append(TradeRequest(Product=self.product_id,
                                       Side="BUY",
-                                       Size=round(Decimal(size), 8),
+                                       Size=size_norm,
                                        Fund=round(Decimal(fund), 8),
                                        Type="market",
                                        Price=round(Decimal(0), 8),
-                                       Stop=0))   
+                                       Stop=0))
                 else:
                     log.debug ("Unable to generate BUY request for signal (%d). Too low fund"%(signal))
                     self.num_buy_req_reject += 1                
