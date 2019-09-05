@@ -140,10 +140,14 @@ class Asset:
         self.current_hold_size = Decimal(0.0)
         self.total_traded_size = Decimal(0.0)
         self.max_per_trade_size = Decimal(0.0)
+        self.min_per_trade_size = Decimal(0.0)
         self.hold_size = Decimal(0.0)
     
     def set_max_per_trade_size (self, size):
         self.max_per_trade_size = Decimal(size)
+        
+    def set_min_per_trade_size (self, size):
+        self.min_per_trade_size = Decimal(size)        
             
     def set_initial_size (self, size):
         self.initial_size = self.current_size = Decimal(size)
@@ -157,10 +161,8 @@ class Asset:
     def set_hold_size (self, size):
         self.hold_size = Decimal(size)
         
-    def get_asset_to_trade (self, strength):
-        slice = Decimal(self.max_per_trade_size)/Decimal(3)
-        
-        cur_size = slice * strength
+    def get_asset_to_trade (self, strength):        
+        cur_size = self.max_per_trade_size * strength
         if ((self.current_size - self.current_hold_size) >= (cur_size + self.hold_size)):
             return cur_size
         else:
@@ -170,10 +172,10 @@ class Asset:
     def __str__(self):
         return ("""{
 "initial_size":%f, "current_size":%f, "hold_size": %f, "current_hold_size":%f, 
-"max_per_trade_size":%f, "latest_traded_size":%f, "total_traded_size":%f
+"max_per_trade_size":%f, "min_per_trade_size":%f, "latest_traded_size":%f, "total_traded_size":%f
 }""")%(
             self.initial_size, self.current_size, self.hold_size, self.current_hold_size,
-            self.max_per_trade_size, self.latest_traded_size, self.total_traded_size)
+            self.max_per_trade_size, self.min_per_trade_size, self.latest_traded_size, self.total_traded_size)
                 
 class Market:
 #     '''

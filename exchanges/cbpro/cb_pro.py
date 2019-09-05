@@ -72,10 +72,7 @@ class CBPRO (Exchange):
         self.feed_base = self.gdax_conf.get ('wsFeed')
         
         self.max_fund_liquidity_percent = self.gdax_conf.get ('fundMaxLiquidity')
-        self.max_per_buy_fund_val = self.gdax_conf.get ('fundMaxPerBuyValue')
-        self.max_per_trade_asset_size = self.gdax_conf.get ('assetMaxPerTradeSize')
-        self.asset_hold_size = self.gdax_conf.get ('assetHoldSize')
-        
+                
         self.public_client = cbpro.PublicClient(api_url=self.api_base)
         if (self.public_client) == None :
             log.critical("gdax public client init failed")
@@ -107,6 +104,10 @@ class CBPRO (Exchange):
             for prod in products:
                 for p in self.gdax_conf['products']:              
                     if prod['id'] in p.keys():
+                        prod['max_per_buy_fund_val'] = p[prod['id']].get ('fundMaxPerBuyValue')
+                        prod['max_per_trade_asset_size'] = p[prod['id']].get ('assetMaxPerTradeSize')
+                        prod['min_per_trade_asset_size'] = p[prod['id']].get ('assetMinPerTradeSize')        
+                        prod['asset_hold_size'] = p[prod['id']].get ('assetHoldSize')                                          
                         self.gdax_products.append(prod)
         
         # Popoulate the account details for each interested currencies
@@ -130,7 +131,7 @@ class CBPRO (Exchange):
         for account in accounts:
             for prod in self.gdax_conf['products']:
                 for prod_id in prod.keys():
-                    currency = prod[prod_id][0]['currency']            
+                    currency = prod[prod_id]['currency']
                     if account['currency'] in currency:
                         log.debug ("Interested Account Found for Currency: "+account['currency'])
                         self.gdax_accounts[account['currency']] = account
@@ -166,13 +167,14 @@ class CBPRO (Exchange):
         market = Market(product=product, exchange=self)    
         market.fund.set_initial_value(Decimal(usd_acc['available']))
         market.fund.set_hold_value(Decimal(usd_acc['hold']))
-        market.fund.set_fund_liquidity_percent(self.max_fund_liquidity_percent)       #### Limit the fund to 10%
-        market.fund.set_max_per_buy_fund_value(self.max_per_buy_fund_val)
+        market.fund.set_fund_liquidity_percent(self.max_fund_liquidity_percent)       
+        market.fund.set_max_per_buy_fund_value(product['max_per_buy_fund_val'])
         market.fund.set_fee(self.gdax_conf['Fee']['maker'], self.gdax_conf['Fee']['taker'])        
         market.asset.set_initial_size(Decimal( crypto_acc['available']))
         market.asset.set_hold_size( Decimal(crypto_acc['hold']))
-        market.asset.set_max_per_trade_size(self.max_per_trade_asset_size)
-        market.asset.set_hold_size(self.asset_hold_size)
+        market.asset.set_max_per_trade_size(product['max_per_trade_asset_size'])
+        market.asset.set_min_per_trade_size(product['min_per_trade_asset_size'])        
+        market.asset.set_hold_size(product['asset_hold_size'])
         
         ## Feed Cb
         market.register_feed_processor(self._gdax_consume_feed)
