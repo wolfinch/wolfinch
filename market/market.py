@@ -336,7 +336,22 @@ class Market:
                 
         #validate the trade Req
         if (len(trade_pos_l)):
+            trade_req_l = []
             log.info ("pos hit take profit")            
+            for pos in trade_pos_l:
+                asset_size = pos.buy.get_asset()
+                if (asset_size <= 0):
+                    log.critical ("Invalid open position for closing: pos: %s"%str(pos))
+                    raise Exception("Invalid open position for closing")
+                log.debug ("Generating take profit SELL trade_req with asset size: %s"%(str(asset_size)))   
+                trade_req_l.append(TradeRequest(Product=self.product_id,
+                                  Side="SELL",
+                                   Size=round(Decimal(asset_size),8),
+                                   Fund=round(Decimal(0), 8),                                   
+                                   Type="market",
+                                   Price=round(Decimal(0), 8),
+                                   Stop=0, id=uuid.UUID(pos.id)))            
+            
             self._execute_market_trade(trade_pos_l)
                 
     def _handle_pending_trade_reqs (self):

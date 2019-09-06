@@ -104,10 +104,10 @@ class CBPRO (Exchange):
             for prod in products:
                 for p in self.gdax_conf['products']:              
                     if prod['id'] in p.keys():
-                        prod['max_per_buy_fund_val'] = p[prod['id']].get ('fundMaxPerBuyValue')
-                        prod['max_per_trade_asset_size'] = p[prod['id']].get ('assetMaxPerTradeSize')
-                        prod['min_per_trade_asset_size'] = p[prod['id']].get ('assetMinPerTradeSize')        
-                        prod['asset_hold_size'] = p[prod['id']].get ('assetHoldSize')                                          
+                        prod['max_per_buy_fund_val'] = p[prod['id']].get ('fundMaxPerBuyValue', 0)
+                        prod['max_per_trade_asset_size'] = p[prod['id']].get ('assetMaxPerTradeSize', 0)
+                        prod['min_per_trade_asset_size'] = p[prod['id']].get ('assetMinPerTradeSize', 0)        
+                        prod['asset_hold_size'] = p[prod['id']].get ('assetHoldSize', 0)                                          
                         self.gdax_products.append(prod)
         
         # Popoulate the account details for each interested currencies
