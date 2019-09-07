@@ -25,11 +25,9 @@ import sys
 import os
 import uuid
 import Queue
-import pprint
+# import pprint
 from itertools import product
 from decimal import Decimal
-import itertools
-import talib
 from datetime import datetime
 import time
 import random
@@ -45,9 +43,6 @@ import strategy
 
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
-
-from decimal import Decimal
-from mock.mock import self
 
 Base = declarative_base()
 
