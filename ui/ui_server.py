@@ -50,48 +50,45 @@ def server_main (mp_pipe=None):
 
     def get_ui_secret():
         return str(int(time.time()/(60*60*24)))
-    #ui_secret = "1234"
     
     @app.route('/js/<path:path>')
-    def send_js(path):
+    def send_js_api(path):
         return send_from_directory('js', path)
     @app.route('/<secret>/oldmonk/stylesheet.css')
-    def stylesheet_page(secret):
+    def stylesheet_page_api(secret):
         if secret != get_ui_secret():
             log.error ("wrong code: "+secret)
             return ""
         return app.send_static_file('stylesheet.css')
     @app.route('/<secret>/oldmonk/chart.html')
-    def chart_page(secret):
+    def chart_page_api(secret):
         if secret != get_ui_secret():
             log.error ("wrong code: "+secret)
             return ""
         return app.send_static_file('chart.html')
     @app.route('/<secret>/oldmonk/trading.html')
-    def trading_page(secret):
+    def trading_page_api(secret):
         if secret != get_ui_secret():
             log.error ("wrong code: "+secret)
             return ""
         return app.send_static_file('trading.html')    
     @app.route('/<secret>/oldmonk')
-    def root_page(secret):
+    def root_page_api(secret):
         if secret != get_ui_secret():
             log.error ("wrong code: "+secret)
             return ""
         return app.send_static_file('index.html')        
-#     @app.route('/api/order_data')
-#     def trade_data():
-#         try:
-#             with open (os.path.join(static_file_dir, POSITION_STATS_FILE), 'r') as fp:
-#                 s = fp.read()
-#                 if not len (s):
-#                     return "{}"
-#                 else:
-#                     return s
-#         except Exception:
-#             return "{}"        
+
+    @app.route('/api/get_markets')
+    def get_markets_api():
+        try:
+            m_list = {"CBPRO":["BTC-USD", "ETH-USD"]}
+            return json.dumps(m_list)
+        except Exception:
+            return "{}"
+              
     @app.route('/api/market_stats')
-    def market_stats():
+    def market_stats_api():
         try:
             with open (os.path.join(static_file_dir, MARKET_STATS), 'r') as fp:
                 s = fp.read()
@@ -103,16 +100,16 @@ def server_main (mp_pipe=None):
             return "{}"
             
     @app.route('/api/candles')
-    def candle_list():
+    def candle_list_api():
         period = request.args.get('period', default = 1, type = int)
         return db_events.get_all_candles(period)
         
     @app.route('/api/positions')
-    def position_list():
+    def position_list_api():
         return db_events.get_all_positions()
     
     @app.route('/api/manual_order')
-    def exec_manual_order():
+    def exec_manual_order_api():
         cmd = request.args.get('cmd', default = "buy", type = str)
         req_number = request.args.get('req_number', default = 0, type = int)
         req_code = request.args.get('req_code', default = "", type = str)
@@ -154,7 +151,7 @@ def server_main (mp_pipe=None):
     log.debug("static_dir: %s root: %s"%(static_file_dir, app.root_path))
     
     log.debug ("starting server..")
-    app.run(host='0.0.0.0', port=80, debug=False)
+    app.run(host='0.0.0.0', port=8080, debug=False)
     log.error ("server finished!")
         
 def ui_main (mp_conn_pipe):

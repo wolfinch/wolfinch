@@ -95,6 +95,7 @@ class CandlesDb(object):
     def db_get_candles_after_time(self, after):
         log.debug ("retrieving candles after time: %d from db"%(after))
         try:
+            res_list = []            
             ResultSet = self.db.session.query(self.mapping).filter(self.ohlcCls.time >= after).order_by(self.ohlcCls.time).all()
             log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
             
