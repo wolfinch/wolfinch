@@ -39,7 +39,7 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 # POSITION_STATS_FILE = "stats_positions_%s_%s.json"%("CBPRO", "BTC-USD")
 MARKET_STATS = "stats_market_%s_%s.json"%("CBPRO", "BTC-USD")
 # TRADED_STATS_FILE = "stats_traded_orders_%s_%s.json"%("CBPRO", "BTC-USD")
-def server_main (mp_pipe=None):
+def server_main (port=8080, mp_pipe=None):
     
     # init db_events
     if not db_events.init(EXCH_NAME, PRODUCT_ID):
@@ -140,7 +140,7 @@ def server_main (mp_pipe=None):
             log.error (err)
             return ret_code(err)
         
-        msg = {"exchange": EXCH_NAME, "product": PRODUCT_ID, "side": cmd, "signal": signal}
+        msg = {"type": "TRADE", "exchange": EXCH_NAME, "product": PRODUCT_ID, "side": cmd, "signal": signal}
         if mp_pipe:
             mp_pipe.send(msg)
         else:
@@ -151,12 +151,12 @@ def server_main (mp_pipe=None):
     log.debug("static_dir: %s root: %s"%(static_file_dir, app.root_path))
     
     log.debug ("starting server..")
-    app.run(host='0.0.0.0', port=8080, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=False)
     log.error ("server finished!")
         
-def ui_main (mp_conn_pipe):
+def ui_main (port=8080, mp_conn_pipe=None):
     try:
-        server_main(mp_conn_pipe)
+        server_main(port=port, mp_pipe=mp_conn_pipe)
     except Exception as e:
         log.critical("ui excpetion e: %s"%(e))
         mp_conn_pipe.send({"error": "exception: %s"%(e)})

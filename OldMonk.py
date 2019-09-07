@@ -57,7 +57,7 @@ def OldMonk_init(decisionConfig, tradingConfig):
 
     # setup ui if required
     if ui.integrated_ui:
-        ui.ui_conn_pipe = ui.ui_mp_init()
+        ui.ui_conn_pipe = ui.ui_mp_init(ui.port)
         if ui.ui_conn_pipe == None :
             log.critical ("unable to setup ui!! ")
             print ("unable to setup UI!!")
@@ -140,6 +140,20 @@ def process_market (market):
     # commit market states to the db periodically (this logic is rate-limited)
     market.lazy_commit_market_states()
     
+def process_ui_trade_notif (msg):
+    exch = msg.get("exchange")
+    product = msg.get("product")
+    side = msg.get("side")
+    signal = msg.get("signal")
+    log.info ("Manual Order: exch: %s prod: %s side: %s signal: %s"%(exch, product, side, str(signal)))
+    m = get_market_by_product (exch, product)
+    if not m:
+        log.error ("Unknown exchange/product exch: %s prod: %s"%(exch, product))
+    else:
+        m.consume_trade_signal(signal)    
+def process_ui_get_market_list_rr (msg, ui_conn_pipe):
+    log.debug ("enter")
+    
 def process_ui_msgs(ui_conn_pipe):
     try:
         while ui_conn_pipe.poll():
@@ -149,16 +163,13 @@ def process_ui_msgs(ui_conn_pipe):
                 log.error ("error in the pipe, ui finished: msg:%s"%(err))
                 raise Exception("UI error - %s"%(err))
             else:
-                exch = msg.get("exchange")
-                product = msg.get("product")
-                side = msg.get("side")
-                signal = msg.get("signal")
-                log.info ("Manual Order: exch: %s prod: %s side: %s signal: %s"%(exch, product, side, str(signal)))
-                m = get_market_by_product (exch, product)
-                if not m:
-                    log.error ("Unknown exchange/product exch: %s prod: %s"%(exch, product))
+                msg_type = msg.get("type")
+                if msg_type == "TRADE":
+                    process_ui_trade_notif (msg)
+                elif msg_type == "GET_MARKET_LIST":
+                    process_ui_get_market_list_rr (msg, ui_conn_pipe)
                 else:
-                    m.consume_trade_signal(signal)
+                    log.error ("Unknown ui msg type: %s", msg_type)
     except Exception as e:
         log.critical ("exception %s on ui"%(e))
         raise e
@@ -274,7 +285,9 @@ def load_config (cfg_file):
                         ui.integrated_ui = True
                     else:
                         log.debug ("ui disabled")
-                        ui.integrated_ui = False                
+                        ui.integrated_ui = False
+                if ex_k == 'port':
+                    ui.port = ex_v                           
                 
 #     print ("v: %s"%str(tradingConfig))
 #     exit(1)

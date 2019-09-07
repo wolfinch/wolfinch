@@ -28,14 +28,14 @@ log.setLevel(log.DEBUG)
 
 g_p = None
 
-def ui_mp_init ():
+def ui_mp_init (port):
     global g_p
     
     log.info ("init multi-process ui")
     
     parent_conn, child_conn = Pipe()
     
-    g_p = Process(target=ui_server.ui_main, args=(child_conn,))
+    g_p = Process(target=ui_server.ui_main, args=(port, child_conn,))
     g_p.start()
     
     return parent_conn
