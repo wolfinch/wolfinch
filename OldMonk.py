@@ -25,7 +25,7 @@ import random
 
 import sims
 import exchanges
-from market import market_init, market_setup, get_market_list, feed_Q_process_msg, feed_deQ, Order, get_market_by_product
+from market import market_init, market_setup, get_market_list, feed_Q_process_msg, feed_deQ, get_market_by_product
 from utils import getLogger
 import db
 from utils.readconf import readConf
@@ -145,7 +145,7 @@ def process_ui_trade_notif (msg):
     product = msg.get("product")
     side = msg.get("side")
     signal = msg.get("signal")
-    log.info ("Manual Order: exch: %s prod: %s side: %s signal: %s"%(exch, product, side, str(signal)))
+    log.info ("Manual Trade Req: exch: %s prod: %s side: %s signal: %s"%(exch, product, side, str(signal)))
     m = get_market_by_product (exch, product)
     if not m:
         log.error ("Unknown exchange/product exch: %s prod: %s"%(exch, product))
@@ -153,6 +153,17 @@ def process_ui_trade_notif (msg):
         m.consume_trade_signal(signal)    
 def process_ui_get_markets_rr (msg, ui_conn_pipe):
     log.debug ("enter")
+    m_dict = {}
+    for m in get_market_list():
+        p_list = m_dict.get(m.exchange_name)
+        if not p_list:
+            m_dict[m.exchange_name] = [m.product_id]
+        else:
+            p_list.append(m.product_id)
+    
+    msg ["type"] = "GET_MARKETS_RESP"
+    msg ["data"] = m_dict
+    ui_conn_pipe.send(msg)
     
 def process_ui_msgs(ui_conn_pipe):
     try:

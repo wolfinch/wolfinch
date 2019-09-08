@@ -90,7 +90,19 @@ def server_main (port=8080, mp_pipe=None):
                 msg = {"type": "GET_MARKETS"}
                 if mp_pipe:
                     msg = mp_send_recv_msg (mp_pipe, msg, True)
-                    g_markets_list = msg.get("data")
+                    if msg:
+                        msg_type = msg.get("type")
+                        if msg_type == "GET_MARKETS_RESP":
+                            log.debug ("GET_MARKETS_RESP recv")
+                            g_markets_list = msg.get("data")
+                            if not g_markets_list:
+                                err = "invalid market list payload"
+                                log.error (err)
+                                raise Exception (err)                            
+                        else:
+                            err = "invalid ui resp msg type: %s"%msg_type
+                            log.error (err)
+                            raise Exception (err)
                 else:
                     err = "server connection can't be found!"
                     log.error (err)
@@ -170,22 +182,18 @@ def server_main (port=8080, mp_pipe=None):
 def mp_send_recv_msg(mp_pipe, msg, wait_resp=False):
     try:
         mp_pipe.send(msg)
-        if not wait_resp:
+        if False == wait_resp:
             return
         #wait for 10 secs for resp
-        while mp_pipe.poll(timeout=10):
+        while mp_pipe.poll(10):
             msg = mp_pipe.recv()
             err = msg.get("error", None)
             if  err != None:
                 log.error ("error in the pipe, ui finished: msg:%s"%(err))
                 raise Exception("UI error - %s"%(err))
             else:
-                msg_type = msg.get("type")
-                if msg_type == "GET_MARKETS_RESP":
-                    log.debug ("GET_MARKETS_RESP recv")
-                    return msg
-                else:
-                    log.error ("Unknown ui resp msg type: %s", msg_type)
+                return msg
+        return None
     except Exception as e:
         log.critical ("exception %s on ui"%(e))
         raise e

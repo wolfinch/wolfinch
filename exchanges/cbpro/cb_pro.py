@@ -107,14 +107,19 @@ class CBPRO (Exchange):
                         prod['max_per_buy_fund_val'] = p[prod['id']].get ('fundMaxPerBuyValue', 0)
                         prod['max_per_trade_asset_size'] = p[prod['id']].get ('assetMaxPerTradeSize', 0)
                         prod['min_per_trade_asset_size'] = p[prod['id']].get ('assetMinPerTradeSize', 0)        
-                        prod['asset_hold_size'] = p[prod['id']].get ('assetHoldSize', 0)                                          
+                        prod['asset_hold_size'] = p[prod['id']].get ('assetHoldSize', 0)
+                        if (prod['max_per_buy_fund_val'] == 0 or prod['max_per_trade_asset_size'] == 0 or 
+                           prod['min_per_trade_asset_size'] == 0 or prod['asset_hold_size'] == 0 ):
+                            log.critical ("invalid config for product: %s"%(prod['id']))
+                            raise Exception ("invalid config for product: %s"%(prod['id']))            
+                            return False       
                         self.gdax_products.append(prod)
         
         # Popoulate the account details for each interested currencies
         accounts =  self.auth_client.get_accounts()
         if (accounts == None):
             log.critical("Unable to get account details!!")
-            raise Exception ("Unable to get CBPRO Accounts!!")            
+            raise Exception ("Unable to get CBPRO Accounts!!")  
             return False
         
         log.info ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
