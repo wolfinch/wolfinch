@@ -28,6 +28,9 @@ from flask import Flask, request, send_from_directory
 from utils import getLogger
 import db_events
 
+#TODO: FIXME, remove static
+g_markets_list = None #{"CBPRO":["BTC-USD", "ETH-USD"]}
+
 UI_TRADE_SECRET = "3254"
 
 log = getLogger ('UI')
@@ -81,10 +84,20 @@ def server_main (port=8080, mp_pipe=None):
 
     @app.route('/api/get_markets')
     def get_markets_api():
+        global g_markets_list
         try:
-            m_list = {"CBPRO":["BTC-USD", "ETH-USD"]}
-            return json.dumps(m_list)
-        except Exception:
+            if not g_markets_list:
+                msg = {"type": "GET_MARKETS"}
+                if mp_pipe:
+                    msg = mp_send_recv_msg (mp_pipe, msg, True)
+                    g_markets_list = msg.get("data")
+                else:
+                    err = "server connection can't be found!"
+                    log.error (err)
+                    raise Exception (err)
+            return json.dumps(g_markets_list)
+        except Exception as e:
+            log.error ("Unable to get market list. Exception: %s",e)
             return "{}"
               
     @app.route('/api/market_stats')
@@ -107,7 +120,7 @@ def server_main (port=8080, mp_pipe=None):
     @app.route('/api/positions')
     def position_list_api():
         return db_events.get_all_positions()
-    
+            
     @app.route('/api/manual_order')
     def exec_manual_order_api():
         cmd = request.args.get('cmd', default = "buy", type = str)
@@ -142,7 +155,7 @@ def server_main (port=8080, mp_pipe=None):
         
         msg = {"type": "TRADE", "exchange": EXCH_NAME, "product": PRODUCT_ID, "side": cmd, "signal": signal}
         if mp_pipe:
-            mp_pipe.send(msg)
+            mp_send_recv_msg(mp_pipe, msg)
         else:
             err = "server connection can't be found!"
             log.error (err)
@@ -154,12 +167,35 @@ def server_main (port=8080, mp_pipe=None):
     app.run(host='0.0.0.0', port=port, debug=False)
     log.error ("server finished!")
         
+def mp_send_recv_msg(mp_pipe, msg, wait_resp=False):
+    try:
+        mp_pipe.send(msg)
+        if not wait_resp:
+            return
+        #wait for 10 secs for resp
+        while mp_pipe.poll(timeout=10):
+            msg = mp_pipe.recv()
+            err = msg.get("error", None)
+            if  err != None:
+                log.error ("error in the pipe, ui finished: msg:%s"%(err))
+                raise Exception("UI error - %s"%(err))
+            else:
+                msg_type = msg.get("type")
+                if msg_type == "GET_MARKETS_RESP":
+                    log.debug ("GET_MARKETS_RESP recv")
+                    return msg
+                else:
+                    log.error ("Unknown ui resp msg type: %s", msg_type)
+    except Exception as e:
+        log.critical ("exception %s on ui"%(e))
+        raise e
+    
 def ui_main (port=8080, mp_conn_pipe=None):
     try:
         server_main(port=port, mp_pipe=mp_conn_pipe)
     except Exception as e:
         log.critical("ui excpetion e: %s"%(e))
-        mp_conn_pipe.send({"error": "exception: %s"%(e)})
+        mp_send_recv_msg(mp_conn_pipe, {"error": "exception: %s"%(e)})
         mp_conn_pipe.close()
         
 def arg_parse ():

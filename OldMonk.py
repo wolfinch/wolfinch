@@ -151,7 +151,7 @@ def process_ui_trade_notif (msg):
         log.error ("Unknown exchange/product exch: %s prod: %s"%(exch, product))
     else:
         m.consume_trade_signal(signal)    
-def process_ui_get_market_list_rr (msg, ui_conn_pipe):
+def process_ui_get_markets_rr (msg, ui_conn_pipe):
     log.debug ("enter")
     
 def process_ui_msgs(ui_conn_pipe):
@@ -166,8 +166,8 @@ def process_ui_msgs(ui_conn_pipe):
                 msg_type = msg.get("type")
                 if msg_type == "TRADE":
                     process_ui_trade_notif (msg)
-                elif msg_type == "GET_MARKET_LIST":
-                    process_ui_get_market_list_rr (msg, ui_conn_pipe)
+                elif msg_type == "GET_MARKETS":
+                    process_ui_get_markets_rr (msg, ui_conn_pipe)
                 else:
                     log.error ("Unknown ui msg type: %s", msg_type)
     except Exception as e:
