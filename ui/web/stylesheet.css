@@ -43,6 +43,15 @@ a, a:focus, a:hover {
 	align: center;
 }
 
+.navbarselector {
+/* 	height: 95%;
+	width:95%;
+	padding-left: 2em;
+	padding-right: 2em;
+	align: center; */
+	position: initial;
+}
+
 footer {
 	position: static;
 	bottom: 0;

@@ -50,22 +50,20 @@
 		console.log("load stats");
 
 	});
-	
+
 	function btn_onclick(id) {
-		
 
 		var req_number = document.getElementById("req_number").value;
 		var req_code = document.getElementById("req_code").value;
-		
-		console.log ("number: "+req_number+" req_code: "+req_code);
-		
+
+		console.log("number: " + req_number + " req_code: " + req_code);
+
 		if (req_number <= 0 || req_code == "") {
-			
-			console.log ("invalid input");
+
+			console.log("invalid input");
 			alert("invalid request!");
 			return false;
-		} 
-
+		}
 
 		switch (id) {
 		case "btn_buy":
@@ -79,18 +77,18 @@
 			break;
 		}
 
-		var txt = cmd + " "+req_number+ " with code '"+req_code+"'?";
-		
+		var txt = cmd + " " + req_number + " with code '" + req_code + "'?";
+
 		if (!confirm(txt)) {
-			console.log ("cancel");
+			console.log("cancel");
 			return true;
-		} 
-		
+		}
+
 		// call api to buy/sell
-		console.log("call api to "+cmd);
+		console.log("call api to " + cmd);
 		$.ajax({
 			type : 'GET',
-			url : '/api/manual_order?cmd='+cmd+"&req_number="+req_number,
+			url : '/api/manual_order?cmd=' + cmd + "&req_number=" + req_number,
 			data : {
 				req_code : req_code
 			},
@@ -99,12 +97,12 @@
 				console.log("manual_order success!");
 				alert(data);
 			},
- 			error: function(xhr, error) {
+			error : function(xhr, error) {
 				console.log("manual_order failed!");
 				alert(error);
-			} 
+			}
 		});
-		
+
 	}
 </script>
 
@@ -119,7 +117,43 @@
 						<h3 class="brand">
 							<a href="/">OldMonk</a>
 						</h3>
+
+
 						<ul class="nav masthead-nav">
+							<li>
+
+								<div style="position: inherit;" class="btn-group" role="group"
+									aria-label="...">
+	<!-- 								<button type="button" style="position: initial;"
+										class="navbarselector btn btn-default ">go</button> -->
+
+									<div class="btn-group btn-group-xs" role="group">
+										<button type="button" style="position: initial;"
+											class="btn btn-default dropdown-toggle"
+											data-toggle="dropdown" aria-haspopup="true"
+											aria-expanded="false">
+											Dropdown <span class="caret"></span>
+										</button>
+										<ul class="dropdown-menu .dropdown-menu-right">
+											<li><a href="#">Dropdown link</a></li>
+											<li><a href="#">Dropdown link</a></li>
+										</ul>
+									</div>
+									<div class="btn-group btn-group-xs" role="group">
+										<button type="button" style="position: initial;"
+											class="btn btn-default dropdown-toggle"
+											data-toggle="dropdown" aria-haspopup="true"
+											aria-expanded="false">
+											Dropdown <span class="caret"></span>
+										</button>
+										<ul class="dropdown-menu .dropdown-menu-right">
+											<li><a href="#">Dropdown link</a></li>
+											<li><a href="#">Dropdown link</a></li>
+										</ul>
+									</div>									
+								</div>
+
+							</li>
 							<li><a href="../oldmonk"> Home</a></li>
 							<li><a href="chart.html">Charts </a></li>
 							<li class="active"><a href="rading.html"> Trading</a></li>
@@ -133,24 +167,22 @@
 
 	<div class="jumbotron jumbotron-fluid">
 		<div class="container"
-			style="margin: false; width: 30vw; height: auto; color: rgba(255, 255, 255, .75); 
-			background-color: rgba(0, 0, 0, 0.1);"
+			style="margin: false; width: 30vw; height: auto; color: rgba(255, 255, 255, .75); background-color: rgba(0, 0, 0, 0.1);"
 			border="0">
 			<div class="row"
 				style="margin: 0; background-color: rgba(fff, 0, 0, .90); width: 30vw; height: 8vh;">
 				<div class="col-sm-12" align="center"
 					style="font-size: 2vw; border: 0;">
-					<b style="font-weight: 300; ">Trade Positions</b>
+					<b style="font-weight: 300;">Trade Positions</b>
 				</div>
 			</div>
-			<div class="row"
-				style="margin: 0;  width: 30vw; height: auto;">
+			<div class="row" style="margin: 0; width: 30vw; height: auto;">
 
 				<div class="col-sm-6" align="center"
 					style="font-size: 1vw; border: 0;">
 					<div class="form-group">
-						<label for="usr">#Positions</label> <input type="number" defaultValue="0"
-							class="form-control" id="req_number"
+						<label for="usr">#Positions</label> <input type="number"
+							defaultValue="0" class="form-control" id="req_number"
 							style="margin: 0; width: 6em; height: 2vh;">
 					</div>
 				</div>
@@ -164,13 +196,13 @@
 				</div>
 			</div>
 
-			<div class="row" style="margin: 0; border-top: 0em solid #555; width: 30vw; height: 7vh; display: flex;
-  						flex-direction: row; align-items: center;">
+			<div class="row"
+				style="margin: 0; border-top: 0em solid #555; width: 30vw; height: 7vh; display: flex; flex-direction: row; align-items: center;">
 				<div class="col-sm-6  text-center" style="vertical-align: middle;">
 					<div id="btn_buy" onclick="btn_onclick(this.id)"
 						class="btn btn-primary btn-lg">Buy</div>
 				</div>
-				<div class="col-sm-6 text-center" >
+				<div class="col-sm-6 text-center">
 					<div id="btn_sell" onclick="btn_onclick(this.id)"
 						class="btn btn-danger btn-lg">Sell</div>
 				</div>
