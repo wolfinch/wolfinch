@@ -29,7 +29,7 @@ from utils import getLogger
 import db_events
 
 #TODO: FIXME, remove static
-g_markets_list = None #{"CBPRO":["BTC-USD", "ETH-USD"]}
+g_markets_list = {"CBPRO":["BTC-USD", "ETH-USD"]}
 
 UI_TRADE_SECRET = "3254"
 

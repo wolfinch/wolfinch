@@ -38,19 +38,108 @@
 
 
 <script type="text/javascript">
-	/* 
-	 $(document).ready( function () {
-	 $('#statsTable').DataTable();
-	 } );
-	 */
 
 	var table;
+	var exchanges;
+	var active_exch = "";
+	var active_market = "";
 	$(document).ready(function() {
 
 		console.log("load stats");
+		
+		load_exch_data();
 
 	});
 
+	function exch_onclick(obj){
+		console.log ("onclick "+this.id);
+		
+		active_exch = this.text;
+		var btn = document.getElementById("exch_btn_id");
+		btn.innerHTML = active_exch +' <span class="caret"></span>';
+	}
+	
+	function market_onclick(obj){
+		console.log ("onclick "+this.id);
+		
+		active_market = this.text;
+		var btn = document.getElementById("markets_btn_id");
+		btn.innerHTML = active_exch +' <span class="caret"></span>';
+		
+		// TODO: FIXME: jork: do rest of logic
+	}	
+	
+	function load_exchanges_dd () {
+		var list = document.getElementById("exchangesDdId"); 
+
+        Object.keys(exchanges).forEach(function(exch_name) {
+        	console.log("loading "+ exch_name);
+        	var li = document.createElement("li");
+            var link = document.createElement("a");
+            var text = document.createTextNode(exch_name);
+            link.appendChild(text);
+            link.href = "#";
+            link.id = "li_exch_id_"+exch_name;
+            link.onclick=exch_onclick;
+            li.appendChild(link);
+            list.appendChild(li);        	
+        });
+	}
+	
+	function load_markets_dd () {
+		console.log("load_markets_dd");
+		markets_l = exchanges[active_exch]
+		var list = document.getElementById("marketsDdId"); 
+
+		if (markets_l == undefined) {
+			console.log("no active exchange set");
+			return;
+		}
+		
+		for (var i=0; i < list.childNodes.length; i++) {
+			console.log("purge old node - "+list.childNodes[i].innerText);
+			list.removeChild(list.childNodes[i]);
+		}
+		
+		markets_l.forEach(function(prod_name) {
+        	console.log("loading "+ prod_name);
+        	var li = document.createElement("li");
+            var link = document.createElement("a");             
+            var text = document.createTextNode(prod_name);
+            link.appendChild(text);
+            link.href = "#";
+            link.id = "li_exch_id_"+prod_name;     
+            link.onclick=market_onclick;            
+            li.appendChild(link);
+            list.appendChild(li);        	
+        });
+
+	}	
+	
+	function load_exch_data () {
+		console.log ("loading exchanges and markets");
+		// call api to buy/sell
+		$.ajax({
+			type : 'GET',
+			url : '/api/get_markets',
+/* 			data : {
+				req_code : req_code
+			}, */
+			dataType : 'json',
+			success : function(data) {
+				console.log("get_markets success!"+data);
+				exchanges = data;
+				load_exchanges_dd ();
+				load_markets_dd ();
+			},
+			error : function(xhr, error) {
+				console.log("get_markets failed!");
+				alert(error);
+			}
+		});		
+		
+	}
+	
 	function btn_onclick(id) {
 
 		var req_number = document.getElementById("req_number").value;
@@ -121,34 +210,27 @@
 
 						<ul class="nav masthead-nav">
 							<li>
-
 								<div style="position: inherit;" class="btn-group" role="group"
 									aria-label="...">
-	<!-- 								<button type="button" style="position: initial;"
-										class="navbarselector btn btn-default ">go</button> -->
 
 									<div class="btn-group btn-group-xs" role="group">
 										<button type="button" style="position: initial;"
 											class="btn btn-default dropdown-toggle"
 											data-toggle="dropdown" aria-haspopup="true"
-											aria-expanded="false">
-											Dropdown <span class="caret"></span>
+											aria-expanded="false" id="exch_btn_id">
+											Exchange <span class="caret"></span>
 										</button>
-										<ul class="dropdown-menu .dropdown-menu-right">
-											<li><a href="#">Dropdown link</a></li>
-											<li><a href="#">Dropdown link</a></li>
+										<ul class="dropdown-menu .dropdown-menu-right" id="exchangesDdId">
 										</ul>
 									</div>
 									<div class="btn-group btn-group-xs" role="group">
 										<button type="button" style="position: initial;"
 											class="btn btn-default dropdown-toggle"
 											data-toggle="dropdown" aria-haspopup="true"
-											aria-expanded="false">
-											Dropdown <span class="caret"></span>
+											aria-expanded="false" id="markets_btn_id" onclick="load_markets_dd()">
+											Market <span class="caret"></span>
 										</button>
-										<ul class="dropdown-menu .dropdown-menu-right">
-											<li><a href="#">Dropdown link</a></li>
-											<li><a href="#">Dropdown link</a></li>
+										<ul class="dropdown-menu .dropdown-menu-right" id="marketsDdId">
 										</ul>
 									</div>									
 								</div>
