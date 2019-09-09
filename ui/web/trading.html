@@ -38,7 +38,6 @@
 
 
 <script type="text/javascript">
-
 	var table;
 	var exchanges;
 	var active_exch = "";
@@ -46,100 +45,144 @@
 	$(document).ready(function() {
 
 		console.log("load stats");
-		
-		load_exch_data();
 
+		load_exch_data();
 	});
 
-	function exch_onclick(obj){
-		console.log ("onclick "+this.id);
-		
+	// exch/market selector - start
+	function exch_onclick(obj) {
+		console.log("onclick " + this.id);
+
 		active_exch = this.text;
 		var btn = document.getElementById("exch_btn_id");
-		btn.innerHTML = active_exch +' <span class="caret"></span>';
+		btn.innerHTML = active_exch + ' <span class="caret"></span>';
+
+		load_markets_dd();
 	}
-	
-	function market_onclick(obj){
-		console.log ("onclick "+this.id);
-		
+
+	function market_onclick(obj) {
+		console.log("onclick " + this.id);
+
 		active_market = this.text;
 		var btn = document.getElementById("markets_btn_id");
-		btn.innerHTML = active_exch +' <span class="caret"></span>';
-		
-		// TODO: FIXME: jork: do rest of logic
-	}	
-	
-	function load_exchanges_dd () {
-		var list = document.getElementById("exchangesDdId"); 
+		btn.innerHTML = active_market + ' <span class="caret"></span>';
 
-        Object.keys(exchanges).forEach(function(exch_name) {
-        	console.log("loading "+ exch_name);
-        	var li = document.createElement("li");
-            var link = document.createElement("a");
-            var text = document.createTextNode(exch_name);
-            link.appendChild(text);
-            link.href = "#";
-            link.id = "li_exch_id_"+exch_name;
-            link.onclick=exch_onclick;
-            li.appendChild(link);
-            list.appendChild(li);        	
-        });
+		// TODO: FIXME: jork: do rest of logic
+		// call api to buy/sell
+		var data = {};
+		data[active_exch] = active_market;
+		console.log("post data:" + active_exch, active_market);
+		$.ajax({
+			type : 'POST',
+			url : '/api/set_active_market',
+			data : data,
+			dataType : 'json',
+			success : function(data) {
+				console.log("set_active_market success!" + data);
+			},
+			error : function(xhr, error) {
+				console.log("set_active_market failed!");
+			}
+		});
 	}
-	
-	function load_markets_dd () {
-		console.log("load_markets_dd");
+
+	function load_exchanges_dd() {
+		var list = document.getElementById("exchangesDdId");
+
+		Object.keys(exchanges).forEach(function(exch_name) {
+			console.log("loading " + exch_name);
+			var li = document.createElement("li");
+			var link = document.createElement("a");
+			var text = document.createTextNode(exch_name);
+			link.appendChild(text);
+			link.href = "#";
+			link.id = "li_exch_id_" + exch_name;
+			link.onclick = exch_onclick;
+			li.appendChild(link);
+			list.appendChild(li);
+		});
+
+		var btn = document.getElementById("exch_btn_id");
+		if (active_exch != undefined && active_exch != "") {
+			console.log("setting active exch " + active_exch);
+			btn.innerHTML = active_exch + ' <span class="caret"></span>';
+		} else {
+			btn.innerHTML = 'Exchange <span class="caret"></span>';
+		}
+	}
+
+	function load_markets_dd() {
+		console.log("load_markets_dd active_exch:" + active_exch);
+
 		markets_l = exchanges[active_exch]
-		var list = document.getElementById("marketsDdId"); 
+		var list = document.getElementById("marketsDdId");
 
 		if (markets_l == undefined) {
 			console.log("no active exchange set");
 			return;
 		}
-		
-		for (var i=0; i < list.childNodes.length; i++) {
-			console.log("purge old node - "+list.childNodes[i].innerText);
-			list.removeChild(list.childNodes[i]);
-		}
-		
-		markets_l.forEach(function(prod_name) {
-        	console.log("loading "+ prod_name);
-        	var li = document.createElement("li");
-            var link = document.createElement("a");             
-            var text = document.createTextNode(prod_name);
-            link.appendChild(text);
-            link.href = "#";
-            link.id = "li_exch_id_"+prod_name;     
-            link.onclick=market_onclick;            
-            li.appendChild(link);
-            list.appendChild(li);        	
-        });
 
-	}	
-	
-	function load_exch_data () {
-		console.log ("loading exchanges and markets");
+		while (list.hasChildNodes()) {
+			console.log("purge old node - " + list.firstChild.innerText);
+			list.removeChild(list.firstChild);
+		}
+
+		markets_l.forEach(function(prod_name) {
+			console.log("loading " + prod_name);
+			var li = document.createElement("li");
+			var link = document.createElement("a");
+			var text = document.createTextNode(prod_name);
+			link.appendChild(text);
+			link.href = "#";
+			link.id = "li_exch_id_" + prod_name;
+			link.onclick = market_onclick;
+			li.appendChild(link);
+			list.appendChild(li);
+		});
+
+		if (active_market != undefined && active_market != "") {
+			var btn = document.getElementById("markets_btn_id");
+
+			if (markets_l.indexOf(active_market) != -1) {
+				btn.innerHTML = active_market + ' <span class="caret"></span>';
+			} else {
+				btn.innerHTML = 'Market <span class="caret"></span>';
+			}
+		}
+	}
+
+	function load_exch_data() {
+		console.log("loading exchanges and markets");
 		// call api to buy/sell
 		$.ajax({
 			type : 'GET',
 			url : '/api/get_markets',
-/* 			data : {
-				req_code : req_code
-			}, */
+			/* 			data : {
+			 req_code : req_code
+			 }, */
 			dataType : 'json',
 			success : function(data) {
-				console.log("get_markets success!"+data);
-				exchanges = data;
-				load_exchanges_dd ();
-				load_markets_dd ();
+				console.log("get_markets success!" + data);
+				exchanges = data["all"];
+				if (data["active"]) {
+					active_exch = Object.keys(data["active"])[0];
+					active_market = Object.values(data["active"])[0];
+
+					console.log("active exhc:" + active_exch + " markt: "
+							+ active_market);
+				}
+				load_exchanges_dd();
+				load_markets_dd();
 			},
 			error : function(xhr, error) {
 				console.log("get_markets failed!");
 				alert(error);
 			}
-		});		
-		
+		});
+
 	}
-	
+	// exch/market selector - done
+
 	function btn_onclick(id) {
 
 		var req_number = document.getElementById("req_number").value;
@@ -194,10 +237,7 @@
 
 	}
 </script>
-
-
 <body>
-
 	<div class="row align-items-start">
 		<div class="col-12">
 			<div class="navbar navbar-inverse navbar-static-top">
@@ -205,37 +245,31 @@
 					<header class="clearfix">
 						<h3 class="brand">
 							<a href="/">OldMonk</a>
-						</h3>
-
-
-						<ul class="nav masthead-nav">
-							<li>
-								<div style="position: inherit;" class="btn-group" role="group"
-									aria-label="...">
-
-									<div class="btn-group btn-group-xs" role="group">
-										<button type="button" style="position: initial;"
-											class="btn btn-default dropdown-toggle"
-											data-toggle="dropdown" aria-haspopup="true"
-											aria-expanded="false" id="exch_btn_id">
-											Exchange <span class="caret"></span>
-										</button>
-										<ul class="dropdown-menu .dropdown-menu-right" id="exchangesDdId">
-										</ul>
-									</div>
-									<div class="btn-group btn-group-xs" role="group">
-										<button type="button" style="position: initial;"
-											class="btn btn-default dropdown-toggle"
-											data-toggle="dropdown" aria-haspopup="true"
-											aria-expanded="false" id="markets_btn_id" onclick="load_markets_dd()">
-											Market <span class="caret"></span>
-										</button>
-										<ul class="dropdown-menu .dropdown-menu-right" id="marketsDdId">
-										</ul>
-									</div>									
+							<div class="btn-group dropdown"
+								style="float: right; margin-left: 2rem;">
+								<div class="btn-group btn-group-xs " role="group">
+									<button type="button" style="position: initial;"
+										class="btn btn-default dropdown-toggle btn-primary" data-toggle="dropdown"
+										aria-haspopup="true" aria-expanded="false" id="exch_btn_id">
+										Exchange <span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu .dropdown-menu-right"
+										id="exchangesDdId">
+									</ul>
 								</div>
-
-							</li>
+								<div class="btn-group btn-group-xs" role="group">
+									<button type="button" style="position: initial;"
+										class="btn btn-default dropdown-toggle btn-primary" data-toggle="dropdown"
+										aria-haspopup="true" aria-expanded="false" id="markets_btn_id"
+										onclick="load_markets_dd">
+										Market <span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu .dropdown-menu-right" id="marketsDdId">
+									</ul>
+								</div>
+							</div>
+						</h3>
+						<ul class="nav masthead-nav">
 							<li><a href="../oldmonk"> Home</a></li>
 							<li><a href="chart.html">Charts </a></li>
 							<li class="active"><a href="rading.html"> Trading</a></li>

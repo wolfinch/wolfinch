@@ -29,7 +29,9 @@ from utils import getLogger
 import db_events
 
 #TODO: FIXME, remove static
-g_markets_list = {"CBPRO":["BTC-USD", "ETH-USD"]}
+g_markets_list = {"CBPRO":["BTC-USD", "ETH-USD"], "BNC":["BTC-INR", "ETH-INR"]}
+# g_markets_list = None
+g_active_market = {} #{"CBPRO": "BTC-USD"}
 
 UI_TRADE_SECRET = "3254"
 
@@ -40,7 +42,7 @@ PRODUCT_ID = "BTC-USD"
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
 # POSITION_STATS_FILE = "stats_positions_%s_%s.json"%("CBPRO", "BTC-USD")
-MARKET_STATS = "stats_market_%s_%s.json"%("CBPRO", "BTC-USD")
+MARKET_STATS = "stats_market_%s_%s.json"
 # TRADED_STATS_FILE = "stats_traded_orders_%s_%s.json"%("CBPRO", "BTC-USD")
 def server_main (port=8080, mp_pipe=None):
     
@@ -107,15 +109,33 @@ def server_main (port=8080, mp_pipe=None):
                     err = "server connection can't be found!"
                     log.error (err)
                     raise Exception (err)
-            return json.dumps(g_markets_list)
+            data = {"all": g_markets_list}
+            if g_active_market.get("EXCH_NAME") and  g_active_market.get("PRODUCT_ID"):
+                data["active"] = {g_active_market["EXCH_NAME"] : g_active_market["PRODUCT_ID"]}
+            return json.dumps(data)
         except Exception as e:
             log.error ("Unable to get market list. Exception: %s",e)
             return "{}"
-              
+    @app.route('/api/set_active_market', methods=["POST"])
+    def set_active_market_api():
+        global g_active_market
+        try:
+            data  = request.form.to_dict()
+            if len(data.keys()) > 0 :
+                g_active_market  = {"EXCH_NAME": data.keys()[0], "PRODUCT_ID": data.values()[0]}
+                log.info ("set active market: %s "%(g_active_market))
+            return "{}"
+        except Exception as e:
+            log.error ("Unable to set active market. Exception: %s", e)
+            return "{}"
     @app.route('/api/market_stats')
     def market_stats_api():
         try:
-            with open (os.path.join(static_file_dir, MARKET_STATS), 'r') as fp:
+            if len(g_active_market.keys()) <= 0:
+                log.erroor ("active market not set")
+                return "{}"
+            m_stats_file = MARKET_STATS%(g_active_market["EXCH_NAME"], g_active_market["PRODUCT_ID"])
+            with open (os.path.join(static_file_dir, m_stats_file), 'r') as fp:
                 s = fp.read()
                 if not len (s):
                     return "{}"
@@ -133,16 +153,31 @@ def server_main (port=8080, mp_pipe=None):
     def position_list_api():
         return db_events.get_all_positions()
             
-    @app.route('/api/manual_order')
+    @app.route('/api/manual_order', methods=["POST"])
     def exec_manual_order_api():
-        cmd = request.args.get('cmd', default = "buy", type = str)
-        req_number = request.args.get('req_number', default = 0, type = int)
-        req_code = request.args.get('req_code', default = "", type = str)
-        
-        log.info ("manual order: type: %s req_number: %d req_code: %s"%(cmd, req_number, req_code))
-        
         def ret_code(err):
-            return json.dumps(err)        
+            return json.dumps(err)       
+                
+        data  = request.form.to_dict()
+        if len(data.keys()) <= 0 :
+            err = "error: invalid request data"
+            log.error (err)
+            return ret_code(err)      
+        
+        cmd = data.get('cmd', "buy")
+        req_number = data.get('req_number', 0)
+        req_code = data.get('req_code', "")
+        exch_name = data.get('exch_name', "")
+        prod_id = data.get('product', "")
+        
+                
+        log.info ("manual order: type: %s req_number: %d req_code: %s exch: %s prod: %s"%(
+            cmd, req_number, req_code, exch_name, prod_id))
+        
+        if (exch_name == "" or prod_id == "" or req_code == "" or req_number <= 0):
+            err = "error: incorrect request data"
+            log.error (err)
+            return ret_code(err)
         
         if req_code != UI_TRADE_SECRET:
             err = "incorrect secret"
@@ -165,7 +200,7 @@ def server_main (port=8080, mp_pipe=None):
             log.error (err)
             return ret_code(err)
         
-        msg = {"type": "TRADE", "exchange": EXCH_NAME, "product": PRODUCT_ID, "side": cmd, "signal": signal}
+        msg = {"type": "TRADE", "exchange": exch_name, "product": prod_id, "side": cmd, "signal": signal}
         if mp_pipe:
             mp_send_recv_msg(mp_pipe, msg)
         else:
