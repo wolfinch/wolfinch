@@ -36,11 +36,151 @@
 
 <script src="https://momentjs.com/downloads/moment.min.js"></script>
 <script type="text/javascript">
-	/* 
-	 $(document).ready( function () {
-	 $('#statsTable').DataTable();
-	 } );
-	 */
+	var table;
+	var exchanges;
+	var active_exch = "";
+	var active_market = "";
+	$(document).ready(function() {
+
+		console.log("load stats");
+
+		load_exch_data(load_tables);
+	});
+
+	// exch/market selector - start
+	function exch_onclick(obj) {
+		console.log("onclick " + this.id);
+
+		active_exch = this.text;
+		var btn = document.getElementById("exch_btn_id");
+		btn.innerHTML = active_exch + ' <span class="caret"></span>';
+
+		load_markets_dd();
+	}
+
+	function market_onclick(obj) {
+		console.log("onclick " + this.id);
+
+		active_market = this.text;
+		var btn = document.getElementById("markets_btn_id");
+		btn.innerHTML = active_market + ' <span class="caret"></span>';
+
+		// call api to buy/sell
+		var data = {};
+		data[active_exch] = active_market;
+		console.log("post data:" + active_exch, active_market);
+		$.ajax({
+			type : 'POST',
+			url : '/api/set_active_market',
+			data : data,
+			dataType : 'json',
+			success : function(data) {
+				console.log("set_active_market success!" + data);
+				load_tables();
+			},
+			error : function(xhr, error) {
+				console.log("set_active_market failed!");
+			}
+		});
+	}
+
+	function load_exchanges_dd() {
+		var list = document.getElementById("exchangesDdId");
+
+		Object.keys(exchanges).forEach(function(exch_name) {
+			console.log("loading " + exch_name);
+			var li = document.createElement("li");
+			var link = document.createElement("a");
+			var text = document.createTextNode(exch_name);
+			link.appendChild(text);
+			link.href = "#";
+			link.id = "li_exch_id_" + exch_name;
+			link.onclick = exch_onclick;
+			li.appendChild(link);
+			list.appendChild(li);
+		});
+
+		var btn = document.getElementById("exch_btn_id");
+		if (active_exch != undefined && active_exch != "") {
+			console.log("setting active exch " + active_exch);
+			btn.innerHTML = active_exch + ' <span class="caret"></span>';
+		} else {
+			btn.innerHTML = 'Exchange <span class="caret"></span>';
+		}
+	}
+
+	function load_markets_dd() {
+		console.log("load_markets_dd active_exch:" + active_exch);
+
+		markets_l = exchanges[active_exch]
+		var list = document.getElementById("marketsDdId");
+
+		if (markets_l == undefined) {
+			console.log("no active exchange set");
+			return;
+		}
+
+		while (list.hasChildNodes()) {
+			console.log("purge old node - " + list.firstChild.innerText);
+			list.removeChild(list.firstChild);
+		}
+
+		markets_l.forEach(function(prod_name) {
+			console.log("loading " + prod_name);
+			var li = document.createElement("li");
+			var link = document.createElement("a");
+			var text = document.createTextNode(prod_name);
+			link.appendChild(text);
+			link.href = "#";
+			link.id = "li_exch_id_" + prod_name;
+			link.onclick = market_onclick;
+			li.appendChild(link);
+			list.appendChild(li);
+		});
+
+		if (active_market != undefined && active_market != "") {
+			var btn = document.getElementById("markets_btn_id");
+
+			if (markets_l.indexOf(active_market) != -1) {
+				btn.innerHTML = active_market + ' <span class="caret"></span>';
+			} else {
+				btn.innerHTML = 'Market <span class="caret"></span>';
+			}
+		}
+	}
+
+	function load_exch_data(exch_cb) {
+		console.log("loading exchanges and markets");
+		// call api to buy/sell
+		$.ajax({
+			type : 'GET',
+			url : '/api/get_markets',
+			dataType : 'json',
+			success : function(data) {
+				console.log("get_markets success!" + data);
+				exchanges = data["all"];
+				if (data["active"]) {
+					active_exch = Object.keys(data["active"])[0];
+					active_market = Object.values(data["active"])[0];
+
+					console.log("active exhc:" + active_exch + " markt: "
+							+ active_market);
+				}
+				load_exchanges_dd();
+				load_markets_dd();
+
+				if (exch_cb) {
+					exch_cb();
+				}
+			},
+			error : function(xhr, error) {
+				console.log("get_markets failed!");
+				alert(error);
+			}
+		});
+
+	}
+	// exch/market selector - done
 
 	function loadTradingStats() {
 		console.log("load market stats")
@@ -52,6 +192,10 @@
 			},
 			dataType : 'json',
 			success : function(data) {
+				if (data.exchange_name == undefined) {
+					console.log("invalid data");
+					return;
+				}
 				console.log("exch:" + data.exchange_name)
 				$("#exch").text(data.exchange_name)
 				$("#mkt").text(data.product_id)
@@ -70,7 +214,8 @@
 				$("#success_trades").text(data.num_success_trade)
 				$("#failed_trades").text(data.num_failed_trade)
 				$("#buyn_hold_profit").text(data.cur_buy_and_hold_profit)
-				$("#cur_candle_time").text(moment(data.cur_candle_time*1000).fromNow())
+				$("#cur_candle_time").text(
+						moment(data.cur_candle_time * 1000).fromNow())
 				$("#cur_candle_vol").text(data.cur_candle_vol)
 				$("#num_candles").text(data.num_candles)
 				$("#cur_market_rate").text(data.current_market_rate)
@@ -105,225 +250,217 @@
 			}
 		});
 	}
-	var table;
-	$(document)
-			.ready(
-					function() {
 
-						console.log("load stats")
-						loadTradingStats();
-						setInterval(loadTradingStats, 120000);
+	function load_tables() {
 
-						/* 			var dataSet = [
-						 {
-						"status": "closed", "open_time":"2019-05-27T16:31:20.743832", "closed_time":"2019-05-27T16:31:20.757285", "profit": 5.555600, "stop_loss": 0.000000, "take_profit":0.000000,
-						"buy":{"id":"88786902-80d7-11e9-9954-8c8590ab863e", "product_id":"BTC-USD", "side":"buy", "order_type":"market",
-						"status_type":"done", "status_reason":"filled", "request_size":92.592594,
-						"filled_size":92.592594, "remaining_size":0.000000, "price":0.180000, "funds":16.666667,
-						"fees":0.000000, "create_time":"2019-05-27T16:31:20.743832", "update_time":"None"}
-						,"sell":{"id":"8879810c-80d7-11e9-be63-8c8590ab863e", "product_id":"BTC-USD", "side":"sell", "order_type":"None",
-						"status_type":"done", "status_reason":"filled", "request_size":92.592594,
-						"filled_size":92.592594, "remaining_size":0.000000, "price":0.240000, "funds":0.000000,
-						"fees":0.000000, "create_time":"2019-05-27T16:31:20.757285", "update_time":"None"}
-						}, {
-						"status": "closed", "open_time":"2019-05-27T16:31:20.744187", "closed_time":"2019-05-27T16:31:20.760100",
-						"profit": 0.000100, "stop_loss": 0.000000, "take_profit":0.000000,
-						"buy":{"id":"88787359-80d7-11e9-ac40-8c8590ab863e", "product_id":"BTC-USD", "side":"buy", "order_type":"market",
-						"status_type":"done", "status_reason":"filled", "request_size":92.592594,
-						"filled_size":92.592594, "remaining_size":0.000000, "price":0.180000, "funds":16.666667,
-						"fees":0.000000, "create_time":"2019-05-27T16:31:20.744187", "update_time":"None"}
-						,"sell":{"id":"8879d682-80d7-11e9-a1c7-8c8590ab863e", "product_id":"BTC-USD", "side":"sell", "order_type":"None",
-						"status_type":"done", "status_reason":"filled", "request_size":0.002451,
-						"filled_size":0.002451, "remaining_size":0.000000, "price":0.240000, "funds":0.000000,
-						"fees":0.000000, "create_time":"2019-05-27T16:31:20.760100", "update_time":"None"}
-						}]
-						 */
+		console.log("load stats")
+		loadTradingStats();
 
-						table = $('#statsTable')
-								.DataTable(
-										{
-											//data : dataSet,
-											//ajax: '/api/data',
-											"processing" : true,
-											pageLength : 25,
-											ajax : {
-												url : "/api/positions?abcd=1",
-												dataSrc : ''
-											},
+		if (table) {
+			// previously init, just reload once and don't mess with timers
+			table.ajax.reload(null, false); // user paging is not reset on reload
+			return;
+		}
+		setInterval(loadTradingStats, 120000);
 
-											columns : [
-													{
-														title : "status",
-														data : "status"
-													},
-													{
-														title : "buy price",
-														data : null,
-														render : function(data,
-																type, row) {
-															if (data.buy != undefined) {
-																return data.buy.price;
-															} else {
-																return "-";
-															}
-														}
-													},
-													{
-														title : "sell price",
-														data : null,
-														render : function(data,
-																type, row) {
-															//console.log("data:"+data)
-															if (data.sell != undefined) {
-																return data.sell.price;
-															} else {
-																return "-";
-															}
-														}
-													},
-													{
-														title : "stop loss",
-														data : "stop_loss"
-													},
-													{
-														title : "take profit",
-														data : "take_profit"
-													},
-													{
-														title : "profit",
-														data : "profit"
-													},
-													{
-														title : "type",
-														data : null,
-														render : function(data,
-																type, row) {
-															if (data.buy != undefined) {
-																return data.buy.order_type;
-															} else {
-																return "-";
-															}
-														}
-													},
-													{
-														title : "request size",
-														data : null,
-														render : function(data,
-																type, row) {
-															if (data.buy != undefined) {
-																return data.buy.request_size;
-															} else {
-																return "-";
-															}
-														}
-													},
-													{
-														title : "buy filled size",
-														data : null,
-														render : function(data,
-																type, row) {
-															if (data.buy != undefined) {
-																return data.buy.filled_size;
-															} else {
-																return "-";
-															}
-														}
-													},
-													{
-														title : "sell filled size",
-														data : null,
-														render : function(data,
-																type, row) {
-															if (data.sell != undefined) {
-																return data.sell.filled_size;
-															} else {
-																return "-";
-															}
-														}
-													},
-													{
-														title : "remaining size",
-														data : null,
-														render : function(data,
-																type, row) {
-															if (data.buy != undefined) {
-																return data.buy.remaining_size;
-															} else {
-																return "-";
-															}
-														}
-													},
-													{
-														title : "funds ",
-														data : null,
-														render : function(data,
-																type, row) {
-															if (data.buy != undefined) {
-																return data.buy.funds;
-															} else {
-																return "-";
-															}
-														}
-													},
-													{
-														title : "open time",
-														//data : "open_time",
-														data : null,
-														render : function(data,
-																type, row) {
-															if (data.open_time != undefined
-																	&& data.open_time != 'None'
-																	&& data.open_time != null) {
-																date = moment(data.open_time);
-																//console.log(date.fromNow());
-																
-																if (type == "sort") {
-																	//console.log(date.unix());																	
-																	return date.unix();
-																} else {
-																	return date.fromNow();
-																//return data.closed_time;
-																}
-															} else {
-																return "-";
-															}
-														}														
-													},
-													{
-														title : "closed time",
-														data : null,
-														render : function(data,
-																type, row) {
-															if (data.closed_time != undefined
-																	&& data.closed_time != 'None'
-																	&& data.closed_time != null) {
-																date = moment(data.closed_time);
-																//console.log(date.fromNow());
-																if (type == "sort") {																	
-																	return date.unix();
-																} else {
-																	return date.fromNow();
-																//return data.closed_time;
-																}
-															} else {
-																return "-";
-															}
-														}
-													} ],
+		/* 			var dataSet = [
+		 {
+		"status": "closed", "open_time":"2019-05-27T16:31:20.743832", "closed_time":"2019-05-27T16:31:20.757285", "profit": 5.555600, "stop_loss": 0.000000, "take_profit":0.000000,
+		"buy":{"id":"88786902-80d7-11e9-9954-8c8590ab863e", "product_id":"BTC-USD", "side":"buy", "order_type":"market",
+		"status_type":"done", "status_reason":"filled", "request_size":92.592594,
+		"filled_size":92.592594, "remaining_size":0.000000, "price":0.180000, "funds":16.666667,
+		"fees":0.000000, "create_time":"2019-05-27T16:31:20.743832", "update_time":"None"}
+		,"sell":{"id":"8879810c-80d7-11e9-be63-8c8590ab863e", "product_id":"BTC-USD", "side":"sell", "order_type":"None",
+		"status_type":"done", "status_reason":"filled", "request_size":92.592594,
+		"filled_size":92.592594, "remaining_size":0.000000, "price":0.240000, "funds":0.000000,
+		"fees":0.000000, "create_time":"2019-05-27T16:31:20.757285", "update_time":"None"}
+		}, {
+		"status": "closed", "open_time":"2019-05-27T16:31:20.744187", "closed_time":"2019-05-27T16:31:20.760100",
+		"profit": 0.000100, "stop_loss": 0.000000, "take_profit":0.000000,
+		"buy":{"id":"88787359-80d7-11e9-ac40-8c8590ab863e", "product_id":"BTC-USD", "side":"buy", "order_type":"market",
+		"status_type":"done", "status_reason":"filled", "request_size":92.592594,
+		"filled_size":92.592594, "remaining_size":0.000000, "price":0.180000, "funds":16.666667,
+		"fees":0.000000, "create_time":"2019-05-27T16:31:20.744187", "update_time":"None"}
+		,"sell":{"id":"8879d682-80d7-11e9-a1c7-8c8590ab863e", "product_id":"BTC-USD", "side":"sell", "order_type":"None",
+		"status_type":"done", "status_reason":"filled", "request_size":0.002451,
+		"filled_size":0.002451, "remaining_size":0.000000, "price":0.240000, "funds":0.000000,
+		"fees":0.000000, "create_time":"2019-05-27T16:31:20.760100", "update_time":"None"}
+		}]
+		 */
 
-											"order" : [ [ 0, "desc" ], [ 12, "desc" ] ],
-											responsive: true
-										});
+		table = $('#statsTable').DataTable(
+				{
+					//data : dataSet,
+					//ajax: '/api/data',
+					"processing" : true,
+					pageLength : 25,
+					ajax : {
+						url : "/api/positions?abcd=1",
+						dataSrc : ''
+					},
 
-						setInterval(function() {
-							table.ajax.reload(null, false); // user paging is not reset on reload
-						}, 120000);
-					});
+					columns : [
+							{
+								title : "status",
+								data : "status"
+							},
+							{
+								title : "buy price",
+								data : null,
+								render : function(data, type, row) {
+									if (data.buy != undefined) {
+										return data.buy.price;
+									} else {
+										return "-";
+									}
+								}
+							},
+							{
+								title : "sell price",
+								data : null,
+								render : function(data, type, row) {
+									//console.log("data:"+data)
+									if (data.sell != undefined) {
+										return data.sell.price;
+									} else {
+										return "-";
+									}
+								}
+							},
+							{
+								title : "stop loss",
+								data : "stop_loss"
+							},
+							{
+								title : "take profit",
+								data : "take_profit"
+							},
+							{
+								title : "profit",
+								data : "profit"
+							},
+							{
+								title : "type",
+								data : null,
+								render : function(data, type, row) {
+									if (data.buy != undefined) {
+										return data.buy.order_type;
+									} else {
+										return "-";
+									}
+								}
+							},
+							{
+								title : "request size",
+								data : null,
+								render : function(data, type, row) {
+									if (data.buy != undefined) {
+										return data.buy.request_size;
+									} else {
+										return "-";
+									}
+								}
+							},
+							{
+								title : "buy filled size",
+								data : null,
+								render : function(data, type, row) {
+									if (data.buy != undefined) {
+										return data.buy.filled_size;
+									} else {
+										return "-";
+									}
+								}
+							},
+							{
+								title : "sell filled size",
+								data : null,
+								render : function(data, type, row) {
+									if (data.sell != undefined) {
+										return data.sell.filled_size;
+									} else {
+										return "-";
+									}
+								}
+							},
+							{
+								title : "remaining size",
+								data : null,
+								render : function(data, type, row) {
+									if (data.buy != undefined) {
+										return data.buy.remaining_size;
+									} else {
+										return "-";
+									}
+								}
+							},
+							{
+								title : "funds ",
+								data : null,
+								render : function(data, type, row) {
+									if (data.buy != undefined) {
+										return data.buy.funds;
+									} else {
+										return "-";
+									}
+								}
+							},
+							{
+								title : "open time",
+								//data : "open_time",
+								data : null,
+								render : function(data, type, row) {
+									if (data.open_time != undefined
+											&& data.open_time != 'None'
+											&& data.open_time != null) {
+										date = moment(data.open_time);
+										//console.log(date.fromNow());
+
+										if (type == "sort") {
+											//console.log(date.unix());																	
+											return date.unix();
+										} else {
+											return date.fromNow();
+											//return data.closed_time;
+										}
+									} else {
+										return "-";
+									}
+								}
+							},
+							{
+								title : "closed time",
+								data : null,
+								render : function(data, type, row) {
+									if (data.closed_time != undefined
+											&& data.closed_time != 'None'
+											&& data.closed_time != null) {
+										date = moment(data.closed_time);
+										//console.log(date.fromNow());
+										if (type == "sort") {
+											return date.unix();
+										} else {
+											return date.fromNow();
+											//return data.closed_time;
+										}
+									} else {
+										return "-";
+									}
+								}
+							} ],
+
+					"order" : [ [ 0, "desc" ], [ 12, "desc" ] ],
+					responsive : true
+				});
+
+		setInterval(function() {
+			table.ajax.reload(null, false); // user paging is not reset on reload
+		}, 120000);
+	}
 </script>
 
 
 <body>
-
 	<div class="row align-items-start">
 		<div class="col-12">
 			<div class="navbar navbar-inverse navbar-static-top">
@@ -331,6 +468,31 @@
 					<header class="clearfix">
 						<h3 class="brand">
 							<a href="/">OldMonk</a>
+							<div class="btn-group dropdown"
+								style="float: right; margin-left: 2rem;">
+								<div class="btn-group btn-group-xs " role="group">
+									<button type="button" style="position: initial;"
+										class="btn btn-default dropdown-toggle btn-primary"
+										data-toggle="dropdown" aria-haspopup="true"
+										aria-expanded="false" id="exch_btn_id">
+										Exchange <span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu .dropdown-menu-right"
+										id="exchangesDdId">
+									</ul>
+								</div>
+								<div class="btn-group btn-group-xs" role="group">
+									<button type="button" style="position: initial;"
+										class="btn btn-default dropdown-toggle btn-primary"
+										data-toggle="dropdown" aria-haspopup="true"
+										aria-expanded="false" id="markets_btn_id"
+										onclick="load_markets_dd">
+										Market <span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu .dropdown-menu-right" id="marketsDdId">
+									</ul>
+								</div>
+							</div>
 						</h3>
 						<ul class="nav masthead-nav">
 							<li class="active"><a href="#"> Home</a></li>
@@ -468,7 +630,7 @@
 							<td
 								style="font-size: 1vw; width: 85%; height: auto; border-collapse: collapse;"
 								colspan="1">
-								
+
 								<div class="table-responsive">
 									<table id="statsTable" class="display compact"
 										style="font-size: 1vw; vertical-align: top; height: 100%; width: auto">
@@ -493,7 +655,7 @@
 										<tbody></tbody>
 									</table>
 								</div>
-																
+
 							</td>
 							<td style="font-size: 1vw; width: 15%; padding-right: 0em;">
 								<div class="table-responsive">

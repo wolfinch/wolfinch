@@ -151,15 +151,12 @@
 		}
 	}
 
-	function load_exch_data() {
+	function load_exch_data(exch_cb) {
 		console.log("loading exchanges and markets");
 		// call api to buy/sell
 		$.ajax({
 			type : 'GET',
 			url : '/api/get_markets',
-			/* 			data : {
-			 req_code : req_code
-			 }, */
 			dataType : 'json',
 			success : function(data) {
 				console.log("get_markets success!" + data);
@@ -173,6 +170,10 @@
 				}
 				load_exchanges_dd();
 				load_markets_dd();
+
+				if (exch_cb) {					
+					exch_cb();
+				}
 			},
 			error : function(xhr, error) {
 				console.log("get_markets failed!");
@@ -211,6 +212,12 @@
 
 		var txt = cmd + " " + req_number + " with code '" + req_code + "'?";
 
+		if (active_exch == "" || active_market == "") {
+			console.log("invalid exchange or market!");
+			alert("invalid exchange or market!");
+			return false;
+		}
+
 		if (!confirm(txt)) {
 			console.log("cancel");
 			return true;
@@ -218,12 +225,17 @@
 
 		// call api to buy/sell
 		console.log("call api to " + cmd);
+		var data = {
+			"cmd" : cmd,
+			"req_number" : req_number,
+			"req_code" : req_code,
+			"exch_name" : active_exch,
+			"product" : active_market,
+		};
 		$.ajax({
-			type : 'GET',
-			url : '/api/manual_order?cmd=' + cmd + "&req_number=" + req_number,
-			data : {
-				req_code : req_code
-			},
+			type : 'POST',
+			url : '/api/manual_order',
+			data : data,
 			dataType : 'json',
 			success : function(data) {
 				console.log("manual_order success!");
@@ -249,8 +261,9 @@
 								style="float: right; margin-left: 2rem;">
 								<div class="btn-group btn-group-xs " role="group">
 									<button type="button" style="position: initial;"
-										class="btn btn-default dropdown-toggle btn-primary" data-toggle="dropdown"
-										aria-haspopup="true" aria-expanded="false" id="exch_btn_id">
+										class="btn btn-default dropdown-toggle btn-primary"
+										data-toggle="dropdown" aria-haspopup="true"
+										aria-expanded="false" id="exch_btn_id">
 										Exchange <span class="caret"></span>
 									</button>
 									<ul class="dropdown-menu .dropdown-menu-right"
@@ -259,8 +272,9 @@
 								</div>
 								<div class="btn-group btn-group-xs" role="group">
 									<button type="button" style="position: initial;"
-										class="btn btn-default dropdown-toggle btn-primary" data-toggle="dropdown"
-										aria-haspopup="true" aria-expanded="false" id="markets_btn_id"
+										class="btn btn-default dropdown-toggle btn-primary"
+										data-toggle="dropdown" aria-haspopup="true"
+										aria-expanded="false" id="markets_btn_id"
 										onclick="load_markets_dd">
 										Market <span class="caret"></span>
 									</button>
