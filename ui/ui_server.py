@@ -37,8 +37,8 @@ UI_TRADE_SECRET = "3254"
 
 log = getLogger ('UI')
 log.setLevel(log.INFO)
-EXCH_NAME = "CBPRO"
-PRODUCT_ID = "BTC-USD"
+# EXCH_NAME = "CBPRO"
+# PRODUCT_ID = "BTC-USD"
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
 # POSITION_STATS_FILE = "stats_positions_%s_%s.json"%("CBPRO", "BTC-USD")
@@ -147,7 +147,7 @@ def server_main (port=8080, mp_pipe=None):
     def market_stats_api():
         try:
             if len(g_active_market.keys()) <= 0:
-                log.erroor ("active market not set")
+                log.error ("active market not set")
                 return "{}"
             m_stats_file = MARKET_STATS % (g_active_market["EXCH_NAME"], g_active_market["PRODUCT_ID"])
             with open (os.path.join(static_file_dir, m_stats_file), 'r') as fp:
@@ -161,11 +161,17 @@ def server_main (port=8080, mp_pipe=None):
             
     @app.route('/api/candles')
     def candle_list_api():
+        if len(g_active_market.keys()) <= 0:
+            log.error ("active market not set")
+            return "[]"        
         period = request.args.get('period', default=1, type=int)
         return db_events.get_all_candles(period)
         
     @app.route('/api/positions')
     def position_list_api():
+        if len(g_active_market.keys()) <= 0:
+            log.error ("active market not set")
+            return "[]"        
         return db_events.get_all_positions()
             
     @app.route('/api/manual_order', methods=["POST"])

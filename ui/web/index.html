@@ -184,6 +184,7 @@
 
 	function loadTradingStats() {
 		console.log("load market stats")
+		
 		$.ajax({
 			type : 'GET',
 			url : '/api/market_stats',
@@ -254,6 +255,12 @@
 	function load_tables() {
 
 		console.log("load stats")
+		
+		if (active_exch == "" || active_market == "") {
+			console.log("markets not set");
+			return;
+		}
+		
 		loadTradingStats();
 
 		if (table) {
