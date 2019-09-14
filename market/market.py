@@ -891,8 +891,12 @@ class Market:
                         
     def load_market_from_stats (self):
         mstats = None
-        with open(MARKET_STATS_FILE%(self.exchange_name, self.product_id), "r") as fd:
-            mstats = json.load(fd)
+        try:
+            with open(MARKET_STATS_FILE%(self.exchange_name, self.product_id), "r") as fd:
+                mstats = json.load(fd)
+        except EnvironmentError: # parent of IOError, OSError *and* WindowsError where available
+            log.error ("unable to open file to restore %s:%s"%(self.exchange_name, self.product_id))
+            return            
         
         log.info ("loading market stats")
         #restore the stats selectively.
