@@ -275,7 +275,7 @@ class Market:
 #                     self.fund.initial_value, self.fund.fund_liquidity_percent, self.start_market_rate))
         return """
 {
-"exchange_name": "%s", "product_id": "%s","name": "%s", "current_market_rate": %d,
+"exchange_name": "%s", "product_id": "%s","name": "%s", "current_market_rate": %f,
 "cur_candle_time": %d, "cur_candle_vol": %f, "num_candles": %d,
 "num_buy_req": %s, "num_buy_req_reject": %s,
 "num_sell_req": %s, "num_sell_req_reject": %s,
@@ -288,7 +288,7 @@ class Market:
 "asset":%s,
 "order_book":%s
 }"""%(
-                self.exchange_name, self.product_id, self.name, self.current_market_rate,
+                self.exchange_name, self.product_id, self.name, round(self.current_market_rate, 4),
                 self.cur_candle_time, self.cur_candle_vol, self.num_candles, 
                 self.num_buy_req, self.num_buy_req_reject,
                 self.num_sell_req, self.num_sell_req_reject,

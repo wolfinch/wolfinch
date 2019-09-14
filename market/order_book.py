@@ -256,7 +256,7 @@ class OrderBook():
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))              
             
     def add_stop_loss_position (self, position, market_rate, sl_rate):
-        stop_price = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 2))
+        stop_price = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 4))
         
         position.set_stop_loss(stop_price)
         
@@ -279,7 +279,7 @@ class OrderBook():
         return self.sl_dict.pop(stop_price, None)        
            
     def smart_stop_loss_update_positions(self, market_rate, sl_rate):
-        new_sl = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 2))
+        new_sl = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 4))
         
         key_list = list (self.sl_dict.irange(maximum=new_sl, inclusive=(False, False)))
         
@@ -367,7 +367,7 @@ class OrderBook():
             
             
     def add_take_profit_position(self, position, market_rate, tp_rate):
-        new_tp = Decimal(round(market_rate*(1 + tp_rate*Decimal(.01)), 2))
+        new_tp = Decimal(round(market_rate*(1 + tp_rate*Decimal(.01)), 4))
         
         position.set_take_profit(new_tp)
         pos_list = self.tp_dict.get(new_tp, None)
