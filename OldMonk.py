@@ -45,14 +45,15 @@ tradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'sto
                  "take_profit_enabled": False, 'take_profit_rate': 0} 
 
 # global Variables
-MAIN_TICK_DELAY    = 0.500 #500 milli
+MAIN_TICK_DELAY = 0.500  # 500 milli
+
 
 def OldMonk_init(decisionConfig, tradingConfig):
     
-    #seed random
+    # seed random
     random.seed()
         
-    #1. Retrieve states back from Db
+    # 1. Retrieve states back from Db
 #     db.init_order_db(Order)
 
     # setup ui if required
@@ -63,17 +64,18 @@ def OldMonk_init(decisionConfig, tradingConfig):
             print ("unable to setup UI!!")
             sys.exit(1)
     
-    #2. Init Exchanges
+    # 2. Init Exchanges
     exchanges.init_exchanges(OldMonkConfig)
     
-    #3. Init markets
+    # 3. Init markets
     market_init (exchanges.exchange_list, decisionConfig, tradingConfig)
     
-    #4. Setup markets
+    # 4. Setup markets
     market_setup(restart=gRestart)
     
-    #5. start stats thread
+    # 5. start stats thread
     stats.start()
+
     
 def OldMonk_end():
     log.info ("Finalizing OldMonk")
@@ -115,15 +117,16 @@ def oldmonk_main ():
         sleep_time = (MAIN_TICK_DELAY - (time.time() - cur_time))
 #         if sleep_time < 0 :
 #             log.critical ("******* TIMING SKEWED (%f) ******"%(sleep_time))
-        sleep_time  = 0 if (sleep_time < 0) else sleep_time     
-    #end While(true)
+        sleep_time = 0 if (sleep_time < 0) else sleep_time     
+    # end While(true)
+
     
 def process_market (market):
 #     """ 
 #     processing routine for one exchange
 #     """
-    log.debug ("processing Market: exchange (%s) product: %s"%( market.exchange_name, market.name))
-    #update various market states on tick
+    log.debug ("processing Market: exchange (%s) product: %s" % (market.exchange_name, market.name))
+    # update various market states on tick
     market.update_market_states()
     
     # Trade only on primary markets
@@ -134,23 +137,26 @@ def process_market (market):
             sims.market_simulator_run (market)
         stats.stats_update_order_bulk(market)            
     
-    #check pending trades periodically and takes actions (this logic is rate-limited)
+    # check pending trades periodically and takes actions (this logic is rate-limited)
     market.watch_pending_orders()
     
     # commit market states to the db periodically (this logic is rate-limited)
     market.lazy_commit_market_states()
+
     
 def process_ui_trade_notif (msg):
     exch = msg.get("exchange")
     product = msg.get("product")
     side = msg.get("side")
     signal = msg.get("signal")
-    log.info ("Manual Trade Req: exch: %s prod: %s side: %s signal: %s"%(exch, product, side, str(signal)))
+    log.info ("Manual Trade Req: exch: %s prod: %s side: %s signal: %s" % (exch, product, side, str(signal)))
     m = get_market_by_product (exch, product)
     if not m:
-        log.error ("Unknown exchange/product exch: %s prod: %s"%(exch, product))
+        log.error ("Unknown exchange/product exch: %s prod: %s" % (exch, product))
     else:
         m.consume_trade_signal(signal)    
+
+
 def process_ui_get_markets_rr (msg, ui_conn_pipe):
     log.debug ("enter")
     m_dict = {}
@@ -164,6 +170,7 @@ def process_ui_get_markets_rr (msg, ui_conn_pipe):
     msg ["type"] = "GET_MARKETS_RESP"
     msg ["data"] = m_dict
     ui_conn_pipe.send(msg)
+
     
 def process_ui_msgs(ui_conn_pipe):
     try:
@@ -171,8 +178,8 @@ def process_ui_msgs(ui_conn_pipe):
             msg = ui_conn_pipe.recv()
             err = msg.get("error", None)
             if  err != None:
-                log.error ("error in the pipe, ui finished: msg:%s"%(err))
-                raise Exception("UI error - %s"%(err))
+                log.error ("error in the pipe, ui finished: msg:%s" % (err))
+                raise Exception("UI error - %s" % (err))
             else:
                 msg_type = msg.get("type")
                 if msg_type == "TRADE":
@@ -182,13 +189,15 @@ def process_ui_msgs(ui_conn_pipe):
                 else:
                     log.error ("Unknown ui msg type: %s", msg_type)
     except Exception as e:
-        log.critical ("exception %s on ui"%(e))
+        log.critical ("exception %s on ui" % (e))
         raise e
+
     
 def clean_states ():
     log.info ("Clearing Db")
     db.clear_db()
     stats.clear_stats()
+
     
 def load_config (cfg_file):
     global OldMonkConfig
@@ -197,9 +206,9 @@ def load_config (cfg_file):
     if not conf:
         return False
     
-    log.debug ("cfg: %s"%OldMonkConfig)
+    log.debug ("cfg: %s" % OldMonkConfig)
     # sanitize the config
-    for k,v in OldMonkConfig.iteritems():
+    for k, v in OldMonkConfig.iteritems():
         if k == 'exchanges':
             if v == None:
                 print ("Atleast one exchange need to be configured")
@@ -207,7 +216,7 @@ def load_config (cfg_file):
             prim = False
             for exch in v:
                 for ex_k, ex_v in exch.iteritems():
-                    log.debug ("processing exch: %s"%ex_k)
+                    log.debug ("processing exch: %s" % ex_k)
                     role = ex_v.get('role')
                     if role == 'primary':
                         if prim == True:
@@ -304,6 +313,7 @@ def load_config (cfg_file):
 #     exit(1)
     log.debug ("config loaded successfully!")
     return True
+
         
 def arg_parse ():
     global gRestart
@@ -324,7 +334,7 @@ def arg_parse ():
         exit (0)
                  
     if (args.config):
-        log.debug ("config file: %s"%args.config)
+        log.debug ("config file: %s" % args.config)
         if False == load_config (args.config):
             log.critical ("Config parse error!!")
             parser.print_help()
@@ -363,11 +373,10 @@ def arg_parse ():
     if (args.backtesting):              
         log.debug ("backtesting enabled")       
         sims.backtesting_on = True
-        #sims.simulator_on = True
+        # sims.simulator_on = True
     else:
         log.debug ("backtesting disabled")       
         sims.backtesting_on = False        
-
     
 #     log.debug("sims.backtesting_on: %d"%(sims.backtesting_on))
 #     exit(1)
@@ -378,7 +387,7 @@ if __name__ == '__main__':
     
     arg_parse()
     
-    getcontext().prec = 8 #decimal precision
+    getcontext().prec = 8  # decimal precision
     
     print("Starting OldMonk..")
     
@@ -403,12 +412,11 @@ if __name__ == '__main__':
         OldMonk_end()
         sys.exit()
     except Exception as e:
-        log.critical ("Unexpected error: %s exception: %s"%(sys.exc_info(), e.message))        
-        print ("Unexpected error: %s exception: %s"%(sys.exc_info(), e.message))
+        log.critical ("Unexpected error: %s exception: %s" % (sys.exc_info(), e.message))        
+        print ("Unexpected error: %s exception: %s" % (sys.exc_info(), e.message))
         OldMonk_end()
         raise
-    #'''Not supposed to reach here'''
+    # '''Not supposed to reach here'''
     print("\nOldMonk end")
-    
 
-#EOF
+# EOF
