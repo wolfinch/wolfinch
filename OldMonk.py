@@ -41,7 +41,7 @@ OldMonkConfig = None
 gRestart = False
 
 decisionConfig = {}
-tradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
+gTradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
                  "take_profit_enabled": False, 'take_profit_rate': 0} 
 
 # global Variables
@@ -230,17 +230,17 @@ def load_config (cfg_file):
         elif k == 'stop_loss':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'enabled':
-                    tradingConfig ['stop_loss_enabled'] = ex_v
+                    gTradingConfig ['stop_loss_enabled'] = ex_v
                 elif ex_k == 'smart':
-                    tradingConfig ['stop_loss_smart_rate'] = ex_v
+                    gTradingConfig ['stop_loss_smart_rate'] = ex_v
                 elif ex_k == 'rate':
-                    tradingConfig ['stop_loss_rate'] = ex_v                    
+                    gTradingConfig ['stop_loss_rate'] = ex_v                    
         elif k == 'take_profit':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'enabled':
-                    tradingConfig ['take_profit_enabled'] = ex_v
+                    gTradingConfig ['take_profit_enabled'] = ex_v
                 elif ex_k == 'rate':
-                    tradingConfig ['take_profit_rate'] = ex_v                                    
+                    gTradingConfig ['take_profit_rate'] = ex_v                                    
         elif k == 'decision':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'model':
@@ -397,7 +397,7 @@ if __name__ == '__main__':
             sims.ga_sim_main (OldMonkConfig, sims.gaDecisionConfig, sims.gaTradingConfig)
             print ("finished running genetic backtesting optimizer")
             sys.exit()
-        OldMonk_init(decisionConfig, tradingConfig)
+        OldMonk_init(decisionConfig, gTradingConfig)
         if sims.import_only:
             log.info ("import only")
             raise SystemExit
