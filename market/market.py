@@ -347,7 +347,7 @@ class Market:
                                    Price=round(Decimal(0), 8),
                                    Stop=0, id=uuid.UUID(pos.id)))            
             
-            self._execute_market_trade(trade_pos_l)
+            self._execute_market_trade(trade_req_l)
                 
     def _handle_pending_trade_reqs (self):
         #TODO: FIXME:jork: Might need to extend
