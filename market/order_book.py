@@ -175,7 +175,7 @@ class OrderBook():
                 self.open_positions.remove(pos)
             if (self.close_pending_positions.get(uuid.UUID(pos.id))):
                 log.critical("Position already close pending \npos:%s"%pos)
-                raise ("Duplicate close pending position")            
+                raise Exception("Duplicate close pending position")            
             
             if self.market.tradeConfig["take_profit_enabled"]:
                 self.pop_take_profit_position(pos)
@@ -334,7 +334,7 @@ class OrderBook():
                 self.open_positions.remove(pos)                
                 if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
                     log.critical("Position already close pending \npos:%s"%pos)
-                    raise ("Duplicate close pending position")            
+                    raise Exception("Duplicate close pending position")            
                 self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
                 # remove pos from take profit points
                 self.pop_take_profit_position(pos)
@@ -357,7 +357,7 @@ class OrderBook():
                 self.open_positions.remove(pos)                
                 if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
                     log.critical("Position already close pending \npos:%s"%pos)
-                    raise ("Duplicate close pending position")            
+                    raise Exception("Duplicate close pending position")            
                 self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
                 # remove pos from take profit points
                 self.pop_stop_loss_position(pos)                
