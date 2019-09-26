@@ -34,7 +34,7 @@ import stats
 import ui
 
 log = getLogger ('OldMonk')
-log.setLevel(log.INFO)
+log.setLevel(log.DEBUG)
 
 # Global Config 
 OldMonkConfig = None
@@ -198,7 +198,28 @@ def clean_states ():
     db.clear_db()
     stats.clear_stats()
 
-    
+# def load_product_config (cfg):
+#         elif k == 'stop_loss':
+#             for ex_k, ex_v in v.iteritems():
+#                 if ex_k == 'enabled':
+#                     gTradingConfig ['stop_loss_enabled'] = ex_v
+#                 elif ex_k == 'smart':
+#                     gTradingConfig ['stop_loss_smart_rate'] = ex_v
+#                 elif ex_k == 'rate':
+#                     gTradingConfig ['stop_loss_rate'] = ex_v                    
+#         elif k == 'take_profit':
+#             for ex_k, ex_v in v.iteritems():
+#                 if ex_k == 'enabled':
+#                     gTradingConfig ['take_profit_enabled'] = ex_v
+#                 elif ex_k == 'rate':
+#                     gTradingConfig ['take_profit_rate'] = ex_v                                    
+#         elif k == 'decision':
+#             for ex_k, ex_v in v.iteritems():
+#                 if ex_k == 'model':
+#                     decisionConfig ['model_type'] = ex_v
+#                 elif ex_k == 'config':
+#                     decisionConfig ['model_config'] = ex_v     
+#     return parsed_cfg
 def load_config (cfg_file):
     global OldMonkConfig
     global decisionConfig
@@ -216,7 +237,7 @@ def load_config (cfg_file):
             prim = False
             for exch in v:
                 for ex_k, ex_v in exch.iteritems():
-                    log.debug ("processing exch: %s" % ex_k)
+                    log.debug ("processing exch: %s val:%s" % (ex_k, ex_v))
                     role = ex_v.get('role')
                     if role == 'primary':
                         if prim == True:
@@ -341,7 +362,7 @@ def arg_parse ():
             exit(1)
         else:
             log.debug ("config loaded successfully!")
-#             exit (0)
+            exit (0)
     else:
         parser.print_help()
         exit(1)
