@@ -40,7 +40,7 @@ log.setLevel(log.DEBUG)
 OldMonkConfig = None
 gRestart = False
 
-decisionConfig = {}
+gDecisionConfig = {}
 gTradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
                  "take_profit_enabled": False, 'take_profit_rate': 0} 
 
@@ -198,31 +198,34 @@ def clean_states ():
     db.clear_db()
     stats.clear_stats()
 
-# def load_product_config (cfg):
-#         elif k == 'stop_loss':
-#             for ex_k, ex_v in v.iteritems():
-#                 if ex_k == 'enabled':
-#                     gTradingConfig ['stop_loss_enabled'] = ex_v
-#                 elif ex_k == 'smart':
-#                     gTradingConfig ['stop_loss_smart_rate'] = ex_v
-#                 elif ex_k == 'rate':
-#                     gTradingConfig ['stop_loss_rate'] = ex_v                    
-#         elif k == 'take_profit':
-#             for ex_k, ex_v in v.iteritems():
-#                 if ex_k == 'enabled':
-#                     gTradingConfig ['take_profit_enabled'] = ex_v
-#                 elif ex_k == 'rate':
-#                     gTradingConfig ['take_profit_rate'] = ex_v                                    
-#         elif k == 'decision':
-#             for ex_k, ex_v in v.iteritems():
-#                 if ex_k == 'model':
-#                     decisionConfig ['model_type'] = ex_v
-#                 elif ex_k == 'config':
-#                     decisionConfig ['model_config'] = ex_v     
-#     return parsed_cfg
+def load_product_config (cfg):
+    parsed_tcfg = {}
+    parsed_dcfg = {}    
+    for k, v in cfg.iteritems():    
+        if k == 'stop_loss':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'enabled':
+                    parsed_tcfg ['stop_loss_enabled'] = ex_v
+                elif ex_k == 'smart':
+                    parsed_tcfg ['stop_loss_smart_rate'] = ex_v
+                elif ex_k == 'rate':
+                    parsed_tcfg ['stop_loss_rate'] = ex_v                    
+        elif k == 'take_profit':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'enabled':
+                    parsed_tcfg ['take_profit_enabled'] = ex_v
+                elif ex_k == 'rate':
+                    parsed_tcfg ['take_profit_rate'] = ex_v                                    
+        elif k == 'decision':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'model':
+                    parsed_dcfg ['model_type'] = ex_v
+                elif ex_k == 'config':
+                    parsed_dcfg ['model_config'] = ex_v     
+    return parsed_tcfg, parsed_dcfg
 def load_config (cfg_file):
     global OldMonkConfig
-    global decisionConfig
+    global gDecisionConfig, gTradingConfig
     OldMonkConfig = readConf(cfg_file)
     if not conf:
         return False
@@ -238,6 +241,13 @@ def load_config (cfg_file):
             for exch in v:
                 for ex_k, ex_v in exch.iteritems():
                     log.debug ("processing exch: %s val:%s" % (ex_k, ex_v))
+                    products = ex_v.get('products')
+                    if products != None and len(products):
+                        log.debug ("processing exch products")
+                        for prod in products:
+                            for prod_name, prod_val in prod.iteritems():
+                                log.debug ("processing product %s:"%(prod_name))
+                                tcfg, dcfg = load_product_config(prod_val)
                     role = ex_v.get('role')
                     if role == 'primary':
                         if prim == True:
@@ -265,9 +275,9 @@ def load_config (cfg_file):
         elif k == 'decision':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'model':
-                    decisionConfig ['model_type'] = ex_v
+                    gDecisionConfig ['model_type'] = ex_v
                 elif ex_k == 'config':
-                    decisionConfig ['model_config'] = ex_v     
+                    gDecisionConfig ['model_config'] = ex_v     
         elif k == 'simulator':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'enabled':
@@ -418,7 +428,7 @@ if __name__ == '__main__':
             sims.ga_sim_main (OldMonkConfig, sims.gaDecisionConfig, sims.gaTradingConfig)
             print ("finished running genetic backtesting optimizer")
             sys.exit()
-        OldMonk_init(decisionConfig, gTradingConfig)
+        OldMonk_init(gDecisionConfig, gTradingConfig)
         if sims.import_only:
             log.info ("import only")
             raise SystemExit
