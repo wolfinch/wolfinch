@@ -229,10 +229,6 @@ class Market:
         self.num_stop_loss_hit = 0
         self.num_success_trade = 0
         self.num_failed_trade = 0
-        self.tradeConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
-                 "take_profit_enabled": False, 'take_profit_rate': 0}
-        self.decisionConfig = None  
-        
         
         #config
         self.product_id = None if product == None else product['id']
@@ -245,6 +241,15 @@ class Market:
         self.fund = Fund ()
         self.asset = Asset ()
         self.order_book = OrderBook(market=self)
+        
+        log.critical ("market: >>>>>>>>>>>>>>>>>>: %s"%(exchange.get_product_config))
+        tcfg, dcfg = exchange.get_product_config (self.exchange_name, self.product_id)
+        if tcfg == None or dcfg == None:
+            log.critical ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
+            raise Exception ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
+        
+        self.tradeConfig = tcfg
+        self.decisionConfig = dcfg  
         decision.decision_config (self.decisionConfig['model_type'], self.decisionConfig['model_config'])      
         self.decision = None  #will setup later
         # Market Strategy related Data
@@ -1164,7 +1169,7 @@ def get_market_by_product (exchange_name, product_id):
         if market.product_id == product_id and market.exchange_name == exchange_name:
             return market
         
-def market_init (exchange_list, decisionConfig, tradingConfig):
+def market_init (exchange_list, get_product_config_hook):
     '''
     Initialize per exchange, per product data.
     This is where we want to keep all the run stats
@@ -1172,6 +1177,8 @@ def market_init (exchange_list, decisionConfig, tradingConfig):
     global OldMonk_market_list
     
     for exchange in exchange_list:
+        exchange.get_product_config = get_product_config_hook
+        log.critical ("adf: >>>>>>>>>>>>>>>>>>: %s"%(exchange.get_product_config))
         products = exchange.get_products()
         if products:
             for product in products:
@@ -1179,8 +1186,13 @@ def market_init (exchange_list, decisionConfig, tradingConfig):
                 if (market == None):
                     log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
                 else:
-                    market.tradeConfig = tradingConfig
-                    market.decisionConfig = decisionConfig
+#                     tradingConfig, decisionConfig = get_product_config_hook(exchange.name, product['id'])
+#                     if tradingConfig == None or decisionConfig == None:
+#                         log.critical ("Invalid product config")
+#                         raise Exception ("Invalid product config")
+#                     market.tradeConfig = tradingConfig
+#                     market.decisionConfig = decisionConfig
+                    log.info ("market init success for exchange (%s) product: %s"%(exchange.name, product['id']))
                     OldMonk_market_list.append(market)
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))

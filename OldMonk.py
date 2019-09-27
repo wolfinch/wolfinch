@@ -48,7 +48,7 @@ gTradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'st
 MAIN_TICK_DELAY = 0.500  # 500 milli
 
 
-def OldMonk_init(decisionConfig, tradingConfig):
+def OldMonk_init():
     
     # seed random
     random.seed()
@@ -68,7 +68,7 @@ def OldMonk_init(decisionConfig, tradingConfig):
     exchanges.init_exchanges(OldMonkConfig)
     
     # 3. Init markets
-    market_init (exchanges.exchange_list, decisionConfig, tradingConfig)
+    market_init (exchanges.exchange_list, get_product_config)
     
     # 4. Setup markets
     market_setup(restart=gRestart)
@@ -198,7 +198,8 @@ def clean_states ():
     db.clear_db()
     stats.clear_stats()
 
-def load_product_config (cfg):
+def parse_product_config (cfg):
+    global gDecisionConfig, gTradingConfig    
     parsed_tcfg = {}
     parsed_dcfg = {}    
     for k, v in cfg.iteritems():    
@@ -221,14 +222,57 @@ def load_product_config (cfg):
                 if ex_k == 'model':
                     parsed_dcfg ['model_type'] = ex_v
                 elif ex_k == 'config':
-                    parsed_dcfg ['model_config'] = ex_v     
+                    parsed_dcfg ['model_config'] = ex_v
+                    
+    if not parsed_tcfg.get("take_profit") :
+        if gTradingConfig.get("take_profit"):
+            parsed_tcfg["take_profit"] = gTradingConfig.get("take_profit")
+            
+    if not parsed_tcfg.get("stop_loss") :
+        if gTradingConfig.get("stop_loss"):
+            parsed_tcfg["stop_loss"] = gTradingConfig.get("stop_loss")
+                        
+    if not parsed_dcfg.get("decision") :
+        if gDecisionConfig.get("decision"):
+            parsed_dcfg["decision"] = gDecisionConfig.get("decision")
+                                    
     return parsed_tcfg, parsed_dcfg
+
+def get_product_config (exch_name, prod_name):
+    global OldMonkConfig
+    
+    log.debug ("get_config for exch: %s prod: %s"%(exch_name, prod_name))
+        
+    # sanitize the config
+    for k, v in OldMonkConfig.iteritems():
+        if k == 'exchanges':
+            if v == None:
+                log.critical ("Atleast one exchange need to be configured")
+                raise Exception("exchanges not configured")
+            for exch in v:
+                for ex_k, ex_v in exch.iteritems():
+                    if ex_k.lower() != exch_name.lower():
+                        continue
+                    log.debug ("processing exch: %s val:%s" % (ex_k, ex_v))
+                    products = ex_v.get('products')
+                    if products != None and len(products):
+                        log.debug ("processing exch products")
+                        for prod in products:
+                            for p_name, p_cfg in prod.iteritems():
+                                if p_name.lower() != prod_name.lower():
+                                    continue
+                                log.debug ("processing product %s:"%(p_name))
+                                tcfg, dcfg = parse_product_config(p_cfg)
+                                log.debug ("tcfg: %s dcfg: %s"%(tcfg, dcfg))
+                                return tcfg, dcfg
+                            
+    log.error ("unable to get config")
+    return None, None
+    
 def load_config (cfg_file):
     global OldMonkConfig
     global gDecisionConfig, gTradingConfig
     OldMonkConfig = readConf(cfg_file)
-    if not conf:
-        return False
     
     log.debug ("cfg: %s" % OldMonkConfig)
     # sanitize the config
@@ -245,9 +289,9 @@ def load_config (cfg_file):
                     if products != None and len(products):
                         log.debug ("processing exch products")
                         for prod in products:
-                            for prod_name, prod_val in prod.iteritems():
+                            for prod_name, _ in prod.iteritems():
                                 log.debug ("processing product %s:"%(prod_name))
-                                tcfg, dcfg = load_product_config(prod_val)
+#                                 tcfg, dcfg = get_product_config(prod_val)
                     role = ex_v.get('role')
                     if role == 'primary':
                         if prim == True:
@@ -372,7 +416,7 @@ def arg_parse ():
             exit(1)
         else:
             log.debug ("config loaded successfully!")
-            exit (0)
+#             exit (0)
     else:
         parser.print_help()
         exit(1)
@@ -428,7 +472,7 @@ if __name__ == '__main__':
             sims.ga_sim_main (OldMonkConfig, sims.gaDecisionConfig, sims.gaTradingConfig)
             print ("finished running genetic backtesting optimizer")
             sys.exit()
-        OldMonk_init(gDecisionConfig, gTradingConfig)
+        OldMonk_init()
         if sims.import_only:
             log.info ("import only")
             raise SystemExit
