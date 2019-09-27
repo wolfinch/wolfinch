@@ -242,7 +242,6 @@ class Market:
         self.asset = Asset ()
         self.order_book = OrderBook(market=self)
         
-        log.critical ("market: >>>>>>>>>>>>>>>>>>: %s"%(exchange.get_product_config))
         tcfg, dcfg = exchange.get_product_config (self.exchange_name, self.product_id)
         if tcfg == None or dcfg == None:
             log.critical ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
@@ -250,7 +249,7 @@ class Market:
         
         self.tradeConfig = tcfg
         self.decisionConfig = dcfg  
-        decision.decision_config (self.decisionConfig['model_type'], self.decisionConfig['model_config'])      
+        decision.decision_config (self.exchange_name, self.product_id, self.decisionConfig['model_type'], self.decisionConfig['model_config'])      
         self.decision = None  #will setup later
         # Market Strategy related Data
         # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema': val, name:val...}]
@@ -261,12 +260,12 @@ class Market:
         self.num_candles        = 0
         self.candlesDb = db.CandlesDb (OHLC, self.exchange_name, self.product_id)
 
-        strategy_list = decision.get_strategy_list()
+        strategy_list = decision.get_strategy_list(self.exchange_name, self.product_id)
         if strategy_list == None:
             log.critical ("invalid strategy_list!!")
             raise ("invalid strategy_list")
-        self.market_strategies     = strategy.Configure(strategy_list)
-        self.indicator_calculators = strategy.Configure_indicators()        
+        self.market_strategies     = strategy.Configure(self.exchange_name, self.product_id, strategy_list)
+        self.indicator_calculators = strategy.Configure_indicators(self.exchange_name, self.product_id)        
         self.new_candle = False
         self.candle_interval = 0
         

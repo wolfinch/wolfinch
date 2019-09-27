@@ -31,10 +31,11 @@ class Decision ():
         log.debug ("init decision for market(%s): model:%s config: %s"%(market.name, decision_type, config))
         if decision_type == "simple":
             strategy = config.get("strategy")
+            params = config.get("params")
             if strategy == None:
                 log.critical ("Strategy not configured")
                 raise ("Strategy not configured")            
-            self.decision = decision_simple.Decision(market, market_list, config=g_strategy_list[strategy])
+            self.decision = decision_simple.Decision(market, market_list, config={strategy: params})
         elif  decision_type == "ml":
             self.decision = decision_ML.Decision(market, market_list, config_path=config)
         else:
@@ -48,7 +49,7 @@ class Decision ():
         pass
     
 # setup decision related configs and states based on global_config
-def decision_config (decision_type="", config=""):
+def decision_config (exchange_name, product_id, decision_type="", config=""):
 #     global g_decision_type, g_decision_config, 
     global g_strategy_list
     
@@ -61,7 +62,12 @@ def decision_config (decision_type="", config=""):
         if strategy == None:
             log.critical ("Strategy not configured")
             raise ("Strategy not configured")
-        g_strategy_list[strategy] =   config['params']      
+        if not g_strategy_list.get(exchange_name):
+            g_strategy_list[exchange_name] = {product_id:{}}
+        elif not g_strategy_list[exchange_name].get (product_id):
+            g_strategy_list[exchange_name][product_id] = {}
+            
+        g_strategy_list[exchange_name][product_id][strategy] =   config['params']
     elif str(decision_type).lower() == "ml":
         log.info ("decision ML")
 #         g_decision_type = "ml"
@@ -70,8 +76,8 @@ def decision_config (decision_type="", config=""):
         log.critical ("Unsupported decision type(%s) cfg:%s"%(decision_type, str(config)))
         raise ("Unsupported decision type(%s) cfg:%s"%(decision_type, str(config)))
         
-def get_strategy_list():
+def get_strategy_list(exchange_name, product_id):
     global g_strategy_list
-    return g_strategy_list
+    return g_strategy_list[exchange_name][product_id]
 
 #EOF

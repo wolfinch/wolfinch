@@ -32,7 +32,7 @@ from indicators.sar import SAR
 from indicators.macd import MACD
 from indicators import indicator
 
-market_indicators = []
+market_indicators = {}
 init_done = False
 
 #Configure all the available indicators here:
@@ -65,12 +65,12 @@ manual_indicator_config = {
     'TRIX': {30},
     }
 
-def Configure (config_list):
+def Configure (exchange_name, product_id, config_list):
     global init_done, market_indicators, indicators_list
     #### Configure the Strategies below ######
     
     if init_done:
-        return market_indicators
+        return market_indicators[exchange_name][product_id]
     
     if not len(config_list):
         print("no indicators to be configured!! potentially no active strategies!")
@@ -82,22 +82,26 @@ def Configure (config_list):
         if not indicator:
             print ("Invalid Indicator(%s)! Either indicator not available, or unable to configure"%(ind_name))
             raise ("Invalid Indicator(%s)! Either indicator not available, or unable to configure"%(ind_name))
+        if not market_indicators.get (exchange_name):
+            market_indicators[exchange_name] = {product_id: []}
+        elif not market_indicators[exchange_name].get(product_id):
+            market_indicators[exchange_name][product_id] = []
         if not len(period_list):
             #default/non-period based indicator
-            market_indicators.append(indicator(ind_name))
+            market_indicators[exchange_name][product_id].append(indicator(ind_name))
         else:
             for period in period_list:
-                market_indicators.append(indicator("%s%d"%(ind_name, period), period))
+                market_indicators[exchange_name][product_id].append(indicator("%s%d"%(ind_name, period), period))
                     
     
     #### Configure the Strategies - end ######
     init_done = True
-    return market_indicators
+    return market_indicators[exchange_name][product_id]
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     print ("Market Indicators Test")
-    Configure (manual_indicator_config)
+    Configure ("SIM_EXCH", "BTC-USD", manual_indicator_config)
     
     
 #EOF
