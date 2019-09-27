@@ -29,12 +29,11 @@ from market import market_init, market_setup, get_market_list, feed_Q_process_ms
 from utils import getLogger
 import db
 from utils.readconf import readConf
-from dateparser import conf
 import stats
 import ui
 
 log = getLogger ('OldMonk')
-log.setLevel(log.DEBUG)
+log.setLevel(log.INFO)
 
 # Global Config 
 OldMonkConfig = None
@@ -42,7 +41,7 @@ gRestart = False
 
 gDecisionConfig = {}
 gTradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
-                 "take_profit_enabled": False, 'take_profit_rate': 0} 
+                 "take_profit_enabled": False, 'take_profit_rate': 0}
 
 # global Variables
 MAIN_TICK_DELAY = 0.500  # 500 milli
@@ -198,6 +197,7 @@ def clean_states ():
     db.clear_db()
     stats.clear_stats()
 
+
 def parse_product_config (cfg):
     global gDecisionConfig, gTradingConfig    
     parsed_tcfg = {}
@@ -238,10 +238,11 @@ def parse_product_config (cfg):
                                     
     return parsed_tcfg, parsed_dcfg
 
+
 def get_product_config (exch_name, prod_name):
     global OldMonkConfig
     
-    log.debug ("get_config for exch: %s prod: %s"%(exch_name, prod_name))
+    log.debug ("get_config for exch: %s prod: %s" % (exch_name, prod_name))
         
     # sanitize the config
     for k, v in OldMonkConfig.iteritems():
@@ -261,13 +262,14 @@ def get_product_config (exch_name, prod_name):
                             for p_name, p_cfg in prod.iteritems():
                                 if p_name.lower() != prod_name.lower():
                                     continue
-                                log.debug ("processing product %s:"%(p_name))
+                                log.debug ("processing product %s:" % (p_name))
                                 tcfg, dcfg = parse_product_config(p_cfg)
-                                log.debug ("tcfg: %s dcfg: %s"%(tcfg, dcfg))
+                                log.debug ("tcfg: %s dcfg: %s" % (tcfg, dcfg))
                                 return tcfg, dcfg
                             
     log.error ("unable to get config")
     return None, None
+
     
 def load_config (cfg_file):
     global OldMonkConfig
@@ -290,7 +292,7 @@ def load_config (cfg_file):
                         log.debug ("processing exch products")
                         for prod in products:
                             for prod_name, _ in prod.iteritems():
-                                log.debug ("processing product %s:"%(prod_name))
+                                log.debug ("processing product %s:" % (prod_name))
 #                                 tcfg, dcfg = get_product_config(prod_val)
                     role = ex_v.get('role')
                     if role == 'primary':

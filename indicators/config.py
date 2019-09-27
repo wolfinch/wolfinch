@@ -33,7 +33,7 @@ from indicators.macd import MACD
 from indicators import indicator
 
 market_indicators = {}
-init_done = False
+# init_done = False
 
 #Configure all the available indicators here:
 # only the indicators required for enabled strategy will be enforced.
@@ -69,8 +69,8 @@ def Configure (exchange_name, product_id, config_list):
     global init_done, market_indicators, indicators_list
     #### Configure the Strategies below ######
     
-    if init_done:
-        return market_indicators[exchange_name][product_id]
+#     if init_done:
+#         return market_indicators[exchange_name][product_id]
     
     if not len(config_list):
         print("no indicators to be configured!! potentially no active strategies!")
@@ -95,7 +95,7 @@ def Configure (exchange_name, product_id, config_list):
                     
     
     #### Configure the Strategies - end ######
-    init_done = True
+#     init_done = True
     return market_indicators[exchange_name][product_id]
 
 ######### ******** MAIN ****** #########

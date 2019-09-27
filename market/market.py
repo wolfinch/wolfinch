@@ -1177,7 +1177,6 @@ def market_init (exchange_list, get_product_config_hook):
     
     for exchange in exchange_list:
         exchange.get_product_config = get_product_config_hook
-        log.critical ("adf: >>>>>>>>>>>>>>>>>>: %s"%(exchange.get_product_config))
         products = exchange.get_products()
         if products:
             for product in products:

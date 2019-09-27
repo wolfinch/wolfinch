@@ -20,13 +20,13 @@ from abc import ABCMeta, abstractmethod
 class Strategy:
     __metaclass__ = ABCMeta
 
-    _indicator_list = {}
     @abstractmethod
     def __init__ (self):
         ''' 
         Init for the strategy class
         '''
         pass
+#         self._indicator_list = {}
     
     def __str__ (self):
         return "{Message: TODO: FIXME: jork: implement}"
@@ -36,11 +36,19 @@ class Strategy:
     
     def set_indicator (self, name, periods=[]):
         
+        if not hasattr(self, "_indicator_list"):
+            self._indicator_list = {}
         ind = self._indicator_list.get(name, None)
         if ind:
             ind.update(periods)
         else:
             self._indicator_list[name] = set(periods)
+            
+    def get_indicators (self):
+        if not hasattr(self, "_indicator_list"):
+            return {}
+        else:        
+            return self._indicator_list
 
     def get_indicator_current (self, candles, name, period=0):
         if period == 0:

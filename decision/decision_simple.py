@@ -18,7 +18,7 @@
 from utils import getLogger
 
 log = getLogger ('decision_simple')
-log.setLevel(log.DEBUG)
+log.setLevel(log.CRITICAL)
 
 class Decision ():
     num_dec = 0
