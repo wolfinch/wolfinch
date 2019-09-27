@@ -202,7 +202,18 @@ def parse_product_config (cfg):
     global gDecisionConfig, gTradingConfig    
     parsed_tcfg = {}
     parsed_dcfg = {}    
-    for k, v in cfg.iteritems():    
+    for k, v in cfg.iteritems():
+        if k == 'currency':
+            parsed_tcfg ['currency'] = v
+        if k == 'fund_max_liquidity':
+            parsed_tcfg ['fund_max_liquidity'] = v
+        if k == 'fund_max_per_buy_value':
+            parsed_tcfg ['fund_max_per_buy_value'] = v
+        if k == 'asset_max_per_trade_size':
+            parsed_tcfg ['asset_max_per_trade_size'] = v
+        if k == 'asset_min_per_trade_size':
+            parsed_tcfg ['asset_min_per_trade_size'] = v
+        
         if k == 'stop_loss':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'enabled':
@@ -236,6 +247,10 @@ def parse_product_config (cfg):
         if gDecisionConfig.get("decision"):
             parsed_dcfg["decision"] = gDecisionConfig.get("decision")
                                     
+    if ( not parsed_tcfg.get('fund_max_liquidity') or not parsed_tcfg.get('fund_max_per_buy_value') or 
+         not parsed_tcfg.get('asset_min_per_trade_size')) :
+        print ("trading config not set")
+        raise Exception ("trading config not set")
     return parsed_tcfg, parsed_dcfg
 
 
