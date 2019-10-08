@@ -316,6 +316,10 @@ def load_config (cfg_file):
             for exch in v:
                 for ex_k, ex_v in exch.iteritems():
                     log.debug ("processing exch: %s val:%s" % (ex_k, ex_v))
+                    #setup backfill config per exch, from global
+                    if OldMonkConfig.get('backfill') :
+                        log.info ("reading backfill global config")
+                        ex_v['backfill'] = OldMonkConfig['backfill']
                     products = ex_v.get('products')
                     if products != None and len(products):
                         log.debug ("processing exch products")

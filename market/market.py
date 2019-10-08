@@ -237,6 +237,8 @@ class Market:
         #config
         self.product_id = None if product == None else product['id']
         self.name = None if product == None else product['display_name']
+        self.fund_type = product['fund_type']
+        self.asset_type = product['asset_type']
         self.exchange_name = None if exchange == None else exchange.name
         self.exchange = exchange       #exchange module
         

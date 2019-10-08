@@ -15,6 +15,10 @@ exchanges:
       config: 'config/cbpro.yml'
       products:
          - 'BTC-USD':
+            fund_max_liquidity : 1000 #$$               
+            fund_max_per_buy_value : 30 #$100 max per buy
+            asset_max_per_trade_size: 1 #per sell asset size max
+            asset_min_per_trade_size: 0.0001 #Min asset size to trade with (may come from exch limits or asset limits)           
             stop_loss:
                enabled: true
                smart: true #track price movement and update stop_loss
@@ -28,9 +32,6 @@ exchanges:
                   strategy: EMA_DEV
                   params : {'ema_sell_s': 85, 'timeout_sell': 14, 'rsi': 24, 'treshold_pct_buy_l': 1.0, 'ema_buy_s': 185, 'timeout_buy': 14, 'period': 165, 'treshold_pct_sell_s': 0.92, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.35, 'treshold_pct_buy_s': 0.39, 'ema_sell_l': 25}
          - 'XLM-USD':
-            currency:
-               - 'XLM'
-               - 'USD'
             fund_max_liquidity : 1000 #$$               
             fund_max_per_buy_value : 20 #$100 max per buy
             asset_max_per_trade_size: 100 #per sell asset size max
@@ -56,10 +57,10 @@ exchanges:
 # exchanges - end
 
 # TODO: exchanges specific config should follow a common timing, should be driven by global config
-#  backfill:
-#    - enabled  : Yes  
-#    - period   : 3  #in Days
-#    - interval : '5m'  #5m 
+backfill:
+   enabled  : true  
+   period   : 3  #in Days
+   interval : 300  #300s == 5m 
 
 # Global Trading config, applied if product/exch specific policies are not configured
 stop_loss:

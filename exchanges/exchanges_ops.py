@@ -23,10 +23,10 @@ def init_exchanges (OldMonkConfig):
     for exch_cls in all_exchanges:
         log.debug ("Initializing exchange (%s)"%(exch_cls.name))
         for exch in OldMonkConfig['exchanges']:
-            for name,v in exch.iteritems():
+            for name, exch_cfg in exch.iteritems():
                 if name.lower() == exch_cls.name.lower():
-                    role = v['role']
-                    cfg = v['config']
+                    role = exch_cfg['role']
+#                     cfg = exch_cfg['config']
                     log.debug ("initializing exchange(%s)"%name)
                     if (sims.simulator_on):
                         sims.exch_obj = sims.SIM_EXCH(exch_cls.name)
@@ -41,7 +41,7 @@ def init_exchanges (OldMonkConfig):
                                 log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
                                 raise Exception()                            
                                                             
-                    exch_obj = exch_cls(config=cfg, primary=(role == 'primary'))
+                    exch_obj = exch_cls(config=exch_cfg, primary=(role == 'primary'))
                     if (exch_obj != None):
                         exchange_list.append(exch_obj)
                         #Market init

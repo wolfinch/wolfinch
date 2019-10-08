@@ -20,7 +20,7 @@ import cbpro
 
 # from pstats import add_callers
 from utils import getLogger, readConf
-from market import Market, OHLC, feed_enQ, get_market_by_product, Order
+from market import OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 
 EXHANGE_NAME = "CBPRO"
@@ -41,10 +41,12 @@ class CBPRO (Exchange):
     ws_client = None
     primary = False
     candle_interval = 0
-    def __init__(self, config=CBPRO_CONF, primary=False):
-        log.info('init CBPRO exchange')        
+    def __init__(self, config, primary=False):
+        log.info('init CBPRO exchange')
         
-        conf = readConf (config)
+        exch_cfg_file = config['config']
+        
+        conf = readConf (exch_cfg_file)
         if (conf != None and len(conf)):
             self.gdax_conf = conf['exchange']
         else:
@@ -52,18 +54,17 @@ class CBPRO (Exchange):
         
         self.primary = True if primary else False
         #get config
-        backfill = self.gdax_conf.get('backfill')
+        backfill = config.get('backfill')
         if not backfill:
-            log.fatal("Invalid Config file")            
+            log.fatal("Invalid backfill config")            
             return None
     
-        for entry in backfill:
-            if entry.get('enabled'):
-                self.gdax_conf['backfill_enabled'] = entry['enabled']
-            if entry.get('period'):
-                self.gdax_conf['backfill_period'] = int(entry['period'])
-            if entry.get('interval'):
-                self.gdax_conf['backfill_interval'] = int(entry['interval'])            
+        if backfill.get('enabled'):
+            self.gdax_conf['backfill_enabled'] = backfill['enabled']
+        if backfill.get('period'):
+            self.gdax_conf['backfill_period'] = int(backfill['period'])
+        if backfill.get('interval'):
+            self.gdax_conf['backfill_interval'] = int(backfill['interval'])            
         
         self.key = self.gdax_conf.get('apiKey')
         self.b64secret = self.gdax_conf.get('apiSecret')
@@ -100,18 +101,14 @@ class CBPRO (Exchange):
         
 #         global gdax_products
         products = self.public_client.get_products()
+        log.info ("products: %s"%(pprint.pformat(products, 4)))
         if (len(products) and len (self.gdax_conf['products'])):
             for prod in products:
                 for p in self.gdax_conf['products']:              
-                    if prod['id'] in p.keys():
-#                         prod['max_per_buy_fund_val'] = p[prod['id']].get ('fundMaxPerBuyValue', 0)
-#                         prod['max_per_trade_asset_size'] = p[prod['id']].get ('assetMaxPerTradeSize', 0)
-#                         prod['min_per_trade_asset_size'] = p[prod['id']].get ('assetMinPerTradeSize', 0)        
-#                         if (prod['max_per_buy_fund_val'] == 0 or prod['max_per_trade_asset_size'] == 0 or 
-#                            prod['min_per_trade_asset_size'] == 0 ):
-#                             log.critical ("invalid config for product: %s"%(prod['id']))
-#                             raise Exception ("invalid config for product: %s"%(prod['id']))            
-#                             return False       
+                    if prod['id'] in p.keys():     
+                        prod ['asset_type'] = prod['base_currency']
+                        prod ['fund_type'] = prod['quote_currency']
+                        
                         self.gdax_products.append(prod)
         
         # Popoulate the account details for each interested currencies
@@ -163,23 +160,16 @@ class CBPRO (Exchange):
     def market_init (self, market):
 #         global ws_client
         usd_acc = self.gdax_accounts['USD']
-        crypto_acc = self.gdax_accounts.get(product['base_currency'])
+        crypto_acc = self.gdax_accounts.get(market.asset_type)
         if (usd_acc == None or crypto_acc == None): 
             log.error ("No account available for product: %s"%(market.product_id))
             return None
         
 #         #Setup the initial params
-#         market = Market(product=product, exchange=self)    
         market.fund.set_initial_value(Decimal(usd_acc['available']))
         market.fund.set_hold_value(Decimal(usd_acc['hold']))
-#         market.fund.set_fund_liquidity_percent(self.max_fund_liquidity_percent)       
-#         market.fund.set_max_per_buy_fund_value(product['max_per_buy_fund_val'])
-#         market.fund.set_fee(self.gdax_conf['Fee']['maker'], self.gdax_conf['Fee']['taker'])
         market.asset.set_initial_size(Decimal( crypto_acc['available']))
         market.asset.set_hold_size( Decimal(crypto_acc['hold']))
-#         market.asset.set_max_per_trade_size(product['max_per_trade_asset_size'])
-#         market.asset.set_min_per_trade_size(product['min_per_trade_asset_size'])        
-#         market.asset.set_hold_size(product['asset_hold_size'])
         
         ## Feed Cb
         market.register_feed_processor(self._gdax_consume_feed)
@@ -400,7 +390,6 @@ class CBPRO (Exchange):
 #             "volume_30d": "364800.84143217"
 #         }
 #         '''
-#         global self.gdax_conf
 #         log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
         
         #log.debug ("consuming ticker feed")
