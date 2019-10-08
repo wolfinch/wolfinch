@@ -75,7 +75,7 @@ genetic_optimizer:
       trading : {}
       
 ui:
-   enabled : false
+   enabled : true
    port : 8080
    
 #EOF
