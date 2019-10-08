@@ -63,7 +63,7 @@ backfill:
    interval : 300  #300s == 5m 
 
 simulator:
-   enabled : true
+   enabled : false
 
 genetic_optimizer: 
    enabled : false
