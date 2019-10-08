@@ -1,7 +1,7 @@
 import networkx as networkx
 import numpy
 from deap.tools import Statistics
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 from termcolor import colored
 
 from conf import runid

@@ -29,7 +29,6 @@ from market import market_init, market_setup, get_market_list, feed_Q_process_ms
 from utils import getLogger
 import db
 from utils.readconf import readConf
-from dateparser import conf
 import stats
 import ui
 
@@ -40,19 +39,20 @@ log.setLevel(log.INFO)
 OldMonkConfig = None
 gRestart = False
 
-decisionConfig = {}
-tradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
-                 "take_profit_enabled": False, 'take_profit_rate': 0} 
+gDecisionConfig = {}
+gTradingConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
+                 "take_profit_enabled": False, 'take_profit_rate': 0}
 
 # global Variables
-MAIN_TICK_DELAY    = 0.500 #500 milli
+MAIN_TICK_DELAY = 0.500  # 500 milli
 
-def OldMonk_init(decisionConfig, tradingConfig):
+
+def OldMonk_init():
     
-    #seed random
+    # seed random
     random.seed()
         
-    #1. Retrieve states back from Db
+    # 1. Retrieve states back from Db
 #     db.init_order_db(Order)
 
     # setup ui if required
@@ -63,17 +63,18 @@ def OldMonk_init(decisionConfig, tradingConfig):
             print ("unable to setup UI!!")
             sys.exit(1)
     
-    #2. Init Exchanges
+    # 2. Init Exchanges
     exchanges.init_exchanges(OldMonkConfig)
     
-    #3. Init markets
-    market_init (exchanges.exchange_list, decisionConfig, tradingConfig)
+    # 3. Init markets
+    market_init (exchanges.exchange_list, get_product_config)
     
-    #4. Setup markets
+    # 4. Setup markets
     market_setup(restart=gRestart)
     
-    #5. start stats thread
+    # 5. start stats thread
     stats.start()
+
     
 def OldMonk_end():
     log.info ("Finalizing OldMonk")
@@ -115,15 +116,16 @@ def oldmonk_main ():
         sleep_time = (MAIN_TICK_DELAY - (time.time() - cur_time))
 #         if sleep_time < 0 :
 #             log.critical ("******* TIMING SKEWED (%f) ******"%(sleep_time))
-        sleep_time  = 0 if (sleep_time < 0) else sleep_time     
-    #end While(true)
+        sleep_time = 0 if (sleep_time < 0) else sleep_time     
+    # end While(true)
+
     
 def process_market (market):
 #     """ 
 #     processing routine for one exchange
 #     """
-    log.debug ("processing Market: exchange (%s) product: %s"%( market.exchange_name, market.name))
-    #update various market states on tick
+    log.debug ("processing Market: exchange (%s) product: %s" % (market.exchange_name, market.name))
+    # update various market states on tick
     market.update_market_states()
     
     # Trade only on primary markets
@@ -134,23 +136,26 @@ def process_market (market):
             sims.market_simulator_run (market)
         stats.stats_update_order_bulk(market)            
     
-    #check pending trades periodically and takes actions (this logic is rate-limited)
+    # check pending trades periodically and takes actions (this logic is rate-limited)
     market.watch_pending_orders()
     
     # commit market states to the db periodically (this logic is rate-limited)
     market.lazy_commit_market_states()
+
     
 def process_ui_trade_notif (msg):
     exch = msg.get("exchange")
     product = msg.get("product")
     side = msg.get("side")
     signal = msg.get("signal")
-    log.info ("Manual Trade Req: exch: %s prod: %s side: %s signal: %s"%(exch, product, side, str(signal)))
+    log.info ("Manual Trade Req: exch: %s prod: %s side: %s signal: %s" % (exch, product, side, str(signal)))
     m = get_market_by_product (exch, product)
     if not m:
-        log.error ("Unknown exchange/product exch: %s prod: %s"%(exch, product))
+        log.error ("Unknown exchange/product exch: %s prod: %s" % (exch, product))
     else:
         m.consume_trade_signal(signal)    
+
+
 def process_ui_get_markets_rr (msg, ui_conn_pipe):
     log.debug ("enter")
     m_dict = {}
@@ -164,6 +169,7 @@ def process_ui_get_markets_rr (msg, ui_conn_pipe):
     msg ["type"] = "GET_MARKETS_RESP"
     msg ["data"] = m_dict
     ui_conn_pipe.send(msg)
+
     
 def process_ui_msgs(ui_conn_pipe):
     try:
@@ -171,8 +177,8 @@ def process_ui_msgs(ui_conn_pipe):
             msg = ui_conn_pipe.recv()
             err = msg.get("error", None)
             if  err != None:
-                log.error ("error in the pipe, ui finished: msg:%s"%(err))
-                raise Exception("UI error - %s"%(err))
+                log.error ("error in the pipe, ui finished: msg:%s" % (err))
+                raise Exception("UI error - %s" % (err))
             else:
                 msg_type = msg.get("type")
                 if msg_type == "TRADE":
@@ -182,24 +188,126 @@ def process_ui_msgs(ui_conn_pipe):
                 else:
                     log.error ("Unknown ui msg type: %s", msg_type)
     except Exception as e:
-        log.critical ("exception %s on ui"%(e))
+        log.critical ("exception %s on ui" % (e))
         raise e
+
     
 def clean_states ():
     log.info ("Clearing Db")
     db.clear_db()
     stats.clear_stats()
+
+
+def parse_product_config (cfg):
+    global gDecisionConfig, gTradingConfig    
+    parsed_tcfg = {}
+    parsed_dcfg = {}    
+    for k, v in cfg.iteritems():
+        if k == 'currency':
+            parsed_tcfg ['currency'] = v
+        if k == 'fund_max_liquidity':
+            parsed_tcfg ['fund_max_liquidity'] = v
+        if k == 'fund_max_per_buy_value':
+            parsed_tcfg ['fund_max_per_buy_value'] = v
+        if k == 'asset_max_per_trade_size':
+            parsed_tcfg ['asset_max_per_trade_size'] = v
+        if k == 'asset_min_per_trade_size':
+            parsed_tcfg ['asset_min_per_trade_size'] = v
+        
+        if k == 'stop_loss':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'enabled':
+                    parsed_tcfg ['stop_loss_enabled'] = ex_v
+                elif ex_k == 'smart':
+                    parsed_tcfg ['stop_loss_smart_rate'] = ex_v
+                elif ex_k == 'rate':
+                    parsed_tcfg ['stop_loss_rate'] = ex_v                    
+        elif k == 'take_profit':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'enabled':
+                    parsed_tcfg ['take_profit_enabled'] = ex_v
+                elif ex_k == 'rate':
+                    parsed_tcfg ['take_profit_rate'] = ex_v                                    
+        elif k == 'decision':
+            for ex_k, ex_v in v.iteritems():
+                if ex_k == 'model':
+                    parsed_dcfg ['model_type'] = ex_v
+                elif ex_k == 'config':
+                    parsed_dcfg ['model_config'] = ex_v
+                    
+    if not parsed_tcfg.get("take_profit") :
+        if gTradingConfig.get("take_profit"):
+            parsed_tcfg["take_profit"] = gTradingConfig.get("take_profit")
+            
+    if not parsed_tcfg.get("stop_loss") :
+        if gTradingConfig.get("stop_loss"):
+            parsed_tcfg["stop_loss"] = gTradingConfig.get("stop_loss")
+                        
+    if not parsed_dcfg.get("decision") :
+        if gDecisionConfig.get("decision"):
+            parsed_dcfg["decision"] = gDecisionConfig.get("decision")
+                                    
+    if ( not parsed_tcfg.get('fund_max_liquidity') or not parsed_tcfg.get('fund_max_per_buy_value') or 
+         not parsed_tcfg.get('asset_min_per_trade_size')) :
+        print ("trading config not set")
+        raise Exception ("trading config not set")
+    return parsed_tcfg, parsed_dcfg
+
+
+def get_product_config (exch_name, prod_name):
+    global OldMonkConfig
+    
+    log.debug ("get_config for exch: %s prod: %s" % (exch_name, prod_name))
+        
+    # sanitize the config
+    for k, v in OldMonkConfig.iteritems():
+        if k == 'exchanges':
+            if v == None:
+                log.critical ("Atleast one exchange need to be configured")
+                raise Exception("exchanges not configured")
+            for exch in v:
+                for ex_k, ex_v in exch.iteritems():
+                    if ex_k.lower() != exch_name.lower():
+                        continue
+                    log.debug ("processing exch: %s val:%s" % (ex_k, ex_v))
+                    products = ex_v.get('products')
+                    if products != None and len(products):
+                        log.debug ("processing exch products")
+                        for prod in products:
+                            for p_name, p_cfg in prod.iteritems():
+                                if p_name.lower() != prod_name.lower():
+                                    continue
+                                log.debug ("processing product %s:" % (p_name))
+                                tcfg, dcfg = parse_product_config(p_cfg)
+                                
+                                #get fee, market_type
+                                fee = ex_v.get('fee')
+                                if not fee :
+                                    print ("exchange fee not set")
+                                    raise Exception("exchange fee not set")
+                                order_type = ex_v.get('order_type')
+                                if not order_type :
+                                    print ("exchange order_type not set")
+                                    raise Exception("exchange order_type not set")
+                                
+                                tcfg ['order_type'] = order_type
+                                tcfg ['fee'] = fee
+                                
+                                log.debug ("tcfg: %s dcfg: %s" % (tcfg, dcfg))
+                                return tcfg, dcfg
+                            
+    log.error ("unable to get config")
+    return None, None
+
     
 def load_config (cfg_file):
     global OldMonkConfig
-    global decisionConfig
+    global gDecisionConfig, gTradingConfig
     OldMonkConfig = readConf(cfg_file)
-    if not conf:
-        return False
     
-    log.debug ("cfg: %s"%OldMonkConfig)
+    log.debug ("cfg: %s" % OldMonkConfig)
     # sanitize the config
-    for k,v in OldMonkConfig.iteritems():
+    for k, v in OldMonkConfig.iteritems():
         if k == 'exchanges':
             if v == None:
                 print ("Atleast one exchange need to be configured")
@@ -207,7 +315,18 @@ def load_config (cfg_file):
             prim = False
             for exch in v:
                 for ex_k, ex_v in exch.iteritems():
-                    log.debug ("processing exch: %s"%ex_k)
+                    log.debug ("processing exch: %s val:%s" % (ex_k, ex_v))
+                    #setup backfill config per exch, from global
+                    if OldMonkConfig.get('backfill') :
+                        log.info ("reading backfill global config")
+                        ex_v['backfill'] = OldMonkConfig['backfill']
+                    products = ex_v.get('products')
+                    if products != None and len(products):
+                        log.debug ("processing exch products")
+                        for prod in products:
+                            for prod_name, _ in prod.iteritems():
+                                log.debug ("processing product %s:" % (prod_name))
+#                                 tcfg, dcfg = get_product_config(prod_val)
                     role = ex_v.get('role')
                     if role == 'primary':
                         if prim == True:
@@ -221,23 +340,23 @@ def load_config (cfg_file):
         elif k == 'stop_loss':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'enabled':
-                    tradingConfig ['stop_loss_enabled'] = ex_v
+                    gTradingConfig ['stop_loss_enabled'] = ex_v
                 elif ex_k == 'smart':
-                    tradingConfig ['stop_loss_smart_rate'] = ex_v
+                    gTradingConfig ['stop_loss_smart_rate'] = ex_v
                 elif ex_k == 'rate':
-                    tradingConfig ['stop_loss_rate'] = ex_v                    
+                    gTradingConfig ['stop_loss_rate'] = ex_v                    
         elif k == 'take_profit':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'enabled':
-                    tradingConfig ['take_profit_enabled'] = ex_v
+                    gTradingConfig ['take_profit_enabled'] = ex_v
                 elif ex_k == 'rate':
-                    tradingConfig ['take_profit_rate'] = ex_v                                    
+                    gTradingConfig ['take_profit_rate'] = ex_v                                    
         elif k == 'decision':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'model':
-                    decisionConfig ['model_type'] = ex_v
+                    gDecisionConfig ['model_type'] = ex_v
                 elif ex_k == 'config':
-                    decisionConfig ['model_config'] = ex_v     
+                    gDecisionConfig ['model_config'] = ex_v     
         elif k == 'simulator':
             for ex_k, ex_v in v.iteritems():
                 if ex_k == 'enabled':
@@ -304,6 +423,7 @@ def load_config (cfg_file):
 #     exit(1)
     log.debug ("config loaded successfully!")
     return True
+
         
 def arg_parse ():
     global gRestart
@@ -324,7 +444,7 @@ def arg_parse ():
         exit (0)
                  
     if (args.config):
-        log.debug ("config file: %s"%args.config)
+        log.debug ("config file: %s" % args.config)
         if False == load_config (args.config):
             log.critical ("Config parse error!!")
             parser.print_help()
@@ -363,11 +483,10 @@ def arg_parse ():
     if (args.backtesting):              
         log.debug ("backtesting enabled")       
         sims.backtesting_on = True
-        #sims.simulator_on = True
+        # sims.simulator_on = True
     else:
         log.debug ("backtesting disabled")       
         sims.backtesting_on = False        
-
     
 #     log.debug("sims.backtesting_on: %d"%(sims.backtesting_on))
 #     exit(1)
@@ -378,7 +497,7 @@ if __name__ == '__main__':
     
     arg_parse()
     
-    getcontext().prec = 8 #decimal precision
+    getcontext().prec = 8  # decimal precision
     
     print("Starting OldMonk..")
     
@@ -388,7 +507,7 @@ if __name__ == '__main__':
             sims.ga_sim_main (OldMonkConfig, sims.gaDecisionConfig, sims.gaTradingConfig)
             print ("finished running genetic backtesting optimizer")
             sys.exit()
-        OldMonk_init(decisionConfig, tradingConfig)
+        OldMonk_init()
         if sims.import_only:
             log.info ("import only")
             raise SystemExit
@@ -403,12 +522,11 @@ if __name__ == '__main__':
         OldMonk_end()
         sys.exit()
     except Exception as e:
-        log.critical ("Unexpected error: %s exception: %s"%(sys.exc_info(), e.message))        
-        print ("Unexpected error: %s exception: %s"%(sys.exc_info(), e.message))
+        log.critical ("Unexpected error: %s exception: %s" % (sys.exc_info(), e.message))        
+        print ("Unexpected error: %s exception: %s" % (sys.exc_info(), e.message))
         OldMonk_end()
         raise
-    #'''Not supposed to reach here'''
+    # '''Not supposed to reach here'''
     print("\nOldMonk end")
-    
 
-#EOF
+# EOF

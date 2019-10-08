@@ -50,8 +50,6 @@ log = getLogger ('MARKET')
 log.setLevel(log.CRITICAL)
 
 OldMonk_market_list = []
-TradingConfig = None
-DecisionConfig = None
 
 class OHLC(object): 
     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']
@@ -78,7 +76,8 @@ class Fund:
         self.current_unrealized_profit = Decimal(0.0)   
         self.total_profit = Decimal(0.0)
         self.current_avg_buy_price = Decimal(0.0)
-        self.latest_buy_price = Decimal(0.0)         
+        self.latest_buy_price = Decimal(0.0)
+        self.fund_max_liquidity = Decimal(0.0)
         self.fund_liquidity_percent = Decimal(0.0)
         self.max_per_buy_fund_value = Decimal(0.0)
         self.maker_fee_rate = 0
@@ -91,6 +90,9 @@ class Fund:
     def set_fund_liquidity_percent (self, value):
         self.fund_liquidity_percent = Decimal(value)
         
+    def set_fund_liquidity (self, value):        
+        self.fund_max_liquidity = Decimal(value)
+        
     def set_hold_value (self, value):
         self.current_hold_value = Decimal(value)      
         
@@ -102,8 +104,8 @@ class Fund:
         self.taker_fee_rate = taker_fee          
 
     def get_fund_to_trade (self, strength):
-        liquid_fund = self.initial_value *  self.fund_liquidity_percent / Decimal(100)
-        rock_bottom = self.initial_value - liquid_fund
+#         liquid_fund = self.initial_value *  self.fund_liquidity_percent / Decimal(100)
+        rock_bottom = self.initial_value - self.fund_max_liquidity
         
         fund = self.max_per_buy_fund_value * strength
         log.debug ("fund: %s slice: %s signal: %s"%(fund, self.max_per_buy_fund_value, strength))
@@ -231,23 +233,49 @@ class Market:
         self.num_stop_loss_hit = 0
         self.num_success_trade = 0
         self.num_failed_trade = 0
-        self.tradeConfig = {"stop_loss_enabled": False, "stop_loss_smart_rate": False, 'stop_loss_rate': 0,
-                 "take_profit_enabled": False, 'take_profit_rate': 0}        
-        
         
         #config
         self.product_id = None if product == None else product['id']
         self.name = None if product == None else product['display_name']
+        self.fund_type = product['fund_type']
+        self.asset_type = product['asset_type']
         self.exchange_name = None if exchange == None else exchange.name
         self.exchange = exchange       #exchange module
+        
+        #set primary?
+        self.primary = exchange.primary
+        
         self.current_market_rate = Decimal(0.0)
         self.start_market_rate = Decimal(0.0)
         self.consume_feed = None
         self.fund = Fund ()
         self.asset = Asset ()
         self.order_book = OrderBook(market=self)
-        decision.decision_config (DecisionConfig['model_type'], DecisionConfig['model_config'])      
+        
+        tcfg, dcfg = exchange.get_product_config (self.exchange_name, self.product_id)
+        if tcfg == None or dcfg == None:
+            log.critical ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
+            raise Exception ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
+        
+        self.tradeConfig = tcfg
+        self.decisionConfig = dcfg  
+        decision.decision_config (self.exchange_name, self.product_id, self.decisionConfig['model_type'], self.decisionConfig['model_config'])      
         self.decision = None  #will setup later
+        
+        #initialize params
+        self.fund.set_initial_value(Decimal(0.0))
+        self.fund.set_hold_value(Decimal(0.0))
+        self.fund.set_fund_liquidity(tcfg['fund_max_liquidity'])
+        self.fund.set_max_per_buy_fund_value(tcfg['fund_max_per_buy_value'])
+        self.fund.set_fee(tcfg['fee']['maker'], tcfg['fee']['taker'])
+        self.asset.set_initial_size(Decimal(0.0))
+        self.asset.set_hold_size( Decimal(0.0))
+        self.asset.set_max_per_trade_size(tcfg['asset_max_per_trade_size'])
+        self.asset.set_min_per_trade_size(tcfg['asset_min_per_trade_size'])        
+        
+        #order type
+        self.order_type = tcfg.get('order_type', "market")
+        
         # Market Strategy related Data
         # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema': val, name:val...}]
         self.market_indicators_data     = []
@@ -257,15 +285,16 @@ class Market:
         self.num_candles        = 0
         self.candlesDb = db.CandlesDb (OHLC, self.exchange_name, self.product_id)
 
-        strategy_list = decision.get_strategy_list()
+        strategy_list = decision.get_strategy_list(self.exchange_name, self.product_id)
         if strategy_list == None:
             log.critical ("invalid strategy_list!!")
             raise ("invalid strategy_list")
-        self.market_strategies     = strategy.Configure(strategy_list)
-        self.indicator_calculators = strategy.Configure_indicators()        
+        self.market_strategies     = strategy.Configure(self.exchange_name, self.product_id, strategy_list)
+        self.indicator_calculators = strategy.Configure_indicators(self.exchange_name, self.product_id)        
         self.new_candle = False
         self.candle_interval = 0
-        
+        self.O = self.H = self.L = self.C = self.V = 0
+                
         self._pending_order_track_time = 0
         self._db_commit_time = 0
             
@@ -299,6 +328,9 @@ class Market:
                 (self.get_market_rate() - self.start_market_rate)*(
                     self.fund.initial_value*Decimal(0.01)*self.fund.fund_liquidity_percent/self.start_market_rate),
                 str(self.fund), str(self.asset), str(self.order_book))        
+        
+    def set_candle_interval (self, value):
+        self.candle_interval = value        
         
     def get_candle_list (self):
         return map(lambda x: x["ohlc"], self.market_indicators_data)
@@ -646,7 +678,7 @@ class Market:
                               Side="SELL",
                                Size=round(Decimal(asset_size),8),
                                Fund=round(Decimal(0), 8),                                   
-                               Type="market",
+                               Type=self.order_type,
                                Price=round(Decimal(0), 8),
                                Stop=0, id=uuid.UUID(pos.id)))
         
@@ -940,7 +972,7 @@ class Market:
         
     def decision_setup (self, market_list):
         log.debug ("decision setup for market (%s)"%(self.name))
-        self.decision = Decision(self, market_list)
+        self.decision = Decision(self, market_list, self.decisionConfig['model_type'], self.decisionConfig['model_config'])
         if self.decision == None:
             log.error ("Failed to setup decision engine")
             return False
@@ -1165,24 +1197,32 @@ def get_market_by_product (exchange_name, product_id):
         if market.product_id == product_id and market.exchange_name == exchange_name:
             return market
         
-def market_init (exchange_list, decisionConfig, tradingConfig):
+def market_init (exchange_list, get_product_config_hook):
     '''
     Initialize per exchange, per product data.
     This is where we want to keep all the run stats
     '''
-    global OldMonk_market_list, TradeConfig, DecisionConfig
+    global OldMonk_market_list
     
-    TradeConfig = tradingConfig
-    DecisionConfig = decisionConfig    
     for exchange in exchange_list:
+        exchange.get_product_config = get_product_config_hook
         products = exchange.get_products()
         if products:
             for product in products:
-                market = exchange.market_init (product)
+                #init new Market for product
+                market = Market(product=product, exchange=exchange)    
+
+                market = exchange.market_init (market)
                 if (market == None):
                     log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
                 else:
-                    market.tradeConfig = TradeConfig
+#                     tradingConfig, decisionConfig = get_product_config_hook(exchange.name, product['id'])
+#                     if tradingConfig == None or decisionConfig == None:
+#                         log.critical ("Invalid product config")
+#                         raise Exception ("Invalid product config")
+#                     market.tradeConfig = tradingConfig
+#                     market.decisionConfig = decisionConfig
+                    log.info ("market init success for exchange (%s) product: %s"%(exchange.name, product['id']))
                     OldMonk_market_list.append(market)
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))
