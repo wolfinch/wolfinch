@@ -28,7 +28,7 @@ import sims
 from order import Order
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 class Position (object):
     def __init__(self, id=None, buy=None, sell=None, profit=0, stop_loss=0,
@@ -83,8 +83,8 @@ class Position (object):
     def __str__(self):
         buy_str = str(self.buy) if self.buy else "null"
         sell_str = str(self.sell) if self.sell else "null"        
-        return """{\n"status": "%s", "open_time":"%s", "closed_time":"%s", "profit": %f, "stop_loss": %f, "take_profit":%f,
-"buy":%s\n,"sell":%s\n}"""%(self.status, self.open_time, self.closed_time, self.profit, self.stop_loss, self.take_profit,
+        return """{\n"id":"%s", "status":"%s", "open_time":"%s", "closed_time":"%s", "profit": %f, "stop_loss": %f, "take_profit":%f,
+"buy":%s\n,"sell":%s\n}"""%(self.id, self.status, self.open_time, self.closed_time, self.profit, self.stop_loss, self.take_profit,
                             buy_str, sell_str)
     def __repr__(self):
         return self.__str__()
@@ -154,14 +154,14 @@ class OrderBook():
         self.positionsDb.db_save_position(position)  
           
     def get_closable_position(self):
-        log.debug ("get_closable_position ")    
+        log.info ("get_closable_position ")    
             
         #get last open position for now
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
         pos = None
         if len(self.open_positions):
             if self.market.tradeConfig["stop_loss_enabled"]:
-                log.debug ("Finding closable position from _stop_loss_ pool.")                                                                    
+                log.info ("Finding closable position from _stop_loss_ pool.")                    
                 pos = self.pop_stop_loss_position()
             if pos == None:
                 try:
@@ -169,12 +169,12 @@ class OrderBook():
                 except IndexError:
                     log.error ("unable to find open position to close")
                     return None
-                log.debug ("Found closable position from _regular_ pool. pos: %s"%(str(pos)))
+                log.info ("Found closable position from _regular_ pool. pos: %s"%(str(pos)))
             else:
-                log.debug ("Found closable position from _stop_loss_ pool. pos: %s"%(str(pos)))                                                    
+                log.info ("Found closable position from _stop_loss_ pool. pos: %s"%(str(pos)))                                        
                 self.open_positions.remove(pos)
             if (self.close_pending_positions.get(uuid.UUID(pos.id))):
-                log.critical("Position already close pending \npos:%s"%pos)
+                log.critical("Position already close pending \npos:%s \n close_pending_positions: %s"%(str(pos), str(self.close_pending_positions)))
                 raise ("Duplicate close pending position")            
             
             if self.market.tradeConfig["take_profit_enabled"]:
@@ -193,7 +193,7 @@ class OrderBook():
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
         pos = self.close_pending_positions.get(uuid.UUID(sell_order.id))
         if pos:
-            log.debug (": sell order(%s) already in pending_list. do nothing"%(sell_order.id))
+            log.info (": sell order(%s) already in pending_list. do nothing"%(sell_order.id))
             return pos
         #find a close_pending pos without sell attached.
         k = sell_order._pos_id
@@ -249,7 +249,8 @@ class OrderBook():
             self.closed_positions.append(position)
                 
                 #update position
-            self.positionsDb.db_save_position(position)            
+            self.positionsDb.db_save_position(position)
+            log.info ("position closed pos: %s"%(str(position)))
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id))
 #         log.debug ("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)\n pos:%s"%(
