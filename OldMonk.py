@@ -387,6 +387,16 @@ def load_config (cfg_file):
                     sims.gaDecisionConfig ['model_config'] = {"strategy": ex_v["strategy"]} 
                     sims.gaDecisionConfig ['model_type'] = 'simple'
                     for t_k, t_v in ex_v.get("trading", {}).iteritems():
+                        if t_k == 'currency':
+                            sims.gaTradingConfig ['currency'] = t_v
+                        if t_k == 'fund_max_liquidity':
+                            sims.gaTradingConfig ['fund_max_liquidity'] = t_v
+                        if t_k == 'fund_max_per_buy_value':
+                            sims.gaTradingConfig ['fund_max_per_buy_value'] = t_v
+                        if t_k == 'asset_max_per_trade_size':
+                            sims.gaTradingConfig ['asset_max_per_trade_size'] = t_v
+                        if t_k == 'asset_min_per_trade_size':
+                            sims.gaTradingConfig ['asset_min_per_trade_size'] = t_v                        
                         if t_k == 'stop_loss':
                             for ex_tk, ex_tv in t_v.iteritems():
                                 if ex_tk == 'enabled':

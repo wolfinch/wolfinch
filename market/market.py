@@ -267,7 +267,9 @@ class Market:
         self.fund.set_hold_value(Decimal(0.0))
         self.fund.set_fund_liquidity(tcfg['fund_max_liquidity'])
         self.fund.set_max_per_buy_fund_value(tcfg['fund_max_per_buy_value'])
-        self.fund.set_fee(tcfg['fee']['maker'], tcfg['fee']['taker'])
+        fee = tcfg.get('fee')
+        if fee:
+            self.fund.set_fee(fee['maker'], fee['taker'])
         self.asset.set_initial_size(Decimal(0.0))
         self.asset.set_hold_size( Decimal(0.0))
         self.asset.set_max_per_trade_size(tcfg['asset_max_per_trade_size'])

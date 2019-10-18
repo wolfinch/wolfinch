@@ -142,7 +142,7 @@ TradingConfig = {
 GaTradingConfig = {}
 
 def police_tradingcfg_gen (t_cfg):
-    for param_key, param_val in GaTradingConfig.iterkeys():
+    for param_key, param_val in GaTradingConfig.iteritems():
         t_cfg [param_key] = param_val
     
     return t_cfg

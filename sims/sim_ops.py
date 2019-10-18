@@ -6,18 +6,15 @@
 
 # import requests
 # import json
-import uuid
-import time
-from datetime import datetime
+# import uuid
+# import time
 # from dateutil.tz import tzlocal
-from decimal import Decimal
-import copy
 import sys
 
 from utils import getLogger
 from market import feed_deQ, feed_Q_process_msg, get_market_list, flush_all_stats, get_all_market_stats, \
-                             market_init, market_setup, Order
-import db
+                             market_init, market_setup
+# import db
 import exchanges
 import sim_exchange
 from genetic import ga_main
@@ -93,7 +90,7 @@ def sim_ga_init (decisionConfig, tradingConfig=None):
     # TODO: FIXME: NOTE: add GA for trading config too
     if tradingConfig == None:
         tradingConfig = gaTradingConfig
-        
+         
     #init 
     #1. Retrieve states back from Db
 #     db.init_order_db(Order)
@@ -101,8 +98,12 @@ def sim_ga_init (decisionConfig, tradingConfig=None):
     #2. Init Exchanges
     exchanges.init_exchanges(gConfig)
     
+    # cfg hook, mock from Oldmonk.py
+    def get_prod_cfg (exch_name, prod_name):
+        return tradingConfig, decisionConfig
+    
     #3. Init markets
-    market_init (exchanges.exchange_list, decisionConfig, tradingConfig)
+    market_init (exchanges.exchange_list, get_prod_cfg)
     
     #4. Setup markets
     market_setup()
