@@ -53,7 +53,7 @@ genetic_optimizer:
    enabled : true
    N_POP : 1000
    N_GEN : 100
-   N_MP : 1
+   N_MP : 30
    config   :
       strategy : EMA_DEV
       trading : {
