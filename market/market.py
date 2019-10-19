@@ -255,7 +255,8 @@ class Market:
         tcfg, dcfg = exchange.get_product_config (self.exchange_name, self.product_id)
         if tcfg == None or dcfg == None:
             log.critical ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
-            raise Exception ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
+#             raise Exception ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
+            return None
         else:
             log.info ("tcfg: %s dcfg: %s"%(tcfg, dcfg))
             
