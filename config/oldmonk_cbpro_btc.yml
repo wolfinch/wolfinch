@@ -1,0 +1,61 @@
+##################################################
+# OldMonk Global config file
+##################################################
+
+
+# Define the interested exchanges here. 
+# One primary exchange for trading and as many others in spectator mode
+# data from exchanges in spectator mode will be considered for trading decision
+exchanges:
+#   - 'binance': 
+#      role: 'secondary'
+#      config: 'config/binance.yml'
+   - 'cbpro' : 
+      role: 'primary'
+      config: 'config/cbpro.yml'
+      products:
+         - 'BTC-USD':
+            fund_max_liquidity : 900 #$$               
+            fund_max_per_buy_value : 30 #$100 max per buy
+            asset_max_per_trade_size: 1 #per sell asset size max
+            asset_min_per_trade_size: 0.0001 #Min asset size to trade with (may come from exch limits or asset limits)           
+            stop_loss:
+               enabled: true
+               smart: true #track price movement and update stop_loss
+               rate : 6 #-3%
+            take_profit:
+               enabled: true
+               rate: 10 # 10percent
+            decision:
+               model    : simple
+               config   :
+                  strategy: EMA_DEV
+                  params : {'ema_sell_s': 85, 'timeout_sell': 14, 'rsi': 24, 'treshold_pct_buy_l': 1.0, 'ema_buy_s': 185, 'timeout_buy': 14, 'period': 165, 'treshold_pct_sell_s': 0.92, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.35, 'treshold_pct_buy_s': 0.39, 'ema_sell_l': 25}
+      # products - end
+      order_type    : market
+      fee     : 
+         maker : 0.15 #make fee %
+         taker : 0.25 #taker fee %
+   #cbpro - end
+# exchanges - end
+
+backfill:
+   enabled  : true  
+   period   : 30  #in Days
+   interval : 300  #300s == 5m 
+
+simulator:
+   enabled : false
+
+genetic_optimizer: 
+   enabled : false
+   N_POP : 1000
+   N_GEN : 100
+   N_MP : 10
+   strategy : EMA_DEV
+      
+ui:
+   enabled : false
+   port : 8080
+   
+#EOF
