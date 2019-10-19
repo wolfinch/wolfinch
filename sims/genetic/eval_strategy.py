@@ -22,7 +22,7 @@ from utils import getLogger
 
 __name__ = "EA-EVAL"
 log = getLogger (__name__)
-log.setLevel(log.INFO)
+log.setLevel(log.DEBUG)
 
 
 g_eval_hook = None
@@ -31,9 +31,9 @@ g_strategy_name, g_strategy_class = None, None
 def get_strategy_vars ():
     return g_strategy_class.config
     
-def config_ga_strategy(ga_cfg):
+def config_ga_strategy(strat_name):
     global g_strategy_name, g_strategy_class
-    g_strategy_name = ga_cfg['model_config']['strategy']
+    g_strategy_name = strat_name #ga_cfg['model_config']['strategy']
     log.info ("configuring GA for strategy - %s"%(g_strategy_name))
     g_strategy_class = strategy.get_strategy_by_name(g_strategy_name)
     

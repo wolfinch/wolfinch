@@ -12,11 +12,10 @@ from datetime import datetime
 # from dateutil.tz import tzlocal
 import copy
 from decimal import Decimal
-
 from utils import getLogger
 import exchanges
-from market import feed_enQ, TradeRequest, Order, Market
 
+from market import feed_enQ, TradeRequest, Order, Market
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
@@ -120,12 +119,11 @@ class SIM_EXCH (exchanges.Exchange):
         self.timeOffset = 0
 
 #         global products
-        prod = {"id": "BTC-USD", "display_name": "BTC/USD"}
+        prod = {"id": "BTC-USD", "display_name": "BTC/USD", "fund_type": "USD",  "asset_type": "BTC"}
         self.products.append(prod)
         
-    def market_init (self, product):
+    def market_init (self, market):
         #Setup the initial params
-        market = Market(product=product, exchange=self)
                 
         #Setup the initial params
         self._set_initial_acc_values (market)
@@ -133,6 +131,7 @@ class SIM_EXCH (exchanges.Exchange):
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
         market.candle_interval = self.candle_interval = 300
+        self.backtesting_idx = 0
         
         #set whether primary or secondary
         market.primary = self.primary
@@ -245,14 +244,16 @@ class SIM_EXCH (exchanges.Exchange):
         
     def _set_initial_acc_values (self, market):
         #Setup the initial params
-        market.fund.set_fee(0.25, 0.15)            
+        market.fund.set_fee(0.5, 0.5)            
         market.fund.set_initial_value(Decimal(2000))
-    #     market.fund.set_hold_value(Decimal(100))
-        market.fund.set_fund_liquidity_percent(90)       #### Limit the fund to 90%
-        market.fund.set_max_per_buy_fund_value(90)
-        market.asset.set_initial_size(Decimal(1))
-        market.asset.set_hold_size( Decimal(0.1))
         market.asset.set_max_per_trade_size(Decimal(0.01))
+        market.fund.set_hold_value(Decimal(0.0))
+        market.fund.set_fund_liquidity(1000)
+        market.fund.set_max_per_buy_fund_value(30)
+        market.asset.set_initial_size(Decimal(0.0))
+        market.asset.set_hold_size( Decimal(0.0))
+        market.asset.set_min_per_trade_size(0.0001)        
+            
             
     def close (self):
         log.debug("Closing SIM exchange...")

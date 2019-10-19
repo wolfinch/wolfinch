@@ -256,25 +256,30 @@ class Market:
         if tcfg == None or dcfg == None:
             log.critical ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
             raise Exception ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
-        
+        else:
+            log.critical ("tcfg: %s dcfg: %s"%(tcfg, dcfg))
+            
         self.tradeConfig = tcfg
         self.decisionConfig = dcfg  
-        decision.decision_config (self.exchange_name, self.product_id, self.decisionConfig['model_type'], self.decisionConfig['model_config'])      
+        decision.decision_config (self.exchange_name, self.product_id, self.decisionConfig['model_type'], self.decisionConfig['model_config'])    
         self.decision = None  #will setup later
         
-        #initialize params
-        self.fund.set_initial_value(Decimal(0.0))
-        self.fund.set_hold_value(Decimal(0.0))
-        self.fund.set_fund_liquidity(tcfg['fund_max_liquidity'])
-        self.fund.set_max_per_buy_fund_value(tcfg['fund_max_per_buy_value'])
-        fee = tcfg.get('fee')
-        if fee:
-            self.fund.set_fee(fee['maker'], fee['taker'])
-        self.asset.set_initial_size(Decimal(0.0))
-        self.asset.set_hold_size( Decimal(0.0))
-        self.asset.set_max_per_trade_size(tcfg['asset_max_per_trade_size'])
-        self.asset.set_min_per_trade_size(tcfg['asset_min_per_trade_size'])        
-        
+        if sims.simulator_on == True:
+            log.debug ("init params from sims-exch")
+        else:
+            #initialize params
+            self.fund.set_initial_value(Decimal(0.0))
+            self.fund.set_hold_value(Decimal(0.0))
+            self.fund.set_fund_liquidity(tcfg['fund_max_liquidity'])
+            self.fund.set_max_per_buy_fund_value(tcfg['fund_max_per_buy_value'])
+            fee = tcfg.get('fee')
+            if fee:
+                self.fund.set_fee(fee['maker'], fee['taker'])
+            self.asset.set_initial_size(Decimal(0.0))
+            self.asset.set_hold_size( Decimal(0.0))
+            self.asset.set_max_per_trade_size(tcfg['asset_max_per_trade_size'])
+            self.asset.set_min_per_trade_size(tcfg['asset_min_per_trade_size'])        
+            
         #order type
         self.order_type = tcfg.get('order_type', "market")
         
@@ -296,7 +301,7 @@ class Market:
         self.new_candle = False
         self.candle_interval = 0
         self.O = self.H = self.L = self.C = self.V = 0
-                
+        
         self._pending_order_track_time = 0
         self._db_commit_time = 0
             
@@ -1027,12 +1032,12 @@ class Market:
         '''
         
         if sims.backtesting_on == True:
-            if self.tradeConfig["stop_loss_smart_rate"] == True:
+            if self.tradeConfig.get("stop_loss_smart_rate", False) == True:
                 self.order_book.smart_stop_loss_update_positions(self.get_market_rate(), self.tradeConfig["stop_loss_rate"])            
             return        
         
         #1.take profit handling, this is aggressive take profit, not waiting for candle period
-        if self.tradeConfig["take_profit_enabled"]:           
+        if self.tradeConfig.get("take_profit_enabled", False):           
             self._handle_take_profit ()
                 
         now = time.time()

@@ -49,7 +49,7 @@ class Decision ():
         pass
     
 # setup decision related configs and states based on global_config
-def decision_config (exchange_name, product_id, decision_type="", config=""):
+def decision_config (exchange_name, product_id, decision_type, config):
 #     global g_decision_type, g_decision_config, 
     global g_strategy_list
     

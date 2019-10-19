@@ -1,8 +1,20 @@
-# '''
-#  OldMonk Auto trading Bot
-#  Desc:  exchange interactions Simulation
-#  (c) Joshith
-# '''
+#! /usr/bin/env python
+#
+# OldMonk Auto trading Bot
+# Desc: Main File implements Bot
+# Copyright 2017-2019, Joshith Rayaroth Koderi. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # import requests
 # import json
@@ -84,23 +96,21 @@ def do_backtesting (simulator_on=False):
 def show_stats ():
     flush_all_stats()
 
-def sim_ga_init (decisionConfig, tradingConfig=None):
-    global gConfig, gaTradingConfig
+def sim_ga_init (decisionConfig, tradingConfig):
+    global gConfig #, gaTradingConfig
     
     # TODO: FIXME: NOTE: add GA for trading config too
-    if tradingConfig == None:
-        tradingConfig = gaTradingConfig
+#     if tradingConfig == None:
+#         tradingConfig = gaTradingConfig
          
     #init 
     #1. Retrieve states back from Db
 #     db.init_order_db(Order)
+    def get_prod_cfg (exch_name, prod_name):
+        return tradingConfig, decisionConfig
     
     #2. Init Exchanges
     exchanges.init_exchanges(gConfig)
-    
-    # cfg hook, mock from Oldmonk.py
-    def get_prod_cfg (exch_name, prod_name):
-        return tradingConfig, decisionConfig
     
     #3. Init markets
     market_init (exchanges.exchange_list, get_prod_cfg)
@@ -123,10 +133,13 @@ def market_backtesting_run (sim_on=False):
     
 genetic_optimizer_on = False
 ga_restart = False
-gaDecisionConfig = {}
-gaTradingConfig = {}
+# gaDecisionConfig = {}
+# gaTradingConfig = {}
 gConfig = None
 ga_config = {"GA_NPOP":0, "GA_NGEN": 0, "GA_NMP": 0}
+
+get_prod_cfg_fn = None
+
 def market_backtesting_ga_hook (decisionConfig, tradingConfig=None):
     """
     market backtesting hook for ga
@@ -136,9 +149,10 @@ def market_backtesting_ga_hook (decisionConfig, tradingConfig=None):
     simulator_on = True
     backtesting_on = True
     
+    log.debug("starting backtesting ")    
+    
     sim_ga_init (decisionConfig, tradingConfig)
     
-    log.debug("starting backtesting")    
     do_backtesting(simulator_on)
     log.info ("backtesting complete. ")
     
@@ -149,14 +163,16 @@ def market_backtesting_ga_hook (decisionConfig, tradingConfig=None):
     
     return stats
     
-def ga_sim_main (gCfg, decisionConfig, tradingConfig):    
-    global gConfig, gaDecisionConfig, gaTradingConfig, ga_restart
+def ga_sim_main (gCfg, get_prod_cfg_hook):
+    global gConfig, ga_restart, get_prod_cfg_fn
     
-    gConfig, gaDecisionConfig, gaTradingConfig = gCfg, decisionConfig, tradingConfig
+    get_prod_cfg_fn = get_prod_cfg_hook
+    
+    gConfig = gCfg
     
     try:
         # start the GA algorithm here:
-        ga_main (ga_config, gaDecisionConfig, tradingConfig, ga_restart, evalfn = market_backtesting_ga_hook)
+        ga_main (ga_config, ga_restart, evalfn = market_backtesting_ga_hook)
     except:
         print ("Unexpected error", sys.exc_info())
         raise        

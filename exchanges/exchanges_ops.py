@@ -18,7 +18,6 @@ exchange_list = []
 def init_exchanges (OldMonkConfig):
     global exchange_list
     
-
     #init exchanges 
     for exch_cls in all_exchanges:
         log.debug ("Initializing exchange (%s)"%(exch_cls.name))
@@ -36,6 +35,7 @@ def init_exchanges (OldMonkConfig):
                             if (sims.exch_obj != None):
                                 exchange_list.append(sims.exch_obj)
                                 #Market init
+                                log.info ("Backtesting_on! skip real exch init!")                                
                                 return
                             else:
                                 log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
