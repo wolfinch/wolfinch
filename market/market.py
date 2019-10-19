@@ -257,7 +257,7 @@ class Market:
             log.critical ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
             raise Exception ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
         else:
-            log.critical ("tcfg: %s dcfg: %s"%(tcfg, dcfg))
+            log.info ("tcfg: %s dcfg: %s"%(tcfg, dcfg))
             
         self.tradeConfig = tcfg
         self.decisionConfig = dcfg  
@@ -1215,7 +1215,9 @@ def market_init (exchange_list, get_product_config_hook):
             for product in products:
                 #init new Market for product
                 market = Market(product=product, exchange=exchange)    
-
+                if (market == None):
+                    log.critical ("Unable to get Market for exchange: %s product: %s"%(exchange.name, product['id']))
+                    continue
                 market = exchange.market_init (market)
                 if (market == None):
                     log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
@@ -1237,6 +1239,11 @@ def market_setup (restart=False):
     This is where we want to keep all the run stats
     '''
     global OldMonk_market_list
+    
+    if not len (OldMonk_market_list):
+        log.critical("No Markets configured. Nothing to do!")
+        exit (0)
+    
     for market in OldMonk_market_list:
         status = market.market_setup (restart)
         if (status == False):
