@@ -243,16 +243,16 @@ class SIM_EXCH (exchanges.Exchange):
         return norm_order
         
     def _set_initial_acc_values (self, market):
-        #Setup the initial params
-        market.fund.set_fee(0.5, 0.5)            
-        market.fund.set_initial_value(Decimal(2000))
-        market.asset.set_max_per_trade_size(Decimal(0.01))
+        #Setup the initial params, usually comes from real exch acc
+#         market.fund.set_fee(0.5, 0.5)            
+        market.fund.set_initial_value(Decimal(20000))
+#         market.asset.set_max_per_trade_size(Decimal(0.01))
         market.fund.set_hold_value(Decimal(0.0))
-        market.fund.set_fund_liquidity(1000)
-        market.fund.set_max_per_buy_fund_value(30)
+#         market.fund.set_fund_liquidity(1000)
+#         market.fund.set_max_per_buy_fund_value(30)
         market.asset.set_initial_size(Decimal(0.0))
         market.asset.set_hold_size( Decimal(0.0))
-        market.asset.set_min_per_trade_size(0.0001)        
+#         market.asset.set_min_per_trade_size(0.0001)        
             
             
     def close (self):

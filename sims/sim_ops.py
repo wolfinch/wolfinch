@@ -107,6 +107,9 @@ def sim_ga_init (decisionConfig, tradingConfig):
     #1. Retrieve states back from Db
 #     db.init_order_db(Order)
     def get_prod_cfg (exch_name, prod_name):
+        tcfg, _ = get_prod_cfg_fn (exch_name, prod_name)
+        tradingConfig.update(tcfg)
+        
         return tradingConfig, decisionConfig
     
     #2. Init Exchanges

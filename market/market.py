@@ -264,21 +264,18 @@ class Market:
         decision.decision_config (self.exchange_name, self.product_id, self.decisionConfig['model_type'], self.decisionConfig['model_config'])    
         self.decision = None  #will setup later
         
-        if sims.simulator_on == True:
-            log.debug ("init params from sims-exch")
-        else:
-            #initialize params
-            self.fund.set_initial_value(Decimal(0.0))
-            self.fund.set_hold_value(Decimal(0.0))
-            self.fund.set_fund_liquidity(tcfg['fund_max_liquidity'])
-            self.fund.set_max_per_buy_fund_value(tcfg['fund_max_per_buy_value'])
-            fee = tcfg.get('fee')
-            if fee:
-                self.fund.set_fee(fee['maker'], fee['taker'])
-            self.asset.set_initial_size(Decimal(0.0))
-            self.asset.set_hold_size( Decimal(0.0))
-            self.asset.set_max_per_trade_size(tcfg['asset_max_per_trade_size'])
-            self.asset.set_min_per_trade_size(tcfg['asset_min_per_trade_size'])        
+        #initialize params
+        self.fund.set_initial_value(Decimal(0.0))
+        self.fund.set_hold_value(Decimal(0.0))
+        self.fund.set_fund_liquidity(tcfg['fund_max_liquidity'])
+        self.fund.set_max_per_buy_fund_value(tcfg['fund_max_per_buy_value'])
+        fee = tcfg.get('fee')
+        if fee:
+            self.fund.set_fee(fee['maker'], fee['taker'])
+        self.asset.set_initial_size(Decimal(0.0))
+        self.asset.set_hold_size( Decimal(0.0))
+        self.asset.set_max_per_trade_size(tcfg['asset_max_per_trade_size'])
+        self.asset.set_min_per_trade_size(tcfg['asset_min_per_trade_size'])        
             
         #order type
         self.order_type = tcfg.get('order_type', "market")

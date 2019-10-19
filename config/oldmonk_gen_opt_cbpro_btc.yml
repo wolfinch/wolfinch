@@ -15,24 +15,18 @@ exchanges:
       config: 'config/cbpro.yml'
       products:
          - 'BTC-USD':
-            fund_max_liquidity : 900 #$$               
+            fund_max_liquidity : 1000 #$$               
             fund_max_per_buy_value : 30 #$100 max per buy
             asset_max_per_trade_size: 1 #per sell asset size max
-            asset_min_per_trade_size: 0.0001 #Min asset size to trade with (may come from exch limits or asset limits)
-            decision:
-               model    : simple
-               config   :
-                  strategy: EMA_DEV
-                  params : {}            
+            asset_min_per_trade_size: 0.0001 #Min asset size to trade with (may come from exch limits or asset limits)          
       # products - end
       order_type    : market
       fee     : 
-         maker : 0.15 #make fee %
-         taker : 0.25 #taker fee %
+         maker : 0.5 #make fee %
+         taker : 0.5 #taker fee %
    #cbpro - end
 # exchanges - end
 
-# TODO: exchanges specific config should follow a common timing, should be driven by global config
 backfill:
    enabled  : true  
    period   : 30  #in Days
