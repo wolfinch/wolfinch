@@ -10,7 +10,7 @@ from decimal import Decimal
 
 Db = None #db.init_db()
 log = getLogger ('ORDER')
-log.setLevel (log.DEBUG)
+log.setLevel (log.CRITICAL)
 
 # Base = declarative_base()
 
