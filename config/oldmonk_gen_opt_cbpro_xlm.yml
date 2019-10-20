@@ -12,7 +12,7 @@ exchanges:
 #      config: 'config/binance.yml'
    - 'cbpro' : 
       role: 'primary'
-      config: 'config/cbpro_xlm.yml'
+      config: 'config/cbpro.yml'
       products:
          - 'XLM-USD':
             fund_max_liquidity : 1000 #$$               
