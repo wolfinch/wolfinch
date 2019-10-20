@@ -21,7 +21,7 @@ from readconf import readConf
 from logger import getLogger
 import sims, ui
 
-log = getLogger ('OldMonk')
+log = getLogger ('confmgr')
 log.setLevel(log.INFO)
 # Global Config 
 OldMonkConfig = None
@@ -130,7 +130,7 @@ def get_product_config (exch_name, prod_name):
                                 log.debug ("tcfg: %s dcfg: %s" % (tcfg, dcfg))
                                 return tcfg, dcfg
                             
-    log.error ("unable to get config")
+    log.error ("unable to get config for %s: %s"%(exch_name, prod_name))
     return None, None    
     
     

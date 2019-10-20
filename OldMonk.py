@@ -282,7 +282,10 @@ if __name__ == '__main__':
         
         if (sims.backtesting_on):
             sims.market_backtesting_run (sims.simulator_on)
-            raise SystemExit
+            if ui.integrated_ui:
+                oldmonk_main()
+            else:
+                raise SystemExit
         else:
             log.debug ("Starting Main forever loop")
             oldmonk_main ()

@@ -255,8 +255,7 @@ class Market:
         tcfg, dcfg = exchange.get_product_config (self.exchange_name, self.product_id)
         if tcfg == None or dcfg == None:
             log.critical ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
-#             raise Exception ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
-            return None
+            raise Exception ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
         else:
             log.info ("tcfg: %s dcfg: %s"%(tcfg, dcfg))
             
@@ -1070,12 +1069,13 @@ class Market:
         self.cur_candle_time = candle.time
         self.cur_candle_vol = candle.volume
         
-        
+        cur_rate = self.get_market_rate()
         # bit of conservative approach for smart-SL. update SL only on candle time
         if self.tradeConfig["stop_loss_smart_rate"] == True:
-            self.order_book.smart_stop_loss_update_positions(self.get_market_rate(), self.tradeConfig["stop_loss_rate"])
+            self.order_book.smart_stop_loss_update_positions(cur_rate, self.tradeConfig["stop_loss_rate"])
                     
-        self.O = self.V = self.H = self.L = self.C = 0
+        self.O = self.H = self.L = self.C = cur_rate
+        self.V = 0
 
         #save to db
         self.candlesDb.db_save_candle(candle)
@@ -1215,22 +1215,23 @@ def market_init (exchange_list, get_product_config_hook):
         if products:
             for product in products:
                 #init new Market for product
-                market = Market(product=product, exchange=exchange)    
-                if (market == None):
+                try:
+                    market = Market(product=product, exchange=exchange)
+                except Exception:
                     log.critical ("Unable to get Market for exchange: %s product: %s"%(exchange.name, product['id']))
-                    continue
-                market = exchange.market_init (market)
-                if (market == None):
-                    log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
                 else:
-#                     tradingConfig, decisionConfig = get_product_config_hook(exchange.name, product['id'])
-#                     if tradingConfig == None or decisionConfig == None:
-#                         log.critical ("Invalid product config")
-#                         raise Exception ("Invalid product config")
-#                     market.tradeConfig = tradingConfig
-#                     market.decisionConfig = decisionConfig
-                    log.info ("market init success for exchange (%s) product: %s"%(exchange.name, product['id']))
-                    OldMonk_market_list.append(market)
+                    market = exchange.market_init (market)
+                    if (market == None):
+                        log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
+                    else:
+    #                     tradingConfig, decisionConfig = get_product_config_hook(exchange.name, product['id'])
+    #                     if tradingConfig == None or decisionConfig == None:
+    #                         log.critical ("Invalid product config")
+    #                         raise Exception ("Invalid product config")
+    #                     market.tradeConfig = tradingConfig
+    #                     market.decisionConfig = decisionConfig
+                        log.info ("market init success for exchange (%s) product: %s"%(exchange.name, product['id']))
+                        OldMonk_market_list.append(market)
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))
                  

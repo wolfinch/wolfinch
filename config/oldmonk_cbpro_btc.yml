@@ -45,7 +45,8 @@ backfill:
    interval : 300  #300s == 5m 
 
 simulator:
-   enabled : false
+   enabled : true
+   backtesting : true
 
 genetic_optimizer: 
    enabled : false
@@ -55,7 +56,7 @@ genetic_optimizer:
    strategy : EMA_DEV
       
 ui:
-   enabled : false
+   enabled : true
    port : 8080
    
 #EOF

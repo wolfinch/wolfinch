@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from utils import getLogger
-from db import init_db
+from db import init_db, is_db_enabled
 from sqlalchemy import *
 from sqlalchemy.orm import mapper 
 import sims
@@ -35,7 +35,7 @@ class PositionDb(object):
         self.db_enable = False        
         self.PositionCls = positionCls
         
-        if sims.simulator_on:
+        if not is_db_enabled():
             # skip db init
             log.info ("sim on, skip db init")
 #             self.db_enable = True            

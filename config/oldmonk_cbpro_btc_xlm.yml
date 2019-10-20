@@ -58,7 +58,7 @@ exchanges:
 
 backfill:
    enabled  : true  
-   period   : 3  #in Days
+   period   : 30  #in Days
    interval : 300  #300s == 5m 
 
 simulator:
@@ -72,7 +72,7 @@ genetic_optimizer:
    strategy : EMA_DEV
       
 ui:
-   enabled : true
+   enabled : false
    port : 8080
    
 #EOF

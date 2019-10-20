@@ -15,7 +15,7 @@ from decimal import Decimal
 from utils import getLogger
 import exchanges
 
-from market import feed_enQ, TradeRequest, Order, Market
+from market import feed_enQ, TradeRequest, Order
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
@@ -36,6 +36,9 @@ Description: Exchange Simulation for papertrade/backtesting.
 open_orders = {}
 traded_orders = {}       # TODO: FIXME: jork:  use the order_book implementation when implemented
 
+# supported products list
+g_prod_list = [{"id": "BTC-USD", "display_name": "BTC/USD", "fund_type": "USD",  "asset_type": "BTC"},
+                {"id": "XLM-USD", "display_name": "XLM/USD", "fund_type": "USD",  "asset_type": "XLM"}]
 order_struct = {u'created_at': u'2018-01-10T09:49:02.639681Z',
              u'executed_value': u'0.0000000000000000',
              u'fill_fees': u'0.0000000000000000',
@@ -119,8 +122,7 @@ class SIM_EXCH (exchanges.Exchange):
         self.timeOffset = 0
 
 #         global products
-        prod = {"id": "BTC-USD", "display_name": "BTC/USD", "fund_type": "USD",  "asset_type": "BTC"}
-        self.products.append(prod)
+        self.products = g_prod_list
         
     def market_init (self, market):
         #Setup the initial params

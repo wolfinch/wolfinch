@@ -16,8 +16,7 @@
 # limitations under the License.
 
 from utils import getLogger
-from db import init_db
-import sims
+from db import init_db, is_db_enabled
 from sqlalchemy import *
 from sqlalchemy.orm import mapper 
 # import sys
@@ -40,7 +39,7 @@ class OrderDb(object):
         self.db_enable = False
         self.ORDER_DB = {}
         
-        if sims.simulator_on:
+        if not is_db_enabled():
             # skip db init
             log.info ("sim on, skip db init")
 #             self.db_enable = True
