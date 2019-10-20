@@ -1,0 +1,49 @@
+##################################################
+# OldMonk Global config file
+##################################################
+
+
+# Define the interested exchanges here. 
+# One primary exchange for trading and as many others in spectator mode
+# data from exchanges in spectator mode will be considered for trading decision
+exchanges:
+#   - 'binance': 
+#      role: 'secondary'
+#      config: 'config/binance.yml'
+   - 'cbpro' : 
+      role: 'primary'
+      config: 'config/cbpro.yml'
+      products:
+         - 'XLM-USD':
+            fund_max_liquidity : 1000 #$$               
+            fund_max_per_buy_value : 20 #$100 max per buy
+            asset_max_per_trade_size: 100 #per sell asset size max
+            asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)
+     # products - end
+      order_type    : market
+      fee     : 
+         maker : 0.5 #make fee %
+         taker : 0.5 #taker fee %
+   #cbpro - end
+# exchanges - end
+
+backfill:
+   enabled  : true  
+   period   : 30  #in Days
+   interval : 300  #300s == 5m 
+
+simulator:
+   enabled : true
+   backtesting : true
+   
+genetic_optimizer: 
+   enabled : true
+   N_POP : 1000
+   N_GEN : 100
+   N_MP : 32
+   strategy : EMA_DEV
+ui:
+   enabled : false
+   port : 8080
+   
+#EOF
