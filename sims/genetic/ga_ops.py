@@ -114,9 +114,14 @@ def createMutantTradecfg(indT, indpb):
     if (indT["stop_loss_enabled"] == False):
         indT["stop_loss_smart_rate"] = False
         indT["stop_loss_rate"] = 0
+    elif indT["stop_loss_rate"] == 0:
+        indT["stop_loss_enabled"] = False
+        indT["stop_loss_smart_rate"] = False
         
     if (indT["take_profit_enabled"] == False):
         indT["take_profit_rate"] = 0
+    elif indT["take_profit_rate"] == 0:
+        indT["take_profit_enabled"] = False
 
     individual = indT
     log.debug ("mutant: %s"%(indT))    
