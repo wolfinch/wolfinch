@@ -23,7 +23,6 @@
 import json
 import sys
 import os
-import uuid
 import Queue
 # import pprint
 from itertools import product
@@ -382,7 +381,7 @@ class Market:
                                    Fund=round(Decimal(0), 8),                                   
                                    Type="market",
                                    Price=round(Decimal(0), 8),
-                                   Stop=0, id=uuid.UUID(pos.id)))            
+                                   Stop=0, id=pos.id))            
             
             self._execute_market_trade(trade_req_l)
                 
@@ -686,7 +685,7 @@ class Market:
                                Fund=round(Decimal(0), 8),                                   
                                Type=self.order_type,
                                Price=round(Decimal(0), 8),
-                               Stop=0, id=uuid.UUID(pos.id)))
+                               Stop=0, id=pos.id))
         
         #3. do regular trade req based on signal
         abs_sig = abs(signal)  
@@ -733,7 +732,7 @@ class Market:
                                        Fund=round(Decimal(0), 8),                                   
                                        Type="market",
                                        Price=round(Decimal(0), 8),
-                                       Stop=0, id=uuid.UUID(position.id)))
+                                       Stop=0, id=position.id))
                 else:
                     log.error ("Unable to generate SELL request for signal (%d)."
                      "Unable to get open positions to sell"%(signal))
@@ -1167,7 +1166,7 @@ class Market:
                                    Fund=round(Decimal(0), 8),                                   
                                    Type="market",
                                    Price=round(Decimal(0), 8),
-                                   Stop=0, id=uuid.UUID(position.buy.id)))
+                                   Stop=0, id=position.id))
             else:                              
                 break
         self._execute_market_trade(trade_req_l)

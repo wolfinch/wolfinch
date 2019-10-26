@@ -18,7 +18,6 @@
 
 # import requests
 # import json
-# import uuid
 # import time
 # from dateutil.tz import tzlocal
 import sys

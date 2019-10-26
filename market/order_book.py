@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import uuid
 import sys
 # import json
 from bintrees import RBTree
@@ -173,7 +172,7 @@ class OrderBook():
             else:
                 log.info ("Found closable position from _stop_loss_ pool. pos: %s"%(str(pos)))                                        
                 self.open_positions.remove(pos)
-            if (self.close_pending_positions.get(uuid.UUID(pos.id))):
+            if (self.close_pending_positions.get(pos.id)):
                 log.critical("""Position already close pending \npos:%s
                      close_pending_positions: %s
                      open_positions: %s"""%(str(pos), str(self.close_pending_positions), str(self.open_positions)))                
@@ -182,7 +181,7 @@ class OrderBook():
             if self.market.tradeConfig["take_profit_enabled"]:
                 self.pop_take_profit_position(pos)
                   
-            self.close_pending_positions[uuid.UUID(pos.id)] = pos
+            self.close_pending_positions[pos.id] = pos
 #         log.debug ("\n\n\n***get_closable_position: open(%d) closed(%d) close_pend(%d) \n pos: %s"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), pos))
         return pos
@@ -193,7 +192,7 @@ class OrderBook():
         log.debug (" order:%s"%(sell_order.id))
 #         log.debug ("\n\n\n***: open(%d) closed(%d) close_pend(%d)\n"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
-        pos = self.close_pending_positions.get(uuid.UUID(sell_order.id))
+        pos = self.close_pending_positions.get(sell_order.id)
         if pos:
             log.info (": sell order(%s) already in pending_list. do nothing"%(sell_order.id))
             return pos
@@ -210,7 +209,7 @@ class OrderBook():
                 pos.add_sell(sell_order)
                 pos.update_state("close_pending")                
                 del(self.close_pending_positions[k])
-                self.close_pending_positions[uuid.UUID(sell_order.id)] = pos
+                self.close_pending_positions[sell_order.id] = pos
 
 #                 log.debug ("\n\n\n***: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))                  
                 return pos
@@ -225,7 +224,7 @@ class OrderBook():
         log.debug ("close_position_failed order: %s"%(sell_order.id))
 #         log.debug ("\n\n\n***close_position_failed: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
            
-        id = uuid.UUID(sell_order.id)
+        id = sell_order.id
         position = self.close_pending_positions.get(id)
         if position:
             position.sell = None
@@ -239,7 +238,7 @@ class OrderBook():
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id)) 
     def close_position (self, sell_order):
         log.debug ("close_position order: %s"%(sell_order.id))
-        id = uuid.UUID(sell_order.id)
+        id = sell_order.id
         position = self.close_pending_positions.pop(id, None)
         if position:
             position.add_sell (sell_order)
@@ -337,12 +336,12 @@ class OrderBook():
             sl_pos_list += pos_list
             for pos in pos_list:
                 self.open_positions.remove(pos)                
-                if (self.close_pending_positions.get(uuid.UUID(pos.id))):
+                if (self.close_pending_positions.get(pos.id)):
                     log.critical("""Position already close pending \npos:%s
                      close_pending_positions: %s
                      open_positions: %s"""%(str(pos), str(self.close_pending_positions), str(self.open_positions)))
                     raise Exception("Duplicate close pending position")               
-                self.close_pending_positions[uuid.UUID(pos.id)] = pos
+                self.close_pending_positions[pos.id] = pos
                 # remove pos from take profit points
                 self.pop_take_profit_position(pos)
         self.market.num_stop_loss_hit += len(sl_pos_list)
@@ -362,12 +361,12 @@ class OrderBook():
             tp_pos_list += pos_list
             for pos in pos_list:
                 self.open_positions.remove(pos)                
-                if (self.close_pending_positions.get(uuid.UUID(pos.id))):
+                if (self.close_pending_positions.get(pos.id)):
                     log.critical("""Position already close pending \npos:%s
                      close_pending_positions: %s
                      open_positions: %s"""%(str(pos), str(self.close_pending_positions), str(self.open_positions)))
                     raise Exception("Duplicate close pending position")              
-                self.close_pending_positions[uuid.UUID(pos.id)] = pos
+                self.close_pending_positions[pos.id] = pos
                 # remove pos from take profit points
                 self.pop_stop_loss_position(pos)                
                 
@@ -413,7 +412,7 @@ class OrderBook():
         return pending_order_list
         
     def add_or_update_pending_buy_order(self, order):
-        id = uuid.UUID(order.id)
+        id = order.id
         if not self.pending_buy_orders_db.get(id):
             self.total_open_order_count += 1
             self.total_order_count += 1 
@@ -422,8 +421,8 @@ class OrderBook():
         return self.pending_buy_orders_db.get (order_id)
     def add_traded_buy_order(self, order):
         self.total_open_order_count -= 1
-        del (self.pending_buy_orders_db[uuid.UUID(order.id)])
-        self.traded_buy_orders_db[uuid.UUID(order.id)] = order
+        del (self.pending_buy_orders_db[order.id])
+        self.traded_buy_orders_db[order.id] = order
         #if this is a successful order, we have a new position open
         if order.status_reason == "filled":
             self.open_position(order)
@@ -431,7 +430,7 @@ class OrderBook():
     def get_traded_buy_order(self, order_id):
         return self.traded_buy_orders_db.get (order_id)
     def add_or_update_pending_sell_order(self, order):
-        id = uuid.UUID(order.id)
+        id = order.id
         if not self.pending_sell_orders_db.get(id):
             self.total_open_order_count += 1
             self.total_order_count += 1        
@@ -440,9 +439,9 @@ class OrderBook():
     def get_pending_sell_order(self, order_id):
         self.pending_sell_orders_db.get (order_id)
     def add_traded_sell_order(self, order):
-        del (self.pending_sell_orders_db[uuid.UUID(order.id)])
+        del (self.pending_sell_orders_db[order.id])
         self.total_open_order_count -= 1
-        self.traded_sell_orders_db[uuid.UUID(order.id)] = order
+        self.traded_sell_orders_db[order.id] = order
         #close/reopen position
         #TODO: TBD: more checks required??
         if order.status_reason == "filled":
@@ -484,16 +483,15 @@ class OrderBook():
             # restore orders
             log.info ("Restoring %d orders"%(len(order_list)))        
             for order in order_list:
-    #             id = uuid.UUID(order.id)            
     #             order_status = order.status_type
                 order_side = order.side
                 
                 log.info ("restoring order: %s side: %s"%(order.id, order_side))                
                 self.total_order_count += 1          
                 if order_side == 'buy':
-                    self.traded_buy_orders_db[uuid.UUID(order.id)] = order
+                    self.traded_buy_orders_db[order.id] = order
                 else:
-                    self.traded_sell_orders_db[uuid.UUID(order.id)] = order
+                    self.traded_sell_orders_db[order.id] = order
                 
         # restore positions
         pos_list = self.positionsDb.db_get_all_positions(self.orderDb)
@@ -539,7 +537,7 @@ class OrderBook():
 #         '''
         if (not order):
             return None
-        order_id = uuid.UUID(order.id)
+        order_id = order.id
         order_status = order.status_type
         order_side = order.side
         if (not order_id):
