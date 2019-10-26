@@ -174,8 +174,10 @@ class OrderBook():
                 log.info ("Found closable position from _stop_loss_ pool. pos: %s"%(str(pos)))                                        
                 self.open_positions.remove(pos)
             if (self.close_pending_positions.get(uuid.UUID(pos.id))):
-                log.critical("Position already close pending \npos:%s \n close_pending_positions: %s"%(str(pos), str(self.close_pending_positions)))
-                raise ("Duplicate close pending position")            
+                log.critical("""Position already close pending \npos:%s
+                     close_pending_positions: %s
+                     open_positions: %s"""%(str(pos), str(self.close_pending_positions), str(self.open_positions)))                
+                raise Exception("Duplicate close pending position")
             
             if self.market.tradeConfig["take_profit_enabled"]:
                 self.pop_take_profit_position(pos)
@@ -230,7 +232,9 @@ class OrderBook():
             self.close_pending_positions.pop(id, None)
             self.open_positions.append(position)
             if self.market.tradeConfig["stop_loss_enabled"]:
-                self.add_stop_loss_position(position, position.buy.get_price(), self.market.tradeConfig["stop_loss_rate"])            
+                self.add_stop_loss_position(position, position.buy.get_price(), self.market.tradeConfig["stop_loss_rate"])
+            if self.market.tradeConfig["take_profit_enabled"]:
+                self.add_take_profit_position(position, position.buy.get_price(), self.market.tradeConfig["take_profit_rate"])
         else:
             log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id)) 
     def close_position (self, sell_order):
@@ -324,7 +328,7 @@ class OrderBook():
     def get_stop_loss_positions(self, market_rate):
         sl_pos_list = []
         
-        key_list = list(self.sl_dict.irange(minimum=market_rate, inclusive=(True, True)))        
+        key_list = list(self.sl_dict.irange(minimum=market_rate, inclusive=(True, True)))  
 #         log.critical ("slPrice: %d"%market_rate)
 #         log.critical ("key_list :%s"%(key_list))
         
@@ -333,10 +337,12 @@ class OrderBook():
             sl_pos_list += pos_list
             for pos in pos_list:
                 self.open_positions.remove(pos)                
-                if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
-                    log.critical("Position already close pending \npos:%s"%pos)
-                    raise Exception("Duplicate close pending position")            
-                self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
+                if (self.close_pending_positions.get(uuid.UUID(pos.id))):
+                    log.critical("""Position already close pending \npos:%s
+                     close_pending_positions: %s
+                     open_positions: %s"""%(str(pos), str(self.close_pending_positions), str(self.open_positions)))
+                    raise Exception("Duplicate close pending position")               
+                self.close_pending_positions[uuid.UUID(pos.id)] = pos
                 # remove pos from take profit points
                 self.pop_take_profit_position(pos)
         self.market.num_stop_loss_hit += len(sl_pos_list)
@@ -356,10 +362,12 @@ class OrderBook():
             tp_pos_list += pos_list
             for pos in pos_list:
                 self.open_positions.remove(pos)                
-                if (self.close_pending_positions.get(uuid.UUID(pos.buy.id))):
-                    log.critical("Position already close pending \npos:%s"%pos)
-                    raise Exception("Duplicate close pending position")            
-                self.close_pending_positions[uuid.UUID(pos.buy.id)] = pos
+                if (self.close_pending_positions.get(uuid.UUID(pos.id))):
+                    log.critical("""Position already close pending \npos:%s
+                     close_pending_positions: %s
+                     open_positions: %s"""%(str(pos), str(self.close_pending_positions), str(self.open_positions)))
+                    raise Exception("Duplicate close pending position")              
+                self.close_pending_positions[uuid.UUID(pos.id)] = pos
                 # remove pos from take profit points
                 self.pop_stop_loss_position(pos)                
                 
@@ -419,6 +427,7 @@ class OrderBook():
         #if this is a successful order, we have a new position open
         if order.status_reason == "filled":
             self.open_position(order)
+            
     def get_traded_buy_order(self, order_id):
         return self.traded_buy_orders_db.get (order_id)
     def add_or_update_pending_sell_order(self, order):
@@ -524,10 +533,10 @@ class OrderBook():
 ####### Public API #######
         
     def add_or_update_my_order (self, order):
-        '''
-        Handle a new order update msg
-        return : order
-        '''
+#         '''
+#         Handle a new order update msg
+#         return : order
+#         '''
         if (not order):
             return None
         order_id = uuid.UUID(order.id)
@@ -543,7 +552,7 @@ class OrderBook():
             current_order = self.get_pending_sell_order(order_id)
             
         #TODO: FIXME: redo order state machine generically, this is all a patchwork
-        if current_order == None and order_status != "done":
+        if current_order == None:
             # see if this is a late/mixed up state msg for an already done order. What we do here, may not be correct
             if (order_side == 'buy'):
                 current_order = self.get_traded_buy_order(order_id)

@@ -47,7 +47,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 OldMonk_market_list = []
 
@@ -366,9 +366,10 @@ class Market:
         trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())
                 
         #validate the trade Req
-        if (len(trade_pos_l)):
+        num_pos = len(trade_pos_l)
+        if (num_pos):
             trade_req_l = []
-            log.info ("pos hit take profit")            
+            log.info ("(%d) pos hit take profit"%(num_pos)) 
             for pos in trade_pos_l:
                 asset_size = pos.buy.get_asset()
                 if (asset_size <= 0):
@@ -388,9 +389,10 @@ class Market:
     def _handle_pending_trade_reqs (self):
         #TODO: FIXME:jork: Might need to extend
 
-        if 0 == len(self.order_book.pending_trade_req):
+        num_pos = len(self.order_book.pending_trade_req)
+        if 0 == num_pos:
             return 
-        log.debug("(%d) Pending Trade Reqs "%(len(self.order_book.pending_trade_req)))        
+        log.debug("(%d) Pending Trade Reqs "%(num_pos))        
         
         market_price = self.get_market_rate()
         for trade_req in self.order_book.pending_trade_req[:]:
@@ -435,7 +437,7 @@ class Market:
                         log.critical ("unable to get order details for done order(%s)"%(order.id))
                         return None
                 if reason == 'filled':
-                    self._buy_order_filled ( order)
+                    self._buy_order_filled ( order)                    
                 elif reason == 'canceled':
                     self._buy_order_canceled (order)
                 else:
@@ -1013,10 +1015,11 @@ class Market:
         else:
             log.debug ("(%d) pending orders to watch"%(pending_num))
         for order in pending_order_list:
-            if not (sims.simulator_on):              
+            if not (sims.simulator_on):       
                 order_det = self.exchange.get_order(order.id)
+                log.info ("watching pending order(%s)"%(order.id))
                 if (order_det):
-                    self.order_status_update(order_det)
+                    self.order_status_update(order)
                 else:
                     # Unknown error here. We should keep trying for the pending order tracking.
                     log.critical ("unable to get order details for pending order(%s)"%(order.id))
