@@ -1014,11 +1014,11 @@ class Market:
         else:
             log.debug ("(%d) pending orders to watch"%(pending_num))
         for order in pending_order_list:
-            if not (sims.simulator_on):       
+            if not (sims.simulator_on):
+                log.info ("watching pending order(%s)"%(order.id))                
                 order_det = self.exchange.get_order(order.id)
-                log.info ("watching pending order(%s)"%(order.id))
                 if (order_det):
-                    self.order_status_update(order)
+                    self.order_status_update(order_det)
                 else:
                     # Unknown error here. We should keep trying for the pending order tracking.
                     log.critical ("unable to get order details for pending order(%s)"%(order.id))
