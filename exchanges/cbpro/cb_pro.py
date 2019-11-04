@@ -202,12 +202,6 @@ class CBPRO (Exchange):
             log.debug("Closing WebSocket Client")
             self.ws_client.close ()        
         log.critical ("exch being closed")
-
-    def add_candle(self, market):
-        # close the current candle period and start a new candle period
-        candle = OHLC(long(time.time()), market.O, market.H, market.L, market.get_market_rate(), market.V)
-        log.info ("New candle identified %s"%(candle))
-        market.add_new_candle (candle)   
    
     def _normalized_order (self, order):
         '''
@@ -408,39 +402,8 @@ class CBPRO (Exchange):
         #log.debug ("consuming ticker feed")
         price = Decimal(msg.get('price'))
         last_size = msg.get('last_size')
-        if (price == 0 or not last_size):
-            log.error ("Invalid price or 'last_size' in ticker feed")
-            return
-        last_size = Decimal(last_size)
-        o = market.O
-        h = market.H
-        l = market.L
-        v = market.V
         
-        #update ticker
-        if o == 0:
-            market.O = market.H = market.L = price
-        else:
-            if price < l:
-                market.L = price
-            if price > h:
-                market.H = price
-        v += last_size
-        market.V = v
-        
-        now = time.time()
-#         log.critical("next_cdl: %d now: %d"%(market.cur_candle_time+self.candle_interval, now))
-        if now >= market.cur_candle_time + self.candle_interval:
-            # close the current candle period and start a new candle period
-            c = price
-            candle = OHLC(long(now), market.O, market.H, market.L, c, market.V)
-            log.debug ("New candle identified %s"%(candle))        
-            market.add_new_candle (candle)
-            
-            
-        #TODO: FIXME: jork: might need to rate-limit the logic here after
-        market.set_market_rate (price)
-#         market.update_market_states()
+        market.tick (price, last_size)
     
         
     ###################### WebSocket Impl : end #############################

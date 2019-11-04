@@ -360,6 +360,36 @@ class Market:
         if (self.consume_feed != None):
             self.consume_feed(self, msg)
             
+    def tick(self, price, l_size):
+        if (price == 0 or not l_size):
+            log.error ("Invalid price or 'last_size' in ticker feed")
+            return
+        size = Decimal(l_size)
+        
+        #update ticker
+        if self.O == 0:
+            self.O = self.H = self.L = price
+        else:
+            if price < self.L:
+                self.L = price
+            if price > self.H:
+                self.H = price
+#         v += size
+        self.V += size
+        
+        now = time.time()
+#         log.critical("next_cdl: %d now: %d"%(market.cur_candle_time+self.candle_interval, now))
+        if now >= self.cur_candle_time + self.candle_interval:
+            # close the current candle period and start a new candle period
+            c = price
+            candle = OHLC(long(now), self.O, self.H, self.L, c, self.V)
+            log.debug ("New candle identified %s"%(candle))        
+            self.add_new_candle (candle)
+            
+            
+        #TODO: FIXME: jork: might need to rate-limit the logic here after
+        self.set_market_rate (price)
+
     def _handle_take_profit (self):
  
         trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())
@@ -1041,7 +1071,9 @@ class Market:
                 
         now = time.time()
         if now >= self.cur_candle_time + self.candle_interval:
-            self.exchange.add_candle (self)
+            candle = OHLC(long(now), self.O, self.H, self.L, self.get_market_rate(), self.V)
+            log.info ("New candle identified %s"%(candle))
+            self.add_new_candle (candle)             
             
         #2.update market states
         if (self.order_book.book_valid == False):
