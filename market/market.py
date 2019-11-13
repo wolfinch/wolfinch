@@ -178,11 +178,13 @@ class Asset:
     def get_asset_to_trade (self, size):        
 #         cur_size = self.max_per_trade_size * strength
 #         if ((self.current_size - self.current_hold_size) >= (cur_size + self.hold_size)):
-        if ((self.current_size - self.current_hold_size) >= size):
+        ## TODO: FIXME: jork: fix fixed rounding precision
+        if (round(self.current_size - self.current_hold_size, 4) >= size):
             self.current_hold_size += size
             return size
         else:
-            log.error("**** No Assets to trade. size(%f) ****"%(size))
+            log.error("**** No Assets to trade. size(%f) current_size(%f) current_hold_size:(%f) ****"%(
+                size, self.current_size, self.current_hold_size))
             return 0
     def buy_confirm (self, size):
         self.current_size += size
@@ -599,7 +601,7 @@ class Market:
 #             self.fund.fee_accrued += market_order.fees      
                   
             #avg cost
-            curr_new_asset_size = (self.asset.current_hold_size + self.asset.current_size - self.asset.initial_size)
+            curr_new_asset_size = (self.asset.current_size - self.asset.initial_size)
             self.fund.latest_buy_price = market_order.price            
             self.fund.current_avg_buy_price = (((self.fund.current_avg_buy_price *
                                                   curr_new_asset_size) + (order_cost))/
@@ -1222,7 +1224,6 @@ class Market:
         trade_req_l = []
         while (True):
             position = self.order_book.get_closable_position()            
-#                 asset_size = self.asset.get_asset_to_trade (1)
                 
             if position:
 #                 self.num_sell_req += 1                                     
@@ -1231,6 +1232,7 @@ class Market:
                 if (asset_size <= 0):
                     log.critical ("Invalid open position for closing: position: %s"%str(position))
                     raise Exception("Invalid open position for closing??")
+                asset_size = self.asset.get_asset_to_trade (asset_size)
                 log.debug ("Generating SELL trade_req with asset size: %s"%(str(asset_size)))       
                 trade_req_l.append(TradeRequest(Product=self.product_id,
                                   Side="SELL",
@@ -1292,11 +1294,11 @@ def market_init (exchange_list, get_product_config_hook):
                 try:
                     market = Market(product=product, exchange=exchange)
                 except Exception:
-                    log.critical ("Unable to get Market for exchange: %s product: %s"%(exchange.name, product['id']))
+                    log.critical ("Unable to get Market for exchange: %s product: %s"%(exchange.name, str(product)))
                 else:
                     market = exchange.market_init (market)
                     if (market == None):
-                        log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, product['id']))
+                        log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, str(product)))
                     else:
     #                     tradingConfig, decisionConfig = get_product_config_hook(exchange.name, product['id'])
     #                     if tradingConfig == None or decisionConfig == None:
@@ -1304,7 +1306,7 @@ def market_init (exchange_list, get_product_config_hook):
     #                         raise Exception ("Invalid product config")
     #                     market.tradeConfig = tradingConfig
     #                     market.decisionConfig = decisionConfig
-                        log.info ("market init success for exchange (%s) product: %s"%(exchange.name, product['id']))
+                        log.info ("market init success for exchange (%s) product: %s"%(exchange.name, str(product)))
                         OldMonk_market_list.append(market)
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))

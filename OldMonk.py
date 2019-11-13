@@ -299,7 +299,7 @@ if __name__ == '__main__':
         print ("Unexpected error: %s exception: %s" % (sys.exc_info(), e.message))
         OldMonk_end()
         traceback.print_exc()
-        os.abort()
+#         os.abort()
     # '''Not supposed to reach here'''
     print("\nOldMonk end")
 
