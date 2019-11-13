@@ -338,7 +338,13 @@ class CBPRO (Exchange):
         Process the order status update feed msg 
         '''
         log.debug ("Order Status Update id:%s"%(msg.get('order_id')))
-        order = self._normalized_order(msg)
+        #order = self._normalized_order(msg)
+
+        order_id   = msg.get('id') or msg.get('order_id')
+        order = self.get_order(order_id)
+        
+        #TODO: TBD: Do order status normalize if needed
+        
         market.order_status_update (order)
     
         

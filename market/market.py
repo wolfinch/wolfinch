@@ -128,7 +128,7 @@ class Fund:
         self.total_traded_value += fund
         self.fee_accrued += fees
         
-    def trade_fail (self, num_order):
+    def buy_fail (self, num_order):
         #release the hold
         self.current_hold_value -= (self.max_per_buy_fund_value * num_order)
         
@@ -195,7 +195,7 @@ class Asset:
         self.current_hold_size -= size
         self.latest_traded_size = size
         self.total_traded_size += size
-    def trade_fail (self, size):
+    def sell_fail (self, size):
         self.current_hold_size -= size
     def __str__(self):
         return ("""{
@@ -486,18 +486,18 @@ class Market:
         if side == 'buy':
             if msg_type == 'done':
                 #for an order done, get the order details             
-                if (sims.simulator_on):
-                    order_det = sims.exch_obj.get_order(order.id)
-                    if (order_det):
-                        order = order_det                    
-                else:                
-                    order_det = self.exchange.get_order(order.id)
-                    if (order_det):
-                        order = order_det
-                    else:
-                        # Unknown error here. We should keep trying for the pending order tracking.
-                        log.critical ("unable to get order details for done order(%s)"%(order.id))
-                        return None
+#                 if (sims.simulator_on):
+#                     order_det = sims.exch_obj.get_order(order.id)
+#                     if (order_det):
+#                         order = order_det                    
+#                 else:                
+#                     order_det = self.exchange.get_order(order.id)
+#                     if (order_det):
+#                         order = order_det
+#                     else:
+#                         # Unknown error here. We should keep trying for the pending order tracking.
+#                         log.critical ("unable to get order details for done order(%s)"%(order.id))
+#                         return None
                 if reason == 'filled':
                     self._buy_order_filled ( order)                    
                 elif reason == 'canceled':
@@ -513,19 +513,19 @@ class Market:
                 raise Exception("Unknown buy order status: %s"%(msg_type))
         elif side == 'sell':
             if msg_type == 'done':
-                #for an order done, get the order details              
-                if (sims.simulator_on):
-                    order_det = sims.exch_obj.get_order(order.id)
-                    if (order_det):
-                        order = order_det                    
-                else:                
-                    order_det = self.exchange.get_order(order.id)
-                    if (order_det):
-                        order = order_det
-                    else:
-                        # Unknown error here. We should keep trying for the pending order tracking.
-                        log.critical ("unable to get order details for done order(%s)"%(order.id))
-                        return None               
+#                 #for an order done, get the order details              
+#                 if (sims.simulator_on):
+#                     order_det = sims.exch_obj.get_order(order.id)
+#                     if (order_det):
+#                         order = order_det                    
+#                 else:                
+#                     order_det = self.exchange.get_order(order.id)
+#                     if (order_det):
+#                         order = order_det
+#                     else:
+#                         # Unknown error here. We should keep trying for the pending order tracking.
+#                         log.critical ("unable to get order details for done order(%s)"%(order.id))
+#                         return None               
                 if reason == 'filled':
                     self._sell_order_filled ( order)
                 elif reason == 'canceled':
@@ -583,7 +583,7 @@ class Market:
             return market_order
         else:
             log.debug ("BUY Order Failed to place")
-            self.fund.trade_fail(1)
+            self.fund.buy_fail(1)
             self.num_buy_order_failed += 1            
             return None
             
@@ -618,7 +618,7 @@ class Market:
     def _buy_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
-            self.fund.trade_fail(1)
+            self.fund.buy_fail(1)
 #             order_cost = (market_order.remaining_size*market_order.price)
 #             self.fund.current_hold_value -= order_cost
 #             self.fund.current_value += order_cost
@@ -637,7 +637,7 @@ class Market:
             log.debug ("SELL Order Sent to exchange. ")      
             return market_order 
         else:
-            self.asset.trade_fail (trade_req.size)
+            self.asset.sell_fail (trade_req.size)
             self.num_sell_order_failed += 1                        
             log.debug ("SELL Order Failed to place")
             return None        
@@ -694,7 +694,7 @@ class Market:
     def _sell_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
-            self.asset.trade_fail(market_order.remaining_size)
+            self.asset.sell_fail(market_order.remaining_size)
 #             self.asset.current_hold_size -= market_order.remaining_size
 #             self.asset.current_size += market_order.remaining_size
         
@@ -1232,7 +1232,7 @@ class Market:
                 if (asset_size <= 0):
                     log.critical ("Invalid open position for closing: position: %s"%str(position))
                     raise Exception("Invalid open position for closing??")
-                asset_size = self.asset.get_asset_to_trade (asset_size)
+                self.asset.get_asset_to_trade (asset_size)
                 log.debug ("Generating SELL trade_req with asset size: %s"%(str(asset_size)))       
                 trade_req_l.append(TradeRequest(Product=self.product_id,
                                   Side="SELL",
