@@ -544,9 +544,13 @@ class OrderBook():
         order_side = order.side
         if (not order_id):
             log.critical ("Invalid order_id: status:%s side: %s" % (order_status, order_side))
-            return None  
+            raise Exception("Invalid order_id: status:%s side: %s" % (order_status, order_side))
             
         if (order_side == 'buy'):
+            # see if this is a late/mixed up state msg for an already done order. What we do here, may not be correct
+            if self.get_traded_buy_order(order_id):
+                log.critical ("******** (%s) order done already, but (%s) state msg recvd, ignore for now, FIXME: FIXME:"%(order_side, order_status))
+                return None              
             # insert/replace the order
             if (order_status == 'filled' or order_status == 'canceled'):
                 # a previously placed order is completed, remove from open order, add to completed orderlist
@@ -558,17 +562,16 @@ class OrderBook():
                                                        len(self.traded_buy_orders_db)))
             elif (order_status == 'open'):
                 # Nothing much to do for us here
-                log.info ("Buy order_id(%s) Status: %s" % (str(order_id), order_status))
-                # see if this is a late/mixed up state msg for an already done order. What we do here, may not be correct
-                if self.get_traded_buy_order(order_id):
-                    log.critical ("******** (%s) order done already, but (%s) state msg recvd, ignore for now, FIXME: FIXME:"%(order_side, order_status))
-                    return None                  
+                log.info ("Buy order_id(%s) Status: %s" % (str(order_id), order_status))                
                 self.add_or_update_pending_buy_order(order)
             else:
                 log.critical("UNKNOWN buy order status: %s" % (order_status))
                 raise Exception("UNKNOWN buy order status: %s" % (order_status))
-                return None
         elif (order_side == 'sell'):
+            # see if this is a late/mixed up state msg for an already done order. What we do here, may not be correct
+            if self.get_traded_sell_order(order_id):
+                log.critical ("******** (%s) order done already, but (%s) state msg recvd, ignore for now, FIXME: FIXME:"%(order_side, order_status))
+                return None              
             # insert/replace the order
             if (order_status == 'filled' or order_status == 'canceled'):
                 # a previously placed order is completed, remove from open order, add to completed orderlist      
@@ -580,21 +583,15 @@ class OrderBook():
                                                        len(self.traded_sell_orders_db)))    
             elif (order_status == 'open'):
                 # Nothing much to do for us here
-                log.info ("Sell order_id(%s) Status: %s" % (str(order_id), order_status))
-                # see if this is a late/mixed up state msg for an already done order. What we do here, may not be correct
-                if self.get_traded_sell_order(order_id):
-                    log.critical ("******** (%s) order done already, but (%s) state msg recvd, ignore for now, FIXME: FIXME:"%(order_side, order_status))
-                    return None                  
+                log.info ("Sell order_id(%s) Status: %s" % (str(order_id), order_status))                
                 self.add_or_update_pending_sell_order(order)                
                 self.close_position_pending(order)
             else:
                 log.critical("UNKNOWN sell order status: %s" % (order_status))
                 raise Exception("UNKNOWN buy order status: %s" % (order_status))
-                return None
         else:
             log.critical("Invalid order :%s" % (order))
             raise Exception("Invalid order :%s" % (order))            
-            return None
 #         log.debug ("Order: %s\n"%(str(order)))
         
         #Add the successful order to the db

@@ -556,7 +556,7 @@ class Market:
             self.num_buy_order_success += 1            
         else:
             log.critical("Invalid Market_order filled order:%s"%(str(order)))
-            raise Exception("Invalid Market_order filled order:%s"%(str(order)))            
+#             raise Exception("Invalid Market_order filled order:%s"%(str(order)))     
             
     def _buy_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)
@@ -609,7 +609,7 @@ class Market:
                 round(market_order.filled_size, 4), round(market_order.price, 4)))            
         else:
             log.critical("Invalid Market_order filled order:%s"%(str(order)))
-            raise Exception("Invalid Market_order filled order:%s"%(str(order)))
+#             raise Exception("Invalid Market_order filled order:%s"%(str(order)))
             
     def _sell_order_canceled(self, order):
         market_order  =  self.order_book.add_or_update_my_order(order)

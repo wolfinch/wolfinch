@@ -204,36 +204,36 @@ class CBPRO (Exchange):
         log.critical ("exch being closed")
    
     def _normalized_order (self, order):
-        '''
-        Desc:
-         Error Handle and Normalize the order json returned by gdax
-          to return the normalized order detail back to callers
-          Handles -
-          1. Initial Order Creation/Order Query
-          2. Order Update Feed Messages
-          Ref: https://docs.gdax.com/#the-code-classprettyprintfullcode-channel
-        Sample order:
-                {u'created_at': u'2018-01-10T09:49:02.639681Z',
-                 u'fill_fees': u'0.0000000000000000',
-                 u'filled_size': u'0.00000000',
-                 u'executed_value': u'29.9998711699000000',                 
-                 u'id': u'7150b013-62ca-49c7-aa28-4a9473778644',
-                 u'post_only': True,
-                 u'price': u'14296.99000000',
-                 u'product_id': u'BTC-USD',
-                 u'settled': False,
-                 u'side': u'buy',
-                 u'funds': u'2959.4764175800000000',                 
-                 u'size': u'0.13988959',
-                 u'status': u'pending',
-                 u'stp': u'dc',
-                 u'time_in_force': u'GTC',
-                 u'type': u'limit'}    
-        Known Errors: 
-          1. {u'message': u'request timestamp expired'}
-          2. {u'message': u'Insufficient funds'}
-          3. {'status' : 'rejected', 'reject_reason': 'post-only'}
-        '''
+#         '''
+#         Desc:
+#          Error Handle and Normalize the order json returned by gdax
+#           to return the normalized order detail back to callers
+#           Handles -
+#           1. Initial Order Creation/Order Query
+#           2. Order Update Feed Messages
+#           Ref: https://docs.gdax.com/#the-code-classprettyprintfullcode-channel
+#         Sample order:
+#                 {u'created_at': u'2018-01-10T09:49:02.639681Z',
+#                  u'fill_fees': u'0.0000000000000000',
+#                  u'filled_size': u'0.00000000',
+#                  u'executed_value': u'29.9998711699000000',                 
+#                  u'id': u'7150b013-62ca-49c7-aa28-4a9473778644',
+#                  u'post_only': True,
+#                  u'price': u'14296.99000000',
+#                  u'product_id': u'BTC-USD',
+#                  u'settled': False,
+#                  u'side': u'buy',
+#                  u'funds': u'2959.4764175800000000',                 
+#                  u'size': u'0.13988959',
+#                  u'status': u'pending',
+#                  u'stp': u'dc',
+#                  u'time_in_force': u'GTC',
+#                  u'type': u'limit'}    
+#         Known Errors: 
+#           1. {u'message': u'request timestamp expired'}
+#           2. {u'message': u'Insufficient funds'}
+#           3. {'status' : 'rejected', 'reject_reason': 'post-only'}
+#         '''
         error_status_codes = ['rejected']
         log.debug ("Order msg:\n%s"%(pprint.pformat(order, 4)))
         
@@ -250,11 +250,11 @@ class CBPRO (Exchange):
         status_reason = order.get('reason') or order.get('done_reason')
         
         status_type = order.get('status') 
-        if order_type in ['received', 'open', 'match', 'change', 'margin_profile_update', 'activate' ]:
+        if status_type in ['pending', 'received', 'open', 'match', 'change', 'margin_profile_update', 'activate' ]:
             # order status update message
             status_type = "open"
-            order_type = order.get('order_type') #could be None
-        elif order_type ==  'done':
+#             order_type = order.get('order_type') #could be None
+        elif status_type ==  'done':
             if (status_reason == 'filled' or status_reason == "canceled"):
                 status_type = status_reason
             else:
@@ -343,7 +343,7 @@ class CBPRO (Exchange):
         ''' 
         Process the order status update feed msg 
         '''
-        log.debug ("Order Status Update id:%s"%(msg.get('order_id')))
+        log.debug ("Order Status Update id:%s update_type: %s"%(msg.get('order_id'), msg.get('type')))
         #order = self._normalized_order(msg)
 
         order_id   = msg.get('id') or msg.get('order_id')
