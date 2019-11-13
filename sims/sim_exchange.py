@@ -68,7 +68,7 @@ def do_trade (market):
         len(open_orders_pvt), len(traded_orders_pvt), price))
     for order in open_orders_pvt[:]:
         #first update order state
-        order.status_type = 'received'
+        order.status = 'open'
 #         print ("order: %s"%(str(order)))
         market.order_status_update (order)
         #now trade
@@ -207,13 +207,20 @@ class SIM_EXCH (exchanges.Exchange):
         order_id   = order.get('id') or order.get('order_id')
         order_type = order.get('type')
         status_reason = order.get('reason') or order.get('done_reason')
+        
         status_type = order.get('status') 
-        if order_type in ['received', 'open', 'done', 'match', 'change', 'margin_profile_update', 'activate' ]:
+        if order_type in ['received', 'open', 'match', 'change', 'margin_profile_update', 'activate' ]:
             # order status update message
-            status_type = order_type
+            status_type = "open"
             order_type = order.get('order_type') #could be None
-        else:
-            pass
+        elif order_type ==  'done':
+            if (status_reason == 'filled' or status_reason == "canceled"):
+                status_type = status_reason
+            else:
+                s = "****** unknown order done reason: %s"%(status_reason)
+                log.critical (s)
+                raise Exception (s)
+
         create_time = order.get('created_at') or None
         update_time  = order.get('time') or order.get('done_at') or None
         side = order.get('side') or None
@@ -239,7 +246,7 @@ class SIM_EXCH (exchanges.Exchange):
             
         log.debug ("price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g"%(
             price, funds, request_size, filled_size, remaining_size, fees))
-        norm_order = Order (order_id, product_id, status_type, order_type=order_type, status_reason=status_reason,
+        norm_order = Order (order_id, product_id, status_type, order_type=order_type,
                             side=side, request_size=request_size, filled_size=filled_size, remaining_size=remaining_size,
                              price=price, funds=funds, fees=fees, create_time=create_time, update_time=update_time)
         return norm_order
@@ -273,8 +280,8 @@ class SIM_EXCH (exchanges.Exchange):
             return None
         log.debug ("BUY - Placing Order on SIM exchange --" )
         
-        buy_order = Order(str(uuid.uuid1()), trade_req.product, "pending", order_type=trade_req.type, 
-                          status_reason=None, side='buy', request_size=trade_req.size,
+        buy_order = Order(str(uuid.uuid1()), trade_req.product, "open", order_type=trade_req.type, 
+                          side='buy', request_size=trade_req.size,
                        filled_size=0,  price=trade_req.price, funds=trade_req.fund,
                      fees=0, create_time=time.ctime())
         
@@ -290,8 +297,8 @@ class SIM_EXCH (exchanges.Exchange):
         if not isinstance(trade_req, TradeRequest):
             return None
         log.debug ("SELL - Placing Order on SIM exchange --" )
-        sell_order = Order(str(uuid.uuid1()), trade_req.product, "pending", order_type=trade_req.type, 
-                          status_reason=None, side='sell', request_size=trade_req.size,
+        sell_order = Order(str(uuid.uuid1()), trade_req.product, "open", order_type=trade_req.type, 
+                          side='sell', request_size=trade_req.size,
                        filled_size=0,  price=trade_req.price, funds=0,
                      fees=0, create_time=time.ctime()) 
         open_orders_pvt = open_orders.get(trade_req.product) 

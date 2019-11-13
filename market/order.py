@@ -76,15 +76,15 @@ class Order (object):
 #     create_time = Column(String(64))
 #     update_time = Column(String(64))    
         
-    def __init__(self, order_id, product_id, status_type, order_type=None, status_reason=None,
+    def __init__(self, order_id, product_id, status, order_type=None,
                  side=None, request_size=0, filled_size=0, remaining_size=0, price=0, funds=0,
                  fees=0, create_time=None, update_time=None
                  ):
         self.id = order_id
         self.product_id = product_id
         self.order_type = order_type
-        self.status_type = status_type
-        self.status_reason = status_reason
+        self.status = status
+#         self.status_reason = status_reason
         self.side = side
         self.request_size = Decimal (request_size)
         self.filled_size = Decimal(filled_size)
@@ -98,11 +98,11 @@ class Order (object):
         
     def __str__ (self):
         return ("""{"id":"%s", "product_id":"%s", "side":"%s", "order_type":"%s",
-"status_type":"%s", "status_reason":"%s", "request_size":%f,
+"status":"%s", "request_size":%f,
 "filled_size":%f, "remaining_size":%f, "price":%f, "funds":%f,
 "fees":%f, "create_time":"%s", "update_time":"%s"}""") % (
-            self.id, self.product_id, self.side, self.order_type, self.status_type,
-             self.status_reason, self.request_size, self.filled_size, self.remaining_size,
+            self.id, self.product_id, self.side, self.order_type, self.status,
+            self.request_size, self.filled_size, self.remaining_size,
              self.price, self.funds, self.fees, self.create_time, self.update_time)
     def __repr__ (self):
         return self.__str__()

@@ -472,73 +472,37 @@ class Market:
                     log.debug("STOP SELL: market(%g) lower than STOP (%g)"%(self.get_market_rate(), trade_req.stop))                                   
     
     def order_status_update (self, order):
+        # simplified order state machine : [open, filled, canceled]
+        # this rework is assumed an abstraction and handles only simplified order status
+        # if there are more order states, it should be handled/translated in the exch impl.
         log.debug ("ORDER UPDATE: %s"%(str(order)))
-        
-        ### TODO: if order pending for too long (cfg), cancel order
         
         if order == None:
             log.error ("Invalid order, skip update")
             return None
         
         side = order.side
-        msg_type = order.status_type
-        reason = order.status_reason
+        order_status = order.status
         if side == 'buy':
-            if msg_type == 'done':
-                #for an order done, get the order details             
-#                 if (sims.simulator_on):
-#                     order_det = sims.exch_obj.get_order(order.id)
-#                     if (order_det):
-#                         order = order_det                    
-#                 else:                
-#                     order_det = self.exchange.get_order(order.id)
-#                     if (order_det):
-#                         order = order_det
-#                     else:
-#                         # Unknown error here. We should keep trying for the pending order tracking.
-#                         log.critical ("unable to get order details for done order(%s)"%(order.id))
-#                         return None
-                if reason == 'filled':
-                    self._buy_order_filled ( order)                    
-                elif reason == 'canceled':
-                    self._buy_order_canceled (order)
-                else:
-                    log.error ("unknown order done reason(%s)"%(reason))                    
-            elif msg_type == 'received':
-                self._buy_order_received(order)
-            elif (msg_type in ['open', 'match', 'change', 'margin_profile_update', 'activate' ]):
-                log.debug ("Ignored buy order status: %s"%(msg_type))
+            if order_status == 'open':
+                self._buy_order_received(order)            
+            elif order_status == 'filled':
+                self._buy_order_filled ( order)                    
+            elif order_status == 'canceled':
+                self._buy_order_canceled (order)
             else:
-                log.critical ("Unknown buy order status: %s"%(msg_type))
-                raise Exception("Unknown buy order status: %s"%(msg_type))
+                log.critical ("Unknown buy order status: %s"%(order_status))
+                raise Exception("Unknown buy order status: %s"%(order_status))
         elif side == 'sell':
-            if msg_type == 'done':
-#                 #for an order done, get the order details              
-#                 if (sims.simulator_on):
-#                     order_det = sims.exch_obj.get_order(order.id)
-#                     if (order_det):
-#                         order = order_det                    
-#                 else:                
-#                     order_det = self.exchange.get_order(order.id)
-#                     if (order_det):
-#                         order = order_det
-#                     else:
-#                         # Unknown error here. We should keep trying for the pending order tracking.
-#                         log.critical ("unable to get order details for done order(%s)"%(order.id))
-#                         return None               
-                if reason == 'filled':
-                    self._sell_order_filled ( order)
-                elif reason == 'canceled':
-                    self._sell_order_canceled (order)
-                else:
-                    log.error ("unknown order done reason(%s)"%(reason))
-            elif msg_type == 'received':
-                self._sell_order_received(order)
-            elif (msg_type in ['open', 'match', 'change', 'margin_profile_update', 'activate']):
-                log.debug ("Ignored sell order status: %s"%(msg_type))
+            if order_status == 'open':
+                self._sell_order_received(order)            
+            elif order_status == 'filled':
+                self._sell_order_filled ( order)                    
+            elif order_status == 'canceled':
+                self._sell_order_canceled (order)
             else:
-                log.error ("Unknown sell order status: %s"%(msg_type))
-                raise Exception("Unknown sell order status: %s"%(msg_type))                
+                log.critical ("Unknown buy order status: %s"%(order_status))
+                raise Exception("Unknown buy order status: %s"%(order_status))             
         else:
             log.error ("Unknown order Side (%s)"%(side))
             raise Exception("Unknown order Side (%s)"%(side))
@@ -548,23 +512,6 @@ class Market:
         if(market_order): #successful order
             log.info ("BUY RECV>>> request_size:%s funds:%s"%(
                 round(market_order.request_size, 4), round(market_order.funds, 4)))
-            
-#             #update fund 
-#             order_type = market_order.order_type
-#             order_cost = 0
-#             if order_type == 'market':
-#                 order_cost = Decimal(market_order.funds) 
-#             elif order_type == 'limit':
-#                 order_cost = Decimal (market_order.price) * Decimal (market_order.request_size)
-#             else:
-#                 log.error ("BUY: unknown order_type: %s"%(order_type))
-#                 return
-#             
-#             if order_cost == 0:
-#                 log.critical ("Invalid order_cost!")
-#                 raise Exception("Invalid order_cost!")
-#             self.fund.current_hold_value += order_cost
-#             self.fund.current_value -= order_cost
         else:
             log.critical("Invalid Market_order filled order:%s"%(str(order)))
             raise Exception("Invalid Market_order filled order:%s"%(str(order)))            
@@ -595,10 +542,6 @@ class Market:
             order_cost = (market_order.filled_size*market_order.price) + market_order.fees
             #fund
             self.fund.buy_confirm(1, order_cost, market_order.fees)
-            
-#             self.fund.current_hold_value -= order_cost
-#             self.fund.total_traded_value += order_cost
-#             self.fund.fee_accrued += market_order.fees      
                   
             #avg cost
             curr_new_asset_size = (self.asset.current_size - self.asset.initial_size)
@@ -619,10 +562,7 @@ class Market:
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #Valid order
             self.fund.buy_fail(1)
-#             order_cost = (market_order.remaining_size*market_order.price)
-#             self.fund.current_hold_value -= order_cost
-#             self.fund.current_value += order_cost
-    
+
     def _sell_order_create (self, trade_req):
         self.num_sell_order += 1
         log.info("SELL: %d sig: %s"%(self.num_sell_order, trade_req))
@@ -647,19 +587,7 @@ class Market:
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
             log.info ("SELL RECV>>> request_size:%s price:%s"%(
-                round(market_order.request_size, 4), round(market_order.price, 4)))            
-#             #update fund 
-#             order_type = market_order.order_type
-#             size = 0
-#             if order_type == 'market':
-#                 size = Decimal(market_order.request_size) 
-#             elif order_type == 'limit':
-#                 size = Decimal (market_order.request_size)
-#             else:
-#                 log.error ("SELL: unknown order_type: %s"%(order_type))
-#                 return
-#             self.asset.current_hold_size += size
-#             self.asset.current_size -= size
+                round(market_order.request_size, 4), round(market_order.price, 4)))
         else:
             log.critical("Invalid Market_order filled order:%s"%(str(order)))
             raise Exception("Invalid Market_order filled order:%s"%(str(order)))
@@ -671,18 +599,10 @@ class Market:
             order_cost = (market_order.filled_size*market_order.price)        
             #fund
             self.fund.sell_confirm(order_cost, market_order.fees)
-#             self.fund.current_value += order_cost
-#             self.fund.fee_accrued += market_order.fees
+
             #asset
             self.asset.sell_confirm(market_order.filled_size)
-#             self.asset.current_hold_size -= (market_order.filled_size + market_order.remaining_size)
-#             self.asset.current_size += market_order.remaining_size
-#             self.asset.latest_traded_size = market_order.filled_size
-#             self.asset.total_traded_size += market_order.filled_size            
-            #profit
-            # NOTE: move the profit calculation to position close, that's more accurate
-#             profit = (market_order.price - self.fund.current_avg_buy_price )*market_order.filled_size
-#             self.fund.current_realized_profit += profit
+
             #stats
             self.num_sell_order_success += 1
             log.info ("SELL FILLED>>> filled_size:%s price:%s "%(

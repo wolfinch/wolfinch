@@ -424,7 +424,7 @@ class OrderBook():
         del (self.pending_buy_orders_db[order.id])
         self.traded_buy_orders_db[order.id] = order
         #if this is a successful order, we have a new position open
-        if order.status_reason == "filled":
+        if order.status == "filled":
             self.open_position(order)
             
     def get_traded_buy_order(self, order_id):
@@ -444,9 +444,8 @@ class OrderBook():
         self.traded_sell_orders_db[order.id] = order
         #close/reopen position
         #TODO: TBD: more checks required??
-        if order.status_reason == "filled":
+        if order.status == "filled":
             log.debug("closed position order: %s"%(order.id))
-            
             self.close_position(order)
         else:
             log.critical("closed position failed order: %s"%(order))            
@@ -529,8 +528,11 @@ class OrderBook():
 
 
 ####### Public API #######
-        
     def add_or_update_my_order (self, order):
+        # simplified order state machine : [open, filled, canceled]
+        # this rework is assumed an abstraction and handles only simplified order status
+        # if there are more order states, it should be handled/translated in the exch impl.
+        # linked to market.order_status_update()        
 #         '''
 #         Handle a new order update msg
 #         return : order
@@ -538,53 +540,15 @@ class OrderBook():
         if (not order):
             return None
         order_id = order.id
-        order_status = order.status_type
+        order_status = order.status
         order_side = order.side
         if (not order_id):
             log.critical ("Invalid order_id: status:%s side: %s" % (order_status, order_side))
-            return None
-        current_order = None
-        if (order_side == 'buy'):
-            current_order = self.get_pending_buy_order(order_id)
-        else:
-            current_order = self.get_pending_sell_order(order_id)
-            
-        #TODO: FIXME: redo order state machine generically, this is all a patchwork
-        if current_order == None:
-            # see if this is a late/mixed up state msg for an already done order. What we do here, may not be correct
-            if (order_side == 'buy'):
-                current_order = self.get_traded_buy_order(order_id)
-            else:
-                current_order = self.get_traded_sell_order(order_id)
-            
-            if current_order:
-                log.critical ("******** (%s) order done already, but (%s) state msg recvd, ignore for now, FIXME: FIXME:"%(order_side, order_status))
-                return current_order    
-            
-        if current_order != None:
-            # Copy whatever available, new gets precedence
-            # money, asset
-            order.request_size = order.request_size or current_order.request_size
-            order.price = order.price or current_order.price
-            order.funds = order.funds or current_order.funds
-            order.fees = order.fees or current_order.fees
-            if order_status != 'done':
-                order.remaining_size = order.remaining_size or current_order.remaining_size
-            # other data
-            order.create_time = order.create_time or current_order.create_time
-            order.update_time = order.update_time or current_order.update_time
-            order.order_type = order.order_type or current_order.order_type
-            order.product_id = order.product_id or current_order.product_id
-            order._pos_id = order._pos_id or current_order._pos_id
-        else:
-            # this is a new order for us (not necessary placed by us, hence need this logic here)
-            log.debug ("New Order Entry To be Inserted: total_order_count: %d "
-                       "total_open_order_count: %d " % (self.total_order_count, self.total_open_order_count))
+            return None  
             
         if (order_side == 'buy'):
             # insert/replace the order
-            self.add_or_update_pending_buy_order(order) 
-            if (order_status == 'done'):
+            if (order_status == 'filled' or order_status == 'canceled'):
                 # a previously placed order is completed, remove from open order, add to completed orderlist
                 self.add_traded_buy_order(order)
                 log.debug ("Buy order Done: total_order_count: %d "
@@ -592,17 +556,21 @@ class OrderBook():
                        "traded_buy_orders_count: %d" % (self.total_order_count,
                                                        self.total_open_order_count,
                                                        len(self.traded_buy_orders_db)))
-            elif (order_status in ['pending', 'open', 'received', 'match']):
+            elif (order_status == 'open'):
                 # Nothing much to do for us here
                 log.info ("Buy order_id(%s) Status: %s" % (str(order_id), order_status))
+                # see if this is a late/mixed up state msg for an already done order. What we do here, may not be correct
+                if self.get_traded_buy_order(order_id):
+                    log.critical ("******** (%s) order done already, but (%s) state msg recvd, ignore for now, FIXME: FIXME:"%(order_side, order_status))
+                    return None                  
+                self.add_or_update_pending_buy_order(order)
             else:
                 log.critical("UNKNOWN buy order status: %s" % (order_status))
                 raise Exception("UNKNOWN buy order status: %s" % (order_status))
                 return None
         elif (order_side == 'sell'):
             # insert/replace the order
-            self.add_or_update_pending_sell_order(order) 
-            if (order_status == 'done'):
+            if (order_status == 'filled' or order_status == 'canceled'):
                 # a previously placed order is completed, remove from open order, add to completed orderlist      
                 self.add_traded_sell_order(order)
                 log.debug ("Sell order Done: total_order_count: %d "
@@ -610,9 +578,14 @@ class OrderBook():
                        "traded_sell_orders_count: %d" % (self.total_order_count,
                                                        self.total_open_order_count,
                                                        len(self.traded_sell_orders_db)))    
-            elif (order_status in ['pending', 'open', 'received', 'match']):
+            elif (order_status == 'open'):
                 # Nothing much to do for us here
                 log.info ("Sell order_id(%s) Status: %s" % (str(order_id), order_status))
+                # see if this is a late/mixed up state msg for an already done order. What we do here, may not be correct
+                if self.get_traded_sell_order(order_id):
+                    log.critical ("******** (%s) order done already, but (%s) state msg recvd, ignore for now, FIXME: FIXME:"%(order_side, order_status))
+                    return None                  
+                self.add_or_update_pending_sell_order(order)                
                 self.close_position_pending(order)
             else:
                 log.critical("UNKNOWN sell order status: %s" % (order_status))
@@ -628,8 +601,7 @@ class OrderBook():
         self.orderDb.db_add_or_update_order(order)
         stats.stats_update_order (self.market, order)
         return order
-    
-    ######### L2 Order book for Exchange, product ########
+
     def new_book (self, bids, asks):
         log.info ("Building new order book")
         if (bids and len(bids)) or (asks and len(asks)):

@@ -62,8 +62,8 @@ class OrderDb(object):
                 Column('id', String(128), index=True, nullable=False, primary_key=True),
                 Column('product_id', String(128)),
                 Column('order_type', String(128)),
-                Column('status_type', String(128)),
-                Column('status_reason', String(128)),   
+                Column('status', String(128)),
+#                 Column('status_reason', String(128)),   
                 Column('side', String(128)),
                 Column('request_size', Numeric, default=0),
                 Column('filled_size', Numeric, default=0),
@@ -85,8 +85,8 @@ class OrderDb(object):
                     self.id = c.id
                     self.product_id = c.product_id if c.product_id else "null"
                     self.order_type = c.order_type if c.order_type else "null"
-                    self.status_type = c.status_type if c.status_type else "null"
-                    self.status_reason = c.status_reason if c.status_reason else "null"
+                    self.status = c.status if c.status else "null"
+#                     self.status_reason = c.status_reason if c.status_reason else "null"
                     self.side = c.side if c.side else "null"
                     self.request_size = c.request_size                    
                     self.filled_size = c.filled_size
@@ -134,8 +134,8 @@ class OrderDb(object):
                 log.info ("#%d order entries"%(len(ResultSet)))
                 for order in ResultSet:
                     log.info ("inserting order: %s in cache"%(str(order.id)))
-                    o = self.OrderCls(order.id, order.product_id, order.status_type, order_type=order.order_type,
-                                       status_reason=order.status_reason, side=order.side,
+                    o = self.OrderCls(order.id, order.product_id, order.status, order_type=order.order_type,
+                                      side=order.side,
                   request_size=order.request_size, filled_size=order.filled_size,
                   remaining_size=order.remaining_size, price=order.price, funds=order.funds,
                  fees=order.fees, create_time=order.create_time, update_time=order.update_time)
@@ -154,8 +154,8 @@ class OrderDb(object):
                 db_order = result.first()
             if db_order != None:
                 log.info ("got order from db ")     
-                order = self.OrderCls(db_order.id, db_order.product_id, db_order.status_type, order_type=db_order.order_type,
-                                       status_reason=db_order.status_reason, side=db_order.side,
+                order = self.OrderCls(db_order.id, db_order.product_id, db_order.status, order_type=db_order.order_type,
+                                       side=db_order.side,
                   request_size=db_order.request_size, filled_size=db_order.filled_size,
                   remaining_size=db_order.remaining_size, price=db_order.price, funds=db_order.funds,
                  fees=db_order.fees, create_time=db_order.create_time, update_time=db_order.update_time)

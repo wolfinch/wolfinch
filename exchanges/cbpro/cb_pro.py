@@ -248,13 +248,19 @@ class CBPRO (Exchange):
         order_id   = order.get('id') or order.get('order_id')
         order_type = order.get('type')
         status_reason = order.get('reason') or order.get('done_reason')
+        
         status_type = order.get('status') 
-        if order_type in ['received', 'open', 'done', 'match', 'change', 'margin_profile_update', 'activate' ]:
+        if order_type in ['received', 'open', 'match', 'change', 'margin_profile_update', 'activate' ]:
             # order status update message
-            status_type = order_type
+            status_type = "open"
             order_type = order.get('order_type') #could be None
-        else:
-            pass
+        elif order_type ==  'done':
+            if (status_reason == 'filled' or status_reason == "canceled"):
+                status_type = status_reason
+            else:
+                s = "****** unknown order done reason: %s"%(status_reason)
+                log.critical (s)
+                raise Exception (s)
         create_time = order.get('created_at') or None
         update_time  = order.get('time') or order.get('done_at') or None
         side = order.get('side') or None
@@ -280,7 +286,7 @@ class CBPRO (Exchange):
             
         log.debug ("price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g"%(
             price, funds, request_size, filled_size, remaining_size, fees))
-        norm_order = Order (order_id, product_id, status_type, order_type=order_type, status_reason=status_reason,
+        norm_order = Order (order_id, product_id, status_type, order_type=order_type,
                             side=side, request_size=request_size, filled_size=filled_size, remaining_size=remaining_size,
                              price=price, funds=funds, fees=fees, create_time=create_time, update_time=update_time)
         return norm_order
