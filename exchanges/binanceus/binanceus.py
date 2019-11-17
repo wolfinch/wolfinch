@@ -15,21 +15,22 @@ from dateutil.tz import tzlocal, tzutc
 from twisted.internet import reactor
 
 from binance.client import Client
-import exchanges.binanceus.binance as binance
-from exchanges.binanceus.binance.websockets import BinanceSocketManager
+import binance
+from binance.websockets import BinanceSocketManager
 
 from utils import getLogger, readConf
 from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 
-log = getLogger ('Binance')
-log.setLevel(log.CRITICAL)
+log = getLogger ('BinanceUS')
+log.setLevel(log.DEBUG)
 
 #BINANCE CONFIG FILE
-BINANCE_CONF = 'config/binance.yml'
+BINANCE_CONF = 'config/binanceus.yml'
+BNC_INTERVAL_MAPPING = {300 :'5m', 600: '10m'}
 
 class Binance (Exchange):
-    name = "binance"
+    name = "binanceus"
     binance_conf = {}
     binance_products = []
     binance_accounts = {}
@@ -38,32 +39,37 @@ class Binance (Exchange):
     ws_client = None
     symbol_to_id = {}
     primary = False
-    def __init__ (self, config=BINANCE_CONF, primary=False):
+    def __init__(self, config, primary=False):
         log.info ("Init Binance exchange")
         
-        conf = readConf (config)
+        exch_cfg_file = config['config']
+        
+        conf = readConf (exch_cfg_file)
         if (conf != None and len(conf)):
             self.binance_conf = conf['exchange']
         else:
             return None
         
-        self.primary = primary
+        self.primary = True if primary else False
         #get config
-        backfill = self.binance_conf.get('backfill')
+        backfill = config.get('backfill')
         if not backfill:
-            log.fatal("Invalid Config file")
+            log.fatal("Invalid backfill config")            
             return None
     
-        for entry in backfill:
-            if entry.get('enabled'):
-                self.binance_conf['backfill_enabled'] = entry['enabled']
-            if entry.get('period'):
-                self.binance_conf['backfill_period'] = int(entry['period'])
-            if entry.get('interval'):
-                self.binance_conf['backfill_interval'] = str(entry['interval'])
-                interval_str = self.binance_conf.get('backfill_interval')
-                self.candle_interval = long(binance.helpers.interval_to_milliseconds(interval_str))//1000
-                                    
+        if backfill.get('enabled'):
+            self.binance_conf['backfill_enabled'] = backfill['enabled']
+        if backfill.get('period'):
+            self.binance_conf['backfill_period'] = int(backfill['period'])
+        if backfill.get('interval'):
+            #map interval in to binance format
+            interval = BNC_INTERVAL_MAPPING[int(backfill['interval']) ]
+            self.binance_conf['backfill_interval'] = interval       
+        
+#         self.api_base = self.binance_conf.get ('apiBase')
+#         self.feed_base = self.binance_conf.get ('wsFeed')
+        
+        
         # for public client, no need of api key
         self.public_client = Client("", "")
         if (self.public_client) == None :
@@ -72,6 +78,8 @@ class Binance (Exchange):
         
         key = self.binance_conf.get('apiKey')
         b64secret = self.binance_conf.get('apiSecret')
+        
+        test_mode = self.binance_conf.get('test_mode')
         
         if ((key and b64secret ) == False):
             log.critical ("Invalid API Credentials in binance Config!! ")
@@ -95,33 +103,40 @@ class Binance (Exchange):
         log.info ("servertime: %d localtime: %d offset: %d"%(serverTime, localTime, self.timeOffset))
         
         products = exch_info.get("symbols")
+        log.info ("products: %s"%(pprint.pformat(products, 4)))
+                
         if (len(products) and len (self.binance_conf['products'])):
             for prod in products:
                 for p in self.binance_conf['products']:
                     for k,v in p.iteritems():
 #                         log.debug ("pk: %s s: %s"%(k, prod['symbol']))
                         if prod['symbol'] == k:
-                            log.debug ("product found: %s p: %s"%(prod, v))
-                            prod['id'] = v[0]['id']
+                            log.debug ("product found: %s v: %s"%(prod, v))
+                            prod['id'] = v['id']
                             prod['display_name'] = k
                             self.symbol_to_id[k] = prod['id']
+                            prod ['asset_type'] = prod['baseAsset']
+                            prod ['fund_type'] = prod['quoteAsset']
+                                                  
                             self.binance_products.append(prod)
         
         # EXH supported in spectator mode. 
-#         # Popoulate the account details for each interested currencies
-#         accounts =  self.auth_client.get_account()
-#         if (accounts == None):
-#             log.critical("Unable to get account details!!")
-#             return False
-#         #log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
-#         for account in accounts:
-#             for prod in self.binance_conf['products']:
-#                 for prod_id in prod.keys():
-#                     currency = prod[prod_id][0]['currency']            
-#                     if account['currency'] in currency:
-#                         log.debug ("Interested Account Found for Currency: "+account['currency'])
-#                         self.binance_accounts[account['currency']] = account
-#                         break  
+        # Popoulate the account details for each interested currencies
+        accounts =  self.auth_client.get_account()
+        log.info ("accounts: %s"%(pprint.pformat(accounts, 4)))
+        if (accounts == None):
+            log.critical("Unable to get account details!!")
+            return False
+        #log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
+        for account in accounts:
+            for prod in self.binance_conf['products']:
+                    for k,v in prod.iteritems():
+                        log.debug ("pk: %s s: %s"%(k, prod['symbol']))                        
+                        currency = prod[prod_id][0]['currency']            
+                        if account['currency'] in currency:
+                            log.debug ("Interested Account Found for Currency: "+account['currency'])
+                            self.binance_accounts[account['currency']] = account
+                            break  
         
         self.ws_client = bm = BinanceSocketManager(self.public_client)
         for prod in self.get_products():
@@ -130,7 +145,7 @@ class Binance (Exchange):
             bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg, interval=backfill_interval)
         bm.start()
                 
-        log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
+        log.info( "**BinanceUS init success**\n Products: %s\n Accounts: %s"%(
                         pprint.pformat(self.binance_products, 4), pprint.pformat(self.binance_accounts, 4)))
         
     def __str__ (self):
@@ -365,13 +380,21 @@ if __name__ == '__main__':
     
     print ("Testing Binance exch:")
     
-    bnc = Binance ()
+    config = {"config": "config/binanceus.yml",
+              'backfill': {
+                  'enabled'  : True,
+                  'period'   : 1,  #in Days
+                  'interval' : 300,  #300s == 5m  
+                }
+              }
+    
+    bnc = Binance (config)
     
 #     m = bnc.market_init('BTC-USD')
     
-    bnc.get_historic_rates('BTC-USD')
+    bnc.get_historic_rates('BTCUSDT')
     
-    sleep(20)
+    sleep(5)
     bnc.close()
     print ("Done")
 #EOF    

@@ -11,11 +11,15 @@ from .exceptions import BinanceAPIException, BinanceRequestException, BinanceWit
 
 class Client(object):
 
-    API_URL = 'https://api.binance.com/api'
-    WITHDRAW_API_URL = 'https://api.binance.com/wapi'
-    MARGIN_API_URL = 'https://api.binance.com/sapi'
-    WEBSITE_URL = 'https://www.binance.com'
-    PUBLIC_API_VERSION = 'v1'
+#     API_URL = 'https://api.binance.com/api'
+#     WITHDRAW_API_URL = 'https://api.binance.com/wapi'
+#     MARGIN_API_URL = 'https://api.binance.com/sapi'
+#     WEBSITE_URL = 'https://www.binance.com'
+    API_URL = 'https://api.binance.us/api'
+    WITHDRAW_API_URL = 'https://api.binance.us/wapi'
+    MARGIN_API_URL = 'https://api.binance.us/sapi'
+    WEBSITE_URL = 'https://www.binance.us'    
+    PUBLIC_API_VERSION = 'v3'
     PRIVATE_API_VERSION = 'v3'
     WITHDRAW_API_VERSION = 'v3'
     MARGIN_API_VERSION = 'v1'
