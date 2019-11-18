@@ -1008,7 +1008,7 @@ class Market:
         for order in pending_order_list:
             if not (sims.simulator_on):
                 log.info ("watching pending order(%s)"%(order.id))                
-                order_det = self.exchange.get_order(order.id)
+                order_det = self.exchange.get_order(self.product_id, order.id)
                 if (order_det):
                     self.order_status_update(order_det)
                 else:
@@ -1038,9 +1038,10 @@ class Market:
             self.add_new_candle (candle)             
             
         #2.update market states
-        if (self.order_book.book_valid == False):
-            log.debug ("Re-Construct the Order Book")
-            self.order_book.reset_book()     
+        #TODO: TBD: do we need this? didabled for now
+#         if (self.order_book.book_valid == False):
+#             log.debug ("Re-Construct the Order Book")
+#             self.order_book.reset_book()     
         #3.pending trades
         self._handle_pending_trade_reqs ()
 

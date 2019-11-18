@@ -308,7 +308,7 @@ class SIM_EXCH (exchanges.Exchange):
             open_orders_pvt.append(sell_order)
         return sell_order
         
-    def get_order (self, order_id):
+    def get_order (self, prod_id, order_id):
     #     open_orders_pvt = open_orders.get(market.product_id)
     #     for order in open_orders_pvt[:]:
     #         if (order.id == order_id):

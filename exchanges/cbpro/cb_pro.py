@@ -347,7 +347,7 @@ class CBPRO (Exchange):
         #order = self._normalized_order(msg)
 
         order_id   = msg.get('id') or msg.get('order_id')
-        order = self.get_order(order_id)
+        order = self.get_order("", order_id)
         
         #TODO: TBD: Do order status normalize if needed
         
@@ -560,7 +560,8 @@ class CBPRO (Exchange):
                         )
         return self._normalized_order (order);
     
-    def get_order (self,  order_id):
+    def get_order (self, prod_id, order_id):
+        #prod_id ignored
         log.debug ("GET - order (%s) "%(order_id))
         order = self.auth_client.get_order(order_id)
         return self._normalized_order (order);
