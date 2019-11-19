@@ -1,1 +1,1 @@
-from binanceus import Binance
+from binanceus import BinanceUS

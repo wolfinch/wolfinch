@@ -16,10 +16,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from exchanges.cbpro import CBPRO
-from exchanges.binanceClient import Binance
+from exchanges.binanceus import BinanceUS
 
 all_exchanges = [
-        Binance,
+        BinanceUS,
         CBPRO
     ]
 

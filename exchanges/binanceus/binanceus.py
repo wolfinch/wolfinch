@@ -31,7 +31,7 @@ BINANCE_CONF = 'config/binanceus.yml'
 BNC_INTERVAL_MAPPING = {300 :'5m', 600: '10m'}
 
 
-class Binance (Exchange):
+class BinanceUS (Exchange):
     name = "binanceus"
     binance_conf = {}
     binance_products = []
@@ -68,7 +68,8 @@ class Binance (Exchange):
         if backfill.get('interval'):
             # map interval in to binance format
             interval = BNC_INTERVAL_MAPPING[int(backfill['interval']) ]
-            self.binance_conf['backfill_interval'] = interval
+            self.binance_conf['backfill_interval'] =  interval
+            self.candle_interval = int(backfill['interval'])
         
         # for public client, no need of api key
         self.public_client = Client("", "")
