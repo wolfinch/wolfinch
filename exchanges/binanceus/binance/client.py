@@ -21,6 +21,7 @@ class Client(object):
     WEBSITE_URL = 'https://www.binance.us'    
     PUBLIC_API_VERSION = 'v3'
     PRIVATE_API_VERSION = 'v3'
+    PRIVATE_WEBSOCKET_API_VERSION = 'v1'
     WITHDRAW_API_VERSION = 'v3'
     MARGIN_API_VERSION = 'v1'
 

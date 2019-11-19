@@ -39,6 +39,7 @@ class Binance (Exchange):
     public_client = None
     auth_client = None
     ws_client = None
+    ws_auth_client = None
     symbol_to_id = {}
     primary = False
 
@@ -67,10 +68,7 @@ class Binance (Exchange):
         if backfill.get('interval'):
             # map interval in to binance format
             interval = BNC_INTERVAL_MAPPING[int(backfill['interval']) ]
-            self.binance_conf['backfill_interval'] = interval       
-        
-#         self.api_base = self.binance_conf.get ('apiBase')
-#         self.feed_base = self.binance_conf.get ('wsFeed')
+            self.binance_conf['backfill_interval'] = interval
         
         # for public client, no need of api key
         self.public_client = Client("", "")
@@ -141,16 +139,29 @@ class Binance (Exchange):
                             self.binance_accounts[balance['asset']] = balance
                             break  
         
+        ### Start WebSocket Streams ###
         self.ws_client = bm = BinanceSocketManager(self.public_client)
+        symbol_list = []
         for prod in self.get_products():
             # Start Kline socket
-            backfill_interval = self.binance_conf.get('backfill_interval')
+#             backfill_interval = self.binance_conf.get('backfill_interval')
 #             bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg, interval=backfill_interval)
 #             bm.start_aggtrade_socket(prod['symbol'], self._feed_enQ_msg)
-            bm.start_trade_socket(prod['symbol'], self._feed_enQ_msg)
+            symbol_list.append(prod['symbol'].lower()+"@trade")
+            
+        if len(symbol_list):
+            #start mux ws socket now
+            log.info ("starting mux ws sockets for syms: %s"%(symbol_list))
+            bm.start_multiplex_socket(symbol_list, self._feed_enQ_msg)
+            
+        self.ws_auth_client = bm_auth = BinanceSocketManager(self.auth_client)
+        # Start user socket for interested symbols
+        log.info ("starting user sockets")
+        bm_auth.start_user_socket(self._feed_enQ_msg)            
 
         bm.start()
-                
+        bm_auth.start()
+        
         log.info("**BinanceUS init success**\n Products: %s\n Accounts: %s" % (
                         pprint.pformat(self.binance_products, 4), pprint.pformat(self.binance_accounts, 4)))
         
@@ -158,38 +169,64 @@ class Binance (Exchange):
         return "{Message: Binance Exchange }"
 
     ######## Feed Consume #######
-    def _feed_enQ_msg (self, msg):
-            log.debug("message :%s " % msg)      
-            msg_type = msg.get('e') 
-            symbol = msg.get("s")
-            product_id = self.symbol_to_id[symbol]
+    def _feed_enQ_msg (self, msg_raw):
+            log.debug("message :%s " % msg_raw)
+            
+            if msg_raw.get('stream'):
+                msg = msg_raw.get('data')
+            else:
+                msg = msg_raw
+
+            msg_type = msg.get('e')
+            
             if (msg_type == 'aggTrade' or msg_type == 'trade'):
-                log.debug ("aggTrade")
+                log.debug ("aggTrade/trade")
+                symbol = msg.get("s")            
+                product_id = self.symbol_to_id.get(symbol)
+                if not product_id:
+                    log.error ("unknown market(%s)"%(symbol))
+                    return 
                 market = get_market_by_product (self.name, product_id)
                 if (market == None):
-                    log.error ("Feed Thread: Unknown market product: %s: msg %s" % (product_id, json.dumps(msg, indent=4, sort_keys=True)))
+                    log.error ("Feed Thread: Unknown market product: %s: msg %s" % (
+                        product_id, json.dumps(msg, indent=4, sort_keys=True)))
                     return
                 feed_enQ(market, msg)
             elif (msg_type == 'kline'):
                 log.debug ("kline")
-                market = get_market_by_product (self.name, product_id)
-                if (market == None):
-                    log.error ("Feed Thread: Unknown market product: %s: msg %s" % (product_id, json.dumps(msg, indent=4, sort_keys=True)))
-                    return
+                symbol = msg.get("s")            
+                product_id = self.symbol_to_id.get(symbol)
+                if not product_id:
+                    log.error ("unknown market(%s)"%(symbol))
+                    return 
                 k = msg.get('k')
                 if k.get('x') == True:
                     # This kline closed, this is a candle
+                    market = get_market_by_product (self.name, product_id)
+                    if (market == None):
+                        log.error ("Feed Thread: Unknown market product: %s: msg %s" % (
+                            product_id, json.dumps(msg, indent=4, sort_keys=True)))
+                        return                    
                     feed_enQ(market, msg)
                 else:
                     # not interested
                     pass                
             elif (msg_type == 'executionReport'):
                 log.debug ("USER DATA: executionReport")
+                symbol = msg.get("s")            
+                product_id = self.symbol_to_id.get(symbol)
+                if not product_id:
+                    log.error ("unknown market(%s)"%(symbol))
+                    return         
                 market = get_market_by_product (self.name, product_id)
                 if (market == None):
-                    log.error ("Feed Thread: Unknown market product: %s: msg %s" % (product_id, json.dumps(msg, indent=4, sort_keys=True)))
+                    log.error ("Feed Thread: Unknown market product: %s: msg %s" % (
+                        product_id, json.dumps(msg, indent=4, sort_keys=True)))
                     return
                 feed_enQ(market, msg)
+            elif (msg_type == 'error'):
+                log.critical("websocket connection retries exceeded!!")
+                raise Exception("websocket connection retries exceeded!!")
             else:
                 log.error ("Unknown feed. message type: %s prod: %s" % (msg_type, product_id))
             return
@@ -200,20 +237,31 @@ class Binance (Exchange):
 #         This is where we do all the useful stuff with Feed
 #         '''
         msg_type = msg.get('e') 
-        if (msg_type == 'aggTrade'):
-            self._binance_consume_aggtrade_feed (market, msg)
-        if (msg_type == 'aggTrade'):
+        if (msg_type == 'trade' or msg_type == 'aggTrade'):
             self._binance_consume_trade_feed (market, msg)            
         elif (msg_type == 'executionReport'):
             log.debug ("Feed: executionReport msg: %s" % (msg))
         elif (msg_type == 'kline'):
             self._binance_consume_candle_feed(market, msg)
                     
-    def _binance_consume_aggtrade_feed (self, market, msg):
-        log.debug ("aggTrade feed: %s" % (msg))
-        
     def _binance_consume_trade_feed (self, market, msg):
+#         {
+#           "e": "aggTrade|trade",  // Event type
+#           "E": 123456789,   // Event time
+#           "s": "BNBBTC",    // Symbol
+#           "a": 12345,       // Aggregate trade ID
+#           "p": "0.001",     // Price
+#           "q": "100",       // Quantity
+#           "f": 100,         // First trade ID
+#           "l": 105,         // Last trade ID
+#           "T": 123456785,   // Trade time
+#           "m": true,        // Is the buyer the market maker?
+#           "M": true         // Ignore
+#         }        
         log.debug ("Trade feed: %s" % (msg))
+        price = Decimal(msg.get('p'))
+        last_size = msg.get('q')
+        market.tick (price, last_size)
                 
     def _binance_consume_candle_feed (self, market, msg):
         log.info ("msg: %s" % msg)
@@ -238,35 +286,30 @@ class Binance (Exchange):
 #         market.update_market_states()        
             
     #### Feed consume done #####    
-    
-    # TODO: FIXME: Spectator mode, make full operational    
-    def market_init (self, product):
-#         usd_acc = self.binance_accounts['USD']
-#         crypto_acc = self.binance_accounts.get(product['base_currency'])
-#         if (usd_acc == None or crypto_acc == None): 
-#             log.error ("No account available for product: %s"%(product['id']))
-#             return None
-        # Setup the initial params
-#         log.debug ("product: %s"%product)
-        market = Market(product=product, exchange=self)    
-        market.fund.set_initial_value(Decimal(0))  # usd_acc['available']))
-        market.fund.set_hold_value(Decimal(0))  # usd_acc['hold']))
-        market.fund.set_fund_liquidity_percent(10)  #### Limit the fund to 10%
-        market.fund.set_max_per_buy_fund_value(100)
-        market.asset.set_initial_size(Decimal(0))  # crypto_acc['available']))
-        market.asset.set_hold_size(0)  # Decimal(crypto_acc['hold']))
-    
-        # # Feed Cb
-        market.consume_feed = self._binance_consume_feed
+    def market_init (self, market):
+#         global ws_client
+        usd_acc = self.gdax_accounts['USD']
+        crypto_acc = self.gdax_accounts.get(market.asset_type)
+        if (usd_acc == None or crypto_acc == None): 
+            log.error ("No account available for product: %s"%(market.product_id))
+            return None
         
-        # # Init Exchange specific private state variables
-        market.O = market.H = market.L = market.C = market.V = 0
-        market.candle_interval = self.candle_interval
-        log.info ("Market init complete: %s" % (product['id']))
+#         #Setup the initial params
+        market.fund.set_initial_value(Decimal(usd_acc['available']))
+        market.fund.set_hold_value(Decimal(usd_acc['hold']))
+        market.asset.set_initial_size(Decimal( crypto_acc['available']))
+        market.asset.set_hold_size( Decimal(crypto_acc['hold']))
         
-        # set whether primary or secondary
-        market.primary = self.primary
+        ## Feed Cb
+        market.register_feed_processor(self._binance_consume_feed)
         
+        ## Init Exchange specific private state variables
+        market.set_candle_interval (self.candle_interval)
+        
+#         #set whether primary or secondary
+#         market.primary = self.primary
+        log.info ("Market init complete: %s" % (market.product_id))
+                
         return market
 
     def close (self):
@@ -276,9 +319,15 @@ class Binance (Exchange):
             log.debug("Closing WebSocket Client")
             self.ws_client.close ()
             self.ws_client.join(1)
+        if (self.ws_auth_client):
+            log.debug("Closing WebSocket Auth Client")
+            self.ws_auth_client.close ()
+            self.ws_auth_client.join(1)
+        
+        if (self.ws_auth_client or self.ws_client):
             if not reactor._stopped:
                 reactor.stop()
-            log.debug("Closed websockets")
+        log.debug("Closed websockets")
 
     def get_products (self):
         log.debug ("products num %d" % (len(self.binance_products)))
@@ -450,7 +499,7 @@ class Binance (Exchange):
 #           3. {'status' : 'rejected', 'reject_reason': 'post-only'}
 #         '''
 #         error_status_codes = ['rejected']
-        log.debug ("Order msg:\n%s" % (pprint.pformat(order, 4)))
+        log.debug ("Order msg: \n%s" % (pprint.pformat(order, 4)))
         
         msg = order.get('msg')
         status = order.get('status')  or order.get('X')
@@ -465,6 +514,7 @@ class Binance (Exchange):
 
         if (status == None and (product_id != None and order_id != None)):
             log.debug ("must be an ACK for order_id (%s)" % (order_id))
+            # For ACK all values might be 0, careful with calculations
             status = "NEW"
                 
         if status in ['NEW', 'PARTIALLY_FILLED', 'FILLED', 'CANCELED', 'PENDING_CANCEL', 'REJECTED', 'EXPIRED' ]:
@@ -498,7 +548,7 @@ class Binance (Exchange):
         funds = Decimal(order.get('Z') or order.get('cummulativeQuoteQty') or 0)
         fees = Decimal(order.get('n') or 0)
         
-        if price == 0:
+        if price == 0 and funds != 0 and filled_size != 0 :
             price = funds / filled_size  # avg size calculation
         fills = order.get('fills')
         if fills :
@@ -538,7 +588,7 @@ class Binance (Exchange):
         # TODO: FIXME: Implement Market/STOP orders
         log.debug ("BUY - Placing Order on exchange --")
         
-        params = {'symbol':trade_req.product, 'side' : SIDE_BUY, 'quantity':trade_req.size }  # asset
+        params = {'symbol':trade_req.product, 'side' : SIDE_BUY, 'quantity':trade_req.size, "newOrderRespType": ORDER_RESP_TYPE_ACK }  # asset
         if trade_req.type == "market":
             params['type'] = ORDER_TYPE_MARKET
         else:
@@ -555,7 +605,7 @@ class Binance (Exchange):
     def sell (self, trade_req) :
         # TODO: FIXME: Implement Market/STOP orders        
         log.debug ("SELL - Placing Order on exchange --")
-        params = {'symbol':trade_req.product, 'side' : SIDE_SELL, 'quantity':trade_req.size }  # asset
+        params = {'symbol':trade_req.product, 'side' : SIDE_SELL, 'quantity':trade_req.size, "newOrderRespType": ORDER_RESP_TYPE_ACK  }  # asset
         if trade_req.type == "market":
             params['type'] = ORDER_TYPE_MARKET
         else:
@@ -571,14 +621,14 @@ class Binance (Exchange):
     
     def get_order (self, prod_id, order_id):
         log.debug ("GET - order (%s) " % (order_id))
-        order = self.auth_client.get_order(prod_id, order_id)
+        order = self.auth_client.get_order(symbol=prod_id, origClientOrderId=order_id)
         return self._normalized_order (order);
     
     def cancel_order (self, prod_id, order_id):
         log.debug ("CANCEL - order (%s) " % (order_id))
         self.auth_client.client.cancel_order(
                 symbol=prod_id,
-                orderId=order_id)
+                origClientOrderId=order_id)
         return None
 
 
@@ -602,14 +652,24 @@ if __name__ == '__main__':
 
     # test historic rates
 #     bnc.get_historic_rates('XLMUSDT')
-    
-    # test order
-    tr = TradeRequest("XLMUSDT", 'BUY', 100, 200, "market", 100, 90)
-    
+#     
+    # test buy order
+    tr = TradeRequest("XLMUSDT", 'BUY', 200, 200, "market", 100, 90)
     order = bnc.buy(tr)
-    print ("order: %s" % (order))
-    
-    sleep(10)
+    print ("buy order: %s" % (order))
+      
+    order = bnc.get_order("XLMUSDT", order.id)
+    print ("get buy order: %s" % (order))
+      
+    # test sell order
+    tr = TradeRequest("XLMUSDT", 'SELL', 200, 200, "market", 100, 90)
+    order = bnc.sell(tr)
+    print ("sell order: %s" % (order))        
+     
+    order = bnc.get_order("XLMUSDT", order.id)
+    print ("get sell order: %s" % (order))    
+     
+    sleep(60)
     bnc.close()
     print ("Done")
 # EOF    
