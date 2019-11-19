@@ -288,17 +288,17 @@ class Binance (Exchange):
     #### Feed consume done #####    
     def market_init (self, market):
 #         global ws_client
-        usd_acc = self.gdax_accounts['USD']
-        crypto_acc = self.gdax_accounts.get(market.asset_type)
+        usd_acc = self.binance_accounts['USDT']
+        crypto_acc = self.binance_accounts.get(market.asset_type)
         if (usd_acc == None or crypto_acc == None): 
             log.error ("No account available for product: %s"%(market.product_id))
             return None
         
 #         #Setup the initial params
-        market.fund.set_initial_value(Decimal(usd_acc['available']))
-        market.fund.set_hold_value(Decimal(usd_acc['hold']))
-        market.asset.set_initial_size(Decimal( crypto_acc['available']))
-        market.asset.set_hold_size( Decimal(crypto_acc['hold']))
+        market.fund.set_initial_value(Decimal(usd_acc['free']))
+        market.fund.set_hold_value(Decimal(usd_acc['locked']))
+        market.asset.set_initial_size(Decimal( crypto_acc['free']))
+        market.asset.set_hold_size( Decimal(crypto_acc['locked']))
         
         ## Feed Cb
         market.register_feed_processor(self._binance_consume_feed)
