@@ -71,13 +71,13 @@ class CBPRO (Exchange):
         if not backfill:
             log.fatal("Invalid backfill config")            
             return None
-    
+        
         if backfill.get('enabled'):
             self.gdax_conf['backfill_enabled'] = backfill['enabled']
         if backfill.get('period'):
             self.gdax_conf['backfill_period'] = int(backfill['period'])
         if backfill.get('interval'):
-            self.gdax_conf['backfill_interval'] = int(backfill['interval'])            
+            self.gdax_conf['backfill_interval'] = int(backfill['interval'])
         
         self.key = self.gdax_conf.get('apiKey')
         self.b64secret = self.gdax_conf.get('apiSecret')
@@ -113,15 +113,21 @@ class CBPRO (Exchange):
         log.info ("servertime: %d localtime: %d offset: %d"%(serverTime, localTime, self.timeOffset))
         
 #         global gdax_products
+        prod_config = config['products']
+        prods = []
+        for p in prod_config:
+            prods += p.keys()
+        self.gdax_conf['products'] = prods
+        
         products = self.public_client.get_products()
         log.info ("products: %s"%(pprint.pformat(products, 4)))
-        if (len(products) and len (self.gdax_conf['products'])):
+        
+        if (len(products) and len (prod_config)):
             for prod in products:
-                for p in self.gdax_conf['products']:              
+                for p in prod_config:              
                     if prod['id'] in p.keys():     
                         prod ['asset_type'] = prod['base_currency']
                         prod ['fund_type'] = prod['quote_currency']
-                        
                         self.gdax_products.append(prod)
         
         # Popoulate the account details for each interested currencies
@@ -143,10 +149,10 @@ class CBPRO (Exchange):
                         log.critical("error while getting accounts: msg: %s"%err_msg)
                         raise Exception ("error while getting accounts: msg: %s"%err_msg)
         for account in accounts:
-            for prod in self.gdax_conf['products']:
+            for prod in prod_config:
                 for prod_id in prod.keys():
-                    currency = prod[prod_id]['currency']
-                    if account['currency'] in currency:
+                    currency = prod[prod_id]['currency']                  
+                    if account['currency'] in currency.values():
                         log.debug ("Interested Account Found for Currency: "+account['currency'])
                         self.gdax_accounts[account['currency']] = account
                         break
@@ -294,9 +300,7 @@ class CBPRO (Exchange):
     ######### WebSocket Client implementation #########
     
     def _register_feed (self, api_key="", api_secret="", api_passphrase="", url=""):
-        products = []
-        for p in self.gdax_conf['products']: #["BTC-USD", "ETH-USD"]
-            products += p.keys()
+        products = self.gdax_conf['products'] #["BTC-USD", "ETH-USD"]
             
         channels = [
 #                 "level2",

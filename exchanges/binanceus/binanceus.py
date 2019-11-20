@@ -647,7 +647,7 @@ if __name__ == '__main__':
                 }
               }
     
-    bnc = Binance (config)
+    bnc = BinanceUS (config)
     
 #     m = bnc.market_init('BTC-USD')
 
@@ -655,20 +655,20 @@ if __name__ == '__main__':
 #     bnc.get_historic_rates('XLMUSDT')
 #     
     # test buy order
-    tr = TradeRequest("XLMUSDT", 'BUY', 200, 200, "market", 100, 90)
-    order = bnc.buy(tr)
-    print ("buy order: %s" % (order))
-      
-    order = bnc.get_order("XLMUSDT", order.id)
-    print ("get buy order: %s" % (order))
-      
-    # test sell order
-    tr = TradeRequest("XLMUSDT", 'SELL', 200, 200, "market", 100, 90)
-    order = bnc.sell(tr)
-    print ("sell order: %s" % (order))        
-     
-    order = bnc.get_order("XLMUSDT", order.id)
-    print ("get sell order: %s" % (order))    
+#     tr = TradeRequest("XLMUSDT", 'BUY', 200, 200, "market", 100, 90)
+#     order = bnc.buy(tr)
+#     print ("buy order: %s" % (order))
+#       
+#     order = bnc.get_order("XLMUSDT", order.id)
+#     print ("get buy order: %s" % (order))
+#       
+#     # test sell order
+#     tr = TradeRequest("XLMUSDT", 'SELL', 200, 200, "market", 100, 90)
+#     order = bnc.sell(tr)
+#     print ("sell order: %s" % (order))        
+#      
+#     order = bnc.get_order("XLMUSDT", order.id)
+#     print ("get sell order: %s" % (order))    
      
     sleep(60)
     bnc.close()
