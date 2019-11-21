@@ -28,8 +28,6 @@ from flask import Flask, request, send_from_directory
 from utils import getLogger
 import db_events
 
-# TODO: FIXME, remove static
-# g_markets_list = {"CBPRO":["BTC-USD", "ETH-USD"], "BNC":["BTC-INR", "ETH-INR"]}
 g_markets_list = None
 g_active_market = {}  # {"CBPRO": "BTC-USD"}
 
@@ -41,11 +39,9 @@ log.setLevel(log.INFO)
 # PRODUCT_ID = "BTC-USD"
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
-# POSITION_STATS_FILE = "stats_positions_%s_%s.json"%("CBPRO", "BTC-USD")
 MARKET_STATS = "stats_market_%s_%s.json"
 
 
-# TRADED_STATS_FILE = "stats_traded_orders_%s_%s.json"%("CBPRO", "BTC-USD")
 def server_main (port=8080, mp_pipe=None):
     
 #     # init db_events
@@ -117,7 +113,9 @@ def server_main (port=8080, mp_pipe=None):
                     raise Exception (err)
             data = {"all": g_markets_list}
             if g_active_market.get("EXCH_NAME") and  g_active_market.get("PRODUCT_ID"):
-                data["active"] = {g_active_market["EXCH_NAME"] : g_active_market["PRODUCT_ID"]}
+                data["active"] = {"EXCH_NAME": g_active_market["EXCH_NAME"],
+                                  "PRODUCT_ID": g_active_market["PRODUCT_ID"],
+                                  "PAUSED": g_active_market["PAUSED"]}
             return json.dumps(data)
         except Exception as e:
             log.error ("Unable to get market list. Exception: %s", e)
@@ -131,7 +129,11 @@ def server_main (port=8080, mp_pipe=None):
             if len(data.keys()) > 0 :
                 exch_name = data.keys()[0]
                 prod_id = data.values()[0].encode('ascii')
-                g_active_market = {"EXCH_NAME": exch_name, "PRODUCT_ID": prod_id}
+                
+                for market in g_markets_list[exch_name]:
+                    if market["product_id"] == prod_id:
+                        g_active_market = {"EXCH_NAME": exch_name, "PRODUCT_ID": prod_id, "PAUSED": market["paused"]}
+                        break                
                 log.info ("set active market: %s " % (g_active_market))
                 # init db_events
                 if not db_events.init(exch_name, prod_id):
@@ -142,6 +144,52 @@ def server_main (port=8080, mp_pipe=None):
         except Exception as e:
             log.error ("Unable to set active market. Exception: %s", e)
             return "{}"
+
+    @app.route('/api/pause_market', methods=["POST"])
+    def pause_market_api():
+
+        def ret_code(err):
+            return json.dumps(err)       
+                
+        data = request.form.to_dict()
+        if len(data.keys()) <= 0 :
+            err = "error: invalid request data"
+            log.error (err)
+            return ret_code(err)      
+        
+        log.info ("data: %s"%(data))
+        pause = bool(int(data.get('pause', False)))
+        req_code = str(data.get('req_code', ""))
+        exch_name = str(data.get('exch_name', ""))
+        prod_id = str(data.get('product', ""))
+                
+        log.info ("pause (%d) exch: %s prod: %s" % (pause, exch_name, prod_id))
+        
+        if (exch_name == "" or prod_id == "" or req_code == ""):
+            err = "error: incorrect request data"
+            log.error (err)
+            return ret_code(err)
+        
+        if req_code != UI_TRADE_SECRET:
+            err = "incorrect secret"
+            log.error (err)
+            return ret_code(err)
+        
+        err = "success"
+        
+        msg = {"type": "PAUSE_TRADING", "exchange": exch_name, "product": prod_id, "pause": pause}
+        if mp_pipe:
+            log.info ("sending pause (%d) msg to tranding engine"%(pause))
+            mp_send_recv_msg(mp_pipe, msg)
+            g_active_market["PAUSED"] = pause
+            for market in g_markets_list[exch_name]:
+                if market["product_id"] == prod_id:
+                    market["paused"] = pause
+                    break            
+        else:
+            err = "server connection can't be found!"
+            log.error (err)
+        return ret_code(err)            
 
     @app.route('/api/market_stats')
     def market_stats_api():

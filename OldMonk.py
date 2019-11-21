@@ -127,7 +127,7 @@ def process_market (market):
     market.update_market_states()
     
     # Trade only on primary markets
-    if market.primary is True and market.new_candle is True:
+    if market.primary is True and market.trading_paused is False and  market.new_candle is True:
         signal = market.generate_trade_signal ()
         market.consume_trade_signal (signal)
         if (sims.simulator_on):
@@ -146,23 +146,37 @@ def process_ui_trade_notif (msg):
     product = msg.get("product")
     side = msg.get("side")
     signal = msg.get("signal")
-    log.info ("Manual Trade Req: exch: %s prod: %s side: %s signal: %s" % (exch, product, side, str(signal)))
     m = get_market_by_product (exch, product)
     if not m:
         log.error ("Unknown exchange/product exch: %s prod: %s" % (exch, product))
     else:
-        m.consume_trade_signal(signal)    
+        log.info ("Manual Trade Req: exch: %s prod: %s side: %s signal: %s" % (exch, product, side, str(signal)))
+        if not m.trading_paused:
+            m.consume_trade_signal(signal)
+        else:
+            log.error ("trading paused for market (%s). unable to consume manual trade order"%(m.name))        
 
-
+def process_ui_pause_trading_notif (msg):
+    exch = msg.get("exchange")
+    product = msg.get("product")
+    pause = msg.get("pause")
+    
+    m = get_market_by_product (exch, product)
+    if not m:
+        log.error ("Unknown exchange/product exch: %s prod: %s" % (exch, product))
+    else:
+        log.info ("pause trading on exch: %s prod: %s" % (exch, product))
+        m.pause_trading(pause)    
+        
 def process_ui_get_markets_rr (msg, ui_conn_pipe):
     log.debug ("enter")
     m_dict = {}
     for m in get_market_list():
         p_list = m_dict.get(m.exchange_name)
         if not p_list:
-            m_dict[m.exchange_name] = [m.product_id]
+            m_dict[m.exchange_name] = [{"product_id": m.product_id, "paused": m.trading_paused}]
         else:
-            p_list.append(m.product_id)
+            p_list.append({"product": m.product_id, "paused": m.trading_paused})
     
     msg ["type"] = "GET_MARKETS_RESP"
     msg ["data"] = m_dict
@@ -183,6 +197,8 @@ def process_ui_msgs(ui_conn_pipe):
                     process_ui_trade_notif (msg)
                 elif msg_type == "GET_MARKETS":
                     process_ui_get_markets_rr (msg, ui_conn_pipe)
+                elif msg_type == "PAUSE_TRADING":
+                    process_ui_pause_trading_notif (msg)
                 else:
                     log.error ("Unknown ui msg type: %s", msg_type)
     except Exception as e:

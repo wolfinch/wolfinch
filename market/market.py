@@ -276,6 +276,7 @@ class Market:
         
         #set primary?
         self.primary = exchange.primary
+        self.trading_paused = False
         
         self.current_market_rate = Decimal(0.0)
         self.start_market_rate = Decimal(0.0)
@@ -427,6 +428,10 @@ class Market:
             
         #TODO: FIXME: jork: might need to rate-limit the logic here after
         self.set_market_rate (price)
+    
+    def pause_trading (self, pause):
+        log.info ("pause_trading: %d"%(pause))
+        self.trading_paused = pause
 
     def _handle_take_profit (self):
  
@@ -993,15 +998,14 @@ class Market:
         log.debug ("commit positions to db")
         self.order_book.db_commit_dirty_positions()
         
-
         
     def watch_pending_orders(self):
         now = time.time()
         if self._pending_order_track_time > now:
             return 
         else:
-            #setup next commit time, some time between 3min to 5min
-            self._pending_order_track_time = int(now) + random.randrange(120, 200)            
+            #setup next tracking time, some time between 2min to 3min
+            self._pending_order_track_time = int(now) + random.randrange(120, 180)            
         
         log.debug ("watching pending orders")
         pending_order_list = self.order_book.get_all_pending_orders()
