@@ -7,12 +7,9 @@
 # One primary exchange for trading and as many others in spectator mode
 # data from exchanges in spectator mode will be considered for trading decision
 exchanges:
-#   - 'binance': 
-#      role: 'secondary'
-#      config: 'config/binance.yml'
-   - 'cbpro' : 
+   - 'binanceus' : 
       role: 'primary'
-      config: 'config/cbpro_sim.yml'
+      config: 'config/binanceus.yml'
       products:
          - 'XLM-USD':
             fund_max_liquidity : 1000 #$$               
@@ -22,8 +19,8 @@ exchanges:
      # products - end
       order_type    : market
       fee     : 
-         maker : 0.5 #make fee %
-         taker : 0.5 #taker fee %
+         maker : 0.1 #make fee %
+         taker : 0.1 #taker fee %
    #cbpro - end
 # exchanges - end
 
