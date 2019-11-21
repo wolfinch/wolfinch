@@ -151,10 +151,7 @@ def process_ui_trade_notif (msg):
         log.error ("Unknown exchange/product exch: %s prod: %s" % (exch, product))
     else:
         log.info ("Manual Trade Req: exch: %s prod: %s side: %s signal: %s" % (exch, product, side, str(signal)))
-        if not m.trading_paused:
-            m.consume_trade_signal(signal)
-        else:
-            log.error ("trading paused for market (%s). unable to consume manual trade order"%(m.name))        
+        m.consume_trade_signal(signal)
 
 def process_ui_pause_trading_notif (msg):
     exch = msg.get("exchange")

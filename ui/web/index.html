@@ -125,14 +125,14 @@
 			list.removeChild(list.firstChild);
 		}
 
-		markets_l.forEach(function(prod_name) {
-			console.log("loading " + prod_name);
+		markets_l.forEach(function(market) {
+			console.log("loading " + market["product_id"]);
 			var li = document.createElement("li");
 			var link = document.createElement("a");
-			var text = document.createTextNode(prod_name);
+			var text = document.createTextNode(market["product_id"]);
 			link.appendChild(text);
 			link.href = "#";
-			link.id = "li_exch_id_" + prod_name;
+			link.id = "li_exch_id_" + market["product_id"];
 			link.onclick = market_onclick;
 			li.appendChild(link);
 			list.appendChild(li);
@@ -141,11 +141,14 @@
 		if (active_market != undefined && active_market != "") {
 			var btn = document.getElementById("markets_btn_id");
 
-			if (markets_l.indexOf(active_market) != -1) {
-				btn.innerHTML = active_market + ' <span class="caret"></span>';
-			} else {
-				btn.innerHTML = 'Market <span class="caret"></span>';
-			}
+			console.log ("active_market: "+active_market+markets_l);
+			
+			btn.innerHTML = 'Market <span class="caret"></span>';			
+			markets_l.forEach(function(market) {
+				if (market["product_id"] == active_market) {
+					btn.innerHTML = active_market + ' <span class="caret"></span>';					
+				}
+			});
 		}
 	}
 
@@ -160,11 +163,12 @@
 				console.log("get_markets success!" + data);
 				exchanges = data["all"];
 				if (data["active"]) {
-					active_exch = Object.keys(data["active"])[0];
-					active_market = Object.values(data["active"])[0];
-
+					active_exch = data["active"]["EXCH_NAME"];
+					active_market = data["active"]["PRODUCT_ID"];
+					paused = data["active"]["PAUSED"];
+					
 					console.log("active exhc:" + active_exch + " markt: "
-							+ active_market);
+							+ active_market+" paused: "+paused);
 				}
 				load_exchanges_dd();
 				load_markets_dd();

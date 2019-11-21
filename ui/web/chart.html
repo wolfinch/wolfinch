@@ -127,14 +127,14 @@
 			list.removeChild(list.firstChild);
 		}
 
-		markets_l.forEach(function(prod_name) {
-			console.log("loading " + prod_name);
+		markets_l.forEach(function(market) {
+			console.log("loading " + market["product_id"]);
 			var li = document.createElement("li");
 			var link = document.createElement("a");
-			var text = document.createTextNode(prod_name);
+			var text = document.createTextNode(market["product_id"]);
 			link.appendChild(text);
 			link.href = "#";
-			link.id = "li_exch_id_" + prod_name;
+			link.id = "li_exch_id_" + market["product_id"];
 			link.onclick = market_onclick;
 			li.appendChild(link);
 			list.appendChild(li);
@@ -143,11 +143,14 @@
 		if (active_market != undefined && active_market != "") {
 			var btn = document.getElementById("markets_btn_id");
 
-			if (markets_l.indexOf(active_market) != -1) {
-				btn.innerHTML = active_market + ' <span class="caret"></span>';
-			} else {
-				btn.innerHTML = 'Market <span class="caret"></span>';
-			}
+			console.log ("active_market: "+active_market+markets_l);
+			
+			btn.innerHTML = 'Market <span class="caret"></span>';			
+			markets_l.forEach(function(market) {
+				if (market["product_id"] == active_market) {
+					btn.innerHTML = active_market + ' <span class="caret"></span>';					
+				}
+			});
 		}
 	}
 
@@ -162,11 +165,12 @@
 				console.log("get_markets success!" + data);
 				exchanges = data["all"];
 				if (data["active"]) {
-					active_exch = Object.keys(data["active"])[0];
-					active_market = Object.values(data["active"])[0];
-
+					active_exch = data["active"]["EXCH_NAME"];
+					active_market = data["active"]["PRODUCT_ID"];
+					paused = data["active"]["PAUSED"];
+					
 					console.log("active exhc:" + active_exch + " markt: "
-							+ active_market);
+							+ active_market+" paused: "+paused);
 				}
 				load_exchanges_dd();
 				load_markets_dd();
@@ -210,7 +214,7 @@
 		setInterval(loadCandles, 120000);
 	}
 
-	var dateFormat = d3.timeFormat("%c"), valueFormat = d3.format(',.2f');
+	var dateFormat = d3.timeFormat("%c"), valueFormat = d3.format(',.4f');
 
 	var parseDate = function(utcSeconds) {
 		var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
@@ -390,10 +394,10 @@
 				.axis(xAxisTop).format(d3.timeFormat('%Y-%m-%d')).width(65);
 		var yAxis = d3.axisRight(y);
 		var ohlcAnnotation = techan.plot.axisannotation().orient('right').axis(
-				yAxis).format(d3.format(',.2f'));
+				yAxis).format(d3.format(',.4f'));
 		var closeAnnotation = techan.plot.axisannotation().orient('right')
 				.accessor(candlestick.accessor()).axis(yAxis).format(
-						d3.format(',.2f'));
+						d3.format(',.4f'));
 		var percentAxis = d3.axisLeft(yPercent).tickFormat(d3.format('+.1%'));
 		var percentAnnotation = techan.plot.axisannotation().orient('left')
 				.axis(percentAxis);
@@ -461,14 +465,14 @@
 			ohlcSelection.append("g").attr("class", "candlestick").attr(
 					"clip-path", "url(#ohlcClip)");
 
-			ohlcSelection.append("g").attr("class", "indicator sma ma-0").attr(
+/* 			ohlcSelection.append("g").attr("class", "indicator sma ma-0").attr(
 					"clip-path", "url(#ohlcClip)");
 
 			ohlcSelection.append("g").attr("class", "indicator sma ma-1").attr(
 					"clip-path", "url(#ohlcClip)");
 
 			ohlcSelection.append("g").attr("class", "indicator ema ma-2").attr(
-					"clip-path", "url(#ohlcClip)");
+					"clip-path", "url(#ohlcClip)"); */
 
 			ohlcSelection.append("g").attr("class", "percent axis");
 

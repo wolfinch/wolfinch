@@ -82,47 +82,48 @@
 				console.log("set_active_market success!" + data);
 				exchanges[active_exch].forEach(function(market) {
 					if (market["product_id"] == active_market) {
-						
-						paused = market["paused"];	
-						console.log ("market: "+active_market+" paused: "+paused);
+
+						paused = market["paused"];
+						console.log("market: " + active_market + " paused: "
+								+ paused);
 						pause_btn = document.getElementById("btn_pause");
 						if (paused) {
 							pause_btn.innerText = "Resume";
-							pause_btn.className = "btn btn-success btn-sm";
+							pause_btn.className = "btn btn-success btn-xs";
 						} else {
 							pause_btn.innerText = "Pause";
-							pause_btn.className = "btn btn-danger btn-sm";
-						}						
+							pause_btn.className = "btn btn-danger btn-xs";
+						}
 					}
-				});				
+				});
 			},
 			error : function(xhr, error) {
 				console.log("set_active_market failed!");
 			}
 		});
 	}
-	
+
 	function pause_onclick(id) {
 
 		var req_code = document.getElementById("req_code").value;
 
 		console.log(" req_code: " + req_code);
 
-		if ( req_code == "") {
+		if (req_code == "") {
 
 			console.log("invalid passcode");
 			alert("please provide passcode!");
 			return false;
 		}
 
-
 		if (active_exch == "" || active_market == "") {
 			console.log("invalid exchange or market!");
 			alert("invalid exchange or market!");
 			return false;
 		}
-		
-		var txt = "Pause trading for " + active_exch + ":"+active_market+" with code '" + req_code + "?";		
+
+		var txt = "Pause trading for " + active_exch + ":" + active_market
+				+ " with code '" + req_code + "?";
 
 		if (!confirm(txt)) {
 			console.log("cancel");
@@ -131,7 +132,7 @@
 
 		// call api to buy/sell
 		var data = {
-			"pause" : (!paused)*1,
+			"pause" : (!paused) * 1,
 			"req_code" : req_code,
 			"exch_name" : active_exch,
 			"product" : active_market,
@@ -148,11 +149,11 @@
 				pause_btn = document.getElementById("btn_pause");
 				if (paused) {
 					pause_btn.innerText = "Resume";
-					pause_btn.className = "btn btn-success btn-sm";
+					pause_btn.className = "btn btn-success btn-xs";
 				} else {
 					pause_btn.innerText = "Pause";
-					pause_btn.className = "btn btn-danger btn-sm";
-				}					
+					pause_btn.className = "btn btn-danger btn-xs";
+				}
 			},
 			error : function(xhr, error) {
 				console.log("pause / resume market failed!");
@@ -160,7 +161,7 @@
 			}
 		});
 
-	}	
+	}
 
 	function load_exchanges_dd() {
 		var list = document.getElementById("exchangesDdId");
@@ -219,12 +220,13 @@
 		if (active_market != undefined && active_market != "") {
 			var btn = document.getElementById("markets_btn_id");
 
-			console.log ("active_market: "+active_market+markets_l);
-			
-			btn.innerHTML = 'Market <span class="caret"></span>';			
+			console.log("active_market: " + active_market + markets_l);
+
+			btn.innerHTML = 'Market <span class="caret"></span>';
 			markets_l.forEach(function(market) {
 				if (market["product_id"] == active_market) {
-					btn.innerHTML = active_market + ' <span class="caret"></span>';					
+					btn.innerHTML = active_market
+							+ ' <span class="caret"></span>';
 				}
 			});
 		}
@@ -244,9 +246,9 @@
 					active_exch = data["active"]["EXCH_NAME"];
 					active_market = data["active"]["PRODUCT_ID"];
 					paused = data["active"]["PAUSED"];
-					
+
 					console.log("active exhc:" + active_exch + " markt: "
-							+ active_market+" paused: "+paused);
+							+ active_market + " paused: " + paused);
 				}
 				load_exchanges_dd();
 				load_markets_dd();
@@ -254,13 +256,13 @@
 				pause_btn = document.getElementById("btn_pause");
 				if (paused) {
 					pause_btn.innerText = "Resume";
-					pause_btn.className = "btn btn-success btn-sm";
+					pause_btn.className = "btn btn-success btn-xs";
 				} else {
 					pause_btn.innerText = "Pause";
-					pause_btn.className = "btn btn-danger btn-sm";
+					pause_btn.className = "btn btn-danger btn-xs";
 				}
-				
-				if (exch_cb) {					
+
+				if (exch_cb) {
 					exch_cb();
 				}
 			},
@@ -272,8 +274,7 @@
 
 	}
 	// exch/market selector - done
-	
-	
+
 	function btn_onclick(id) {
 
 		var req_number = document.getElementById("req_number").value;
@@ -372,18 +373,29 @@
 									</ul>
 								</div>
 								<div class="btn-group btn-group-xs" role="group">
-								
-								<div class="col-sm-6  text-center" style="vertical-align: middle;">
-									<div id="btn_pause" onclick="pause_onclick(this.id)"
-										class="btn btn-danger btn-sm">Pause</div>
-								</div>
+									<div class="col-sm-6  text-center"
+										style="vertical-align: middle;">
+										<div id="btn_pause" onclick="pause_onclick(this.id)"
+											class="btn btn-danger btn-xs">Pause</div>
+									</div>
 								</div>
 							</div>
 						</h3>
 						<ul class="nav masthead-nav">
+
+							<li>
+								<div class="form-group" style="margin-bottom: 0px;">
+									<label for="usr"
+										style="color: #d2d2dc; font-size: small; font-weight: 200;">Code</label>
+									<input type="
+										text" class="form-control"
+										id="req_code" style="margin: 0; width: 4vw; height: 2vh;">
+								</div>
+							</li>
+
 							<li><a href="../oldmonk"> Home</a></li>
 							<li><a href="chart.html">Charts </a></li>
-							<li class="active"><a href="rading.html"> Trading</a></li>
+							<li class="active"><a href="trading.html"> Trading</a></li>
 							<li><a href="/"> Documentation</a></li>
 						</ul>
 					</header>
@@ -405,20 +417,13 @@
 			</div>
 			<div class="row" style="margin: 0; width: 30vw; height: auto;">
 
-				<div class="col-sm-6" align="center"
+				<div class="col-sm-12" align="center"
 					style="font-size: 1vw; border: 0;">
 					<div class="form-group">
-						<label for="usr">#Positions</label> <input type="number"
+						<label for="usr" style="color: #d2d2dc; font-size: small; font-weight: 200;"
+						>#Positions</label> <input type="number"
 							defaultValue="0" class="form-control" id="req_number"
 							style="margin: 0; width: 6em; height: 2vh;">
-					</div>
-				</div>
-				<div class="col-sm-6" align="center"
-					style="font-size: 1vw; border: 0;">
-					<div class="form-group">
-						<label for="usr">Code</label> <input type="text"
-							class="form-control" id="req_code"
-							style="margin: 0; width: 8em; height: 2vh;">
 					</div>
 				</div>
 			</div>
