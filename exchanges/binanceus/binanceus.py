@@ -77,9 +77,9 @@ class BinanceUS (Exchange):
             log.critical("binance public client init failed")
             return None
         
+        #get data from exch conf
         self.key = self.binance_conf.get('apiKey')
         self.b64secret = self.binance_conf.get('apiSecret')
-        
         self.test_mode = self.binance_conf.get('test_mode') or False
         
         if ((self.key and self.b64secret) == False):
@@ -103,6 +103,11 @@ class BinanceUS (Exchange):
         
         log.info ("servertime: %d localtime: %d offset: %d" % (serverTime, localTime, self.timeOffset))
         
+#         self.binance_conf['products'] = []
+#         for p in config['products']:
+#             # add the product ids
+#             self.binance_conf['products'] += p.keys()
+                    
         products = exch_info.get("symbols")
         log.info ("products: %s" % (pprint.pformat(products, 4)))
                 
@@ -131,14 +136,12 @@ class BinanceUS (Exchange):
         balances = accounts ['balances']
         for balance in balances:
 #             log.debug ("balance: %s"%(balance))
-            for prod in self.binance_conf['products']:
-                    for prod_id, v in prod.iteritems():
-                        log.debug ("prod_id: %s v: %s" % (prod_id, v))                     
-                        currency = v['currency']         
-                        if balance['asset'] in currency:
-                            log.debug ("Interested Account Found for Currency: " + balance['asset'])
-                            self.binance_accounts[balance['asset']] = balance
-                            break  
+            for prod in self.binance_products:
+                log.debug ("prod_id: %s" % (prod['id']))               
+                if balance['asset'] in [prod ['asset_type'], prod ['fund_type']]:
+                    log.debug ("Interested Account Found for Currency: " + balance['asset'])
+                    self.binance_accounts[balance['asset']] = balance
+                    break  
         
         ### Start WebSocket Streams ###
         self.ws_client = bm = BinanceSocketManager(self.public_client)
@@ -289,8 +292,8 @@ class BinanceUS (Exchange):
     #### Feed consume done #####    
     def market_init (self, market):
 #         global ws_client
-        usd_acc = self.binance_accounts['USDT']
-        crypto_acc = self.binance_accounts.get(market.asset_type)
+        usd_acc = self.binance_accounts[market.get_fund_type()]
+        crypto_acc = self.binance_accounts.get(market.get_asset_type())
         if (usd_acc == None or crypto_acc == None): 
             log.error ("No account available for product: %s"%(market.product_id))
             return None
