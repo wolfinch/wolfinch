@@ -113,22 +113,20 @@ class CBPRO (Exchange):
         log.info ("servertime: %d localtime: %d offset: %d"%(serverTime, localTime, self.timeOffset))
         
 #         global gdax_products
-        prod_config = config['products']
-        prods = []
-        for p in prod_config:
-            prods += p.keys()
-        self.gdax_conf['products'] = prods
+        self.gdax_conf['products'] = []
+        for p in config['products']:
+            # add the product ids
+            self.gdax_conf['products'] += p.keys()
         
         products = self.public_client.get_products()
         log.info ("products: %s"%(pprint.pformat(products, 4)))
         
-        if (len(products) and len (prod_config)):
+        if (len(products) and len (self.gdax_conf['products'])):
             for prod in products:
-                for p in prod_config:              
-                    if prod['id'] in p.keys():     
-                        prod ['asset_type'] = prod['base_currency']
-                        prod ['fund_type'] = prod['quote_currency']
-                        self.gdax_products.append(prod)
+                if prod['id'] in self.gdax_conf['products']:     
+                    prod ['asset_type'] = prod['base_currency']
+                    prod ['fund_type'] = prod['quote_currency']
+                    self.gdax_products.append(prod)
         
         # Popoulate the account details for each interested currencies
         accounts =  self.auth_client.get_accounts()
@@ -149,13 +147,11 @@ class CBPRO (Exchange):
                         log.critical("error while getting accounts: msg: %s"%err_msg)
                         raise Exception ("error while getting accounts: msg: %s"%err_msg)
         for account in accounts:
-            for prod in prod_config:
-                for prod_id in prod.keys():
-                    currency = prod[prod_id]['currency']                  
-                    if account['currency'] in currency.values():
-                        log.debug ("Interested Account Found for Currency: "+account['currency'])
-                        self.gdax_accounts[account['currency']] = account
-                        break
+            for prod in self.gdax_products:
+                if (account['currency'] == prod ['asset_type'] or account['currency'] == prod ['fund_type']):
+                    log.debug ("Interested Account Found for Currency: "+account['currency'])
+                    self.gdax_accounts[account['currency']] = account
+                    break
 
         self.start_wsfeed ()
 
@@ -178,8 +174,8 @@ class CBPRO (Exchange):
      
     def market_init (self, market):
 #         global ws_client
-        usd_acc = self.gdax_accounts['USD']
-        crypto_acc = self.gdax_accounts.get(market.asset_type)
+        usd_acc = self.gdax_accounts[market.get_fund_type()]
+        crypto_acc = self.gdax_accounts.get(market.get_asset_type())
         if (usd_acc == None or crypto_acc == None): 
             log.error ("No account available for product: %s"%(market.product_id))
             return None

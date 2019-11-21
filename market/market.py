@@ -290,7 +290,7 @@ class Market:
             raise Exception ("Unable to get product config for exch: %s prod: %s"%(self.exchange_name, self.product_id))
         else:
             log.info ("tcfg: %s dcfg: %s"%(tcfg, dcfg))
-            
+                 
         self.tradeConfig = tcfg
         self.decisionConfig = dcfg  
         decision.decision_config (self.exchange_name, self.product_id, self.decisionConfig['model_type'], self.decisionConfig['model_config'])    
@@ -365,6 +365,11 @@ class Market:
                     self.fund.initial_value*Decimal(0.01)*self.fund.fund_liquidity_percent/self.start_market_rate),
                 str(self.fund), str(self.asset), str(self.order_book))        
         
+    def get_fund_type(self):
+        return self.fund_type
+    def get_asset_type(self):
+        return self.asset_type
+            
     def set_candle_interval (self, value):
         self.candle_interval = value        
         
