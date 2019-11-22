@@ -7,9 +7,9 @@
 # One primary exchange for trading and as many others in spectator mode
 # data from exchanges in spectator mode will be considered for trading decision
 exchanges:
-   - 'cbpro' : 
+   - 'binanceus' : 
       role: 'primary'
-      config: 'config/binance.yml'
+      config: 'config/binanceus.yml'
       products:
          - 'XLMUSDT':
             fund_max_liquidity : 900 #$$               
@@ -44,7 +44,7 @@ backfill:
 
 simulator:
    enabled : false
-   backtesting : true
+   backtesting : false 
    
 genetic_optimizer: 
    enabled : false
