@@ -110,7 +110,8 @@ class Fund:
         log.debug ("fund: %s slice: %s num_order: %s"%(fund, self.max_per_buy_fund_value, num_order))
         
         if self.current_value - (self.current_hold_value + fund) < rock_bottom:
-            log.error ("**** No Funds to trade. num_order(%d) ****"%(num_order))
+            log.error ("**** No Funds to trade. current_value(%f) current_hold_value(%f) num_order(%d) ****"%(
+                self.current_value, self.current_hold_value, num_order))
             return 0
         else:
             #  hold fund 
@@ -812,8 +813,8 @@ class Market:
                 log.debug ("%d candles found from exch"%len(candle_list))
                 norm_candle_list = self._normalize_candle_list_helper (db_candle_list, candle_list)
                 
-                #remove the last entry from db (as the last cdl could be incorrect candle)
                 if (len(self.market_indicators_data) > 0):
+                    #remove the last entry from db (as the last cdl could be incorrect candle)
                     self.market_indicators_data.remove(self.market_indicators_data[-1])
                 for candle in norm_candle_list:
                     self.market_indicators_data.append({'ohlc': candle})
@@ -822,6 +823,9 @@ class Market:
                 #log.debug ("Imported Historic rates #num Candles (%s)", str(self.market_indicators_data))
                 #save candles in Db for future
                 self.candlesDb.db_save_candles(norm_candle_list)
+                
+                #set market rate
+                self.set_market_rate (self.market_indicators_data[-1]["ohlc"].close)
                 log.debug ("imported %d candles from exchange and saved to db"%len(norm_candle_list))                
 
     def _calculate_historic_indicators (self):
@@ -1108,38 +1112,28 @@ class Market:
         return signal
     
     def consume_trade_signal (self, signal):
-        """
-        Execute the trade based on signal 
-         - Policy can be applied on the behavior of signal strength 
-         Logic :-
-         * Based on the Signal strength and fund balances, take trade decision and
-            calculate the exact amount to be traded
-             1.  See if there is any manual override, if there is one, that takes priority (skip other steps?)
-             2.  el
-             
-            -- Manual Override file: "override/TRADE_<exchange_name>.<product>"
-                Json format:
-                {
-                 product : <ETH-USD|BTC-USD>
-                 type    : <BUY|SELL>
-                 size    : <BTC>
-                 price   : <limit-price>
-                }
-                
-            -- To ignore a product
-               add an empty file with name "<exchange_name>_<product>.ignore"
-        """
+#         """
+#         Execute the trade based on signal 
+#          - Policy can be applied on the behavior of signal strength 
+#          Logic :-
+#          * Based on the Signal strength and fund balances, take trade decision and
+#             calculate the exact amount to be traded
+#              1.  See if there is any manual override, if there is one, that takes priority (skip other steps?)
+#              2.  el
+#              
+#             -- Manual Override file: "override/TRADE_<exchange_name>.<product>"
+#                 Json format:
+#                 {
+#                  product : <ETH-USD|BTC-USD>
+#                  type    : <BUY|SELL>
+#                  size    : <BTC>
+#                  price   : <limit-price>
+#                 }
+#                 
+#             -- To ignore a product
+#                add an empty file with name "<exchange_name>_<product>.ignore"
+#         """
         trade_req_list = []        
-#         exchange_name = self.exchange.name
-#         ignore_file = "override/%s_%s.ignore"%(exchange_name, self.product_id)
-#         #Override file name = override/TRADE_<exchange_name>.<product>
-#         if (os.path.isfile(ignore_file)):
-#             log.info("Ignore file present for product. Skip processing! "+ignore_file)
-#             return
-
-
-        #get manual trade reqs if any
-        #trade_req_list = self._get_manual_trade_req ()
         
         # Now generate auto trade req list
         log.info ("Trade Signal strength:"+str(signal))

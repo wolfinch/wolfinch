@@ -232,7 +232,7 @@ class BinanceUS (Exchange):
                 log.critical("websocket connection retries exceeded!!")
                 raise Exception("websocket connection retries exceeded!!")
             else:
-                log.error ("Unknown feed. message type: %s prod: %s" % (msg_type, product_id))
+                log.error ("Unknown feed. message type: %s" % (msg_type))
             return
                 
     def _binance_consume_feed (self, market, msg):
@@ -244,10 +244,23 @@ class BinanceUS (Exchange):
         if (msg_type == 'trade' or msg_type == 'aggTrade'):
             self._binance_consume_trade_feed (market, msg)            
         elif (msg_type == 'executionReport'):
-            log.debug ("Feed: executionReport msg: %s" % (msg))
+            log.debug ("Feed: executionReport msg: %s " % (msg))
+            self._binance_consume_order_update_feed(market, msg)
         elif (msg_type == 'kline'):
             self._binance_consume_candle_feed(market, msg)
                     
+    def _binance_consume_order_update_feed (self, market, msg):
+#         ''' 
+#         Process the order status update feed msg 
+#         '''
+        order = self._normalized_order(msg)
+        if order == None:
+            log.error ("order update ignored")
+            return None
+        log.debug ("Order Status Update id:%s side: %s status: %s"%(order.id, order.side, order.status))
+        market.order_status_update (order)        
+        
+        
     def _binance_consume_trade_feed (self, market, msg):
 #         {
 #           "e": "aggTrade|trade",  // Event type
@@ -262,9 +275,10 @@ class BinanceUS (Exchange):
 #           "m": true,        // Is the buyer the market maker?
 #           "M": true         // Ignore
 #         }        
-        log.debug ("Trade feed: %s" % (msg))
+#         log.debug ("Trade feed: %s" % (msg))
         price = Decimal(msg.get('p'))
-        last_size = msg.get('q')
+        last_size = Decimal(msg.get('q'))
+        log.debug ("Trade feed: price: %f size: %f" % (price, last_size))  
         market.tick (price, last_size)
                 
     def _binance_consume_candle_feed (self, market, msg):
@@ -512,9 +526,14 @@ class BinanceUS (Exchange):
             return None
         
         # Valid Order
-        product_id = order.get('symbol')
-        order_id = order.get('clientOrderId') or order.get('C') or order.get('c')
-        order_type = order.get('type')
+        product_id = order.get('symbol') or order.get("s")
+        order_id = order.get('clientOrderId') or order.get('c')
+        order_type = order.get('type') or order.get("o")
+        
+        if order_type == "MARKET":
+            order_type = "market"
+        elif order_type == "LIMIT":
+            order_type = 'limit'
 
         if (status == None and (product_id != None and order_id != None)):
             log.debug ("must be an ACK for order_id (%s)" % (order_id))
@@ -522,7 +541,7 @@ class BinanceUS (Exchange):
             status = "NEW"
                 
         if status in ['NEW', 'PARTIALLY_FILLED', 'FILLED', 'CANCELED', 'PENDING_CANCEL', 'REJECTED', 'EXPIRED' ]:
-            if status in ["NEW", 'PARTIALLY_FILLED']:
+            if status == "NEW":
                 status_type = "open"
             elif status == 'FILLED':
                 status_type = "filled"
@@ -532,17 +551,34 @@ class BinanceUS (Exchange):
             elif status == 'REJECTED':
                 log.error ("order rejected msg:%s" % (order))
                 return None
-            else:
+            else: #, 'PARTIALLY_FILLED'
                 log.critical ('unhandled order status(%s)' % (status))
+                return None
 #             order_type = order.get('order_type') #could be None
         else:
             s = "****** unknown order status: %s" % (status)
             log.critical (s)
             raise Exception (s)
             
-        create_time = order.get('O') or order.get('time') or None
+        create_time = order.get('O') or order.get('time') 
+        if create_time:
+            create_time = datetime.utcfromtimestamp(int(create_time)/1000).replace(tzinfo=tzutc()).astimezone(tzlocal()).isoformat()
+#         else:
+#             create_time = datetime.now().isoformat()
         update_time = order.get('updateTime') or order.get('transactTime') or order.get('T') or order.get('O') or None
+        if update_time:
+            update_time = datetime.utcfromtimestamp(int(update_time)/1000).replace(tzinfo=tzutc()).astimezone(tzlocal()).isoformat()
+        else:
+            update_time = datetime.now().isoformat()
+                    
         side = order.get('side') or order.get('S') or None
+        if side == None:
+            log.critical("unable to get order side %s(%s)"%(product_id, order_id))
+            raise Exception ("unable to get order side")
+        elif side == 'BUY':
+            side = 'buy'
+        elif side == 'SELL':
+            side = 'sell'
         
         # Money matters
         price = Decimal(order.get('price') or 0)
@@ -554,15 +590,15 @@ class BinanceUS (Exchange):
         
         if price == 0 and funds != 0 and filled_size != 0 :
             price = funds / filled_size  # avg size calculation
-        fills = order.get('fills')
+        fills = Decimal(order.get('fills') or 0)
         if fills :
-            qty = 0
-            comm = 0
+            qty = Decimal(0.0)
+            comm = Decimal(0.0)
             for fill in fills:
-                qty += fill.get('qty')
-                comm += fill.get('commission')
+                qty += Decimal(fill.get('qty') or 0)
+                comm += Decimal(fill.get('commission') or 0)
             if fees == 0:
-                fees = comm
+                fees = Decimal(comm)
         
 #         if status == "FILLED":
 #             total_val = Decimal(order.get('executed_value') or 0)
@@ -603,7 +639,8 @@ class BinanceUS (Exchange):
             order = self.auth_client.create_order(**params)
         else:
             log.info ("placing order in test mode")            
-            order = self.auth_client.create_test_order(**params)            
+            order = self.auth_client.create_test_order(**params)
+        order["side"] = 'buy'     
         return self._normalized_order (order);
     
     def sell (self, trade_req) :
@@ -621,6 +658,7 @@ class BinanceUS (Exchange):
         else:            
             log.info ("placing order in test mode")
             order = self.auth_client.create_test_order(**params)     
+        order["side"] = 'sell'
         return self._normalized_order (order);
     
     def get_order (self, prod_id, order_id):

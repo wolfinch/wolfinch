@@ -311,7 +311,8 @@ if __name__ == '__main__':
         log.critical ("Unexpected error: %s exception: %s" % (sys.exc_info(), e.message))        
         print ("Unexpected error: %s exception: %s" % (sys.exc_info(), e.message))
         OldMonk_end()
-        traceback.print_exc()
+        raise
+#         traceback.print_exc()
 #         os.abort()
     # '''Not supposed to reach here'''
     print("\nOldMonk end")
