@@ -19,20 +19,20 @@ exchanges:
             stop_loss:
                enabled: true
                smart: true #track price movement and update stop_loss
-               rate : 3 #-3%
+               rate : 4 #-3%
             take_profit:
                enabled: true
-               rate: 6 # 10percent
+               rate: 19 # 10percent
             decision:
                model    : simple
                config   :
                   strategy: EMA_DEV
-                  params : {'ema_sell_s': 85, 'timeout_sell': 14, 'rsi': 24, 'treshold_pct_buy_l': 1.0, 'ema_buy_s': 185, 'timeout_buy': 14, 'period': 165, 'treshold_pct_sell_s': 0.92, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.35, 'treshold_pct_buy_s': 0.39, 'ema_sell_l': 25}           
+                  params : {'ema_sell_s': 85, 'timeout_sell': 74, 'rsi': 76, 'treshold_pct_buy_l': 1.31, 'ema_buy_s': 90, 'timeout_buy': 4, 'period': 195, 'treshold_pct_sell_s': 0.61, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.0, 'treshold_pct_buy_s': 1.69, 'ema_sell_l': 70}
       # products - end
       order_type    : market
       fee     : 
          maker : 0.075 #make fee %
-         taker : 0.075df #taker fee %
+         taker : 0.075 #taker fee %
    #cbpro - end
 # exchanges - end
 
