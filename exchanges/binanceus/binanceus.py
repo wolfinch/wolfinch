@@ -673,7 +673,7 @@ if __name__ == '__main__':
 #     order = bnc.get_order("XLMUSDT", order.id)
 #     print ("get sell order: %s" % (order))    
      
-    sleep(60)
+    sleep(10)
     bnc.close()
     print ("Done")
 # EOF    
