@@ -71,22 +71,28 @@ class BinanceSocketManager(threading.Thread):
 
     DEFAULT_USER_TIMEOUT = 30 * 60  # 30 minutes
 
-    def __init__(self, client, user_timeout=DEFAULT_USER_TIMEOUT):
+    def __init__(self, client, user_timeout=DEFAULT_USER_TIMEOUT, margin_timeout=DEFAULT_USER_TIMEOUT):
         """Initialise the BinanceSocketManager
 
         :param client: Binance API client
         :type client: binance.Client
         :param user_timeout: Custom websocket timeout
         :type user_timeout: int
+        :param margin_timeout: Custom websocket timeout
+        :type margin_timeout: int
 
         """
         threading.Thread.__init__(self)
         self._conns = {}
+        self._user_timer = None
+        self._user_listen_key = None
+        self._user_callback = None
+        self._margin_timer = None
+        self._margin_listen_key = None
+        self._margin_callback = None
         self._client = client
         self._user_timeout = user_timeout
-        self._timers = {'user': None, 'margin': None}
-        self._listen_keys = {'user': None, 'margin': None}
-        self._account_callbacks = {'user': None, 'margin': None}
+        self._margin_timeout = margin_timeout
 
     def _start_socket(self, path, callback, prefix='ws/'):
         if path in self._conns:
@@ -406,55 +412,6 @@ class BinanceSocketManager(threading.Thread):
         """
         return self._start_socket('!ticker@arr', callback)
 
-    def start_symbol_book_ticker_socket(self, symbol, callback):
-        """Start a websocket for the best bid or ask's price or quantity for a specified symbol.
-
-        https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md#individual-symbol-book-ticker-streams
-
-        :param symbol: required
-        :type symbol: str
-        :param callback: callback function to handle messages
-        :type callback: function
-
-        :returns: connection key string if successful, False otherwise
-
-        Message Format
-
-        .. code-block:: python
-
-            {
-                "u":400900217,     // order book updateId
-                "s":"BNBUSDT",     // symbol
-                "b":"25.35190000", // best bid price
-                "B":"31.21000000", // best bid qty
-                "a":"25.36520000", // best ask price
-                "A":"40.66000000"  // best ask qty
-            }
-
-        """
-        return self._start_socket(symbol.lower() + '@bookTicker', callback)
-
-    def start_book_ticker_socket(self, callback):
-        """Start a websocket for the best bid or ask's price or quantity for all symbols.
-
-        https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md#all-book-tickers-stream
-
-        :param callback: callback function to handle messages
-        :type callback: function
-
-        :returns: connection key string if successful, False otherwise
-
-        Message Format
-
-        .. code-block:: python
-
-            {
-                // Same as <symbol>@bookTicker payload
-            }
-
-        """
-        return self._start_socket('!bookTicker', callback)
-
     def start_multiplex_socket(self, streams, callback):
         """Start a multiplexed socket using a list of socket names.
         User stream sockets can not be included.
@@ -493,7 +450,8 @@ class BinanceSocketManager(threading.Thread):
         # Get the user listen key
         user_listen_key = self._client.stream_get_listen_key()
         # and start the socket with this specific key
-        return self._start_account_socket('user', user_listen_key, callback)
+        conn_key = self._start_user_socket(user_listen_key, callback)
+        return conn_key
 
     def start_margin_socket(self, callback):
         """Start a websocket for margin data
@@ -507,47 +465,45 @@ class BinanceSocketManager(threading.Thread):
 
         Message Format - see Binance API docs for all types
         """
-        # Get the user margin listen key
-        margin_listen_key = self._client.margin_stream_get_listen_key()
+        # Get the user listen key
+        user_listen_key = self._client.stream_get_listen_key()
         # and start the socket with this specific key
-        return self._start_account_socket('margin', margin_listen_key, callback)
-
-    def _start_account_socket(self, socket_type, listen_key, callback):
-        """Starts one of user or margin socket"""
-        self._check_account_socket_open(listen_key)
-        self._listen_keys[socket_type] = listen_key
-        self._account_callbacks[socket_type] = callback
-        conn_key = self._start_socket(listen_key, callback)
-        if conn_key:
-            # start timer to keep socket alive
-            self._start_socket_timer(socket_type)
+        conn_key = self._start_user_socket(user_listen_key, callback)
         return conn_key
 
-    def _check_account_socket_open(self, listen_key):
-        if not listen_key:
-            return
-        for conn_key in self._conns:
-            if len(conn_key) >= 60 and conn_key[:60] == listen_key:
-                self.stop_socket(conn_key)
-                break
+    def _start_user_socket(self, user_listen_key, callback):
+        # With this function we can start a user socket with a specific key
+        if self._user_listen_key:
+            # cleanup any sockets with this key
+            for conn_key in self._conns:
+                if len(conn_key) >= 60 and conn_key[:60] == self._user_listen_key:
+                    self.stop_socket(conn_key)
+                    break
+        self._user_listen_key = user_listen_key
+        self._user_callback = callback
+        conn_key = self._start_socket(self._user_listen_key, callback)
+        if conn_key:
+            # start timer to keep socket alive
+            self._start_user_timer()
 
-    def _start_socket_timer(self, socket_type):
-        callback = self._keepalive_account_socket
+        return conn_key
 
-        self._timers[socket_type] = threading.Timer(self._user_timeout, callback, [socket_type])
-        self._timers[socket_type].setDaemon(True)
-        self._timers[socket_type].start()
+    def _start_user_timer(self):
+        self._user_timer = threading.Timer(self._user_timeout, self._keepalive_user_socket)
+        self._user_timer.setDaemon(True)
+        self._user_timer.start()
 
-    def _keepalive_account_socket(self, socket_type):
-        if socket_type == 'user':
-            listen_key_func = self._client.stream_get_listen_key
-            callback = self._user_callback
+    def _keepalive_user_socket(self):
+        user_listen_key = self._client.stream_get_listen_key()
+        # check if they key changed and
+        if user_listen_key != self._user_listen_key:
+            # Start a new socket with the key received
+            # `_start_user_socket` automatically cleanup open sockets
+            # and starts timer to keep socket alive
+            self._start_user_socket(user_listen_key, self._user_callback)
         else:
-            listen_key_func = self._client.margin_stream_get_listen_key
-            callback = self._margin_callback
-        listen_key = listen_key_func()
-        if listen_key != self._listen_keys[socket_type]:
-            self._start_account_socket(socket_type, listen_key, callback)
+            # Restart timer only if the user listen key is not changed
+            self._start_user_timer()
 
     def stop_socket(self, conn_key):
         """Stop a websocket given the connection key
@@ -566,20 +522,16 @@ class BinanceSocketManager(threading.Thread):
         del(self._conns[conn_key])
 
         # check if we have a user stream socket
-        if len(conn_key) >= 60 and conn_key[:60] == self._listen_keys['user']:
-            self._stop_account_socket('user')
+        if len(conn_key) >= 60 and conn_key[:60] == self._user_listen_key:
+            self._stop_user_socket()
 
-        # or a margin stream socket
-        if len(conn_key) >= 60 and conn_key[:60] == self._listen_keys['margin']:
-            self._stop_account_socket('margin')
-
-    def _stop_account_socket(self, socket_type):
-        if not self._listen_keys[socket_type]:
+    def _stop_user_socket(self):
+        if not self._user_listen_key:
             return
-        if self._timers[socket_type]:
-            self._timers[socket_type].cancel()
-            self._timers[socket_type] = None
-        self._listen_keys[socket_type] = None
+        # stop the timer
+        self._user_timer.cancel()
+        self._user_timer = None
+        self._user_listen_key = None
 
     def run(self):
         try:
