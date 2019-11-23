@@ -826,6 +826,10 @@ class Market:
                 
                 #set market rate
                 self.set_market_rate (self.market_indicators_data[-1]["ohlc"].close)
+                #open a new candle. This is a non-issue for high-freq traded symbols.
+                # but in case if there is no-trades in the candle window,
+                # unless we set values below, it will create a weird candle
+                self.O = self.H = self.C = self.L = self.market_indicators_data[-1]["ohlc"].close
                 log.debug ("imported %d candles from exchange and saved to db"%len(norm_candle_list))                
 
     def _calculate_historic_indicators (self):
