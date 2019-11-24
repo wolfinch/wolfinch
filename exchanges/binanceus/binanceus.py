@@ -174,7 +174,7 @@ class BinanceUS (Exchange):
 
     ######## Feed Consume #######
     def _feed_enQ_msg (self, msg_raw):
-            log.debug("message :%s " % msg_raw)
+#             log.debug("message :%s " % msg_raw)
             
             if msg_raw.get('stream'):
                 msg = msg_raw.get('data')
@@ -282,7 +282,7 @@ class BinanceUS (Exchange):
         market.tick (price, last_size)
                 
     def _binance_consume_candle_feed (self, market, msg):
-        log.info ("msg: %s" % msg)
+#         log.info ("msg: %s" % msg)
 #         msg_type = msg.get('e')
         k = msg.get('k')
         t = long(k.get('T') + 1) // 1000 + self.timeOffset

@@ -525,7 +525,7 @@ class Market:
                 round(market_order.request_size, 4), round(market_order.funds, 4)))
         else:
             log.critical("Invalid Market_order filled order:%s"%(str(order)))
-            raise Exception("Invalid Market_order filled order:%s"%(str(order)))            
+#             raise Exception("Invalid Market_order filled order:%s"%(str(order)))
                                         
     def _buy_order_create (self, trade_req):
         
@@ -601,7 +601,7 @@ class Market:
                 round(market_order.request_size, 4), round(market_order.price, 4)))
         else:
             log.critical("Invalid Market_order filled order:%s"%(str(order)))
-            raise Exception("Invalid Market_order filled order:%s"%(str(order)))
+#             raise Exception("Invalid Market_order filled order:%s"%(str(order)))
                         
     def _sell_order_filled (self, order):
         # TODO: FIXME: FIX real order cost. it may be less fee
