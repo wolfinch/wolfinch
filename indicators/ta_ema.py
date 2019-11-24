@@ -4,7 +4,7 @@
 #  (c) OldMonk Bot
 # '''
 
-from decimal import Decimal
+# from decimal import Decimal
 from indicator import Indicator
 import numpy as np
 import talib
@@ -25,7 +25,7 @@ class EMA (Indicator):
     def calculate(self, candles):        
         candles_len = len(candles)
         if candles_len < self.period:
-            return Decimal(0)
+            return float(0)
         
         val_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-self.period:]))
         
@@ -33,5 +33,5 @@ class EMA (Indicator):
         cur_ema = talib.EMA (val_array, timeperiod=self.period)
         
 #         log.info ("TA_EMA: %g"%cur_ema)
-        return Decimal(cur_ema[-1])
+        return float(cur_ema[-1])
         

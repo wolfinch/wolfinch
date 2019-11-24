@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 # from dateutil.tz import tzlocal
 import copy
-from decimal import Decimal
+# from decimal import float
 from utils import getLogger
 import exchanges
 
@@ -228,14 +228,14 @@ class SIM_EXCH (exchanges.Exchange):
         update_time  = order.get('time') or order.get('done_at') or None
         side = order.get('side') or None
         # Money matters
-        price =   Decimal(order.get('price') or 0)
-        request_size  = Decimal(order.get('size') or  0)    
-        filled_size = Decimal(order.get('filled_size') or 0)
-        remaining_size  = Decimal(order.get('remaining_size') or 0)
-        funds = Decimal(order.get('funds') or order.get('specified_funds') or 0)
-        fees = Decimal(order.get('fees') or order.get('fill_fees') or 0)
+        price =   float(order.get('price') or 0)
+        request_size  = float(order.get('size') or  0)    
+        filled_size = float(order.get('filled_size') or 0)
+        remaining_size  = float(order.get('remaining_size') or 0)
+        funds = float(order.get('funds') or order.get('specified_funds') or 0)
+        fees = float(order.get('fees') or order.get('fill_fees') or 0)
         if order.get('settled') == True:
-            total_val = Decimal(order.get('executed_value') or 0)
+            total_val = float(order.get('executed_value') or 0)
             if total_val and filled_size and not price:
                 price = total_val/filled_size
             if (funds == 0):
@@ -257,13 +257,13 @@ class SIM_EXCH (exchanges.Exchange):
     def _set_initial_acc_values (self, market):
         #Setup the initial params, usually comes from real exch acc
 #         market.fund.set_fee(0.5, 0.5)            
-        market.fund.set_initial_value(Decimal(20000))
-#         market.asset.set_max_per_trade_size(Decimal(0.01))
-        market.fund.set_hold_value(Decimal(0.0))
+        market.fund.set_initial_value(float(20000))
+#         market.asset.set_max_per_trade_size(float(0.01))
+        market.fund.set_hold_value(float(0.0))
 #         market.fund.set_fund_liquidity(1000)
 #         market.fund.set_max_per_buy_fund_value(30)
-        market.asset.set_initial_size(Decimal(0.0))
-        market.asset.set_hold_size( Decimal(0.0))
+        market.asset.set_initial_size(float(0.0))
+        market.asset.set_hold_size( float(0.0))
 #         market.asset.set_min_per_trade_size(0.0001)        
             
             

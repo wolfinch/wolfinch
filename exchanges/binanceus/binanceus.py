@@ -7,7 +7,6 @@
 
 import json
 import pprint
-from decimal import Decimal
 from datetime import datetime, timedelta
 from time import sleep
 import time
@@ -276,8 +275,8 @@ class BinanceUS (Exchange):
 #           "M": true         // Ignore
 #         }        
 #         log.debug ("Trade feed: %s" % (msg))
-        price = Decimal(msg.get('p'))
-        last_size = Decimal(msg.get('q'))
+        price = float(msg.get('p'))
+        last_size = float(msg.get('q'))
         log.debug ("Trade feed: price: %f size: %f" % (price, last_size))  
         market.tick (price, last_size)
                 
@@ -286,11 +285,11 @@ class BinanceUS (Exchange):
 #         msg_type = msg.get('e')
         k = msg.get('k')
         t = long(k.get('T') + 1) // 1000 + self.timeOffset
-        o = Decimal(k.get('o'))
-        h = Decimal(k.get('h'))
-        l = Decimal(k.get('l'))
-        c = Decimal(k.get('c'))
-        v = Decimal(k.get('v'))
+        o = float(k.get('o'))
+        h = float(k.get('h'))
+        l = float(k.get('l'))
+        c = float(k.get('c'))
+        v = float(k.get('v'))
         
 #         if now >= market.cur_candle_time + interval:
             # close the current candle period and start a new candle period
@@ -313,10 +312,10 @@ class BinanceUS (Exchange):
             return None
         
 #         #Setup the initial params
-        market.fund.set_initial_value(Decimal(usd_acc['free']))
-        market.fund.set_hold_value(Decimal(usd_acc['locked']))
-        market.asset.set_initial_size(Decimal( crypto_acc['free']))
-        market.asset.set_hold_size( Decimal(crypto_acc['locked']))
+        market.fund.set_initial_value(float(usd_acc['free']))
+        market.fund.set_hold_value(float(usd_acc['locked']))
+        market.asset.set_initial_size(float( crypto_acc['free']))
+        market.asset.set_hold_size( float(crypto_acc['locked']))
         
         ## Feed Cb
         market.register_feed_processor(self._binance_consume_feed)
@@ -581,27 +580,27 @@ class BinanceUS (Exchange):
             side = 'sell'
         
         # Money matters
-        price = Decimal(order.get('price') or 0)
-        request_size = Decimal(order.get('q') or order.get('origQty') or 0)
-        filled_size = Decimal(order.get('z') or order.get('executedQty') or 0)
-        remaining_size = Decimal(0)  # FIXME: jork:
-        funds = Decimal(order.get('Z') or order.get('cummulativeQuoteQty') or 0)
-        fees = Decimal(order.get('n') or 0)
+        price = float(order.get('price') or 0)
+        request_size = float(order.get('q') or order.get('origQty') or 0)
+        filled_size = float(order.get('z') or order.get('executedQty') or 0)
+        remaining_size = float(0)  # FIXME: jork:
+        funds = float(order.get('Z') or order.get('cummulativeQuoteQty') or 0)
+        fees = float(order.get('n') or 0)
         
         if price == 0 and funds != 0 and filled_size != 0 :
             price = funds / filled_size  # avg size calculation
-        fills = Decimal(order.get('fills') or 0)
+        fills = float(order.get('fills') or 0)
         if fills :
-            qty = Decimal(0.0)
-            comm = Decimal(0.0)
+            qty = float(0.0)
+            comm = float(0.0)
             for fill in fills:
-                qty += Decimal(fill.get('qty') or 0)
-                comm += Decimal(fill.get('commission') or 0)
+                qty += float(fill.get('qty') or 0)
+                comm += float(fill.get('commission') or 0)
             if fees == 0:
-                fees = Decimal(comm)
+                fees = float(comm)
         
 #         if status == "FILLED":
-#             total_val = Decimal(order.get('executed_value') or 0)
+#             total_val = float(order.get('executed_value') or 0)
 #             if total_val and filled_size and not price:
 #                 price = total_val/filled_size
 #             if (funds == 0):

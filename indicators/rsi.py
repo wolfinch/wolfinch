@@ -4,7 +4,6 @@
 #  (c) OldMonk Bot
 # '''
 
-from decimal import Decimal
 from indicator import Indicator
 import numpy as np
 import talib
@@ -21,12 +20,12 @@ class RSI (Indicator):
     def calculate(self, candles):        
         candles_len = len(candles)
         if candles_len < self.period+1:
-            return Decimal(0)
+            return float(0)
         
         val_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-(self.period+1):]))
         
         #calculate 
         cur_rsi = talib.RSI (val_array, timeperiod=self.period)
         
-        return Decimal(cur_rsi[-1])
+        return float(cur_rsi[-1])
         

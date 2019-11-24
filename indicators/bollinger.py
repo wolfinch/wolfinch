@@ -4,7 +4,7 @@
 #  (c) OldMonk Bot
 # '''
 
-from decimal import Decimal
+# from decimal import Decimal
 from indicator import Indicator
 import numpy as np
 import talib
@@ -21,7 +21,7 @@ class BBANDS (Indicator):
     def calculate(self, candles):        
         candles_len = len(candles)
         if candles_len < self.period:
-            return Decimal(0)
+            return float(0)
         
         val_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-self.period:]))
         

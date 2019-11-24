@@ -26,7 +26,7 @@ import os
 import Queue
 # import pprint
 from itertools import product
-from decimal import Decimal
+# from decimal import float
 from datetime import datetime
 import time
 import random
@@ -46,7 +46,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.INFO)
+log.setLevel(log.CRITICAL)
 
 OldMonk_market_list = []
 
@@ -54,11 +54,11 @@ class OHLC(object):
     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']
     def __init__ (self, time=0, open=0, high=0, low=0, close =0, volume =0):
         self.time = time
-        self.open = Decimal(open)
-        self.high = Decimal(high)
-        self.low  = Decimal(low)
-        self.close = Decimal(close)
-        self.volume = Decimal(volume)
+        self.open = float(open)
+        self.high = float(high)
+        self.low  = float(low)
+        self.close = float(close)
+        self.volume = float(volume)
     def __str__ (self):
         return '{"time": "%s", "open": %g, "high": %g, "low": %g, "close": %g, "volume": %g}'%(
             str(self.time), self.open, self.high, self.low, self.close, self.volume)
@@ -67,43 +67,43 @@ class OHLC(object):
      
 class Fund:
     def __init__(self):
-        self.initial_value = Decimal(0.0)
-        self.current_value = Decimal(0.0)
-        self.current_hold_value = Decimal(0.0)
-        self.total_traded_value = Decimal(0.0)
-        self.current_realized_profit = Decimal(0.0)
-        self.current_unrealized_profit = Decimal(0.0)   
-        self.total_profit = Decimal(0.0)
-        self.current_avg_buy_price = Decimal(0.0)
-        self.latest_buy_price = Decimal(0.0)
-        self.fund_max_liquidity = Decimal(0.0)
-        self.fund_liquidity_percent = Decimal(0.0)
-        self.max_per_buy_fund_value = Decimal(0.0)
+        self.initial_value = float(0.0)
+        self.current_value = float(0.0)
+        self.current_hold_value = float(0.0)
+        self.total_traded_value = float(0.0)
+        self.current_realized_profit = float(0.0)
+        self.current_unrealized_profit = float(0.0)   
+        self.total_profit = float(0.0)
+        self.current_avg_buy_price = float(0.0)
+        self.latest_buy_price = float(0.0)
+        self.fund_max_liquidity = float(0.0)
+        self.fund_liquidity_percent = float(0.0)
+        self.max_per_buy_fund_value = float(0.0)
         self.maker_fee_rate = 0
         self.taker_fee_rate = 0
-        self.fee_accrued = Decimal(0)        
+        self.fee_accrued = float(0)        
             
     def set_initial_value (self, value):
-        self.initial_value = self.current_value = Decimal(value)
+        self.initial_value = self.current_value = float(value)
         
     def set_fund_liquidity_percent (self, value):
-        self.fund_liquidity_percent = Decimal(value)
+        self.fund_liquidity_percent = float(value)
         
     def set_fund_liquidity (self, value):        
-        self.fund_max_liquidity = Decimal(value)
+        self.fund_max_liquidity = float(value)
         
     def set_hold_value (self, value):
-        self.current_hold_value = Decimal(value)      
+        self.current_hold_value = float(value)      
         
     def set_max_per_buy_fund_value (self, value):
-        self.max_per_buy_fund_value = Decimal(value)
+        self.max_per_buy_fund_value = float(value)
     
     def set_fee(self, maker_fee, taker_fee):
         self.maker_fee_rate = maker_fee
         self.taker_fee_rate = taker_fee          
 
     def get_fund_to_trade (self, num_order):
-#         liquid_fund = self.initial_value *  self.fund_liquidity_percent / Decimal(100)
+#         liquid_fund = self.initial_value *  self.fund_liquidity_percent / float(100)
         rock_bottom = self.initial_value - self.fund_max_liquidity
         
         fund = self.max_per_buy_fund_value * num_order
@@ -149,20 +149,20 @@ class Fund:
                 
 class Asset:
     def __init__(self):    
-        self.initial_size = Decimal(0.0)
-        self.current_size = Decimal(0.0)
-        self.latest_traded_size = Decimal(0.0)
-        self.current_hold_size = Decimal(0.0)
-        self.total_traded_size = Decimal(0.0)
-        self.max_per_trade_size = Decimal(0.0)
-        self.min_per_trade_size = Decimal(0.0)
-        self.hold_size = Decimal(0.0)
+        self.initial_size = float(0.0)
+        self.current_size = float(0.0)
+        self.latest_traded_size = float(0.0)
+        self.current_hold_size = float(0.0)
+        self.total_traded_size = float(0.0)
+        self.max_per_trade_size = float(0.0)
+        self.min_per_trade_size = float(0.0)
+        self.hold_size = float(0.0)
     
     def set_max_per_trade_size (self, size):
         self.max_per_trade_size = size
         
     def set_min_per_trade_size (self, size):
-        self.min_per_trade_size = Decimal(size)        
+        self.min_per_trade_size = float(size)        
             
     def set_initial_size (self, size):
         self.initial_size = self.current_size = size
@@ -174,7 +174,7 @@ class Asset:
         return self.current_size
         
     def set_hold_size (self, size):
-        self.hold_size = Decimal(size)
+        self.hold_size = float(size)
         
     def get_asset_to_trade (self, size):        
 #         cur_size = self.max_per_trade_size * strength
@@ -203,9 +203,9 @@ class Asset:
 "initial_size":%f, "current_size":%f, "hold_size": %f, "current_hold_size":%f, 
 "max_per_trade_size":%f, "min_per_trade_size":%f, "latest_traded_size":%f, "total_traded_size":%f
 }""")%(
-            Decimal(self.initial_size), Decimal(self.current_size), Decimal(self.hold_size), Decimal(self.current_hold_size),
-            Decimal(self.max_per_trade_size), Decimal(self.min_per_trade_size),
-             Decimal(self.latest_traded_size), Decimal(self.total_traded_size))
+            float(self.initial_size), float(self.current_size), float(self.hold_size), float(self.current_hold_size),
+            float(self.max_per_trade_size), float(self.min_per_trade_size),
+             float(self.latest_traded_size), float(self.total_traded_size))
                 
 class Market:
 #     '''
@@ -279,8 +279,8 @@ class Market:
         self.primary = exchange.primary
         self.trading_paused = False
         
-        self.current_market_rate = Decimal(0.0)
-        self.start_market_rate = Decimal(0.0)
+        self.current_market_rate = float(0.0)
+        self.start_market_rate = float(0.0)
         self.consume_feed = None
         self.fund = Fund ()
         self.asset = Asset ()
@@ -299,15 +299,15 @@ class Market:
         self.decision = None  #will setup later
         
         #initialize params
-        self.fund.set_initial_value(Decimal(0.0))
-        self.fund.set_hold_value(Decimal(0.0))
+        self.fund.set_initial_value(float(0.0))
+        self.fund.set_hold_value(float(0.0))
         self.fund.set_fund_liquidity(tcfg['fund_max_liquidity'])
         self.fund.set_max_per_buy_fund_value(tcfg['fund_max_per_buy_value'])
         fee = tcfg.get('fee')
         if fee:
             self.fund.set_fee(fee['maker'], fee['taker'])
-        self.asset.set_initial_size(Decimal(0.0))
-        self.asset.set_hold_size( Decimal(0.0))
+        self.asset.set_initial_size(float(0.0))
+        self.asset.set_hold_size( float(0.0))
         self.asset.set_max_per_trade_size(tcfg['asset_max_per_trade_size'])
         self.asset.set_min_per_trade_size(tcfg['asset_min_per_trade_size'])        
             
@@ -364,7 +364,7 @@ class Market:
                 self.num_take_profit_hit, self.num_stop_loss_hit,
                 self.num_success_trade, self.num_failed_trade,
                 (self.get_market_rate() - self.start_market_rate)*(
-                    self.fund.initial_value*Decimal(0.01)*self.fund.fund_liquidity_percent/self.start_market_rate),
+                    self.fund.initial_value*float(0.01)*self.fund.fund_liquidity_percent/self.start_market_rate),
                 str(self.fund), str(self.asset), str(self.order_book))        
         
     def get_fund_type(self):
@@ -404,7 +404,7 @@ class Market:
         if (price == 0 or not l_size):
             log.error ("Invalid price or 'last_size' in ticker feed")
             return
-        size = Decimal(l_size)
+        size = float(l_size)
         
         #update ticker
         if self.O == 0:
@@ -451,10 +451,10 @@ class Market:
                 log.debug ("Generating take profit SELL trade_req with asset size: %s"%(str(asset_size)))   
                 trade_req_l.append(TradeRequest(Product=self.product_id,
                                   Side="SELL",
-                                   Size=round(Decimal(asset_size),8),
-                                   Fund=round(Decimal(0), 8),                                   
+                                   Size=round(float(asset_size),8),
+                                   Fund=round(float(0), 8),                                   
                                    Type="market",
-                                   Price=round(Decimal(0), 8),
+                                   Price=round(float(0), 8),
                                    Stop=0, id=pos.id))            
             
             self._execute_market_trade(trade_req_l)
@@ -643,10 +643,10 @@ class Market:
                 if (trade_req_dict != None and trade_req_dict['product'] == self.product_id ):
                     trade_req = TradeRequest(Product=trade_req_dict['product'],
                                               Side=trade_req_dict['side'],
-                                               Size=round(Decimal(trade_req_dict['size']),8),
-                                               Fund=round(Decimal(0), 8), #TODO: FIXME: make sure correct fund/size                        
+                                               Size=round(float(trade_req_dict['size']),8),
+                                               Fund=round(float(0), 8), #TODO: FIXME: make sure correct fund/size                        
                                                 Type=trade_req_dict['type'],
-                                                 Price=round(Decimal(trade_req_dict['price']), 8),
+                                                 Price=round(float(trade_req_dict['price']), 8),
                                                  Stop=trade_req_dict['stop'])
                     log.info("Valid manual order : %s"%(str(trade_req)))
                     trade_req_list.append(trade_req)
@@ -683,10 +683,10 @@ class Market:
             log.debug ("Generating watermark SELL trade_req with asset size: %s"%(str(asset_size)))   
             trade_req_l.append(TradeRequest(Product=self.product_id,
                               Side="SELL",
-                               Size=round(Decimal(asset_size),8),
-                               Fund=round(Decimal(0), 8),                                   
+                               Size=round(float(asset_size),8),
+                               Fund=round(float(0), 8),                                   
                                Type=self.order_type,
-                               Price=round(Decimal(0), 8),
+                               Price=round(float(0), 8),
                                Stop=0, id=pos.id))
         
         #3. do regular trade req based on signal
@@ -700,7 +700,7 @@ class Market:
                 if fund > 0:
                     size = fund / self.get_market_rate()
                     #normalize size
-                    size_norm = round(Decimal((size - size % self.asset.min_per_trade_size)), 8)
+                    size_norm = round(float((size - size % self.asset.min_per_trade_size)), 8)
                     if size_norm == 0 :
                         log.critical ("buy size too small min_size: %f size: %f", self.asset.min_per_trade_size, size)
                         continue
@@ -708,9 +708,9 @@ class Market:
                     trade_req_l.append(TradeRequest(Product=self.product_id,
                                       Side="BUY",
                                        Size=size_norm,
-                                       Fund=round(Decimal(fund), 8),
+                                       Fund=round(float(fund), 8),
                                        Type="market",
-                                       Price=round(Decimal(0), 8),
+                                       Price=round(float(0), 8),
                                        Stop=0))
                 else:
                     log.debug ("Unable to generate BUY request for signal (%d). Too low fund"%(signal))
@@ -731,10 +731,10 @@ class Market:
                     log.debug ("Generating SELL trade_req with asset size: %s"%(str(asset_size)))       
                     trade_req_l.append(TradeRequest(Product=self.product_id,
                                       Side="SELL",
-                                       Size=round(Decimal(asset_size),8),
-                                       Fund=round(Decimal(0), 8),                                   
+                                       Size=round(float(asset_size),8),
+                                       Fund=round(float(0), 8),                                   
                                        Type="market",
-                                       Price=round(Decimal(0), 8),
+                                       Price=round(float(0), 8),
                                        Stop=0, id=position.id))
                 else:
                     log.error ("Unable to generate SELL request for signal (%d)."
@@ -920,9 +920,9 @@ class Market:
         num_candles = len(self.market_indicators_data)
         self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
         if sims.backtesting_on:
-            self.start_market_rate = Decimal(0) if num_candles == 0 else self.market_indicators_data[0]['ohlc'].close
+            self.start_market_rate = float(0) if num_candles == 0 else self.market_indicators_data[0]['ohlc'].close
         else:
-            self.start_market_rate = Decimal(0) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].close
+            self.start_market_rate = float(0) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].close
         self.num_candles = num_candles
         self._init_states()
         log.debug ("market (%s) setup done! num_candles(%d) cur_candle_time(%d)"%(
@@ -960,25 +960,25 @@ class Market:
         log.info ("loading fund stats")        
         mf = self.fund
         sf = mstats['fund']
-        mf.initial_value = Decimal(sf['initial_value'])
-        mf.current_hold_value = Decimal(sf['current_hold_value'])
-        mf.total_traded_value = Decimal(sf['total_traded_value'])
-        mf.fee_accrued = Decimal(sf['fee_accrued'])
-        mf.current_realized_profit = Decimal(sf['current_realized_profit'])
-        mf.current_unrealized_profit = Decimal(sf['current_unrealized_profit'])
-        mf.total_profit = Decimal(sf['total_profit'])
-        mf.current_avg_buy_price = Decimal(sf['current_avg_buy_price'])
-        mf.latest_buy_price = Decimal(sf['latest_buy_price'])
+        mf.initial_value = float(sf['initial_value'])
+        mf.current_hold_value = float(sf['current_hold_value'])
+        mf.total_traded_value = float(sf['total_traded_value'])
+        mf.fee_accrued = float(sf['fee_accrued'])
+        mf.current_realized_profit = float(sf['current_realized_profit'])
+        mf.current_unrealized_profit = float(sf['current_unrealized_profit'])
+        mf.total_profit = float(sf['total_profit'])
+        mf.current_avg_buy_price = float(sf['current_avg_buy_price'])
+        mf.latest_buy_price = float(sf['latest_buy_price'])
         
         #restore asset
         log.info ("loading asset stats")
         ma = self.asset
         sa = mstats['asset'] 
-        ma.initial_size = Decimal(sa['initial_size'])
-        ma.hold_size = Decimal(sa['hold_size'])
-        ma.current_hold_size = Decimal(sa['current_hold_size'])
-        ma.latest_traded_size = Decimal(sa['latest_traded_size'])
-        ma.total_traded_size = Decimal(sa['total_traded_size'])
+        ma.initial_size = float(sa['initial_size'])
+        ma.hold_size = float(sa['hold_size'])
+        ma.current_hold_size = float(sa['current_hold_size'])
+        ma.latest_traded_size = float(sa['latest_traded_size'])
+        ma.total_traded_size = float(sa['total_traded_size'])
         
         
     def _clear_states (self):
@@ -1164,10 +1164,10 @@ class Market:
                 log.debug ("Generating SELL trade_req with asset size: %s"%(str(asset_size)))       
                 trade_req_l.append(TradeRequest(Product=self.product_id,
                                   Side="SELL",
-                                   Size=round(Decimal(asset_size),8),
-                                   Fund=round(Decimal(0), 8),                                   
+                                   Size=round(float(asset_size),8),
+                                   Fund=round(float(0), 8),                                   
                                    Type="market",
-                                   Price=round(Decimal(0), 8),
+                                   Price=round(float(0), 8),
                                    Stop=0, id=position.id))
             else:                              
                 break

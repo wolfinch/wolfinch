@@ -16,7 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from decimal import Decimal
 from indicator import Indicator
 
 # import numpy as np
@@ -34,5 +33,5 @@ class NOOP (Indicator):
         candles_len = len(candles)
         if candles_len == 0:
             return 0
-        return Decimal(candles[-1]['ohlc'].close)
+        return float(candles[-1]['ohlc'].close)
         

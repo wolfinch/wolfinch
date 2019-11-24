@@ -19,7 +19,6 @@
 # import requests
 import json
 import pprint
-from decimal import Decimal
 
 from datetime import datetime, timedelta
 from time import sleep
@@ -181,10 +180,10 @@ class CBPRO (Exchange):
             return None
         
 #         #Setup the initial params
-        market.fund.set_initial_value(Decimal(usd_acc['available']))
-        market.fund.set_hold_value(Decimal(usd_acc['hold']))
-        market.asset.set_initial_size(Decimal( crypto_acc['available']))
-        market.asset.set_hold_size( Decimal(crypto_acc['hold']))
+        market.fund.set_initial_value(float(usd_acc['available']))
+        market.fund.set_hold_value(float(usd_acc['hold']))
+        market.asset.set_initial_size(float( crypto_acc['available']))
+        market.asset.set_hold_size( float(crypto_acc['hold']))
         
         ## Feed Cb
         market.register_feed_processor(self._gdax_consume_feed)
@@ -267,14 +266,14 @@ class CBPRO (Exchange):
         update_time  = order.get('time') or order.get('done_at') or None
         side = order.get('side') or None
         # Money matters
-        price =   Decimal(order.get('price') or 0)
-        request_size  = Decimal(order.get('size') or  0)
-        filled_size = Decimal(order.get('filled_size') or 0)
-        remaining_size  = Decimal(order.get('remaining_size') or 0)
-        funds = Decimal(order.get('executed_value') or order.get('funds') or order.get('specified_funds') or 0)
-        fees = Decimal(order.get('fees') or order.get('fill_fees') or 0)
+        price =   float(order.get('price') or 0)
+        request_size  = float(order.get('size') or  0)
+        filled_size = float(order.get('filled_size') or 0)
+        remaining_size  = float(order.get('remaining_size') or 0)
+        funds = float(order.get('executed_value') or order.get('funds') or order.get('specified_funds') or 0)
+        fees = float(order.get('fees') or order.get('fill_fees') or 0)
         if order.get('settled') == True:
-            total_val = Decimal(order.get('executed_value') or 0)
+            total_val = float(order.get('executed_value') or 0)
             if total_val and filled_size and not price:
                 price = total_val/filled_size
             if (funds == 0):
@@ -412,7 +411,7 @@ class CBPRO (Exchange):
 #         log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
         
         #log.debug ("consuming ticker feed")
-        price = Decimal(msg.get('price'))
+        price = float(msg.get('price'))
         last_size = msg.get('last_size')
         
         market.tick (price, last_size)

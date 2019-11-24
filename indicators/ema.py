@@ -3,7 +3,6 @@
 #  (c) OldMonk Bot
 # '''
 
-from decimal import Decimal
 from indicator import Indicator
 
 class DEFUNCT_EMA (Indicator):
@@ -14,7 +13,7 @@ class DEFUNCT_EMA (Indicator):
     def __init__(self, name, period=12):
         self.name = name
         self.period = period
-        self._multiplier = Decimal(2)/ (period +1)
+        self._multiplier = float(2)/ (period +1)
                 
     def calculate(self, candles):
         # The formula below is for a 10-day EMA:
@@ -25,13 +24,13 @@ class DEFUNCT_EMA (Indicator):
         
         candles_len = len(candles)
         if candles_len < self.period:
-            return Decimal(0)
+            return float(0)
         
         prev_ema = candles[candles_len - 2][self.name]
         if prev_ema == 0:
             #SMA 
-            prev_ema =  Decimal(sum( map (lambda x: x['ohlc'].close, candles)))/self.period
+            prev_ema =  float(sum( map (lambda x: x['ohlc'].close, candles)))/self.period
         
         #calculate ema
-        return Decimal(((candles[candles_len - 1]['ohlc'].close - prev_ema )*self._multiplier + prev_ema))
+        return float(((candles[candles_len - 1]['ohlc'].close - prev_ema )*self._multiplier + prev_ema))
         

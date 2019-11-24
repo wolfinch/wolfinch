@@ -3,7 +3,6 @@
 #  (c) OldMonk Bot
 # '''
 
-from decimal import Decimal
 from indicator import Indicator
 
 class SMA (Indicator):
@@ -20,5 +19,5 @@ class SMA (Indicator):
             return 0
 #        print ("len sma: "+str(len(data)))
         #(time, o, h,l,c, vol)
-        return  Decimal(sum( map (lambda x: x['ohlc'].close, candles[-self.period:])))/self.period
+        return  float(sum( map (lambda x: x['ohlc'].close, candles[-self.period:])))/self.period
         

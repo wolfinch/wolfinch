@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from decimal import Decimal
+# from decimal import Decimal
 from strategy_base import Strategy
 
 class EMA_DEV(Strategy):
@@ -50,10 +50,10 @@ class EMA_DEV(Strategy):
         self.ema_buy_l = ema_buy_l
         self.ema_sell_s = ema_sell_s
         self.ema_sell_l = ema_sell_l
-        self.treshold_pct_buy_s = Decimal(treshold_pct_buy_s)
-        self.treshold_pct_buy_l = Decimal(treshold_pct_buy_l)
-        self.treshold_pct_sell_s = Decimal(treshold_pct_sell_s)
-        self.treshold_pct_sell_l = Decimal(treshold_pct_sell_l)
+        self.treshold_pct_buy_s = float(treshold_pct_buy_s)
+        self.treshold_pct_buy_l = float(treshold_pct_buy_l)
+        self.treshold_pct_sell_s = float(treshold_pct_sell_s)
+        self.treshold_pct_sell_l = float(treshold_pct_sell_l)
         self.timeout_buy = timeout_buy
         self.timeout_sell = timeout_sell
         self.rsi = rsi

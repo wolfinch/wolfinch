@@ -16,9 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from decimal import Decimal
+# from decimal import Decimal
 from strategy_base import Strategy
-import numpy as np
+# import numpy as np
 
 class EMA_RSI(Strategy):
     #HoF -       #EMA_RSI: {'rsi': 64, 'ema_s': 44, 'period': 38, 'ema_m': 184, 'ema_l': 156, 'ema_ll': 64}

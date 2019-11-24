@@ -6,7 +6,7 @@
 '''
 from sqlalchemy.ext.declarative import declarative_base
 from utils import getLogger
-from decimal import Decimal
+# from decimal import float
 
 Db = None #db.init_db()
 log = getLogger ('ORDER')
@@ -35,7 +35,7 @@ class TradeRequest:
         self.fund = Fund
         self.type = Type
         self.price = Price
-        self.stop = Decimal(Stop or 0)
+        self.stop = float(Stop or 0)
 
     def __str__(self):
         return "{'product':%s, 'side':%s, 'size':%f, 'fund':%f, 'type':%s, 'price':%f, 'stop':%f}" % (
@@ -86,12 +86,12 @@ class Order (object):
         self.status = status
 #         self.status_reason = status_reason
         self.side = side
-        self.request_size = Decimal (request_size)
-        self.filled_size = Decimal(filled_size)
-        self.remaining_size = Decimal(remaining_size)
-        self.price = Decimal(price)
-        self.funds = Decimal(funds)
-        self.fees = Decimal(fees)
+        self.request_size = float (request_size)
+        self.filled_size = float(filled_size)
+        self.remaining_size = float(remaining_size)
+        self.price = float(price)
+        self.funds = float(funds)
+        self.fees = float(fees)
         self.create_time = create_time
         self.update_time = update_time
         self._pos_id = 0

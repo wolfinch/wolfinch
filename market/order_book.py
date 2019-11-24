@@ -18,7 +18,7 @@
 import sys
 # import json
 from bintrees import RBTree
-from decimal import Decimal
+# from decimal import Decimal
 from sortedcontainers import sorteddict 
 from utils import getLogger
 import stats
@@ -60,7 +60,7 @@ class Position (object):
         if status == "open" or status == "close_pending" or status == "closed":
             self.status = status
             if status == "closed":
-                self.profit = Decimal((self.sell.get_price() - self.buy.get_price())*self.sell.get_asset())
+                self.profit = float((self.sell.get_price() - self.buy.get_price())*self.sell.get_asset())
         else:
             log.critical ("Unknown position status(%s)"%(status))
             raise Exception ("Unknown position status(%s)"%(status))
@@ -260,7 +260,7 @@ class OrderBook():
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))              
             
     def add_stop_loss_position (self, position, market_rate, sl_rate):
-        stop_price = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 4))
+        stop_price = float(round(market_rate*(1 - sl_rate*float(.01)), 4))
         
         position.set_stop_loss(stop_price)
         
@@ -283,7 +283,7 @@ class OrderBook():
         return self.sl_dict.pop(stop_price, None)        
            
     def smart_stop_loss_update_positions(self, market_rate, sl_rate):
-        new_sl = Decimal(round(market_rate*(1 - sl_rate*Decimal(.01)), 4))
+        new_sl = float(round(market_rate*(1 - sl_rate*float(.01)), 4))
         
         key_list = list (self.sl_dict.irange(maximum=new_sl, inclusive=(False, False)))
         
@@ -375,7 +375,7 @@ class OrderBook():
             
             
     def add_take_profit_position(self, position, market_rate, tp_rate):
-        new_tp = Decimal(round(market_rate*(1 + tp_rate*Decimal(.01)), 4))
+        new_tp = float(round(market_rate*(1 + tp_rate*float(.01)), 4))
         
         position.set_take_profit(new_tp)
         pos_list = self.tp_dict.get(new_tp, None)
@@ -616,16 +616,16 @@ class OrderBook():
             log.error ("Unable to get orderbook for exchange(%s) product: %s"%(self.market.exchange.name, self.market.product_id))
             return
         for bid in res['bids']:
-            new_size = Decimal(bid[1]) 
-            price = Decimal(bid[0])
-            new_size += Decimal((self.get_bids(price) or 0))
+            new_size = float(bid[1]) 
+            price = float(bid[0])
+            new_size += float((self.get_bids(price) or 0))
             self.set_bids(price, new_size)
         for ask in res['asks']:
-            new_size = Decimal(ask[1]) 
-            price = Decimal(ask[0])
-            new_size += Decimal((self.get_asks(price) or 0))
+            new_size = float(ask[1]) 
+            price = float(ask[0])
+            new_size += float((self.get_asks(price) or 0))
             self.set_asks(price, new_size)
-        self._sequence = Decimal(res['sequence'])
+        self._sequence = float(res['sequence'])
         self.book_valid = True
 #         print ("asks: %s"%(str(self._asks)))
 #         print ("bids: %s"%(str(self._bids)))
@@ -635,8 +635,8 @@ class OrderBook():
         asks = [ [price, size]]
         '''
         for ask in asks:
-            price = Decimal(ask[0])
-            size = Decimal(ask[1])
+            price = float(ask[0])
+            size = float(ask[1])
             if size > 0:  # size > 0 add, size = 0 remove
                 self.set_asks(price, size)
             else:
@@ -663,8 +663,8 @@ class OrderBook():
         bids = [ [price, size]]
         '''
         for bid in bids:
-            price = Decimal(bid[0])
-            size = Decimal(bid[1])
+            price = float(bid[0])
+            size = float(bid[1])
             if size > 0:  # size > 0 add, size = 0 remove
                 self.set_bids(price, size)
             else:

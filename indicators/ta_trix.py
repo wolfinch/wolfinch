@@ -4,7 +4,6 @@
 #  (c) OldMonk Bot
 # '''
 
-from decimal import Decimal
 from indicator import Indicator
 import numpy as np
 import talib
@@ -25,7 +24,7 @@ class TRIX (Indicator):
     def calculate(self, candles):        
         candles_len = len(candles)
         if candles_len < self.period:
-            return Decimal(0)
+            return float(0)
         
         val_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-self.period:]))
         
@@ -33,5 +32,5 @@ class TRIX (Indicator):
         cur_trix = talib.TRIX (val_array, timeperiod=self.period/3)
         
 #         log.critical ("TA_TRIX: %s"%str(cur_trix[-1]))
-        return Decimal(cur_trix[-1])
+        return float(cur_trix[-1])
         
