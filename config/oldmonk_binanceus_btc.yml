@@ -15,7 +15,7 @@ exchanges:
             fund_max_liquidity : 900 #$$               
             fund_max_per_buy_value : 30 #$100 max per buy
             asset_max_per_trade_size: 1000 #per sell asset size max
-            asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)
+            asset_min_per_trade_size: 0.001 #Min asset size to trade with (may come from exch limits or asset limits)
             stop_loss:
                enabled: true
                smart: false #track price movement and update stop_loss
