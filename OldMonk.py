@@ -174,7 +174,7 @@ def process_ui_get_markets_rr (msg, ui_conn_pipe):
         if not p_list:
             m_dict[m.exchange_name] = [{"product_id": m.product_id, "paused": m.trading_paused}]
         else:
-            p_list.append({"product": m.product_id, "paused": m.trading_paused})
+            p_list.append({"product_id": m.product_id, "paused": m.trading_paused})
     
     msg ["type"] = "GET_MARKETS_RESP"
     msg ["data"] = m_dict
