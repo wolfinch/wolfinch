@@ -101,7 +101,7 @@ class EMA_DEV(Strategy):
             (cur_close >= ema_sell_l * (1 + (1 * self.treshold_pct_sell_l/100))) and 
             (self.cur_timeout_sell < 0 )):
             
-            signal = -3 # sell
+            signal = -1 # sell
             self.cur_timeout_sell = self.timeout_sell
         elif ((cur_close <= ema_buy_s *(1 + (1 * self.treshold_pct_buy_s/100))) and 
             (cur_close <= ema_buy_l  * (1 + (1 * self.treshold_pct_buy_l/100))) and 
