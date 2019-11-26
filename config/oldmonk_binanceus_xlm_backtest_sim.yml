@@ -53,7 +53,7 @@ genetic_optimizer:
    N_MP : 1
    strategy : EMA_DEV
 ui:
-   enabled : false
+   enabled : true
    port : 8080
    
 #EOF

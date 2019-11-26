@@ -115,7 +115,8 @@ def server_main (port=8080, mp_pipe=None):
             if g_active_market.get("EXCH_NAME") and  g_active_market.get("PRODUCT_ID"):
                 data["active"] = {"EXCH_NAME": g_active_market["EXCH_NAME"],
                                   "PRODUCT_ID": g_active_market["PRODUCT_ID"],
-                                  "PAUSED": g_active_market["PAUSED"]}
+                                  "BUY_PAUSED": g_active_market["BUY_PAUSED"],
+                                  "SELL_PAUSED": g_active_market["SELL_PAUSED"]}
             return json.dumps(data)
         except Exception as e:
             log.error ("Unable to get market list. Exception: %s", e)
@@ -132,7 +133,8 @@ def server_main (port=8080, mp_pipe=None):
                 
                 for market in g_markets_list[exch_name]:
                     if market["product_id"] == prod_id:
-                        g_active_market = {"EXCH_NAME": exch_name, "PRODUCT_ID": prod_id, "PAUSED": market["paused"]}
+                        g_active_market = {"EXCH_NAME": exch_name, "PRODUCT_ID": prod_id,
+                                "BUY_PAUSED": market["buy_paused"], "SELL_PAUSED": market["sell_paused"]}
                         break                
                 log.info ("set active market: %s " % (g_active_market))
                 # init db_events
@@ -158,12 +160,13 @@ def server_main (port=8080, mp_pipe=None):
             return ret_code(err)      
         
         log.info ("data: %s"%(data))
-        pause = bool(int(data.get('pause', False)))
+        buy_pause = bool(int(data.get('buy_pause', False)))
+        sell_pause = bool(int(data.get('sell_pause', False)))        
         req_code = str(data.get('req_code', ""))
         exch_name = str(data.get('exch_name', ""))
         prod_id = str(data.get('product', ""))
                 
-        log.info ("pause (%d) exch: %s prod: %s" % (pause, exch_name, prod_id))
+        log.info ("buy_pause (%d) sell_pause (%d) exch: %s prod: %s" % (buy_pause, sell_pause, exch_name, prod_id))
         
         if (exch_name == "" or prod_id == "" or req_code == ""):
             err = "error: incorrect request data"
@@ -177,14 +180,16 @@ def server_main (port=8080, mp_pipe=None):
         
         err = "success"
         
-        msg = {"type": "PAUSE_TRADING", "exchange": exch_name, "product": prod_id, "pause": pause}
+        msg = {"type": "PAUSE_TRADING", "exchange": exch_name, "product": prod_id, "buy_pause": buy_pause, "sell_pause": sell_pause}
         if mp_pipe:
-            log.info ("sending pause (%d) msg to tranding engine"%(pause))
+            log.info ("sending buy_pause (%d) sell_pause(%d) msg to tranding engine"%(buy_pause, sell_pause))
             mp_send_recv_msg(mp_pipe, msg)
-            g_active_market["PAUSED"] = pause
+            g_active_market["BUY_PAUSED"] = buy_pause
+            g_active_market["SELL_PAUSED"] = sell_pause            
             for market in g_markets_list[exch_name]:
                 if market["product_id"] == prod_id:
-                    market["paused"] = pause
+                    market["buy_paused"] = buy_pause
+                    market["sell_paused"] = sell_pause                    
                     break            
         else:
             err = "server connection can't be found!"

@@ -128,7 +128,7 @@ def process_market (market):
     
     # Trade only on primary markets
     if market.new_candle is True:
-        if market.primary is True and market.trading_paused is False:
+        if market.primary is True:
             signal = market.generate_trade_signal ()
             market.consume_trade_signal (signal)
             if (sims.simulator_on):
@@ -157,14 +157,15 @@ def process_ui_trade_notif (msg):
 def process_ui_pause_trading_notif (msg):
     exch = msg.get("exchange")
     product = msg.get("product")
-    pause = msg.get("pause")
+    buy_pause = msg.get("buy_pause")
+    sell_pause = msg.get("sell_pause")
     
     m = get_market_by_product (exch, product)
     if not m:
         log.error ("Unknown exchange/product exch: %s prod: %s" % (exch, product))
     else:
         log.info ("pause trading on exch: %s prod: %s" % (exch, product))
-        m.pause_trading(pause)    
+        m.pause_trading(buy_pause, sell_pause)    
         
 def process_ui_get_markets_rr (msg, ui_conn_pipe):
     log.debug ("enter")
@@ -172,9 +173,11 @@ def process_ui_get_markets_rr (msg, ui_conn_pipe):
     for m in get_market_list():
         p_list = m_dict.get(m.exchange_name)
         if not p_list:
-            m_dict[m.exchange_name] = [{"product_id": m.product_id, "paused": m.trading_paused}]
+            m_dict[m.exchange_name] = [{"product_id": m.product_id,
+                     "buy_paused": m.trading_paused_buy, "sell_paused": m.trading_paused_sell}]
         else:
-            p_list.append({"product_id": m.product_id, "paused": m.trading_paused})
+            p_list.append({"product_id": m.product_id, 
+                           "buy_paused": m.trading_paused_buy, "sell_paused": m.trading_paused_sel})
     
     msg ["type"] = "GET_MARKETS_RESP"
     msg ["data"] = m_dict

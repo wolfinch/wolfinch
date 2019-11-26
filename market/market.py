@@ -42,6 +42,7 @@ import strategy
 
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
+from keras.datasets import reuters
 
 Base = declarative_base()
 
@@ -277,7 +278,8 @@ class Market:
         
         #set primary?
         self.primary = exchange.primary
-        self.trading_paused = False
+        self.trading_paused_buy = False
+        self.trading_paused_sell = False
         
         self.current_market_rate = float(0.0)
         self.start_market_rate = float(0.0)
@@ -351,6 +353,7 @@ class Market:
 "num_take_profit_hit": %d, "num_stop_loss_hit": %d,
 "num_success_trade": %d, "num_failed_trade": %d,
 "cur_buy_and_hold_profit": %f,
+"trading_paused_buy": %d, "trading_paused_sell": %d,
 "fund":%s,
 "asset":%s,
 "order_book":%s
@@ -365,6 +368,7 @@ class Market:
                 self.num_success_trade, self.num_failed_trade,
                 (self.get_market_rate() - self.start_market_rate)*(
                     self.fund.initial_value*float(0.01)*self.fund.fund_liquidity_percent/self.start_market_rate),
+                self.trading_paused_buy, self.trading_paused_sell,
                 str(self.fund), str(self.asset), str(self.order_book))        
         
     def get_fund_type(self):
@@ -430,9 +434,10 @@ class Market:
         #TODO: FIXME: jork: might need to rate-limit the logic here after
         self.set_market_rate (price)
     
-    def pause_trading (self, pause):
-        log.info ("pause_trading: %d"%(pause))
-        self.trading_paused = pause
+    def pause_trading (self, buy_pause, sell_pause):
+        log.info ("pause_trading: buy_pause:%d sell_pause: %d"%(buy_pause, sell_pause))
+        self.trading_paused_buy = buy_pause
+        self.trading_paused_sell = sell_pause
 
     def _handle_take_profit (self):
  
@@ -955,6 +960,8 @@ class Market:
                                 mstats['num_sell_order'], mstats['num_sell_order_success'], mstats['num_sell_order_failed']
         self.num_take_profit_hit, self.num_stop_loss_hit = mstats['num_take_profit_hit'], mstats['num_stop_loss_hit']
         self.num_success_trade, self.num_failed_trade = mstats['num_success_trade'], mstats['num_failed_trade']
+        self.trading_paused_buy, self.trading_paused_sell = mstats.get('trading_paused_buy') or False, \
+                                                             mstats.get('trading_paused_sell') or False
         
         #restore fund states
         log.info ("loading fund stats")        
@@ -1137,6 +1144,14 @@ class Market:
 #             -- To ignore a product
 #                add an empty file with name "<exchange_name>_<product>.ignore"
 #         """
+    
+        if self.trading_paused_sell is True and signal < 0:
+            log.info ("sell paused on market: ignore signal (%d)"%(signal))
+            return
+        if self.trading_paused_buy is True and signal > 0:
+            log.info ("buy paused on market: ignore signal (%d)"%(signal))
+            return
+
         trade_req_list = []        
         
         # Now generate auto trade req list

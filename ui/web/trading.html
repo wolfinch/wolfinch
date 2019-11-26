@@ -42,7 +42,8 @@
 	var exchanges;
 	var active_exch = "";
 	var active_market = "";
-	var paused = false;
+	var buy_paused = false;
+	var sell_paused = false;	
 	$(document).ready(function() {
 
 		console.log("load stats");
@@ -82,18 +83,32 @@
 				console.log("set_active_market success!" + data);
 				exchanges[active_exch].forEach(function(market) {
 					if (market["product_id"] == active_market) {
-
-						paused = market["paused"];
+	
+						// buy pause
+						buy_paused = market["buy_paused"];
 						console.log("market: " + active_market + " paused: "
 								+ paused);
-						pause_btn = document.getElementById("btn_pause");
-						if (paused) {
-							pause_btn.innerText = "Resume";
+						pause_btn = document.getElementById("btn_pause_buy");
+						if (buy_paused) {
+							pause_btn.innerText = "Buy Resume";
 							pause_btn.className = "btn btn-success btn-xs";
 						} else {
-							pause_btn.innerText = "Pause";
+							pause_btn.innerText = "Buy Pause";
 							pause_btn.className = "btn btn-danger btn-xs";
 						}
+						
+						// sell pause
+						sell_paused = market["sell_paused"];
+						console.log("market: " + active_market + " paused: "
+								+ paused);
+						pause_btn = document.getElementById("btn_pause_sell");
+						if (sell_paused) {
+							pause_btn.innerText = "Sell Resume";
+							pause_btn.className = "btn btn-success btn-xs";
+						} else {
+							pause_btn.innerText = "Sell Pause";
+							pause_btn.className = "btn btn-danger btn-xs";
+						}						
 					}
 				});
 			},
@@ -130,9 +145,18 @@
 			return true;
 		}
 
-		// call api to buy/sell
+		if (id == "btn_pause_buy") {
+			buy_paused = !buy_paused;
+		} else if (id == "btn_pause_sell") {
+			sell_paused = !sell_paused;
+		} else {
+			console.log ("unknown id:"+id);
+		}
+		
+		// call api to pause/resume
 		var data = {
-			"pause" : (!paused) * 1,
+			"buy_pause" : (buy_paused) * 1,
+			"sell_pause" : (sell_paused) * 1,
 			"req_code" : req_code,
 			"exch_name" : active_exch,
 			"product" : active_market,
@@ -145,15 +169,25 @@
 			success : function(data) {
 				console.log("pause / resume market success!");
 				alert(data);
-				paused = !paused;
-				pause_btn = document.getElementById("btn_pause");
-				if (paused) {
-					pause_btn.innerText = "Resume";
+				// set buy_pause state
+				pause_btn = document.getElementById("btn_pause_buy");
+				if (buy_paused) {
+					pause_btn.innerText = "Buy Resume";
 					pause_btn.className = "btn btn-success btn-xs";
 				} else {
-					pause_btn.innerText = "Pause";
+					pause_btn.innerText = "Buy Pause";
 					pause_btn.className = "btn btn-danger btn-xs";
 				}
+				
+				// set sell pause state
+				pause_btn = document.getElementById("btn_pause_sell");
+				if (sell_paused) {
+					pause_btn.innerText = "Sell Resume";
+					pause_btn.className = "btn btn-success btn-xs";
+				} else {
+					pause_btn.innerText = "Sell Pause";
+					pause_btn.className = "btn btn-danger btn-xs";
+				}				
 			},
 			error : function(xhr, error) {
 				console.log("pause / resume market failed!");
@@ -245,22 +279,34 @@
 				if (data["active"]) {
 					active_exch = data["active"]["EXCH_NAME"];
 					active_market = data["active"]["PRODUCT_ID"];
-					paused = data["active"]["PAUSED"];
+					buy_paused = data["active"]["BUY_PAUSED"];
+					sell_paused = data["active"]["SELL_PAUSED"];
 
 					console.log("active exhc:" + active_exch + " markt: "
-							+ active_market + " paused: " + paused);
+							+ active_market + " buy_paused: " + buy_paused + " sell_paused: " + sell_paused);
 				}
 				load_exchanges_dd();
 				load_markets_dd();
 
-				pause_btn = document.getElementById("btn_pause");
-				if (paused) {
-					pause_btn.innerText = "Resume";
+				// buy pause state
+				pause_btn = document.getElementById("btn_pause_buy");
+				if (buy_paused) {
+					pause_btn.innerText = "Buy Resume";
 					pause_btn.className = "btn btn-success btn-xs";
 				} else {
-					pause_btn.innerText = "Pause";
+					pause_btn.innerText = "Buy Pause";
 					pause_btn.className = "btn btn-danger btn-xs";
 				}
+				
+				// sell pause state
+				pause_btn = document.getElementById("btn_pause_sell");
+				if (sell_paused) {
+					pause_btn.innerText = "Sell Resume";
+					pause_btn.className = "btn btn-success btn-xs";
+				} else {
+					pause_btn.innerText = "Sell Pause";
+					pause_btn.className = "btn btn-danger btn-xs";
+				}				
 
 				if (exch_cb) {
 					exch_cb();
@@ -373,10 +419,17 @@
 									</ul>
 								</div>
 								<div class="btn-group btn-group-xs" role="group">
-									<div class="col-sm-6  text-center"
-										style="vertical-align: middle;">
-										<div id="btn_pause" onclick="pause_onclick(this.id)"
-											class="btn btn-danger btn-xs">Pause</div>
+									<div id="div_pause">
+										<div class="col-sm-6  text-center"
+											style="vertical-align: middle; padding-right: 0px;">
+											<div id="btn_pause_buy" onclick="pause_onclick(this.id)"
+												class="btn btn-danger btn-xs">Buy Pause</div>
+										</div>
+										<div class="col-sm-6  text-center"
+											style="vertical-align: middle; padding-left: 0px;">
+											<div id="btn_pause_sell" onclick="pause_onclick(this.id)"
+												class="btn btn-danger btn-xs">Sell Pause</div>
+										</div>
 									</div>
 								</div>
 							</div>
