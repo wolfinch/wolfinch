@@ -177,7 +177,7 @@ def process_ui_get_markets_rr (msg, ui_conn_pipe):
                      "buy_paused": m.trading_paused_buy, "sell_paused": m.trading_paused_sell}]
         else:
             p_list.append({"product_id": m.product_id, 
-                           "buy_paused": m.trading_paused_buy, "sell_paused": m.trading_paused_sel})
+                           "buy_paused": m.trading_paused_buy, "sell_paused": m.trading_paused_sell})
     
     msg ["type"] = "GET_MARKETS_RESP"
     msg ["data"] = m_dict
