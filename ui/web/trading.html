@@ -87,7 +87,7 @@
 						// buy pause
 						buy_paused = market["buy_paused"];
 						console.log("market: " + active_market + " paused: "
-								+ paused);
+								+ buy_paused);
 						pause_btn = document.getElementById("btn_pause_buy");
 						if (buy_paused) {
 							pause_btn.innerText = "Buy Resume";
@@ -100,7 +100,7 @@
 						// sell pause
 						sell_paused = market["sell_paused"];
 						console.log("market: " + active_market + " paused: "
-								+ paused);
+								+ sell_paused);
 						pause_btn = document.getElementById("btn_pause_sell");
 						if (sell_paused) {
 							pause_btn.innerText = "Sell Resume";
