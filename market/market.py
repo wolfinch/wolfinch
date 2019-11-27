@@ -670,12 +670,13 @@ class Market:
         trade_req_l = []
         trade_pos_l = []
         #1. if stop loss enabled, get stop loss hit positions
-        if self.tradeConfig["stop_loss_enabled"]:
+
+        if self.tradeConfig["stop_loss_enabled"] and self.trading_paused_sell is False:
             log.debug ("find pos hit stop loss")
             trade_pos_l += self.order_book.get_stop_loss_positions(self.get_market_rate())
         
         #2. if take profit enabled, get TP hit positions
-        if self.tradeConfig["take_profit_enabled"]:
+        if self.tradeConfig["take_profit_enabled"] and self.trading_paused_sell is False:
             log.debug ("find pos hit take profit")
             trade_pos_l += self.order_book.get_take_profit_positions(self.get_market_rate())
         
@@ -1052,7 +1053,7 @@ class Market:
             return        
         
         #1.take profit handling, this is aggressive take profit, not waiting for candle period
-        if self.tradeConfig.get("take_profit_enabled", False):           
+        if self.tradeConfig.get("take_profit_enabled", False) and self.trading_paused_sell is False:           
             self._handle_take_profit ()
                 
         now = time.time()
