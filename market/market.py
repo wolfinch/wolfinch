@@ -695,6 +695,14 @@ class Market:
                                Price=round(float(0), 8),
                                Stop=0, id=pos.id))
         
+    
+        if self.trading_paused_sell is True and signal < 0:
+            log.info ("sell paused on market: ignore signal (%d)"%(signal))
+            return trade_req_l
+        if self.trading_paused_buy is True and signal > 0:
+            log.info ("buy paused on market: ignore signal (%d)"%(signal))
+            return trade_req_l
+        
         #3. do regular trade req based on signal
         abs_sig = abs(signal)  
         while (abs_sig):  
@@ -1145,13 +1153,6 @@ class Market:
 #             -- To ignore a product
 #                add an empty file with name "<exchange_name>_<product>.ignore"
 #         """
-    
-        if self.trading_paused_sell is True and signal < 0:
-            log.info ("sell paused on market: ignore signal (%d)"%(signal))
-            return
-        if self.trading_paused_buy is True and signal > 0:
-            log.info ("buy paused on market: ignore signal (%d)"%(signal))
-            return
 
         trade_req_list = []        
         

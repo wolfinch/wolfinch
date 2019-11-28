@@ -633,12 +633,16 @@ class BinanceUS (Exchange):
         else:
             params['type'] = ORDER_TYPE_LIMIT
             params['price'] = trade_req.price,  # USD
-            
-        if self.test_mode == False:    
-            order = self.auth_client.create_order(**params)
-        else:
-            log.info ("placing order in test mode")            
-            order = self.auth_client.create_test_order(**params)
+        
+        try:
+            if self.test_mode == False:    
+                order = self.auth_client.create_order(**params)
+            else:
+                log.info ("placing order in test mode")            
+                order = self.auth_client.create_test_order(**params)
+        except Exception as e:
+            log.error ("exception while placing order - %s"%(e))
+            return None
         order["side"] = 'buy'     
         return self._normalized_order (order);
     
@@ -652,17 +656,25 @@ class BinanceUS (Exchange):
             params['type'] = ORDER_TYPE_LIMIT
             params['price'] = trade_req.price,  # USD            
                     
-        if self.test_mode == False:    
-            order = self.auth_client.create_order(**params)
-        else:            
-            log.info ("placing order in test mode")
-            order = self.auth_client.create_test_order(**params)     
+        try:
+            if self.test_mode == False:    
+                order = self.auth_client.create_order(**params)
+            else:            
+                log.info ("placing order in test mode")
+                order = self.auth_client.create_test_order(**params)     
+        except Exception as e:
+            log.error ("exception while placing order - %s"%(e))
+            return None            
         order["side"] = 'sell'
         return self._normalized_order (order);
     
     def get_order (self, prod_id, order_id):
         log.debug ("GET - order (%s) " % (order_id))
-        order = self.auth_client.get_order(symbol=prod_id, origClientOrderId=order_id)
+        try:
+            order = self.auth_client.get_order(symbol=prod_id, origClientOrderId=order_id)
+        except Exception as e:
+            log.error ("exception while placing order - %s"%(e))
+            return None        
         return self._normalized_order (order);
     
     def cancel_order (self, prod_id, order_id):
