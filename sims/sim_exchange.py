@@ -40,7 +40,9 @@ traded_orders = {}       # TODO: FIXME: jork:  use the order_book implementation
 g_prod_list = [{"id": "BTC-USD", "display_name": "BTC/USD", "fund_type": "USD",  "asset_type": "BTC"},
                 {"id": "XLM-USD", "display_name": "XLM/USD", "fund_type": "USD",  "asset_type": "XLM"},
                 {"id": "XLMUSDT", "display_name": "XLM/USDT", "fund_type": "USDT",  "asset_type": "XLM"},
-                {"id": "BTCUSDT", "display_name": "BTC/USD", "fund_type": "USDT",  "asset_type": "BTC"},                
+                {"id": "BTCUSDT", "display_name": "BTC/USD", "fund_type": "USDT",  "asset_type": "BTC"}, 
+                {"id": "XLMUSD", "display_name": "XLM/USD", "fund_type": "USD",  "asset_type": "XLM"},
+                {"id": "BTCUSD", "display_name": "BTC/USD", "fund_type": "USD",  "asset_type": "BTC"},                                  
                 ]
 order_struct = {u'created_at': u'2018-01-10T09:49:02.639681Z',
              u'executed_value': u'0.0000000000000000',

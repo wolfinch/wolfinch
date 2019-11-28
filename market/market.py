@@ -585,19 +585,20 @@ class Market:
             order = sims.exch_obj.sell (trade_req)
         else:
             order = self.exchange.sell (trade_req)
-        #update fund 
-        market_order  =  self.order_book.add_or_update_my_order(order)
-        if(market_order): #successful order
-            log.debug ("SELL Order Sent to exchange. ")
-            market_order._pos_id = trade_req.id
-            
-            return market_order 
-        else:
-            self.asset.sell_fail (trade_req.size)
-            self.order_book.close_position_failed(trade_req.id)
-            self.num_sell_order_failed += 1                        
-            log.debug ("SELL Order Failed to place")
-            return None        
+        
+        if order != None:
+            #update fund 
+            order._pos_id = trade_req.id            
+            market_order  =  self.order_book.add_or_update_my_order(order)
+            if(market_order): #successful order
+                log.debug ("SELL Order Sent to exchange. ")
+                return market_order 
+        log.error ("sell order failed")            
+        self.asset.sell_fail (trade_req.size)
+        self.order_book.close_position_failed(trade_req.id)
+        self.num_sell_order_failed += 1                        
+        log.debug ("SELL Order Failed to place")
+        return None        
 
     def _sell_order_received (self, order):
 #         log.critical ("SELL RECV: %s"%(json.dumps(order, indent=4, sort_keys=True)))
