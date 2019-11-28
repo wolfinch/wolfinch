@@ -11,7 +11,7 @@ exchanges:
       role: 'primary'
       config: 'config/binanceus.yml'
       products:
-         - 'XLMUSDT':
+         - 'XLMUSD':
             fund_max_liquidity : 900 #$$               
             fund_max_per_buy_value : 20 #$100 max per buy
             asset_max_per_trade_size: 1000 #per sell asset size max
