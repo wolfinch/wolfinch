@@ -42,12 +42,11 @@ import strategy
 
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
-from keras.datasets import reuters
 
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 OldMonk_market_list = []
 
@@ -761,11 +760,13 @@ class Market:
         return trade_req_l
 
     def _execute_market_trade(self, trade_req_list):
-        '''
-        Desc: Execute a trade request on the market. 
-              This API calls the sell/buy APIs of the corresponding exchanges 
-              and expects the order in uniform format
-        '''
+#         '''
+#         Desc: Execute a trade request on the market. 
+#               This API calls the sell/buy APIs of the corresponding exchanges 
+#               and expects the order in uniform format
+#         '''
+        
+        log.info ("placing (%d) trade requests"%(len(trade_req_list)))
         for trade_req in trade_req_list:
             log.debug ("Executing Trade Request:"+str(trade_req))
             if (trade_req.type == 'limit' or trade_req.type == 'market'):
