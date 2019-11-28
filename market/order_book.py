@@ -189,7 +189,7 @@ class OrderBook():
     def close_position_pending(self, sell_order):
         # Intentionally _not_ updating the pos_db here. Yes, There is a case of wrong pos state if we go down come back during this state 
         # TODO: FIXME: This may not be the best way. might cause race with below api with multi thread/multi exch
-        log.debug (" order:%s"%(sell_order.id))
+        log.info (" order:%s"%(sell_order.id))
 #         log.debug ("\n\n\n***: open(%d) closed(%d) close_pend(%d)\n"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
         pos = self.close_pending_positions.get(sell_order.id)
@@ -220,24 +220,24 @@ class OrderBook():
             #something is very wrong
             log.critical("Unable to find pending position for close id: %s"%(sell_order.id))
             raise Exception ("Unable to find pending position for close")
-    def close_position_failed(self, sell_order):
-        log.debug ("close_position_failed order: %s"%(sell_order.id))
+    def close_position_failed(self, pos_id):
+        log.info ("close_position_failed order: %s"%(pos_id))
 #         log.debug ("\n\n\n***close_position_failed: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))  
            
-        id = sell_order.id
-        position = self.close_pending_positions.get(id)
+#         id = sell_order.id
+        position = self.close_pending_positions.get(pos_id)
         if position:
             position.sell = None
-            self.close_pending_positions.pop(id, None)
+            self.close_pending_positions.pop(pos_id, None)
             self.open_positions.append(position)
             if self.market.tradeConfig["stop_loss_enabled"]:
                 self.add_stop_loss_position(position, position.buy.get_price(), self.market.tradeConfig["stop_loss_rate"])
             if self.market.tradeConfig["take_profit_enabled"]:
                 self.add_take_profit_position(position, position.buy.get_price(), self.market.tradeConfig["take_profit_rate"])
         else:
-            log.critical ("Unable to get close_pending position. order_id: %s"%(sell_order.id)) 
+            log.critical ("Unable to get close_pending position. order_id: %s"%(pos_id)) 
     def close_position (self, sell_order):
-        log.debug ("close_position order: %s"%(sell_order.id))
+        log.info ("close_position order: %s"%(sell_order.id))
         id = sell_order.id
         position = self.close_pending_positions.pop(id, None)
         if position:
@@ -449,7 +449,7 @@ class OrderBook():
             self.close_position(order)
         else:
             log.critical("closed position failed order: %s"%(order))            
-            self.close_position_failed(order)
+            self.close_position_failed(order.id)
     def get_traded_sell_order(self, order_id):
         return self.traded_sell_orders_db.get (order_id)
             

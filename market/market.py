@@ -586,13 +586,15 @@ class Market:
         else:
             order = self.exchange.sell (trade_req)
         #update fund 
-        order._pos_id = trade_req.id
         market_order  =  self.order_book.add_or_update_my_order(order)
         if(market_order): #successful order
-            log.debug ("SELL Order Sent to exchange. ")      
+            log.debug ("SELL Order Sent to exchange. ")
+            market_order._pos_id = trade_req.id
+            
             return market_order 
         else:
             self.asset.sell_fail (trade_req.size)
+            self.order_book.close_position_failed(trade_req.id)
             self.num_sell_order_failed += 1                        
             log.debug ("SELL Order Failed to place")
             return None        
