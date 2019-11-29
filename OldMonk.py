@@ -86,7 +86,7 @@ def Wolfinch_end():
     log.info ("all cleanup done.")
     
 
-def oldmonk_main ():
+def wolfinch_main ():
     """
     Main Function for Wolfinch
     """
@@ -302,12 +302,12 @@ if __name__ == '__main__':
         if (sims.backtesting_on):
             sims.market_backtesting_run (sims.simulator_on)
             if ui.integrated_ui:
-                oldmonk_main()
+                wolfinch_main()
             else:
                 raise SystemExit
         else:
             log.debug ("Starting Main forever loop")
-            oldmonk_main ()
+            wolfinch_main ()
     except (KeyboardInterrupt, SystemExit):
         Wolfinch_end()
         sys.exit()
