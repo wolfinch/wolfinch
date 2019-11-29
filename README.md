@@ -1,4 +1,4 @@
-# OldMonk Auto Trading Bot
+# Wolfinch Auto Trading Bot
 
 # Read third-party readme for dependencies
 

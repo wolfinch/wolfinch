@@ -1,2 +1,2 @@
 ReadMe:
-OldMonk Auto-trading Bot - UI
+Wolfinch Auto-trading Bot - UI
