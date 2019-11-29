@@ -1,5 +1,5 @@
 #
-# OldMonk Auto trading Bot
+# wolfinch Auto trading Bot
 # Desc: Main File implements Bot
 # Copyright 2017-2019, Joshith Rayaroth Koderi. All Rights Reserved.
 #

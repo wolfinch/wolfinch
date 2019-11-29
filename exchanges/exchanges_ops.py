@@ -1,8 +1,8 @@
 '''
- OldMonk Auto trading Bot
+ Wolfinch Auto trading Bot
  Desc: Exchanges list 
          All exchange housekeeping ops here
- (c) OldMonk Bot
+ (c) Wolfinch Bot
 '''
 
 from utils import getLogger
@@ -15,13 +15,13 @@ log.setLevel (log.INFO)
 
 
 exchange_list = []
-def init_exchanges (OldMonkConfig):
+def init_exchanges (WolfinchConfig):
     global exchange_list
     
     #init exchanges 
     for exch_cls in all_exchanges:
         log.debug ("Initializing exchange (%s)"%(exch_cls.name))
-        for exch in OldMonkConfig['exchanges']:
+        for exch in WolfinchConfig['exchanges']:
             for name, exch_cfg in exch.iteritems():
                 if name.lower() == exch_cls.name.lower():
                     role = exch_cfg['role']

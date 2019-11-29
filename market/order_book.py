@@ -1,5 +1,5 @@
 # '''
-#  OldMonk Auto trading Bot
+#  Wolfinch Auto trading Bot
 #  Desc:  exchange interactions Simulation
 #  (c) Joshith
 # '''

@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 # '''
-#  OldMonk Auto trading Bot
+#  Wolfinch Auto trading Bot
 #  Desc:  Genetic Optimizer
-# Copyright 2019, Joshith Rayaroth Koderi, OldMonk Bot. All Rights Reserved.
+# Copyright 2019, Joshith Rayaroth Koderi, Wolfinch Bot. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at

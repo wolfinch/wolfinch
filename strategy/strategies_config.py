@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# OldMonk Auto trading Bot
+# Wolfinch Auto trading Bot
 # Desc: Global Market Strategy Configuration. 
 # ref. implementation.
 # All the globally available market strategies are instantiated and configured here.

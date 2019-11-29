@@ -1,6 +1,6 @@
 # '''
 #  Desc: Market Simple Moving Average (SMA) implementation 
-#  (c) OldMonk Bot
+#  (c) Wolfinch Bot
 # '''
 
 from indicator import Indicator

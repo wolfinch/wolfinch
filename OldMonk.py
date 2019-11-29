@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# OldMonk Auto trading Bot
+# Wolfinch Auto trading Bot
 # Desc: Main File implements Bot
 # Copyright 2017-2019, Joshith Rayaroth Koderi. All Rights Reserved.
 #
@@ -36,7 +36,7 @@ import db
 import stats
 import ui
 
-log = getLogger ('OldMonk')
+log = getLogger ('Wolfinch')
 log.setLevel(log.INFO)
 
 gRestart = False
@@ -45,7 +45,7 @@ gRestart = False
 MAIN_TICK_DELAY = 0.500  # 500 milli
 
 
-def OldMonk_init():
+def Wolfinch_init():
     
     # seed random
     random.seed()
@@ -74,8 +74,8 @@ def OldMonk_init():
     stats.start()
 
     
-def OldMonk_end():
-    log.info ("Finalizing OldMonk")
+def Wolfinch_end():
+    log.info ("Finalizing Wolfinch")
     exchanges.close_exchanges ()
     
     # stop stats thread
@@ -88,7 +88,7 @@ def OldMonk_end():
 
 def oldmonk_main ():
     """
-    Main Function for OldMonk
+    Main Function for Wolfinch
     """
     feed_deQ_fn = feed_deQ
     feed_Q_process_msg_fn = feed_Q_process_msg
@@ -214,11 +214,11 @@ def clean_states ():
         
 def arg_parse ():
     global gRestart
-    parser = argparse.ArgumentParser(description='OldMonk Auto Trading Bot')
+    parser = argparse.ArgumentParser(description='Wolfinch Auto Trading Bot')
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
     parser.add_argument("--clean", help='Clean states,dbs and exit. Clear all the existing states', action='store_true')
-    parser.add_argument("--config", help='OldMonk Global config file')
+    parser.add_argument("--config", help='Wolfinch Global config file')
     parser.add_argument("--backtesting", help='do backtesting', action='store_true')
     parser.add_argument("--import_only", help='do import only', action='store_true')
     parser.add_argument("--restart", help='restart from the previous state', action='store_true')        
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     
     getcontext().prec = 8  # decimal precision
     
-    print("Starting OldMonk..")
+    print("Starting Wolfinch Trading Bot..")
     
     try:
         if sims.genetic_optimizer_on:
@@ -294,7 +294,7 @@ if __name__ == '__main__':
             sims.ga_sim_main (get_config(), get_product_config)
             print ("finished running genetic backtesting optimizer")
             sys.exit()
-        OldMonk_init()
+        Wolfinch_init()
         if sims.import_only:
             log.info ("import only")
             raise SystemExit
@@ -309,16 +309,16 @@ if __name__ == '__main__':
             log.debug ("Starting Main forever loop")
             oldmonk_main ()
     except (KeyboardInterrupt, SystemExit):
-        OldMonk_end()
+        Wolfinch_end()
         sys.exit()
     except Exception as e:
         log.critical ("Unexpected error: %s exception: %s" % (sys.exc_info(), e.message))        
         print ("Unexpected error: %s exception: %s" % (sys.exc_info(), e.message))
-        OldMonk_end()
+        Wolfinch_end()
         raise
 #         traceback.print_exc()
 #         os.abort()
     # '''Not supposed to reach here'''
-    print("\nOldMonk end")
+    print("\nWolfinch end")
 
 # EOF

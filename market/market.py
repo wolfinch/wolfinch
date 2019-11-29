@@ -1,4 +1,4 @@
-# OldMonk Auto trading Bot
+# Wolfinch Auto trading Bot
 # Desc: Market/trading routines
 # Copyright 2019, Joshith Rayaroth Koderi. All Rights Reserved.
 #
@@ -48,7 +48,7 @@ Base = declarative_base()
 log = getLogger ('MARKET')
 log.setLevel(log.INFO)
 
-OldMonk_market_list = []
+Wolfinch_market_list = []
 
 class OHLC(object): 
     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']
@@ -1220,10 +1220,10 @@ def feed_Q_process_msg (msg):
         market.market_consume_feed(msg['msg'])
 
 def get_market_list ():
-    return OldMonk_market_list
+    return Wolfinch_market_list
 
 def get_market_by_product (exchange_name, product_id):
-    for market in OldMonk_market_list:
+    for market in Wolfinch_market_list:
         if market.product_id == product_id and market.exchange_name == exchange_name:
             return market
         
@@ -1232,7 +1232,7 @@ def market_init (exchange_list, get_product_config_hook):
     Initialize per exchange, per product data.
     This is where we want to keep all the run stats
     '''
-    global OldMonk_market_list
+    global Wolfinch_market_list
     
     for exchange in exchange_list:
         exchange.get_product_config = get_product_config_hook
@@ -1256,7 +1256,7 @@ def market_init (exchange_list, get_product_config_hook):
     #                     market.tradeConfig = tradingConfig
     #                     market.decisionConfig = decisionConfig
                         log.info ("market init success for exchange (%s) product: %s"%(exchange.name, str(product)))
-                        OldMonk_market_list.append(market)
+                        Wolfinch_market_list.append(market)
         else:
             log.error ("No products found in exchange:%s"%(exchange.name))
                  
@@ -1265,13 +1265,13 @@ def market_setup (restart=False):
     Setup market states.
     This is where we want to keep all the run stats
     '''
-    global OldMonk_market_list
+    global Wolfinch_market_list
     
-    if not len (OldMonk_market_list):
+    if not len (Wolfinch_market_list):
         log.critical("No Markets configured. Nothing to do!")
         exit (0)
     
-    for market in OldMonk_market_list:
+    for market in Wolfinch_market_list:
         status = market.market_setup (restart)
         if (status == False):
             log.critical ("Market Init Failed for market: %s"%(market.name))
@@ -1284,8 +1284,8 @@ def market_setup (restart=False):
         return
                 
     log.info ("market setup complete for all markets, init decision engines now")
-    for market in OldMonk_market_list:            
-        status = market.decision_setup (OldMonk_market_list)
+    for market in Wolfinch_market_list:            
+        status = market.decision_setup (Wolfinch_market_list)
         if (status == False):
             log.critical ("decision_setup Failed for market: %s"%(market.name))
             return False
@@ -1294,7 +1294,7 @@ def market_setup (restart=False):
                         
 def get_all_market_stats ():
     market_stats = {}
-    for market in OldMonk_market_list:        
+    for market in Wolfinch_market_list:        
         market_stats[market.name] = json.loads(str(market))
     return market_stats
 
@@ -1303,15 +1303,15 @@ TRADE_STATS_FILE = "data/stats_traded_orders_%s.json"
 POSITION_STATS_FILE = "data/stats_positions_%s_%s.json"        
 
 def display_market_stats (fd = sys.stdout):
-    global OldMonk_market_list
+    global Wolfinch_market_list
     if sys.stdout != fd:
         fd.write("\n\n*****Market statistics*****\n")
-    for market in OldMonk_market_list:        
+    for market in Wolfinch_market_list:        
         fd.write(str("\n%s\n\n"%str(market)))
 def flush_all_stats ():
     display_market_stats()
     
-    for market in OldMonk_market_list:
+    for market in Wolfinch_market_list:
         with open(MARKET_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:
             fd.write(str("\n%s\n\n"%str(market)))      
         with open(POSITION_STATS_FILE%(market.exchange_name, market.product_id), "w") as fd:

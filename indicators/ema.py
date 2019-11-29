@@ -1,6 +1,6 @@
 # '''
 #  Desc: Market Exponential Moving Average (EMA) implementation 
-#  (c) OldMonk Bot
+#  (c) Wolfinch Bot
 # '''
 
 from indicator import Indicator

@@ -1,7 +1,7 @@
 #
-# OldMonk Auto trading Bot
+# wolfinch Auto trading Bot
 # Desc: Sqlite db impl
-# Copyright 2018, OldMonk. All Rights Reserved.
+# Copyright 2018, wolfinch. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class SqliteDb (DbBase):
             log.error( "No writing allowed, tsk! ")
             return 
                 
-        self.engine = db.create_engine('sqlite:///data/OldMonk.sqlite.db', connect_args={'check_same_thread': False})       
+        self.engine = db.create_engine('sqlite:///data/wolfinch.sqlite.db', connect_args={'check_same_thread': False})       
 #         self.base = declarative_base()
         if self.engine == None :
             log.error ("sqlite or sqlalchemy init failed")

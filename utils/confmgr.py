@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# OldMonk Auto trading Bot
+# Wolfinch Auto trading Bot
 # Desc: Main File implements Bot
 # Copyright 2019, Joshith Rayaroth Koderi. All Rights Reserved.
 #
@@ -24,7 +24,7 @@ import sims, ui
 log = getLogger ('confmgr')
 log.setLevel(log.INFO)
 # Global Config 
-OldMonkConfig = None
+WolfinchConfig = None
 gDecisionConfig = {}
 gTradingConfig = {"stop_loss_enabled": False,
                   "stop_loss_smart_rate": False,
@@ -89,12 +89,12 @@ def parse_product_config (cfg):
 
 
 def get_product_config (exch_name, prod_name):
-    global OldMonkConfig
+    global WolfinchConfig
     
     log.debug ("get_config for exch: %s prod: %s" % (exch_name, prod_name))
         
     # sanitize the config
-    for k, v in OldMonkConfig.iteritems():
+    for k, v in WolfinchConfig.iteritems():
         if k == 'exchanges':
             if v == None:
                 log.critical ("Atleast one exchange need to be configured")
@@ -135,13 +135,13 @@ def get_product_config (exch_name, prod_name):
     
     
 def load_config (cfg_file):
-    global OldMonkConfig
+    global WolfinchConfig
     global gDecisionConfig, gTradingConfig
-    OldMonkConfig = readConf(cfg_file)
+    WolfinchConfig = readConf(cfg_file)
     
-    log.debug ("cfg: %s" % OldMonkConfig)
+    log.debug ("cfg: %s" % WolfinchConfig)
     # sanitize the config
-    for k, v in OldMonkConfig.iteritems():
+    for k, v in WolfinchConfig.iteritems():
         if k == 'exchanges':
             if v == None:
                 print ("Atleast one exchange need to be configured")
@@ -151,9 +151,9 @@ def load_config (cfg_file):
                 for ex_k, ex_v in exch.iteritems():
                     log.debug ("processing exch: %s val:%s" % (ex_k, ex_v))
                     #setup backfill config per exch, from global
-                    if OldMonkConfig.get('backfill') :
+                    if WolfinchConfig.get('backfill') :
                         log.info ("reading backfill global config")
-                        ex_v['backfill'] = OldMonkConfig['backfill']
+                        ex_v['backfill'] = WolfinchConfig['backfill']
                     products = ex_v.get('products')
                     if products != None and len(products):
                         log.debug ("processing exch products")
@@ -271,7 +271,7 @@ def load_config (cfg_file):
     return True
     
 def get_config ():
-    return OldMonkConfig
+    return WolfinchConfig
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':

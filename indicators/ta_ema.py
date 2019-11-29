@@ -1,7 +1,7 @@
 # '''
 #  Desc: Market Exponential Moving Average (EMA) implementation using ta-lib
 #  (c) https://mrjbq7.github.io/ta-lib/
-#  (c) OldMonk Bot
+#  (c) Wolfinch Bot
 # '''
 
 # from decimal import Decimal

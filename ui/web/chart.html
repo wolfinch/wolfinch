@@ -1,7 +1,7 @@
 <html lang="en">
 
 <head>
-<title>OldMonk Trading Bot</title>
+<title>Wolfinch Trading Bot</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet"
@@ -335,8 +335,8 @@
 			}
 		};
 
-		var x = techan.scale.financetime();
-		var y = d3.scaleLinear();
+		var x = techan.scale.financetime().range([0, 700]);;
+		var y = d3.scaleLinear().range([500, 0]);;
 		var yPercent = y.copy();
 		var yVolume = d3.scaleLinear();
 		var candlestick = techan.plot.candlestick().xScale(x).yScale(y);
@@ -344,8 +344,15 @@
 		function zoomed() {
 
 			console.log("zoomed");
-			x.zoomable().domain(
-					d3.event.transform.rescaleX(zoomableInit).domain());
+	        var rescaledY = d3.event.transform.rescaleY(y);
+	        yAxis.scale(rescaledY);
+	        candlestick.yScale(rescaledY);
+
+	        // Emulates D3 behaviour, required for financetime due to secondary zoomable scale
+	        x.zoomable().domain(d3.event.transform.rescaleX(zoomableInit).domain());
+	
+			
+			
 			y.domain(d3.event.transform.rescaleY(yInit).domain());
 			yPercent.domain(d3.event.transform.rescaleY(yPercentInit).domain());
 
@@ -498,7 +505,8 @@
 			// Stash for zooming
 			//zoomableInit = x.zoomable().domain(
 			//		[ indicatorPreRoll, data.length ]).copy(); // Zoom in a little to hide indicator preroll
-			zoomableInit = x.copy();
+			zoomableInit = x.zoomable().clamp(false).copy();
+			//zoomableInit = x.copy();
 			yInit = y.copy();
 			yPercentInit = yPercent.copy();
 
@@ -510,6 +518,8 @@
 			svg.select("g.closeValue.annotation").datum(
 					[ data[data.length - 1] ]).call(closeAnnotation);
 			svg.select("g.volume").datum(data).call(volume);
+					
+			
 			svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
 			//svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
 
@@ -662,7 +672,7 @@
 				<div class="container">
 					<header class="clearfix">
 						<h3 class="brand">
-							<a href="/">OldMonk</a>
+							<a href="/">Wolfinch</a>
 							<div class="btn-group dropdown"
 								style="float: right; margin-left: 2rem;">
 								<div class="btn-group btn-group-xs " role="group">
@@ -690,7 +700,7 @@
 							</div>
 						</h3>
 						<ul class="nav masthead-nav">
-							<li><a href="../oldmonk"> Home</a></li>
+							<li><a href="../wolfinch"> Home</a></li>
 							<li class="active"><a href="chart.html">Charts </a></li>
 							<li><a href="trading.html"> Trading</a></li>
 							<li><a href="/"> Documentation</a></li>
@@ -728,7 +738,7 @@
 			<p>
 				<small>
 					<div class="row">
-						<em>&copy; 2017-2019 OldMonk Bot</em>
+						<em>&copy; 2017-2019 Wolfinch Bot</em>
 					</div>
 				</small>
 

@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# OldMonk Auto trading Bot
+# Wolfinch Auto trading Bot
 # Desc: Main File implements Bot
 # Copyright 2017-2019, Joshith Rayaroth Koderi. All Rights Reserved.
 #
@@ -160,7 +160,7 @@ def market_backtesting_ga_hook (decisionConfig, tradingConfig=None):
     
     
     stats = get_all_market_stats ()
-    log.info ("Finalizing OldMonk")
+    log.info ("Finalizing Wolfinch")
     exchanges.close_exchanges ()
     
     return stats

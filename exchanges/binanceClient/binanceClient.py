@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # '''
-#  OldMonk Auto trading Bot
-#  Desc: Binance exchange interactions for OldMonk
+#  Wolfinch Auto trading Bot
+#  Desc: Binance exchange interactions for Wolfinch
 #  (c) Joshith
 # '''
 

@@ -19,7 +19,7 @@ class MongoDb (DbBase):
             return False
         else:
             log.info ("MongoDb Init Done")
-            db = client['OldMonkDb']
+            db = client['wolfinchDb']
             return True
         
     def clear_db (self):
@@ -28,7 +28,7 @@ class MongoDb (DbBase):
             return True
         
         #clear db entries
-        client.drop_database("OldMonkDb")
+        client.drop_database("wolfinchDb")
         
     def clear_table (self, table):
         global client, db    

@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 #
-# OldMonk Auto trading Bot
-# Desc: Stats implementation for OldMonk Bot
-# Copyright 2018, OldMonk Bot. All Rights Reserved.
+# Wolfinch Auto trading Bot
+# Desc: Stats implementation for Wolfinch Bot
+# Copyright 2018, Wolfinch Bot. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

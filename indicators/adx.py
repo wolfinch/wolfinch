@@ -1,7 +1,7 @@
 # '''
 #  Desc: Average Directional Movement Index (Momentum Indicators) implementation using ta-lib
 #  (c) https://mrjbq7.github.io/ta-lib/
-#  (c) OldMonk Bot
+#  (c) Wolfinch Bot
 # '''
 
 from indicator import Indicator

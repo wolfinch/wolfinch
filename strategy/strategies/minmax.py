@@ -1,9 +1,9 @@
 #
-# OldMonk Auto trading Bot
+# Wolfinch Auto trading Bot
 # Desc:  MINMAX strategy (Trade if candle close is min or max of history periods.)
 # strategy based on - https://www.reddit.com/r/zenbot/comments/b92mis/minmax_strategy/
 #
-# Copyright 2018, OldMonk Bot. All Rights Reserved.
+# Copyright 2018, Wolfinch Bot. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at

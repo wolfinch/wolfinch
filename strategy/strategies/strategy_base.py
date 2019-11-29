@@ -1,7 +1,7 @@
 #
-# OldMonk Auto trading Bot
+# Wolfinch Auto trading Bot
 # Desc:  Market Strategy Abstract Class Implementation
-# Copyright 2018, OldMonk Bot. All Rights Reserved.
+# Copyright 2018, Wolfinch Bot. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

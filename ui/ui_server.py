@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# OldMonk Auto trading Bot
+# Wolfinch Auto trading Bot
 # Desc: Main UI impl
 # Copyright 2019, Joshith Rayaroth Koderi. All Rights Reserved.
 #
@@ -58,28 +58,28 @@ def server_main (port=8080, mp_pipe=None):
     def send_js_api(path):
         return send_from_directory('js', path)
 
-    @app.route('/<secret>/oldmonk/stylesheet.css')
+    @app.route('/<secret>/wolfinch/stylesheet.css')
     def stylesheet_page_api(secret):
         if secret != get_ui_secret():
             log.error ("wrong code: " + secret)
             return ""
         return app.send_static_file('stylesheet.css')
 
-    @app.route('/<secret>/oldmonk/chart.html')
+    @app.route('/<secret>/wolfinch/chart.html')
     def chart_page_api(secret):
         if secret != get_ui_secret():
             log.error ("wrong code: " + secret)
             return ""
         return app.send_static_file('chart.html')
 
-    @app.route('/<secret>/oldmonk/trading.html')
+    @app.route('/<secret>/wolfinch/trading.html')
     def trading_page_api(secret):
         if secret != get_ui_secret():
             log.error ("wrong code: " + secret)
             return ""
         return app.send_static_file('trading.html')    
 
-    @app.route('/<secret>/oldmonk')
+    @app.route('/<secret>/wolfinch')
     def root_page_api(secret):
         if secret != get_ui_secret():
             log.error ("wrong code: " + secret)
@@ -319,11 +319,11 @@ def ui_main (port=8080, mp_conn_pipe=None):
 
         
 def arg_parse ():
-    parser = argparse.ArgumentParser(description='OldMonk Auto Trading Bot UI Server')
+    parser = argparse.ArgumentParser(description='Wolfinch Auto Trading Bot UI Server')
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
     parser.add_argument("--clean", help='Clean states and exit. Clear all the existing states', action='store_true')
-#     parser.add_argument("--config", help='OldMonk Global config file')
+#     parser.add_argument("--config", help='Wolfinch Global config file')
 #     parser.add_argument("--backtesting", help='do backtesting', action='store_true')
     
     args = parser.parse_args()
@@ -339,7 +339,7 @@ if __name__ == '__main__':
     
     getcontext().prec = 8  # decimal precision
     
-    print("Starting OldMonk UI server..")
+    print("Starting Wolfinch UI server..")
     
     try:
         log.debug ("Starting Main forever loop")
@@ -350,6 +350,6 @@ if __name__ == '__main__':
         print ("Unexpected error: ", sys.exc_info())
         raise
     # '''Not supposed to reach here'''
-    print("\nOldMonk UI Server end")
+    print("\nWolfinch UI Server end")
 
 # EOF

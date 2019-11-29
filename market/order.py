@@ -1,8 +1,8 @@
 
 '''
- OldMonk Auto trading Bot
+ Wolfinch Auto trading Bot
  Desc: Order Class and TradeRequest and order class - implementation
- (c) OldMonk Bot
+ (c) Wolfinch Bot
 '''
 from sqlalchemy.ext.declarative import declarative_base
 from utils import getLogger

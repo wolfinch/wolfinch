@@ -1,9 +1,9 @@
 #
-# OldMonk Auto trading Bot
+# Wolfinch Auto trading Bot
 # Desc:  EMA_RSI strategy
 # strategy based on - https://www.mql5.com/en/forum/197614
 #
-# Copyright 2018, OldMonk Bot. All Rights Reserved.
+# Copyright 2018, Wolfinch Bot. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at

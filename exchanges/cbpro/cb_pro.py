@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# OldMonk Auto trading Bot
+# Wolfinch Auto trading Bot
 # Desc: Main File implements Bot
 # Copyright 2019, Joshith Rayaroth Koderi. All Rights Reserved.
 #

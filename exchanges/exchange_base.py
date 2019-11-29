@@ -1,7 +1,7 @@
 '''
- OldMonk Auto trading Bot
+ Wolfinch Auto trading Bot
  Desc: Exchanges impl Abstract Class Implementation
- (c) OldMonk Bot
+ (c) Wolfinch Bot
 '''
 from abc import ABCMeta, abstractmethod
 

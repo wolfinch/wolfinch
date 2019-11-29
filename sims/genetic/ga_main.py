@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 # '''
-#  OldMonk Auto trading Bot
+#  Wolfinch Auto trading Bot
 #  Desc:  Genetic Optimizer
-# Copyright 2019, Joshith Rayaroth Koderi, OldMonk Bot. All Rights Reserved.
+# Copyright 2019, Joshith Rayaroth Koderi, Wolfinch Bot. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -64,7 +64,7 @@ def ga_init (ga_config, evalfn = None):
 
     #init stats
     with open (STATS_FILE, "w") as fp:
-        fp.write("OldMonk Genetica optimizer stats\n")    
+        fp.write("Wolfinch Genetica optimizer stats\n")    
         
 #     ga_ops.GaTradingConfig = ga_tradecfg
     eval_strategy.config_ga_strategy(ga_strategy_name)
