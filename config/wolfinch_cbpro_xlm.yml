@@ -1,0 +1,62 @@
+##################################################
+# Wolfinch Global config file
+##################################################
+
+
+# Define the interested exchanges here. 
+# One primary exchange for trading and as many others in spectator mode
+# data from exchanges in spectator mode will be considered for trading decision
+exchanges:
+#   - 'binance': 
+#      role: 'secondary'
+#      config: 'config/binance.yml'
+   - 'cbpro' : 
+      role: 'primary'
+      config: 'config/cbpro.yml'
+      products:
+        - 'XLM-USD':
+            fund_max_liquidity : 1000 #$$               
+            fund_max_per_buy_value : 20 #$100 max per buy
+            asset_max_per_trade_size: 100 #per sell asset size max
+            asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)      
+            stop_loss:
+               enabled: true
+               smart: false #track price movement and update stop_loss
+               rate : 6 #-3%
+            take_profit:
+               enabled: true
+               rate: 8 # 10percent
+            decision:
+               model    : simple
+               config   :         
+                  strategy: EMA_DEV
+                  params : {'ema_sell_s': 50, 'timeout_sell': 6, 'rsi': 22, 'treshold_pct_buy_l': 0.94, 'ema_buy_s': 50, 'timeout_buy': 18, 'period': 155, 'treshold_pct_sell_s': 1.36, 'ema_buy_l': 65, 'treshold_pct_sell_l': 0.59, 'treshold_pct_buy_s': 0.7, 'ema_sell_l': 20}
+      # products - end
+      order_type    : market
+      fee     : 
+         maker : 0.5 #make fee %
+         taker : 0.5 #taker fee %
+   #cbpro - end
+# exchanges - end
+
+backfill:
+   enabled  : true  
+   period   : 30  #in Days
+   interval : 300  #300s == 5m 
+
+simulator:
+   enabled : true
+   backtesting: true
+
+genetic_optimizer: 
+   enabled : false
+   N_POP : 1000
+   N_GEN : 100
+   N_MP : 10
+   strategy : EMA_DEV
+      
+ui:
+   enabled : true
+   port : 8080
+   
+#EOF
