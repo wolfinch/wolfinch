@@ -17,12 +17,21 @@
 # limitations under the License.
 
 import time
+import json
+    
+UI_CODES_FILE = "data/ui_codes.json"
     
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     
+    # Simple code is no code. TODO: FIXME: FIXME: 
     ui_code =  int(time.time()/(60*60*24))
     
-    print("\nui_code: %d"%(ui_code))    
+    ui_code_o = {'TRADE_SECRET': str(ui_code), 'PAGE_SECRET': str(ui_code)}
     
+    print("\nui_code: %d"%(ui_code))    
+    with open (UI_CODES_FILE, 'w') as fp:
+        json.dump(ui_code_o, fp)
+        
+    print ("UI CODES GENERATED!!")
 #EOF

@@ -31,16 +31,29 @@ import db_events
 g_markets_list = None
 g_active_market = {}  # {"CBPRO": "BTC-USD"}
 
-UI_TRADE_SECRET = "3254"
 
 log = getLogger ('UI')
 log.setLevel(log.INFO)
-# EXCH_NAME = "CBPRO"
-# PRODUCT_ID = "BTC-USD"
+
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
 MARKET_STATS = "stats_market_%s_%s.json"
 
+UI_CODES_FILE = "data/ui_codes.json"
+UI_TRADE_SECRET = "1234"
+UI_PAGE_SECRET = "1234"
+
+def load_ui_codes ():
+    global UI_TRADE_SECRET, UI_PAGE_SECRET
+    log.info ("loading ui codes")
+    try:
+        with open (UI_CODES_FILE, 'r') as fp:
+            codes = json.load(fp)            
+            UI_TRADE_SECRET, UI_PAGE_SECRET = codes['TRADE_SECRET'], codes['PAGE_SECRET']
+    except Exception as e:
+        log.critical ("exception %s on ui while reading UI codes" % (e))        
+        raise e    
+        
 
 def server_main (port=8080, mp_pipe=None):
     
@@ -49,10 +62,12 @@ def server_main (port=8080, mp_pipe=None):
 #         log.error ("db_events init failure")
 #         return
     
+    load_ui_codes ()
+    
     app = Flask(__name__, static_folder='web/', static_url_path='/web/')
 
     def get_ui_secret():
-        return str(int(time.time() / (60 * 60 * 24)))
+        return str(UI_PAGE_SECRET)
     
     @app.route('/js/<path:path>')
     def send_js_api(path):
@@ -311,6 +326,7 @@ def mp_send_recv_msg(mp_pipe, msg, wait_resp=False):
     
 def ui_main (port=8080, mp_conn_pipe=None):
     try:
+        log.info ("init UI server")
         server_main(port=port, mp_pipe=mp_conn_pipe)
     except Exception as e:
         log.critical("ui excpetion e: %s" % (e))
