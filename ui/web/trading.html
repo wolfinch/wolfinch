@@ -43,7 +43,7 @@
 	var active_exch = "";
 	var active_market = "";
 	var buy_paused = false;
-	var sell_paused = false;	
+	var sell_paused = false;
 	$(document).ready(function() {
 
 		console.log("load stats");
@@ -83,8 +83,8 @@
 				console.log("set_active_market success!" + data);
 				exchanges[active_exch].forEach(function(market) {
 					if (market["product_id"] == active_market) {
-	
-						// buy pause
+
+						// Pause Buy
 						buy_paused = market["buy_paused"];
 						console.log("market: " + active_market + " paused: "
 								+ buy_paused);
@@ -93,11 +93,11 @@
 							pause_btn.innerText = "Buy Resume";
 							pause_btn.className = "btn btn-success btn-xs";
 						} else {
-							pause_btn.innerText = "Buy Pause";
+							pause_btn.innerText = "Pause Buy";
 							pause_btn.className = "btn btn-danger btn-xs";
 						}
-						
-						// sell pause
+
+						// Pause Sell
 						sell_paused = market["sell_paused"];
 						console.log("market: " + active_market + " paused: "
 								+ sell_paused);
@@ -106,9 +106,9 @@
 							pause_btn.innerText = "Sell Resume";
 							pause_btn.className = "btn btn-success btn-xs";
 						} else {
-							pause_btn.innerText = "Sell Pause";
+							pause_btn.innerText = "Pause Sell";
 							pause_btn.className = "btn btn-danger btn-xs";
-						}						
+						}
 					}
 				});
 			},
@@ -150,9 +150,9 @@
 		} else if (id == "btn_pause_sell") {
 			sell_paused = !sell_paused;
 		} else {
-			console.log ("unknown id:"+id);
+			console.log("unknown id:" + id);
 		}
-		
+
 		// call api to pause/resume
 		var data = {
 			"buy_pause" : (buy_paused) * 1,
@@ -166,28 +166,42 @@
 			url : '/api/pause_market',
 			data : data,
 			dataType : 'json',
-			success : function(data) {
-				console.log("pause / resume market success!");
-				alert(data);
+			success : function(resp_data) {
+				alert(resp_data);
+
+				if (resp_data == "success") {
+					console.log("pause / resume market success!");
+				} else {
+					console.log("pause / resume market failed! resp:"
+							+ resp_data);
+					if (id == "btn_pause_buy") {
+						buy_paused = !buy_paused;
+					} else if (id == "btn_pause_sell") {
+						sell_paused = !sell_paused;
+					} else {
+						console.log("unknown id:" + id);
+					}
+				}
+
 				// set buy_pause state
 				pause_btn = document.getElementById("btn_pause_buy");
 				if (buy_paused) {
 					pause_btn.innerText = "Buy Resume";
 					pause_btn.className = "btn btn-success btn-xs";
 				} else {
-					pause_btn.innerText = "Buy Pause";
+					pause_btn.innerText = "Pause Buy";
 					pause_btn.className = "btn btn-danger btn-xs";
 				}
-				
-				// set sell pause state
+
+				// set Pause Sell state
 				pause_btn = document.getElementById("btn_pause_sell");
 				if (sell_paused) {
 					pause_btn.innerText = "Sell Resume";
 					pause_btn.className = "btn btn-success btn-xs";
 				} else {
-					pause_btn.innerText = "Sell Pause";
+					pause_btn.innerText = "Pause Sell";
 					pause_btn.className = "btn btn-danger btn-xs";
-				}				
+				}
 			},
 			error : function(xhr, error) {
 				console.log("pause / resume market failed!");
@@ -283,30 +297,31 @@
 					sell_paused = data["active"]["SELL_PAUSED"];
 
 					console.log("active exhc:" + active_exch + " markt: "
-							+ active_market + " buy_paused: " + buy_paused + " sell_paused: " + sell_paused);
+							+ active_market + " buy_paused: " + buy_paused
+							+ " sell_paused: " + sell_paused);
 				}
 				load_exchanges_dd();
 				load_markets_dd();
 
-				// buy pause state
+				// Pause Buy state
 				pause_btn = document.getElementById("btn_pause_buy");
 				if (buy_paused) {
 					pause_btn.innerText = "Buy Resume";
 					pause_btn.className = "btn btn-success btn-xs";
 				} else {
-					pause_btn.innerText = "Buy Pause";
+					pause_btn.innerText = "Pause Buy";
 					pause_btn.className = "btn btn-danger btn-xs";
 				}
-				
-				// sell pause state
+
+				// Pause Sell state
 				pause_btn = document.getElementById("btn_pause_sell");
 				if (sell_paused) {
 					pause_btn.innerText = "Sell Resume";
 					pause_btn.className = "btn btn-success btn-xs";
 				} else {
-					pause_btn.innerText = "Sell Pause";
+					pause_btn.innerText = "Pause Sell";
 					pause_btn.className = "btn btn-danger btn-xs";
-				}				
+				}
 
 				if (exch_cb) {
 					exch_cb();
@@ -418,27 +433,13 @@
 									<ul class="dropdown-menu .dropdown-menu-right" id="marketsDdId">
 									</ul>
 								</div>
-								<div class="btn-group btn-group-xs" role="group">
-									<div id="div_pause">
-										<div class="col-sm-6  text-center"
-											style="vertical-align: middle; padding-right: 0px;">
-											<div id="btn_pause_buy" onclick="pause_onclick(this.id)"
-												class="btn btn-danger btn-xs">Buy Pause</div>
-										</div>
-										<div class="col-sm-6  text-center"
-											style="vertical-align: middle; padding-left: 5px;">
-											<div id="btn_pause_sell" onclick="pause_onclick(this.id)"
-												class="btn btn-danger btn-xs">Sell Pause</div>
-										</div>
-									</div>
-								</div>
 							</div>
 						</h3>
 						<ul class="nav masthead-nav">
 
 							<li>
 								<div class="form-group" style="margin-bottom: 0px;">
-						<!-- 			<label for="usr"
+									<!-- 			<label for="usr"
 										style="color: #d2d2dc; font-size: small; font-weight: 200;">Code</label> -->
 									<input type="
 										text" class="form-control"
@@ -468,32 +469,78 @@
 					<b style="font-weight: 300;">Trade Positions</b>
 				</div>
 			</div>
-			<div class="row" style="margin: 0; width: 30vw; height: auto;">
+			<div class="row" style="margin: 1vw; width: 30vw; height: auto;">
 
 				<div class="col-sm-12" align="center"
 					style="font-size: 1vw; border: 0;">
 					<div class="form-group">
-						<label for="usr" style="color: #d2d2dc; font-size: small; font-weight: 200;"
-						>#Positions</label> <input type="number"
-							defaultValue="0" class="form-control" id="req_number"
-							style="margin: 0; width: 6em; height: 2vh;">
+						<label for="usr"
+							style="color: #d2d2dc; font-size: small; font-weight: 200;">#Positions</label>
+						<input type="number" defaultValue="0" class="form-control"
+							id="req_number" style="margin: 0; width: 6em; height: 2vh;">
 					</div>
 				</div>
 			</div>
 
 			<div class="row"
-				style="margin: 0; border-top: 0em solid #555; width: 30vw; height: 7vh; display: flex; flex-direction: row; align-items: center;">
+				style="margin: 1vw; border-top: 0em solid #555; width: 30vw; height: 7vh;
+				display: flex; flex-direction: row; align-items: center;">
 				<div class="col-sm-6  text-center" style="vertical-align: middle;">
 					<div id="btn_buy" onclick="btn_onclick(this.id)"
+						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"					
 						class="btn btn-primary btn-lg">Buy</div>
 				</div>
 				<div class="col-sm-6 text-center">
 					<div id="btn_sell" onclick="btn_onclick(this.id)"
+						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"					
 						class="btn btn-danger btn-lg">Sell</div>
 				</div>
 			</div>
 		</div>
+
+		<div class="container"
+			style="margin-top: 2vh; width: 30vw; height: auto; color: rgba(255, 255, 255, .75); background-color: rgba(0, 0, 0, 0.1);"
+			border="0">
+			<div class="row"
+				style="margin: 1vh; background-color: rgba(fff, 0, 0, .90); width: 28vw; height: 6vh;">
+				<div class="col-sm-8" align="center"
+					style="height: 6vh; font-size: 2vw; border: 0; display: flex; align-items: center;">
+					<b style="font-weight: 300;">Pause Auto Trading</b>
+				</div>
+
+				<div class="col-sm-4" align="center"
+					style="font-size: 2vw; border: 0;">
+
+					<div class="row"
+						style="margin: 0vw; border-top: 0em solid #555; height: 3vh; width: 8vw; display: flex;
+						 flex-direction: row; align-items: center;">
+
+						<div class="col-sm-6  text-center" style="vertical-align: middle; padding: 0;">
+							<div id="btn_pause_buy" onclick="pause_onclick(this.id)" 
+								style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"							
+								class="btn btn-danger btn-xs">Pause Buy</div>
+						</div>
+					</div>
+					<div class="row"
+						style="margin: 0vw; border-top: 0em solid #555; height: 3vh; width: 8vw; display: flex;
+						 flex-direction: row; align-items: center;">
+
+						<div class="col-sm-6  text-center" style="vertical-align: middle; padding: 0;">
+							<div id="btn_pause_sell" onclick="pause_onclick(this.id)" 
+							style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"
+								class="btn btn-danger btn-xs">Pause Sell</div>
+						</div>
+					</div>
+
+
+				</div>
+
+			</div>
+
+		</div>
 	</div>
+
+
 
 	<footer class="footer">
 		<div class="container">
