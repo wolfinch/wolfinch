@@ -18,18 +18,44 @@
 
 import time
 import json
+import argparse
     
 UI_CODES_FILE = "data/ui_codes.json"
+
+ui_code = "1234"
+trading_code = "1234"
+
+def arg_parse ():
+    global ui_code, trading_code
+    parser = argparse.ArgumentParser(description='Wolfinch Auto Trading Bot UI Server Code Generator')
+
+    parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
+    parser.add_argument("--web", help='web ui secret')
+    parser.add_argument("--trading", help='trading secret')
+
+    args = parser.parse_args()
     
+    if args.web:
+        ui_code = str(args.web)
+    else:
+        # Simple code is no code. TODO: FIXME: FIXME: 
+        ui_code =  int(time.time()/(60*60*24))
+        
+    if args.trading:
+        trading_code = str(args.trading)
+    else:
+        # Simple code is no code. TODO: FIXME: FIXME: 
+        trading_code =  int(time.time()/(60*60*24))
+        
+                
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     
-    # Simple code is no code. TODO: FIXME: FIXME: 
-    ui_code =  int(time.time()/(60*60*24))
+    arg_parse ()
     
-    ui_code_o = {'TRADE_SECRET': str(ui_code), 'PAGE_SECRET': str(ui_code)}
+    ui_code_o = {'TRADE_SECRET': str(trading_code), 'UI_SECRET': str(ui_code)}
     
-    print("\nui_code: %d"%(ui_code))    
+    print("\nui_code: %s trade_code: %s"%(ui_code, trading_code))    
     with open (UI_CODES_FILE, 'w') as fp:
         json.dump(ui_code_o, fp)
         

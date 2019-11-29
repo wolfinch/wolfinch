@@ -49,7 +49,7 @@ def load_ui_codes ():
     try:
         with open (UI_CODES_FILE, 'r') as fp:
             codes = json.load(fp)            
-            UI_TRADE_SECRET, UI_PAGE_SECRET = codes['TRADE_SECRET'], codes['PAGE_SECRET']
+            UI_TRADE_SECRET, UI_PAGE_SECRET = codes['TRADE_SECRET'], codes['UI_SECRET']
     except Exception as e:
         log.critical ("exception %s on ui while reading UI codes" % (e))        
         raise e    
