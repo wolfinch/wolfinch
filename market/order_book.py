@@ -311,8 +311,8 @@ class OrderBook():
                 sl_price = pos.get_stop_loss()
                 pos_list = self.sl_dict.get(sl_price)
             else:
-                #get the highest in the sorted SL list
-                sl_price, pos_list = self.sl_dict.peekitem()
+                #get the lowest in the sorted SL list
+                sl_price, pos_list = self.sl_dict.peekitem(index=0)
 #             log.debug ("pop position at sl_price:%d"%(sl_price))
             if pos_list and len(pos_list):
                 if pos:
