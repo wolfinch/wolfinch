@@ -55,10 +55,11 @@ exchanges:
 # exchanges - end
 
 # TODO: exchanges specific config should follow a common timing, should be driven by global config
+candle_interval : 300  #300s == 5m 
+
 backfill:
    enabled  : true  
    period   : 30  #in Days
-   interval : 300  #300s == 5m 
 
 simulator:
    enabled : false

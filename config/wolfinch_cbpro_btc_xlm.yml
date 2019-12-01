@@ -56,10 +56,11 @@ exchanges:
    #cbpro - end
 # exchanges - end
 
+candle_interval : 300  #300s == 5m 
+
 backfill:
    enabled  : true  
    period   : 30  #in Days
-   interval : 300  #300s == 5m 
 
 simulator:
    enabled : false

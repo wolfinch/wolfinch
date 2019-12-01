@@ -154,6 +154,10 @@ def load_config (cfg_file):
                     if WolfinchConfig.get('backfill') :
                         log.info ("reading backfill global config")
                         ex_v['backfill'] = WolfinchConfig['backfill']
+                    #setup candle_interval config per exch, from global
+                    if WolfinchConfig.get('candle_interval') :
+                        log.info ("reading candle_interval global config")
+                        ex_v['candle_interval'] = WolfinchConfig['candle_interval']                        
                     products = ex_v.get('products')
                     if products != None and len(products):
                         log.debug ("processing exch products")

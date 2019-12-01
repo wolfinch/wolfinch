@@ -27,6 +27,7 @@ log.setLevel(log.CRITICAL)
 
 #BINANCE CONFIG FILE
 BINANCE_CONF = 'config/binance.yml'
+BNC_INTERVAL_MAPPING = {300 :'5m', 600: '10m'}
 
 class Binance (Exchange):
     name = "binance"
@@ -49,6 +50,12 @@ class Binance (Exchange):
         
         self.primary = primary
         #get config
+        if config.get('candle_interval'):
+            # map interval in to binance format
+            interval = BNC_INTERVAL_MAPPING[int(config['candle_interval']) ]
+            self.binance_conf['backfill_interval'] =  interval
+            self.candle_interval = int(config['candle_interval'])        
+                        
         backfill = self.binance_conf.get('backfill')
         if not backfill:
             log.fatal("Invalid Config file")
@@ -59,11 +66,7 @@ class Binance (Exchange):
                 self.binance_conf['backfill_enabled'] = entry['enabled']
             if entry.get('period'):
                 self.binance_conf['backfill_period'] = int(entry['period'])
-            if entry.get('interval'):
-                self.binance_conf['backfill_interval'] = str(entry['interval'])
-                interval_str = self.binance_conf.get('backfill_interval')
-                self.candle_interval = long(binance.helpers.interval_to_milliseconds(interval_str))//1000
-                                    
+
         # for public client, no need of api key
         self.public_client = Client("", "")
         if (self.public_client) == None :

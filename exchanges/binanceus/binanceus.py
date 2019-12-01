@@ -55,6 +55,13 @@ class BinanceUS (Exchange):
         
         self.primary = True if primary else False
         # get config
+        if config.get('candle_interval'):
+            # map interval in to binance format
+            interval = BNC_INTERVAL_MAPPING[int(config['candle_interval']) ]
+            self.binance_conf['backfill_interval'] =  interval
+            self.candle_interval = int(config['candle_interval'])        
+                
+        # get config
         backfill = config.get('backfill')
         if not backfill:
             log.fatal("Invalid backfill config")            
@@ -64,11 +71,7 @@ class BinanceUS (Exchange):
             self.binance_conf['backfill_enabled'] = backfill['enabled']
         if backfill.get('period'):
             self.binance_conf['backfill_period'] = int(backfill['period'])
-        if backfill.get('interval'):
-            # map interval in to binance format
-            interval = BNC_INTERVAL_MAPPING[int(backfill['interval']) ]
-            self.binance_conf['backfill_interval'] =  interval
-            self.candle_interval = int(backfill['interval'])
+
         
         # for public client, no need of api key
         self.public_client = Client("", "")
@@ -291,7 +294,6 @@ class BinanceUS (Exchange):
         c = float(k.get('c'))
         v = float(k.get('v'))
         
-#         if now >= market.cur_candle_time + interval:
             # close the current candle period and start a new candle period
         candle = OHLC(long(t), o, h, l, c, v)
         log.debug ("New candle identified %s" % (candle))        
@@ -324,7 +326,6 @@ class BinanceUS (Exchange):
         market.set_candle_interval (self.candle_interval)
         
 #         #set whether primary or secondary
-#         market.primary = self.primary
         log.info ("Market init complete: %s" % (market.product_id))
                 
         return market

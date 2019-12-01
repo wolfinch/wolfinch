@@ -75,8 +75,9 @@ class CBPRO (Exchange):
             self.gdax_conf['backfill_enabled'] = backfill['enabled']
         if backfill.get('period'):
             self.gdax_conf['backfill_period'] = int(backfill['period'])
-        if backfill.get('interval'):
-            self.gdax_conf['backfill_interval'] = int(backfill['interval'])
+            
+        if config.get('candle_interval'):
+            self.gdax_conf['backfill_interval'] = int(config['candle_interval'])
         
         self.key = self.gdax_conf.get('apiKey')
         self.b64secret = self.gdax_conf.get('apiSecret')
