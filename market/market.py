@@ -438,10 +438,15 @@ class Market:
         self.trading_paused_buy = buy_pause
         self.trading_paused_sell = sell_pause
 
-    def _handle_take_profit (self):
+    def _handle_tp_and_sl (self):
  
-        trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())
+        trade_pos_l = []
+        if self.tradeConfig.get("take_profit_enabled", False):
+            trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())
                 
+        if self.tradeConfig.get("stop_loss_enabled", False):
+            trade_pos_l += self.order_book.get_take_profit_positions(self.get_market_rate())
+                                
         #validate the trade Req
         num_pos = len(trade_pos_l)
         if (num_pos):
@@ -1065,8 +1070,8 @@ class Market:
             return        
         
         #1.take profit handling, this is aggressive take profit, not waiting for candle period
-        if self.tradeConfig.get("take_profit_enabled", False) and self.trading_paused_sell == False:           
-            self._handle_take_profit ()
+        if self.trading_paused_sell == False:           
+            self._handle_tp_and_sl ()
                 
         now = time.time()
         if now >= self.cur_candle_time + self.candle_interval:
