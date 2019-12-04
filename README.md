@@ -1,15 +1,15 @@
 [![|License|](https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg)](LICENSE)
 
 ********
-#Wolfinch Auto Trading Bot
-*******
+# Wolfinch Auto Trading Bot
+********
 
-Wolfinch is a trading bot implemented in Python. It is primarily focused on crypto currency trading, however the implementation is generic enough that it can be used for trading any asset. The modularized implementation is easily extensible to support more exchanges, trading strategies and indicators. A simple UI is available out of the box to view trades and allow basic control on operation. 
+Wolfinch is a trading bot implemented in Python. It is primarily focused on crypto currency trading, however the implementation is generic enough that it can be used for trading any asset. The modularized implementation is easily extensible to support more exchanges, trading strategies and indicators. A simple UI is available out of the box to view trades and allow basic controls in operation. 
 
 Features include : 
 * Auto / Manual Trading Modes
 * Multiple decision engines
-* YAML based rich configuration - everything is customizable
+* YAML based rich configuration - tons of nuts and bolts to customize
 * Out of the box UI availability
 * Pluggable Strategies 
 * Pluggable Indicators
@@ -25,17 +25,32 @@ Features include :
 * Restartability (of live trading, backtesting, genetic optimizer)
 
 
-Supported Exchanges
-===================
+## Using Wolfinch
+
+Starting the bot is fairly straight forward. 
+
+A few examples below covers most startup modes:
+* Fresh start: 
+    `Wolfinch.py --config <config.yml>`
+* Restart from previous state: 
+    `Wolfinch.py --config <config.yml> --restart`
+* Import historic data and exit: 
+    `Wolfinch.py --config <config.yml> --import_only`
+
+A lot of sample config files are available in config/ directory. Those should serve as a very good starting point.
+
+
+### Supported Exchanges
 * Coinbase Pro
 * Binance
 * Binance US
 * gdax [deprecated]
 
-Using Wolfinch
-==============
+### Disclaimer:
 
-## Further Enhancements: 
+Strategies are experimental. Use them at your own risk. 
+
+#### Further Enhancements: 
 
 Not based on priority.
 
@@ -45,20 +60,24 @@ Not based on priority.
 5. more exchanges, inter exchange strategy, tie with model
 7. integrate news source
 10. high frequency trading
+11. ** Any additional feature requests **
 
+#### NOTE:
+Read third-party readme for dependencies
+[README](third_party/README)
 
+### Donate:
+You can donate to appreciate the countless hours spent on the development.
 
-NOTE:
-# Read third-party readme for dependencies
+* **BTC** : 35bYjx9Geo6gLM41nqRnZA5KpciJEfJokD
+* **ETH** : 0x2598eA883719a679deEf821736fa39DF0DD9F86C
+* **LTC** : MRfdbKHUrSxv2zKztdVyodKwSzpQNgofr8
 
-Read third_party/README
-
-License
-=======
+### License
 
 GNU General Public License v3.0 or later
 
-See ![LICENSE](LICENSE) to see the full text.
+See [LICENSE](LICENSE) to see the full text.
 
 
    
