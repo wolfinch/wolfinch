@@ -1,4 +1,4 @@
-|PyPI version| |Docs badge| |Build Status| |License|
+|Build Status| |License|
 
 *******
 # Wolfinch Auto Trading Bot
@@ -58,3 +58,9 @@ License
 GNU General Public License v3.0 or later
 
 See `LICENSE <LICENSE>`_ to see the full text.
+
+
+.. |License| image:: https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg
+   :target: LICENSE
+   :alt: Repository License
+   
