@@ -444,8 +444,9 @@ class Market:
         if self.tradeConfig.get("take_profit_enabled", False):
             trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())
                 
-        if self.tradeConfig.get("stop_loss_enabled", False):
-            trade_pos_l += self.order_book.get_stop_loss_positions(self.get_market_rate())
+        #TODO: TBD: Disabled aggressive SL closing. SL is assessed based on candle close.
+#         if self.tradeConfig.get("stop_loss_enabled", False):
+#             trade_pos_l += self.order_book.get_stop_loss_positions(self.get_market_rate())
                                 
         #validate the trade Req
         num_pos = len(trade_pos_l)
