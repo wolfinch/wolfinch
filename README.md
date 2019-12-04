@@ -66,9 +66,9 @@ Read third-party [Readme](third_party/README.md) for dependencies
 ### Donate:
 You can donate to appreciate the countless hours spent on the development.
 
-* **BTC** : 35bYjx9Geo6gLM41nqRnZA5KpciJEfJokD
-* **ETH** : 0x2598eA883719a679deEf821736fa39DF0DD9F86C
-* **LTC** : MRfdbKHUrSxv2zKztdVyodKwSzpQNgofr8
+* **BTC** : `35bYjx9Geo6gLM41nqRnZA5KpciJEfJokD`
+* **ETH** : `0x2598eA883719a679deEf821736fa39DF0DD9F86C`
+* **LTC** : `MRfdbKHUrSxv2zKztdVyodKwSzpQNgofr8`
 
 ### License
 
