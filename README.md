@@ -1,12 +1,12 @@
-|Build Status| |License|
+[![|License|](https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg)](LICENSE)
 
+********
+#Wolfinch Auto Trading Bot
 *******
-# Wolfinch Auto Trading Bot
-*******
 
-Wolfinch is a trading bot implemented in Python. It is primarily focused on crypto currency trading, however the implementation is generic enough that it can be used for any assets. The modularized implementation is easily extensible to support more exchanges, strategies and indicators. A simple UI is available out of the box to view trades and allow basic control on operation. 
+Wolfinch is a trading bot implemented in Python. It is primarily focused on crypto currency trading, however the implementation is generic enough that it can be used for trading any asset. The modularized implementation is easily extensible to support more exchanges, trading strategies and indicators. A simple UI is available out of the box to view trades and allow basic control on operation. 
 
-Features : 
+Features include : 
 * Auto / Manual Trading Modes
 * Multiple decision engines
 * YAML based rich configuration - everything is customizable
@@ -22,6 +22,7 @@ Features :
 * Supports trading multiple exchanges at the same time
 * Supports trading multiple trading pairs at the same time
 * Supports cross exchange, cross pair trading (Using signals and indicators on one exchange/trading-pair to make trading decision on another exchange/trading-pair)
+* Restartability (of live trading, backtesting, genetic optimizer)
 
 
 Supported Exchanges
@@ -57,10 +58,7 @@ License
 
 GNU General Public License v3.0 or later
 
-See `LICENSE <LICENSE>`_ to see the full text.
+See ![LICENSE](LICENSE) to see the full text.
 
 
-.. |License| image:: https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg
-   :target: LICENSE
-   :alt: Repository License
    
