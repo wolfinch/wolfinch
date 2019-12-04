@@ -2,11 +2,10 @@
 
 ********
 # Wolfinch Auto Trading Bot
-********
 
 Wolfinch is a trading bot implemented in Python. It is primarily focused on crypto currency trading, however the implementation is generic enough that it can be used for trading any asset. The modularized implementation is easily extensible to support more exchanges, trading strategies and indicators. A simple UI is available out of the box to view trades and allow basic controls in operation. 
 
-Features include : 
+#### Features include : 
 * Auto / Manual Trading Modes
 * Multiple decision engines
 * YAML based rich configuration - tons of nuts and bolts to customize
@@ -60,11 +59,10 @@ Not based on priority.
 5. more exchanges, inter exchange strategy, tie with model
 7. integrate news source
 10. high frequency trading
-11. ** Any additional feature requests **
+11. **Any additional feature requests**
 
 #### NOTE:
-Read third-party readme for dependencies
-[README](third_party/README)
+Read third-party [Readme](third_party/README) for dependencies
 
 ### Donate:
 You can donate to appreciate the countless hours spent on the development.
