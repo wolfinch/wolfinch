@@ -8,7 +8,7 @@ Wolfinch is a trading bot implemented in Python. It is primarily focused on cryp
 #### Features include : 
 * Auto / Manual Trading Modes
 * Multiple decision engines
-* YAML based rich configuration - tons of nuts and bolts to customize
+* YAML based rich configuration file support - Tons of nuts and bolts to customize
 * Out of the box UI availability
 * Pluggable Strategies 
 * Pluggable Indicators
@@ -22,7 +22,6 @@ Wolfinch is a trading bot implemented in Python. It is primarily focused on cryp
 * Supports trading multiple trading pairs at the same time
 * Supports cross exchange, cross pair trading (Using signals and indicators on one exchange/trading-pair to make trading decision on another exchange/trading-pair)
 * Restartability (of live trading, backtesting, genetic optimizer)
-
 
 ## Using Wolfinch
 
@@ -62,7 +61,7 @@ Not based on priority.
 11. **Any additional feature requests**
 
 #### NOTE:
-Read third-party [Readme](third_party/README) for dependencies
+Read third-party [Readme](third_party/README.md) for dependencies
 
 ### Donate:
 You can donate to appreciate the countless hours spent on the development.
