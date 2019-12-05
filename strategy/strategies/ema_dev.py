@@ -73,10 +73,9 @@ class EMA_DEV(Strategy):
 #         self.num_cdl = 0
 
     def generate_signal (self, candles):
-#         self.num_cdl += 1
-        '''
-        Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
-        '''
+#         '''
+#         Trade Signale in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
+#         '''
         len_candles = len (candles)
 
         signal = 0
@@ -103,6 +102,8 @@ class EMA_DEV(Strategy):
             
             signal = -1 # sell
             self.cur_timeout_sell = self.timeout_sell
+            #after a sell you want to wait before buying back.
+            self.cur_timeout_buy = self.timeout_buy            
         elif ((cur_close <= ema_buy_s *(1 + (1 * self.treshold_pct_buy_s/100))) and 
             (cur_close <= ema_buy_l  * (1 + (1 * self.treshold_pct_buy_l/100))) and 
             (self.cur_timeout_buy < 0 )):
