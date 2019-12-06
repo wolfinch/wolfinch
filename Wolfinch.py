@@ -19,7 +19,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-from __future__ import print_function
+
 import time
 import sys
 import os
