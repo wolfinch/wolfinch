@@ -17,8 +17,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
+
 from utils import getLogger
-from db import init_db, is_db_enabled
+from .db import init_db, is_db_enabled
 from sqlalchemy import *
 from sqlalchemy.orm import mapper 
 # import sys
@@ -145,7 +146,7 @@ class OrderDb(object):
             #clear cache now
             self.db.session.expire_all()                           
             return res_list
-        except Exception, e:
+        except Exception as e:
             log.critical(e.message)
 
     def _db_get_order(self, order_id):
@@ -165,7 +166,7 @@ class OrderDb(object):
                 log.error ("order_id:%s not in Db"%(order_id))
             #clear cache now
             self.db.session.expire_all()                             
-        except Exception, e:
+        except Exception as e:
             print(e.message)
         return order
                         
@@ -205,13 +206,13 @@ class OrderDb(object):
     def get_all_orders (self):
         if (not self.db_enable):
             #skip Db
-            return self.ORDER_DB.values()
+            return list(self.ORDER_DB.values())
         res_list = self._db_get_all_orders()
         if res_list:
             for order in res_list:
                 log.info ("inserting order: %s in cache"%(str(order.id)))
                 self.ORDER_DB[order.id] = order          
-        return self.ORDER_DB.values()
+        return list(self.ORDER_DB.values())
             
     def clear_order_db(self):
         log.info ("clearing order db")

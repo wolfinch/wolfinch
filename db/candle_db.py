@@ -17,8 +17,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
+
+
 from utils import getLogger
-from db import init_db
+from .db import init_db
 from sqlalchemy import *
 from sqlalchemy.orm import mapper 
 
@@ -102,11 +104,11 @@ class CandlesDb(object):
             log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
             
             if (len(ResultSet)):
-                res_list = map (lambda c: self.OHLCCls(c.time, c.open, c.high, c.low, c.close, c.volume), ResultSet)
+                res_list = [self.OHLCCls(c.time, c.open, c.high, c.low, c.close, c.volume) for c in ResultSet]
             #clear cache now
             self.db.session.expire_all()
             return res_list
-        except Exception, e:
+        except Exception as e:
             print(e.message)          
         
         
@@ -120,11 +122,11 @@ class CandlesDb(object):
             log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
             
             if (len(ResultSet)):
-                res_list = map (lambda c: self.OHLCCls(c.time, c.open, c.high, c.low, c.close, c.volume), ResultSet)
+                res_list = [self.OHLCCls(c.time, c.open, c.high, c.low, c.close, c.volume) for c in ResultSet]
             #clear cache now
             self.db.session.expire_all()
             return res_list
-        except Exception, e:
+        except Exception as e:
             print(e.message)        
    
 # EOF

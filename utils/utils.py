@@ -13,6 +13,7 @@
 # 
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import print_function
 import networkx as networkx
 import numpy
 from deap.tools import Statistics
@@ -43,7 +44,7 @@ def log_stuff(g, history, hof, population, stats):
     record = stats.compile(population)
     hof.update(population)
     hof.persist()
-    print(colored(f'\nGeneration {g} {record}', 'green') )
+    print(colored('\nGeneration {g} {record}', 'green') )
     # print(hof)
 
 

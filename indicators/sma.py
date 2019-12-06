@@ -31,7 +31,6 @@ class SMA (Indicator):
     def calculate(self, candles):
         if len(candles) < self.period:
             return 0
-#        print ("len sma: "+str(len(data)))
         #(time, o, h,l,c, vol)
         return  float(sum( map (lambda x: x['ohlc'].close, candles[-self.period:])))/self.period
         
