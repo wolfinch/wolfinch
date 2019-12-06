@@ -30,24 +30,24 @@ exchanges:
             fund_max_liquidity : 900 #$$               
             fund_max_per_buy_value : 30 #$100 max per buy
             asset_max_per_trade_size: 1000 #per sell asset size max
-            asset_min_per_trade_size: 0.001 #Min asset size to trade with (may come from exch limits or asset limits)
+            asset_min_per_trade_size: .001 #Min asset size to trade with (may come from exch limits or asset limits)
             stop_loss:
                enabled: true
-               smart: false #track price movement and update stop_loss
-               rate : 4 #-3%
+               smart: true #track price movement and update stop_loss
+               rate : 0.3 #-3%
             take_profit:
                enabled: true
-               rate: 19 # 10percent
+               rate: 0.5 # 10percent
             decision:
                model    : simple
                config   :
                   strategy: EMA_DEV
-                  params : {'ema_sell_s': 85, 'timeout_sell': 10, 'rsi': 76, 'treshold_pct_buy_l': 1.31, 'ema_buy_s': 90, 'timeout_buy': 10, 'period': 195, 'treshold_pct_sell_s': 0.61, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.0, 'treshold_pct_buy_s': 1.69, 'ema_sell_l': 70}
+                  params : {'ema_sell_s': 85, 'timeout_sell': 74, 'rsi': 76, 'treshold_pct_buy_l': 1.31, 'ema_buy_s': 90, 'timeout_buy': 4, 'period': 195, 'treshold_pct_sell_s': 0.61, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.0, 'treshold_pct_buy_s': 1.69, 'ema_sell_l': 70} 
       # products - end
       order_type    : market
       fee     : 
          maker : 0.075 #make fee %
-         taker : 0.075 #taker fee %
+         taker : 0.075df #taker fee %
    #cbpro - end
 # exchanges - end
 
@@ -59,8 +59,8 @@ backfill:
    period   : 30  #in Days
 
 simulator:
-   enabled : false
-   backtesting : false 
+   enabled : true
+   backtesting : true
    
 genetic_optimizer: 
    enabled : false
@@ -69,7 +69,7 @@ genetic_optimizer:
    N_MP : 1
    strategy : EMA_DEV
 ui:
-   enabled : true
+   enabled : false
    port : 8080
    
 #EOF
