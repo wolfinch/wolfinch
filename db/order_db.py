@@ -206,13 +206,13 @@ class OrderDb(object):
     def get_all_orders (self):
         if (not self.db_enable):
             #skip Db
-            return list(self.ORDER_DB.values())
+            return self.ORDER_DB.values()
         res_list = self._db_get_all_orders()
         if res_list:
             for order in res_list:
                 log.info ("inserting order: %s in cache"%(str(order.id)))
                 self.ORDER_DB[order.id] = order          
-        return list(self.ORDER_DB.values())
+        return self.ORDER_DB.values()
             
     def clear_order_db(self):
         log.info ("clearing order db")
