@@ -1,6 +1,7 @@
 # '''
-#  Desc: Commodity Channel Index (Momentum Indicators) implementation using ta-lib
-#  (c) https://mrjbq7.github.io/ta-lib/
+#  Desc: Commodity Channel Index (Momentum Indicators) implementation using tulip
+#  https://tulipindicators.org/cci
+#
 #  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -20,7 +21,7 @@
 
 from .indicator import Indicator
 import numpy as np
-import talib
+import tulipy as ti
 
 class CCI (Indicator):
     '''
@@ -41,7 +42,7 @@ class CCI (Indicator):
         low_array = np.array([float(x['ohlc'].low) for x in candles[-self.period:]])
         
         #calculate 
-        cci = talib.CCI (high_array, low_array, close_array, timeperiod=self.period)
+        cci = ti.cci (high_array, low_array, close_array, period=self.period)
         
         return cci[-1]
         

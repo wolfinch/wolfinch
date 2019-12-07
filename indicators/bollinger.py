@@ -1,6 +1,7 @@
 # '''
-#  Desc: Bollinger Bands (Overlap Studies) implementation using ta-lib
-#  (c) https://mrjbq7.github.io/ta-lib/
+#  Desc: Bollinger Bands (Overlap Studies) implementation using tulip
+#  https://tulipindicators.org/bband
+#
 #  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -21,16 +22,17 @@
 # from decimal import Decimal
 from .indicator import Indicator
 import numpy as np
-import talib
+import tulipy as ti
 
 class BBANDS (Indicator):
     '''
     Bollinger Bands (Overlap Studies) market indicator implementation using TA library
     '''
     
-    def __init__(self, name, period=20):
+    def __init__(self, name, period=20, stddev=2):
         self.name = name
         self.period = period
+        self.stddev = stddev
                 
     def calculate(self, candles):        
         candles_len = len(candles)
@@ -40,7 +42,7 @@ class BBANDS (Indicator):
         val_array = np.array([float(x['ohlc'].close) for x in candles[-self.period:]])
         
         #calculate 
-        (upperband, middleband, lowerband) = talib.BBANDS (val_array, timeperiod=self.period)
+        (upperband, middleband, lowerband) = ti.bbands (val_array, period=self.period, stddev=self.stddev)
         
         return (upperband[-1], middleband[-1], lowerband[-1])
         

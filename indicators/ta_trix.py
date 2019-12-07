@@ -1,6 +1,7 @@
 # '''
-#  Desc: TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA implementation using ta-lib
-#  (c) https://mrjbq7.github.io/ta-lib/
+#  Desc: TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA implementation using tulip
+#  https://tulipindicators.org/trix
+#
 #  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -20,15 +21,11 @@
 
 from .indicator import Indicator
 import numpy as np
-import talib
-
-# from utils import getLogger
-# log = getLogger ('TA_TRIX')
-# log.setLevel(log.DEBUG)
+import tulipy as ti
 
 class TRIX (Indicator):
     '''
-    TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA market indicator implementation using TA library
+    TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA market indicator implementation using Tulip library
     '''
     
     def __init__(self, name, period=90):
@@ -43,7 +40,7 @@ class TRIX (Indicator):
         val_array = np.array([float(x['ohlc'].close) for x in candles[-self.period:]])
         
         #calculate trix
-        cur_trix = talib.TRIX (val_array, timeperiod=self.period/3)
+        cur_trix = ti.trix (val_array, period=self.period/3)
         
 #         log.critical ("TA_TRIX: %s"%str(cur_trix[-1]))
         return float(cur_trix[-1])

@@ -19,7 +19,7 @@
 
 from .indicator import Indicator
 
-class DEFUNCT_EMA (Indicator):
+class DEPRECATED_EMA (Indicator):
     '''
     Exponential moving Average (EMA) market indicator implementation
     '''

@@ -1,6 +1,6 @@
 # '''
-#  Desc: Moving Average Convergence/Divergence (Momentum Indicators) implementation using ta-lib
-#  (c) https://mrjbq7.github.io/ta-lib/
+#  Desc: Moving Average Convergence/Divergence (Momentum Indicators) implementation using tulip
+#  https://tulipindicators.org/macd
 #  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -20,7 +20,7 @@
 
 from .indicator import Indicator
 import numpy as np
-import talib
+import tulipy as ti
 
 class MACD (Indicator):
     '''
@@ -31,19 +31,23 @@ class MACD (Indicator):
         period = slowperiod + signal - 1
     '''
     
-    def __init__(self, name, period=34):
+    def __init__(self, name, short_period=34, long_period=34, signal_period=34):
         self.name = name
-        self.period = period
+        self.short_period = short_period
+        self.long_period = long_period
+        self.signal_period = signal_period
                 
     def calculate(self, candles):        
         candles_len = len(candles)
-        if candles_len < self.period:
+        if candles_len < self.long_period:
             return (0, 0, 0)
         
         close_array = np.array([float(x['ohlc'].close) for x in candles[-self.period:]])
         
         #calculate 
-        (macd, macdsignal, macdhist) = talib.MACD (close_array)
+        (macd, macdsignal, macdhist) = ti.macd (close_array, short_period=self.short_period,
+                                                long_period=self.long_period,
+                                                signal_period=self.signal_period)
         
         return (macd[-1], macdsignal[-1], macdhist[-1])
         

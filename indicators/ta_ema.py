@@ -1,6 +1,7 @@
 # '''
-#  Desc: Market Exponential Moving Average (EMA) implementation using ta-lib
-#  (c) https://mrjbq7.github.io/ta-lib/
+#  Desc: Market Exponential Moving Average (EMA) implementation using tulip
+#  https://tulipindicators.org/ema
+#
 #  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -21,11 +22,7 @@
 # from decimal import Decimal
 from .indicator import Indicator
 import numpy as np
-import talib
-
-# from utils import getLogger
-# log = getLogger ('TA_EMA')
-# log.setLevel(log.DEBUG)
+import tulipy as ti
 
 class EMA (Indicator):
     '''
@@ -44,7 +41,7 @@ class EMA (Indicator):
         val_array = np.array([float(x['ohlc'].close) for x in candles[-self.period:]])
         
         #calculate ema
-        cur_ema = talib.EMA (val_array, timeperiod=self.period)
+        cur_ema = ti.ema (val_array, self.period)
         
 #         log.info ("TA_EMA: %g"%cur_ema)
         return float(cur_ema[-1])

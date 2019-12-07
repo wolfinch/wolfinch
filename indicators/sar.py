@@ -1,6 +1,6 @@
 # '''
-#  Desc: Parabolic SAR (Overlap Studies) implementation using ta-lib
-#  (c) https://mrjbq7.github.io/ta-lib/
+#  Desc: Parabolic SAR (Overlap Studies) implementation using tuliplib
+#  https://tulipindicators.org/psar
 #  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -20,7 +20,7 @@
 
 from .indicator import Indicator
 import numpy as np
-import talib
+import tulipy as ti
 
 class SAR (Indicator):
     '''
@@ -40,7 +40,7 @@ class SAR (Indicator):
         low_array = np.array([float(x['ohlc'].low) for x in candles[-self.period:]])
         
         #calculate 
-        sar = talib.SAR (high_array, low_array)
+        sar = ti.psar (high_array, low_array)
         
         return sar[-1]
         
