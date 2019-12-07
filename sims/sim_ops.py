@@ -18,7 +18,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from __future__ import print_function
+
 # import requests
 # import json
 # import time
@@ -30,8 +30,8 @@ from market import feed_deQ, feed_Q_process_msg, get_market_list, flush_all_stat
                              market_init, market_setup
 # import db
 import exchanges
-import sim_exchange
-from genetic import ga_main
+from . import sim_exchange
+from .genetic import ga_main
 
 #from market.order import Order, TradeRequest
 #from market import feed_enQ
