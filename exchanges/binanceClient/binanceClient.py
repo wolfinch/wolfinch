@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
-from __future__ import print_function
+
 
 import json
 import pprint
@@ -101,8 +101,8 @@ class Binance (Exchange):
             
 #         global binance_products
         exch_info = self.public_client.get_exchange_info()
-        serverTime = long(exch_info['serverTime'])
-        localTime = long(time.time()*1000)
+        serverTime = int(exch_info['serverTime'])
+        localTime = int(time.time()*1000)
         self.timeOffset = (serverTime - localTime)//1000
         #if time diff is less the 5s, ignore. 
         if abs(self.timeOffset) < 5: 
@@ -114,7 +114,7 @@ class Binance (Exchange):
         if (len(products) and len (self.binance_conf['products'])):
             for prod in products:
                 for p in self.binance_conf['products']:
-                    for k,v in p.iteritems():
+                    for k,v in p.items():
 #                         log.debug ("pk: %s s: %s"%(k, prod['symbol']))
                         if prod['symbol'] == k:
                             log.debug ("product found: %s p: %s"%(prod, v))
@@ -182,7 +182,7 @@ class Binance (Exchange):
         log.info ("msg: %s"%msg)
 #         msg_type = msg.get('e')
         k = msg.get('k')
-        t = long(k.get('T')+1)//1000 + self.timeOffset
+        t = int(k.get('T')+1)//1000 + self.timeOffset
         o = Decimal(k.get('o'))
         h = Decimal(k.get('h'))
         l = Decimal(k.get('l'))
@@ -191,7 +191,7 @@ class Binance (Exchange):
         
 #         if now >= market.cur_candle_time + interval:
             # close the current candle period and start a new candle period
-        candle = OHLC(long(t), o, h, l, c, v)
+        candle = OHLC(int(t), o, h, l, c, v)
         log.debug ("New candle identified %s"%(candle))        
         market.O = market.V = market.H = market.L = 0
         market.add_new_candle (candle)
@@ -336,10 +336,9 @@ class Binance (Exchange):
                         log.error ("Error while retrieving Historic rates: msg: %s\n will retry.."%(err_msg))
                 else:
                     #candles are of struct [[time, o, h, l,c, V]]
-                    candles_list += map(
-                        lambda candle: OHLC(time=long(candle[6] + 1)//1000, 
+                    candles_list += [OHLC(time=int(candle[6] + 1)//1000, 
                                             low=candle[3], high=candle[2], open=candle[1], 
-                                            close=candle[4], volume=candle[5]), candles)
+                                            close=candle[4], volume=candle[5]) for candle in candles]
     #                 log.debug ("%s"%(candles))
                     log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
                         start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))

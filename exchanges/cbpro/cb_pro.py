@@ -18,7 +18,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from __future__ import print_function
+
 import json
 import pprint
 
@@ -118,7 +118,7 @@ class CBPRO (Exchange):
         self.gdax_conf['products'] = []
         for p in config['products']:
             # add the product ids
-            self.gdax_conf['products'] += p.keys()
+            self.gdax_conf['products'] += list(p.keys())
         
         products = self.public_client.get_products()
         log.info ("products: %s"%(pprint.pformat(products, 4)))
@@ -518,10 +518,9 @@ class CBPRO (Exchange):
                         log.error ("Error while retrieving Historic rates: msg: %s\n will retry.."%(err_msg))
                 else:
                     #candles are of struct [[time, o, h, l,c, V]]
-                    candles_list += map(
-                        lambda candle: OHLC(time=candle[0], 
+                    candles_list += [OHLC(time=candle[0], 
                                             low=candle[1], high=candle[2], open=candle[3], 
-                                            close=candle[4], volume=candle[5]), reversed(candles))
+                                            close=candle[4], volume=candle[5]) for candle in reversed(candles)]
     #                 log.debug ("%s"%(candles))
                     log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
                         start_str, end_str, (0 if not candles else len(candles))))
