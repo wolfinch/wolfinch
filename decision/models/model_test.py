@@ -17,12 +17,12 @@
 # 
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
-from __future__ import print_function
+
 
 import  numpy as np
 import matplotlib.pyplot as plt
 
-from model_simple_DAE import Model
+from .model_simple_DAE import Model
 # from model_LSTM import Model
 # from model_SVC import Model
 
@@ -51,13 +51,15 @@ def plot_res (X_train, Y_orig, Y_Pred):
 def create_x_list(indi_list, strat_list):
     def form_x_from_ind (ind, strat):
         x = [ind['ohlc'].time, ind['ohlc'].close, ind['ohlc'].open , ind['ohlc'].high, ind['ohlc'].low, ind['ohlc'].volume]
-        map(lambda s: x.append(s), strat.itervalues())
+        for v in strat.values():
+            x.append(v)
+#         list(map(lambda s: x.append(s), iter(strat.values())))
 #             x += [yy]
 #             print ("x: %s"%x)
 #             print ("ind %s"%ind['ohlc'].close)
 #             print ("strat %s"%strat)
         return x
-    x_list =  map (form_x_from_ind, indi_list, strat_list)
+    x_list =  list(map (form_x_from_ind, indi_list, strat_list))
 #         print ("x_list: %s"%x_list)
     return x_list
         
@@ -205,7 +207,9 @@ if __name__ == '__main__':
 
     # TEST MODEL
     print ("len x y",len(x_list[0]),len(y_list))
-    map (lambda x,y : x.append(y), x_list, y_list)
+    for x, y in zip (x_list, y_list):
+        x.append(y)
+#     list(map (lambda x,y : x.append(y), x_list, y_list))
     # TEST MODEL
     
     
