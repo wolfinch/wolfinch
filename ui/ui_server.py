@@ -18,7 +18,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from __future__ import print_function
+
 import sys
 from decimal import getcontext
 import argparse
@@ -28,7 +28,7 @@ import time
 from flask import Flask, request, send_from_directory
 
 from utils import getLogger
-import db_events
+from . import db_events
 
 g_markets_list = None
 g_active_market = {}  # {"CBPRO": "BTC-USD"}
@@ -144,9 +144,9 @@ def server_main (port=8080, mp_pipe=None):
         global g_active_market
         try:
             data = request.form.to_dict()
-            if len(data.keys()) > 0 :
-                exch_name = data.keys()[0]
-                prod_id = data.values()[0].encode('ascii')
+            if len(data) > 0 :
+                exch_name = list(data.keys())[0]
+                prod_id = list(data.values())[0].encode('ascii')
                 
                 for market in g_markets_list[exch_name]:
                     if market["product_id"] == prod_id:
@@ -171,7 +171,7 @@ def server_main (port=8080, mp_pipe=None):
             return json.dumps(err)       
                 
         data = request.form.to_dict()
-        if len(data.keys()) <= 0 :
+        if len(data) <= 0 :
             err = "error: invalid request data"
             log.error (err)
             return ret_code(err)      
@@ -216,7 +216,7 @@ def server_main (port=8080, mp_pipe=None):
     @app.route('/api/market_stats')
     def market_stats_api():
         try:
-            if len(g_active_market.keys()) <= 0:
+            if len(g_active_market) <= 0:
                 log.error ("active market not set")
                 return "{}"
             m_stats_file = MARKET_STATS % (g_active_market["EXCH_NAME"], g_active_market["PRODUCT_ID"])
@@ -231,7 +231,7 @@ def server_main (port=8080, mp_pipe=None):
             
     @app.route('/api/candles')
     def candle_list_api():
-        if len(g_active_market.keys()) <= 0:
+        if len(g_active_market) <= 0:
             log.error ("active market not set")
             return "[]"        
         period = request.args.get('period', default=1, type=int)
@@ -239,7 +239,7 @@ def server_main (port=8080, mp_pipe=None):
         
     @app.route('/api/positions')
     def position_list_api():
-        if len(g_active_market.keys()) <= 0:
+        if len(g_active_market) <= 0:
             log.error ("active market not set")
             return "[]"        
         return db_events.get_all_positions()
@@ -251,7 +251,7 @@ def server_main (port=8080, mp_pipe=None):
             return json.dumps(err)       
                 
         data = request.form.to_dict()
-        if len(data.keys()) <= 0 :
+        if len(data) <= 0 :
             err = "error: invalid request data"
             log.error (err)
             return ret_code(err)      
