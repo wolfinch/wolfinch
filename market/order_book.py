@@ -27,7 +27,7 @@ from utils import getLogger
 import stats
 import db
 import sims
-from order import Order
+from .order import Order
 
 log = getLogger('ORDER-BOOK')
 log.setLevel(log.CRITICAL)
@@ -410,8 +410,8 @@ class OrderBook():
                 
     def get_all_pending_orders(self):
         pending_order_list =[]
-        pending_order_list += self.pending_buy_orders_db.values()
-        pending_order_list += self.pending_sell_orders_db.values()
+        pending_order_list += list(self.pending_buy_orders_db.values())
+        pending_order_list += list(self.pending_sell_orders_db.values())
         return pending_order_list
         
     def add_or_update_pending_buy_order(self, order):
@@ -519,7 +519,7 @@ class OrderBook():
 #         sys.exit()
                 
     def dump_traded_orders(self, fd=sys.stdout):
-        traded = str(self.traded_buy_orders_db.values() + self.traded_sell_orders_db.values())
+        traded = str(list(self.traded_buy_orders_db.values()) + list(self.traded_sell_orders_db.values()))
         fd.write(traded)
     def dump_positions(self, fd=sys.stdout):
         fd.write(str(self.all_positions))

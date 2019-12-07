@@ -25,7 +25,7 @@
 import json
 import sys
 import os
-import Queue
+import queue
 # import pprint
 from itertools import product
 # from decimal import float
@@ -34,8 +34,8 @@ import time
 import random
 
 from utils import *
-from order_book import OrderBook
-from order import TradeRequest
+from .order_book import OrderBook
+from .order import TradeRequest
 from decision import Decision
 import decision
 import db
@@ -427,7 +427,7 @@ class Market:
         if now >= self.cur_candle_time + self.candle_interval:
             # close the current candle period and start a new candle period
             c = price
-            candle = OHLC(long(now), self.O, self.H, self.L, c, self.V)
+            candle = OHLC(int(now), self.O, self.H, self.L, c, self.V)
             log.debug ("New candle identified %s"%(candle))
             self.add_new_candle (candle)
             
@@ -944,7 +944,7 @@ class Market:
         log.critical ("%f : _process_historic_strategies aafter "%(time.time()))
         
         num_candles = len(self.market_indicators_data)
-        self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
+        self.cur_candle_time = int(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
         if sims.backtesting_on:
             self.start_market_rate = float(0) if num_candles == 0 else self.market_indicators_data[0]['ohlc'].close
         else:
@@ -1078,7 +1078,7 @@ class Market:
                 
         now = time.time()
         if now >= self.cur_candle_time + self.candle_interval:
-            candle = OHLC(long(now), self.O, self.H, self.L, self.get_market_rate(), self.V)
+            candle = OHLC(int(now), self.O, self.H, self.L, self.get_market_rate(), self.V)
             log.info ("New candle identified %s"%(candle))
             self.add_new_candle (candle)
             
@@ -1204,7 +1204,7 @@ class Market:
 ############# Market Class Def - end #############
 
 # Feed Q routines
-feedQ = Queue.Queue()
+feedQ = queue.Queue()
 def feed_enQ (market, msg):
     log.debug ("-------feed_enQ msg -------")
     obj = {"market":market, "msg":msg}
@@ -1216,7 +1216,7 @@ def feed_deQ (timeout):
             msg = feedQ.get(False)
         else:
             msg = feedQ.get(block=True, timeout=timeout)
-    except Queue.Empty:
+    except queue.Empty:
         return None
     else:
         return msg
