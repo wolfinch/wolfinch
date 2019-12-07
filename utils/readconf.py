@@ -13,7 +13,7 @@
 # 
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 import yaml
 
 # Load  external config file
@@ -24,4 +24,4 @@ def readConf (fileName):
 #             print (confDict)
             return confDict
     except : # parent of IOError, OSError *and* WindowsError where available
-        print ('Oops!! Conf Read Error for '+fileName)
+        print('Oops!! Conf Read Error for '+fileName)

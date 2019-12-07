@@ -13,7 +13,7 @@
 # 
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
-from __future__ import print_function
+
 import networkx as networkx
 import numpy
 from deap.tools import Statistics
