@@ -19,7 +19,7 @@
 # '''
 
 # from decimal import Decimal
-from indicator import Indicator
+from .indicator import Indicator
 import numpy as np
 import talib
 
@@ -37,7 +37,7 @@ class BBANDS (Indicator):
         if candles_len < self.period:
             return float(0)
         
-        val_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-self.period:]))
+        val_array = np.array([float(x['ohlc'].close) for x in candles[-self.period:]])
         
         #calculate 
         (upperband, middleband, lowerband) = talib.BBANDS (val_array, timeperiod=self.period)

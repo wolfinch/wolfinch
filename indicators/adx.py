@@ -18,7 +18,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-from indicator import Indicator
+from .indicator import Indicator
 import numpy as np
 import talib
 
@@ -36,9 +36,9 @@ class ADX (Indicator):
         if candles_len < self.period+20: #make sure 20 more candles are available to work with
             return 0
         
-        close_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-(self.period+20):]))
-        high_array = np.array(map(lambda x: float(x['ohlc'].high), candles[-(self.period+20):]))
-        low_array = np.array(map(lambda x: float(x['ohlc'].low), candles[-(self.period+20):]))
+        close_array = np.array([float(x['ohlc'].close) for x in candles[-(self.period+20):]])
+        high_array = np.array([float(x['ohlc'].high) for x in candles[-(self.period+20):]])
+        low_array = np.array([float(x['ohlc'].low) for x in candles[-(self.period+20):]])
         
         #calculate 
         adx = talib.ADX (high_array, low_array, close_array, timeperiod=self.period)

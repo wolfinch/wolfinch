@@ -18,7 +18,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from indicator import Indicator
+from .indicator import Indicator
 
 # import numpy as np
 # import talib

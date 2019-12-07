@@ -18,7 +18,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-from indicator import Indicator
+from .indicator import Indicator
 import numpy as np
 import talib
 
@@ -40,7 +40,7 @@ class MACD (Indicator):
         if candles_len < self.period:
             return (0, 0, 0)
         
-        close_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-self.period:]))
+        close_array = np.array([float(x['ohlc'].close) for x in candles[-self.period:]])
         
         #calculate 
         (macd, macdsignal, macdhist) = talib.MACD (close_array)

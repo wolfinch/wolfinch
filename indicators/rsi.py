@@ -18,7 +18,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-from indicator import Indicator
+from .indicator import Indicator
 import numpy as np
 import talib
 
@@ -36,7 +36,7 @@ class RSI (Indicator):
         if candles_len < self.period+1:
             return float(0)
         
-        val_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-(self.period+1):]))
+        val_array = np.array([float(x['ohlc'].close) for x in candles[-(self.period+1):]])
         
         #calculate 
         cur_rsi = talib.RSI (val_array, timeperiod=self.period)

@@ -18,7 +18,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-from indicator import Indicator
+from .indicator import Indicator
 import numpy as np
 import talib
 
@@ -36,8 +36,8 @@ class SAR (Indicator):
         if candles_len < self.period:
             return 0
         
-        high_array = np.array(map(lambda x: float(x['ohlc'].high), candles[-self.period:]))
-        low_array = np.array(map(lambda x: float(x['ohlc'].low), candles[-self.period:]))
+        high_array = np.array([float(x['ohlc'].high) for x in candles[-self.period:]])
+        low_array = np.array([float(x['ohlc'].low) for x in candles[-self.period:]])
         
         #calculate 
         sar = talib.SAR (high_array, low_array)

@@ -17,7 +17,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-from indicator import Indicator
+from .indicator import Indicator
 
 class DEFUNCT_EMA (Indicator):
     '''

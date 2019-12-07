@@ -19,9 +19,7 @@
 '''
 from abc import ABCMeta, abstractmethod
 
-class Indicator:
-    __metaclass__ = ABCMeta
-
+class Indicator(metaclass=ABCMeta):
     @abstractmethod
     def __init__ (self):
         ''' 
