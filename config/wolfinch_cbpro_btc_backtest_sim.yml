@@ -59,11 +59,11 @@ candle_interval : 300  #300s == 5m
 
 backfill:
    enabled  : true  
-   period   : 1  #in Days
+   period   : 10  #in Days
 
 simulator:
-   enabled : false
-   backtesting : false
+   enabled : true
+   backtesting : true
    
 genetic_optimizer: 
    enabled : false

@@ -1250,7 +1250,6 @@ def market_init (exchange_list, get_product_config_hook):
                 try:
                     log.info ("configuring market for exch: %s prod: %s"%(exchange, product))
                     market = Market(product=product, exchange=exchange)
-                    log.info ("***88all is good")
                 except Exception as e:
                     log.critical ("Unable to get Market for exchange: %s product: %s e: %s"%(exchange.name, str(product), str(e)))
                 else:
