@@ -154,7 +154,7 @@ class PositionDb(object):
             self.db.session.expire_all()                    
             return res_list
         except Exception as e:
-            log.critical(e.message)
+            log.critical(str(e))
             
     def clear_position_db(self):
         if (not self.db_enable):

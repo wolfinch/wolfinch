@@ -144,11 +144,15 @@ def server_main (port=8080, mp_pipe=None):
         global g_active_market
         try:
             data = request.form.to_dict()
+#             log.info ("data:%s"%(data))
             if len(data) > 0 :
-                exch_name = list(data.keys())[0]
-                prod_id = list(data.values())[0].encode('ascii')
+                exch_name = str(list(data.keys())[0])
+                prod_id = str(list(data.values())[0])
+
+                log.info ("exch:%s prod_id:%s"%(exch_name, prod_id))
                 
                 for market in g_markets_list[exch_name]:
+#                     log.info ("market :%s prod_id:%s"%(market, prod_id))
                     if market["product_id"] == prod_id:
                         g_active_market = {"EXCH_NAME": exch_name, "PRODUCT_ID": prod_id,
                                 "BUY_PAUSED": market["buy_paused"], "SELL_PAUSED": market["sell_paused"]}

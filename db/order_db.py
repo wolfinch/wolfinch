@@ -102,7 +102,7 @@ class OrderDb(object):
             self.orderCls = OT
             self.mapping = mapper(self.orderCls, self.table)
         except Exception as e:
-            log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(e.message))
+            log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(str(e)))
             raise e
     
     def _db_save_order (self, order):     
@@ -147,7 +147,7 @@ class OrderDb(object):
             self.db.session.expire_all()                           
             return res_list
         except Exception as e:
-            log.critical(e.message)
+            log.critical(str(e))
 
     def _db_get_order(self, order_id):
         order = None
@@ -167,7 +167,7 @@ class OrderDb(object):
             #clear cache now
             self.db.session.expire_all()                             
         except Exception as e:
-            print(e.message)
+            print(str(e))          
         return order
                         
     def db_add_or_update_order (self, order):     

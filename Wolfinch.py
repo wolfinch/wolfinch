@@ -330,8 +330,8 @@ if __name__ == '__main__':
         Wolfinch_end()
         sys.exit()
     except Exception as e:
-        log.critical("Unexpected error: %s exception: %s" %(sys.exc_info(), str(e.message)))
-        print("Unexpected error: %s exception: %s" %(sys.exc_info(), str(e.message)))
+        log.critical("Unexpected error: %s exception: %s" %(sys.exc_info(), str(e)))
+        print("Unexpected error: %s exception: %s" %(sys.exc_info(), str(e)))
         Wolfinch_end()
         raise
 #         traceback.print_exc()
