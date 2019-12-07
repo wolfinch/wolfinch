@@ -18,7 +18,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from strategy_base import Strategy
+from .strategy_base import Strategy
 import numpy as np
 
 class TREND_RSI(Strategy):
