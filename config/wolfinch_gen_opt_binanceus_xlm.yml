@@ -26,7 +26,7 @@ exchanges:
       role: 'primary'
       config: 'config/binanceus.yml'
       products:
-         - 'XLM-USD':
+         - 'XLMUSD':
             fund_max_liquidity : 1000 #$$               
             fund_max_per_buy_value : 20 #$100 max per buy
             asset_max_per_trade_size: 100 #per sell asset size max
@@ -51,8 +51,8 @@ simulator:
    
 genetic_optimizer: 
    enabled : true
-   N_POP : 1000
-   N_GEN : 100
+   N_POP : 1
+   N_GEN : 2
    N_MP : 32
    strategy : EMA_DEV
 ui:

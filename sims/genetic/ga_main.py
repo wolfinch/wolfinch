@@ -53,15 +53,14 @@ def ga_init (ga_config, evalfn = None):
     #init config:
 #     print (ga_config)
     for ga_k, ga_v in ga_config.items():
-        if ga_v > 0:
-            if ga_k == "GA_NGEN":
-                N_GEN = ga_v
-            if ga_k == "GA_NPOP":
-                N_POP = ga_v            
-            if ga_k == "GA_NMP":
-                N_MP = ga_v
-            if ga_k == "strategy":
-                ga_strategy_name = ga_v
+        if ga_k == "GA_NGEN":
+            N_GEN = ga_v
+        if ga_k == "GA_NPOP":
+            N_POP = ga_v            
+        if ga_k == "GA_NMP":
+            N_MP = ga_v
+        if ga_k == "strategy":
+            ga_strategy_name = ga_v
                     
 #     print ("N_GEN: %d N_POP: %d N_MP:%d"%(N_GEN, N_POP, N_MP))
 #     raise 
