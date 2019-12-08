@@ -22,8 +22,9 @@
 # from decimal import Decimal
 from .strategy_base import Strategy
 
+
 class EMA_DEV(Strategy):
-    #HoF :       #EMA_DEV{'strategy_cfg': {'ema_sell_s': 45, 'timeout_sell': 66, 'rsi': 34,
+    # HoF :       #EMA_DEV{'strategy_cfg': {'ema_sell_s': 45, 'timeout_sell': 66, 'rsi': 34,
     # 'treshold_pct_buy_l': 1.71, 'ema_buy_s': 135, 'timeout_buy': 2, 'period': 110, 'treshold_pct_sell_s': 0.38,
     # 'ema_buy_l': 75, 'treshold_pct_sell_l': 0.49, 'treshold_pct_buy_s': 1.42, 'ema_sell_l': 95},
     # 'trading_cfg': {'take_profit_enabled': True, 'stop_loss_smart_rate': False, 'take_profit_rate': 20,
@@ -34,18 +35,18 @@ class EMA_DEV(Strategy):
         'ema_buy_l' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'ema_sell_s' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'ema_sell_l' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
-        'rsi' : {'default': 21, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 1 }},        
+        'rsi' : {'default': 21, 'var': {'type': int, 'min': 10, 'max': 100, 'step': 1 }},
         'treshold_pct_buy_s' : {'default': 1, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
         'treshold_pct_buy_l' : {'default': 1.5, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
         'treshold_pct_sell_s' : {'default': 0.8, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
-        'treshold_pct_sell_l' : {'default': 1, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},     
+        'treshold_pct_sell_l' : {'default': 1, 'var': {'type': float, 'min': 0, 'max': 2, 'step': 0.2 }},
         'timeout_buy' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},
-        'timeout_sell' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},             
+        'timeout_sell' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},
         }
     
     def __init__ (self, name, period=120, ema_buy_s=50, ema_buy_l=120, ema_sell_s=50, ema_sell_l=120,
                   treshold_pct_buy_s=1, rsi=21, treshold_pct_buy_l=1.5, treshold_pct_sell_s=0.8, treshold_pct_sell_l=1,
-                  timeout_buy = 50, timeout_sell = 50):     
+                  timeout_buy=50, timeout_sell=50):     
         self.name = name
         self.period = period
     
@@ -60,13 +61,13 @@ class EMA_DEV(Strategy):
         self.timeout_buy = timeout_buy
         self.timeout_sell = timeout_sell
         self.rsi = rsi
-        #internal states
+        # internal states
         self.position = ''
         self.signal = 0
         self.cur_timeout_buy = timeout_buy
         self.cur_timeout_sell = timeout_sell    
         
-        #configure required indicators
+        # configure required indicators
         self.set_indicator("EMA", {ema_buy_s, ema_buy_l, ema_sell_s, ema_sell_l})
         self.set_indicator("RSI", {rsi})
         self.set_indicator("close")
@@ -99,19 +100,19 @@ class EMA_DEV(Strategy):
 #         else:
 #             self.trend = 'bearish'
 #         
-        if ((cur_close >= ema_sell_s *(1 + (1 * self.treshold_pct_sell_s/100))) and 
-            (cur_close >= ema_sell_l * (1 + (1 * self.treshold_pct_sell_l/100))) and 
-            (self.cur_timeout_sell < 0 )):
+        if ((cur_close >= ema_sell_s * (1 + (1 * self.treshold_pct_sell_s / 100))) and 
+            (cur_close >= ema_sell_l * (1 + (1 * self.treshold_pct_sell_l / 100))) and 
+            (self.cur_timeout_sell < 0)):
             
-            signal = -1 # sell
+            signal = -1  # sell
             self.cur_timeout_sell = self.timeout_sell
-            #after a sell you want to wait before buying back.
-            self.cur_timeout_buy = self.timeout_buy            
-        elif ((cur_close <= ema_buy_s *(1 + (1 * self.treshold_pct_buy_s/100))) and 
-            (cur_close <= ema_buy_l  * (1 + (1 * self.treshold_pct_buy_l/100))) and 
-            (self.cur_timeout_buy < 0 )):
+            # after a sell you want to wait before buying back.
+            self.cur_timeout_buy = self.timeout_buy // 2
+        elif ((cur_close <= ema_buy_s * (1 + (1 * self.treshold_pct_buy_s / 100))) and 
+            (cur_close <= ema_buy_l * (1 + (1 * self.treshold_pct_buy_l / 100))) and 
+            (self.cur_timeout_buy < 0)):
             
-            signal = 1 # buy
+            signal = 1  # buy
             self.cur_timeout_buy = self.timeout_buy
         else:
             self.cur_timeout_buy -= 1
@@ -126,4 +127,4 @@ class EMA_DEV(Strategy):
 #             self.num_buy, self.num_sell, self.num_cdl, self.cur_timeout_buy))
         return signal
     
-#EOF
+# EOF
