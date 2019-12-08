@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 '''
 # Wolfinch Auto trading Bot
 # Desc: Main File implements Bot
