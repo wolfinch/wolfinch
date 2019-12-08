@@ -228,13 +228,13 @@ def arg_parse():
     global gRestart
     parser = argparse.ArgumentParser(description='Wolfinch Auto Trading Bot')
 
-    parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0.1')
     parser.add_argument("--clean",
                         help='Clean states,dbs and exit. Clear all the existing states',
                         action='store_true')
     parser.add_argument("--config", help='Wolfinch Global config file')
     parser.add_argument("--backtesting", help='do backtesting', action='store_true')
-    parser.add_argument("--import_only", help='do import only', action='store_true')
+    parser.add_argument("--import_only", help='do import only and exit ', action='store_true')
     parser.add_argument("--restart", help='restart from the previous state', action='store_true')
     parser.add_argument("--ga_restart", help='restart genetic analysis from previous state',
                         action='store_true')
