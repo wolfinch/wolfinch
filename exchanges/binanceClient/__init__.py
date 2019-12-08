@@ -1,1 +1,1 @@
-from binanceClient import Binance
+from .binanceClient import Binance

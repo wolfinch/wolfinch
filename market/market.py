@@ -25,7 +25,7 @@
 import json
 import sys
 import os
-import Queue
+import queue
 # import pprint
 from itertools import product
 # from decimal import float
@@ -34,8 +34,8 @@ import time
 import random
 
 from utils import *
-from order_book import OrderBook
-from order import TradeRequest
+from .order_book import OrderBook
+from .order import TradeRequest
 from decision import Decision
 import decision
 import db
@@ -270,8 +270,8 @@ class Market:
         self.num_failed_trade = 0
         
         #config
-        self.product_id = None if product == None else product['id']
-        self.name = None if product == None else product['display_name']
+        self.product_id = None if product == None else str(product['id'])
+        self.name = None if product == None else str(product['display_name'])
         self.fund_type = product['fund_type']
         self.asset_type = product['asset_type']
         self.exchange_name = None if exchange == None else exchange.name
@@ -325,7 +325,6 @@ class Market:
         self.cur_candle_vol = 0
         self.num_candles        = 0
         self.candlesDb = db.CandlesDb (OHLC, self.exchange_name, self.product_id)
-
         strategy_list = decision.get_strategy_list(self.exchange_name, self.product_id)
         if strategy_list == None:
             log.critical ("invalid strategy_list!!")
@@ -427,7 +426,7 @@ class Market:
         if now >= self.cur_candle_time + self.candle_interval:
             # close the current candle period and start a new candle period
             c = price
-            candle = OHLC(long(now), self.O, self.H, self.L, c, self.V)
+            candle = OHLC(int(now), self.O, self.H, self.L, c, self.V)
             log.debug ("New candle identified %s"%(candle))
             self.add_new_candle (candle)
             
@@ -944,7 +943,7 @@ class Market:
         log.critical ("%f : _process_historic_strategies aafter "%(time.time()))
         
         num_candles = len(self.market_indicators_data)
-        self.cur_candle_time = long(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
+        self.cur_candle_time = int(time.time()) if num_candles == 0 else self.market_indicators_data[-1]['ohlc'].time
         if sims.backtesting_on:
             self.start_market_rate = float(0) if num_candles == 0 else self.market_indicators_data[0]['ohlc'].close
         else:
@@ -1078,7 +1077,7 @@ class Market:
                 
         now = time.time()
         if now >= self.cur_candle_time + self.candle_interval:
-            candle = OHLC(long(now), self.O, self.H, self.L, self.get_market_rate(), self.V)
+            candle = OHLC(int(now), self.O, self.H, self.L, self.get_market_rate(), self.V)
             log.info ("New candle identified %s"%(candle))
             self.add_new_candle (candle)
             
@@ -1204,7 +1203,7 @@ class Market:
 ############# Market Class Def - end #############
 
 # Feed Q routines
-feedQ = Queue.Queue()
+feedQ = queue.Queue()
 def feed_enQ (market, msg):
     log.debug ("-------feed_enQ msg -------")
     obj = {"market":market, "msg":msg}
@@ -1216,7 +1215,7 @@ def feed_deQ (timeout):
             msg = feedQ.get(False)
         else:
             msg = feedQ.get(block=True, timeout=timeout)
-    except Queue.Empty:
+    except queue.Empty:
         return None
     else:
         return msg
@@ -1249,20 +1248,15 @@ def market_init (exchange_list, get_product_config_hook):
             for product in products:
                 #init new Market for product
                 try:
+                    log.info ("configuring market for exch: %s prod: %s"%(exchange, product))
                     market = Market(product=product, exchange=exchange)
-                except Exception:
-                    log.critical ("Unable to get Market for exchange: %s product: %s"%(exchange.name, str(product)))
+                except Exception as e:
+                    log.critical ("Unable to get Market for exchange: %s product: %s e: %s"%(exchange.name, str(product), str(e)))
                 else:
                     market = exchange.market_init (market)
                     if (market == None):
                         log.critical ("Market Init Failed for exchange: %s product: %s"%(exchange.name, str(product)))
                     else:
-    #                     tradingConfig, decisionConfig = get_product_config_hook(exchange.name, product['id'])
-    #                     if tradingConfig == None or decisionConfig == None:
-    #                         log.critical ("Invalid product config")
-    #                         raise Exception ("Invalid product config")
-    #                     market.tradeConfig = tradingConfig
-    #                     market.decisionConfig = decisionConfig
                         log.info ("market init success for exchange (%s) product: %s"%(exchange.name, str(product)))
                         Wolfinch_market_list.append(market)
         else:

@@ -18,12 +18,12 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from __future__ import print_function
+
 from multiprocessing import Process, Pipe
 
 from utils import getLogger
 
-import ui_server
+from . import ui_server
 
 log = getLogger ('UI-OPS')
 log.setLevel(log.DEBUG)

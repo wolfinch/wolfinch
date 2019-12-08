@@ -1,6 +1,7 @@
 # '''
-#  Desc: Average Directional Movement Index (Momentum Indicators) implementation using ta-lib
-#  (c) https://mrjbq7.github.io/ta-lib/
+#  Desc: Average Directional Movement Index (Momentum Indicators) implementation using tulip
+#  https://tulipindicators.org/adx
+#
 #  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -18,9 +19,9 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-from indicator import Indicator
+from .indicator import Indicator
 import numpy as np
-import talib
+import tulipy as ti
 
 class ADX (Indicator):
     '''
@@ -36,12 +37,12 @@ class ADX (Indicator):
         if candles_len < self.period+20: #make sure 20 more candles are available to work with
             return 0
         
-        close_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-(self.period+20):]))
-        high_array = np.array(map(lambda x: float(x['ohlc'].high), candles[-(self.period+20):]))
-        low_array = np.array(map(lambda x: float(x['ohlc'].low), candles[-(self.period+20):]))
+        close_array = np.array([float(x['ohlc'].close) for x in candles[-(self.period+20):]])
+        high_array = np.array([float(x['ohlc'].high) for x in candles[-(self.period+20):]])
+        low_array = np.array([float(x['ohlc'].low) for x in candles[-(self.period+20):]])
         
         #calculate 
-        adx = talib.ADX (high_array, low_array, close_array, timeperiod=self.period)
+        adx = ti.adx (high_array, low_array, close_array, self.period)
         
         return adx[-1]
         

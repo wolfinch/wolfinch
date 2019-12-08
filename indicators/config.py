@@ -21,6 +21,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
+
 from indicators.noop import NOOP
 from indicators.sma import SMA
 # from indicators.ema import EMA
@@ -79,11 +80,11 @@ def Configure (exchange_name, product_id, config_list):
         raise ("no indicators to be configured!! potentially no active strategies!")
     
     
-    for ind_name, period_list in config_list.iteritems():
+    for ind_name, period_list in config_list.items():
         indicator = indicators_list.get (ind_name)
         if not indicator:
             print ("Invalid Indicator(%s)! Either indicator not available, or unable to configure"%(ind_name))
-            raise ("Invalid Indicator(%s)! Either indicator not available, or unable to configure"%(ind_name))
+            raise "Invalid Indicator(%s)! Either indicator not available, or unable to configure"
         if not market_indicators.get (exchange_name):
             market_indicators[exchange_name] = {product_id: []}
         elif not market_indicators[exchange_name].get(product_id):

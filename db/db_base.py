@@ -20,9 +20,7 @@
 
 from abc import ABCMeta, abstractmethod
 
-class DbBase:
-    __metaclass__ = ABCMeta
-
+class DbBase(metaclass=ABCMeta):
     @abstractmethod
     def __init__ (self):
         ''' 

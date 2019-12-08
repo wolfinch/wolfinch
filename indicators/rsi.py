@@ -1,6 +1,6 @@
 # '''
-#  Desc: Relative Strength Index (Momentum Indicators) implementation using ta-lib
-#  (c) https://mrjbq7.github.io/ta-lib/
+#  Desc: Relative Strength Index (Momentum Indicators) implementation using tulip
+#  https://tulipindicators.org/rsi
 #  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -18,9 +18,9 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-from indicator import Indicator
+from .indicator import Indicator
 import numpy as np
-import talib
+import tulipy as ti
 
 class RSI (Indicator):
     '''
@@ -36,10 +36,10 @@ class RSI (Indicator):
         if candles_len < self.period+1:
             return float(0)
         
-        val_array = np.array(map(lambda x: float(x['ohlc'].close), candles[-(self.period+1):]))
+        val_array = np.array([float(x['ohlc'].close) for x in candles[-(self.period+1):]])
         
         #calculate 
-        cur_rsi = talib.RSI (val_array, timeperiod=self.period)
+        cur_rsi = ti.rsi (val_array, period=self.period)
         
         return float(cur_rsi[-1])
         

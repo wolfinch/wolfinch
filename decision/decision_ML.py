@@ -18,7 +18,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 from utils import getLogger
-from models.model_simple_DAE import Model, load_model
+from .models.model_simple_DAE import Model, load_model
 # from models.model_LSTM import Model
 # from models.model_SVC import Model
 

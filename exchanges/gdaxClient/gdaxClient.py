@@ -133,7 +133,7 @@ def init():
     if (len(products) and len (gdax_conf['products'])):
         for prod in products:
             for p in gdax_conf['products']:              
-                if prod['id'] in p.keys():
+                if prod['id'] in list(p.keys()):
                     gdax_products.append(prod)
     
     # Popoulate the account details for each interested currencies
@@ -144,7 +144,7 @@ def init():
     #log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
     for account in accounts:
         for prod in gdax_conf['products']:
-            for prod_id in prod.keys():
+            for prod_id in list(prod.keys()):
                 currency = prod[prod_id][0]['currency']            
                 if account['currency'] in currency:
                     log.debug ("Interested Account Found for Currency: "+account['currency'])
@@ -308,7 +308,7 @@ class gdaxWebsocketClient (GDAX.WebsocketClient):
 def register_feed (api_key="", api_secret="", api_passphrase="", url=""):
     products = []
     for p in gdax_conf['products']: #["BTC-USD", "ETH-USD"]
-        products += p.keys()
+        products += list(p.keys())
         
     channels = [
             "level2",
@@ -446,7 +446,7 @@ def gdax_consume_ticker_feed (market, msg):
     if now >= market.cur_candle_time + granularity:
         # close the current candle period and start a new candle period
         c = price
-        candle = OHLC(long(market.cur_candle_time), market.O, market.H, market.L, c, market.V)
+        candle = OHLC(int(market.cur_candle_time), market.O, market.H, market.L, c, market.V)
         log.debug ("New candle identified %s"%(candle))        
         market.O = market.V = market.H = market.L = 0
         market.cur_candle_time = now
@@ -550,10 +550,9 @@ def get_historic_rates (product_id, start=None, end=None):
                     log.error ("Error while retrieving Historic rates: msg: %s\n will retry.."%(err_msg))
             else:
                 #candles are of struct [[time, o, h, l,c, V]]
-                candles_list += map(
-                    lambda candle: OHLC(time=candle[0], 
+                candles_list += [OHLC(time=candle[0], 
                                         low=candle[1], high=candle[2], open=candle[3], 
-                                        close=candle[4], volume=candle[5]), reversed(candles))
+                                        close=candle[4], volume=candle[5]) for candle in reversed(candles)]
 #                 log.debug ("%s"%(candles))
                 log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
                     start_str, end_str, (0 if not candles else len(candles))))

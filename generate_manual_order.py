@@ -87,7 +87,7 @@ if __name__ == '__main__':
     yes = {'yes','y', 'ye'}
     
     print ("\nConfirm Order (yes/no):")
-    choice = raw_input().lower()
+    choice = input().lower()
     if choice in yes:
         order_file_name = "override/TRADE_%s.%s"%(args.exchange, args.product)
         with open (order_file_name, "w") as fp:

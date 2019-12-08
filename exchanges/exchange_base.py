@@ -19,9 +19,7 @@
 '''
 from abc import ABCMeta, abstractmethod
 
-class Exchange:
-    __metaclass__ = ABCMeta
-
+class Exchange(metaclass=ABCMeta):
     @abstractmethod
     def __init__ (self):
         ''' 

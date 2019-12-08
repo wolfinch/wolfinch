@@ -19,9 +19,10 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 
+
 import random
 
-import eval_strategy
+from . import eval_strategy
 from utils import getLogger
 
 # __name__ = "EA-OPS"
@@ -94,7 +95,7 @@ def createMutantStrategy(indS, indpb):
     
     conf = eval_strategy.get_strategy_vars()
     log.debug ("original: %s"%(indS))
-    for key in indS.iterkeys():
+    for key in indS.keys():
         rand = random.random()
         if rand < indpb:
             indS [key] = genParamVal(conf, key)
@@ -107,7 +108,7 @@ def createMutantTradecfg(indT, indpb):
     conf = TradingConfig
         
     log.debug ("original: %s"%(indT))
-    for key in indT.iterkeys():
+    for key in indT.keys():
         rand = random.random()
         if rand < indpb:
             indT [key] = genParamVal(conf, key)
@@ -150,7 +151,7 @@ TradingConfig = {
 GaTradingConfig = {}
 
 def police_tradingcfg_gen (t_cfg):
-    for param_key, param_val in GaTradingConfig.iteritems():
+    for param_key, param_val in GaTradingConfig.items():
         t_cfg [param_key] = param_val
     
     return t_cfg
@@ -158,7 +159,7 @@ def police_tradingcfg_gen (t_cfg):
 def tradingcfgGenerator ():
     cfg_gen = {}
     
-    for param_key in TradingConfig.iterkeys():
+    for param_key in TradingConfig.keys():
         cfg_gen [param_key] = genParamVal(TradingConfig, param_key)
         
     cfg_gen = police_tradingcfg_gen(cfg_gen)
@@ -182,7 +183,7 @@ def strategyGenerator ():
     conf = eval_strategy.get_strategy_vars()
     strat_gen = {}
     
-    for param_key in conf.iterkeys():
+    for param_key in conf.keys():
         strat_gen [param_key] = genParamVal(conf, param_key)
 #         yield param_key, val    
 #         yield val

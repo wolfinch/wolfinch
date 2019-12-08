@@ -17,19 +17,22 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
+
+
 from utils import getLogger
-from db import init_db
+from .db import init_db
 from sqlalchemy import *
 from sqlalchemy.orm import mapper 
 
 log = getLogger ('CANDLE-DB')
-log.setLevel (log.CRITICAL)
+log.setLevel (log.DEBUG)
 
 class CandlesDb(object):
     def __init__ (self, ohlcCls, exchange_name, product_id, read_only=False):
         self.OHLCCls = ohlcCls
         self.db = init_db(read_only)
-        log.info ("init candlesdb")
+        log.info ("init candlesdb: %s %s"%(exchange_name, product_id))
+        
         self.table_name = "candle_%s_%s"%(exchange_name, product_id)
         if not self.db.engine.dialect.has_table(self.db.engine, self.table_name):  # If table don't exist, Create.
             # Create a table with the appropriate Columns
@@ -102,12 +105,12 @@ class CandlesDb(object):
             log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
             
             if (len(ResultSet)):
-                res_list = map (lambda c: self.OHLCCls(c.time, c.open, c.high, c.low, c.close, c.volume), ResultSet)
+                res_list = [self.OHLCCls(c.time, c.open, c.high, c.low, c.close, c.volume) for c in ResultSet]
             #clear cache now
             self.db.session.expire_all()
             return res_list
-        except Exception, e:
-            print(e.message)          
+        except Exception as e:
+            print(str(e))          
         
         
     def db_get_all_candles (self):
@@ -120,11 +123,10 @@ class CandlesDb(object):
             log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
             
             if (len(ResultSet)):
-                res_list = map (lambda c: self.OHLCCls(c.time, c.open, c.high, c.low, c.close, c.volume), ResultSet)
+                res_list = [self.OHLCCls(c.time, c.open, c.high, c.low, c.close, c.volume) for c in ResultSet]
             #clear cache now
             self.db.session.expire_all()
             return res_list
-        except Exception, e:
-            print(e.message)        
-   
+        except Exception as e:
+            print(str(e))             
 # EOF

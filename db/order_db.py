@@ -17,8 +17,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
+
 from utils import getLogger
-from db import init_db, is_db_enabled
+from .db import init_db, is_db_enabled
 from sqlalchemy import *
 from sqlalchemy.orm import mapper 
 # import sys
@@ -101,7 +102,7 @@ class OrderDb(object):
             self.orderCls = OT
             self.mapping = mapper(self.orderCls, self.table)
         except Exception as e:
-            log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(e.message))
+            log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(str(e)))
             raise e
     
     def _db_save_order (self, order):     
@@ -145,8 +146,8 @@ class OrderDb(object):
             #clear cache now
             self.db.session.expire_all()                           
             return res_list
-        except Exception, e:
-            log.critical(e.message)
+        except Exception as e:
+            log.critical(str(e))
 
     def _db_get_order(self, order_id):
         order = None
@@ -165,8 +166,8 @@ class OrderDb(object):
                 log.error ("order_id:%s not in Db"%(order_id))
             #clear cache now
             self.db.session.expire_all()                             
-        except Exception, e:
-            print(e.message)
+        except Exception as e:
+            print(str(e))          
         return order
                         
     def db_add_or_update_order (self, order):     

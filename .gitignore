@@ -1,4 +1,5 @@
 *.pyc
+*.bak
 *.yml
 data/*.db*
 data/*.json

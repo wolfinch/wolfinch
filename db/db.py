@@ -19,7 +19,7 @@
 
 
 # use the specific db impl
-from sqlite import SqliteDb
+from .sqlite import SqliteDb
 
 DB = None
 

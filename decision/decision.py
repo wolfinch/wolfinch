@@ -18,7 +18,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 from utils import getLogger
-import decision_simple
+from . import decision_simple
 # import decision_ML
 
 log = getLogger ('DECISION')
@@ -76,7 +76,7 @@ def decision_config (exchange_name, product_id, decision_type, config):
 #         g_decision_config = config
     else:
         log.critical ("Unsupported decision type(%s) cfg:%s"%(decision_type, str(config)))
-        raise ("Unsupported decision type(%s) cfg:%s"%(decision_type, str(config)))
+        raise "Unsupported decision type(%s) cfg:%s"
         
 def get_strategy_list(exchange_name, product_id):
     global g_strategy_list

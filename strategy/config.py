@@ -21,8 +21,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
+
 import indicators
-from strategies_config import strategies_list
+from .strategies_config import strategies_list
 
 init_done = False
 
@@ -39,10 +40,10 @@ def Configure (exchange_name, product_id, strategy_list={}):
         if market_strategies.get(exchange_name):
             return market_strategies[exchange_name].get(product_id)
     
-    for strategy_name, strategy_params in strategy_list.iteritems():
+    for strategy_name, strategy_params in strategy_list.items():
         strategy = strategies_list.get(strategy_name)
         if not strategy:
-            raise ("Unknown strategy(%s)" % (strategy_name))
+            raise Exception("Unknown strategy(%s)" % (strategy_name))
         
         if not market_strategies.get(exchange_name):
             market_strategies[exchange_name] = {product_id :[]}

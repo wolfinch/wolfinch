@@ -1,1 +1,1 @@
-from cb_pro import CBPRO
+from .cb_pro import CBPRO
