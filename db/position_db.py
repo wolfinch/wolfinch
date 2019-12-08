@@ -18,7 +18,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 from utils import getLogger
-from db import init_db, is_db_enabled
+from .db import init_db, is_db_enabled
 from sqlalchemy import *
 from sqlalchemy.orm import mapper 
 import sims
@@ -153,8 +153,8 @@ class PositionDb(object):
             #clear cache now
             self.db.session.expire_all()                    
             return res_list
-        except Exception, e:
-            log.critical(e.message)
+        except Exception as e:
+            log.critical(str(e))
             
     def clear_position_db(self):
         if (not self.db_enable):

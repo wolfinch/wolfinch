@@ -66,7 +66,7 @@ def eval_strategy_with_config (config_kw):
     log.debug ("stats: %s"%str(stats))
      
     cur_profit = 0
-    for _, k_v in stats.iteritems():
+    for _, k_v in stats.items():
         cur_profit += round(k_v['fund']['current_realized_profit'], 2)
      
     return cur_profit

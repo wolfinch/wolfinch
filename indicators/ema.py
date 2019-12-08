@@ -17,9 +17,9 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-from indicator import Indicator
+from .indicator import Indicator
 
-class DEFUNCT_EMA (Indicator):
+class DEPRECATED_EMA (Indicator):
     '''
     Exponential moving Average (EMA) market indicator implementation
     '''

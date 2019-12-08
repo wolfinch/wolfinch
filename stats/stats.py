@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import Queue
+import queue
 from   threading import Thread
 import time
 import pprint
@@ -40,7 +40,7 @@ g_stats_thread = None
 # Dumping the whole order db doesn't scale in long run
 
 # Stats Q routines
-statsQ = Queue.Queue()
+statsQ = queue.Queue()
 def _stats_enQ (stats_type, market=None, msg=None):
     obj = (stats_type, market, msg)
     statsQ.put(obj)
@@ -51,7 +51,7 @@ def _stats_deQ (timeout):
             msg = statsQ.get(False)
         else:
             msg = statsQ.get(block=True, timeout=timeout)
-    except Queue.Empty:
+    except queue.Empty:
         return None
     else:
         return msg

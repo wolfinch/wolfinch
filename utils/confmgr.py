@@ -18,9 +18,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from __future__ import print_function
-from readconf import readConf
-from logger import getLogger
+
+from .readconf import readConf
+from .logger import getLogger
 import sims, ui
 
 log = getLogger ('confmgr')
@@ -38,7 +38,7 @@ def parse_product_config (cfg):
     global gDecisionConfig, gTradingConfig    
     parsed_tcfg = {}
     parsed_dcfg = {}    
-    for k, v in cfg.iteritems():
+    for k, v in cfg.items():
         if k == 'currency':
             parsed_tcfg ['currency'] = v
         if k == 'fund_max_liquidity':
@@ -51,7 +51,7 @@ def parse_product_config (cfg):
             parsed_tcfg ['asset_min_per_trade_size'] = v
         
         if k == 'stop_loss':
-            for ex_k, ex_v in v.iteritems():
+            for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
                     parsed_tcfg ['stop_loss_enabled'] = ex_v
                 elif ex_k == 'smart':
@@ -59,13 +59,13 @@ def parse_product_config (cfg):
                 elif ex_k == 'rate':
                     parsed_tcfg ['stop_loss_rate'] = ex_v                    
         elif k == 'take_profit':
-            for ex_k, ex_v in v.iteritems():
+            for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
                     parsed_tcfg ['take_profit_enabled'] = ex_v
                 elif ex_k == 'rate':
                     parsed_tcfg ['take_profit_rate'] = ex_v                                    
         elif k == 'decision':
-            for ex_k, ex_v in v.iteritems():
+            for ex_k, ex_v in v.items():
                 if ex_k == 'model':
                     parsed_dcfg ['model_type'] = ex_v
                 elif ex_k == 'config':
@@ -96,13 +96,13 @@ def get_product_config (exch_name, prod_name):
     log.debug ("get_config for exch: %s prod: %s" % (exch_name, prod_name))
         
     # sanitize the config
-    for k, v in WolfinchConfig.iteritems():
+    for k, v in WolfinchConfig.items():
         if k == 'exchanges':
             if v == None:
                 log.critical ("Atleast one exchange need to be configured")
                 raise Exception("exchanges not configured")
             for exch in v:
-                for ex_k, ex_v in exch.iteritems():
+                for ex_k, ex_v in exch.items():
                     if ex_k.lower() != exch_name.lower():
                         continue
                     log.debug ("processing exch: %s val:%s" % (ex_k, ex_v))
@@ -110,7 +110,7 @@ def get_product_config (exch_name, prod_name):
                     if products != None and len(products):
                         log.debug ("processing exch products")
                         for prod in products:
-                            for p_name, p_cfg in prod.iteritems():
+                            for p_name, p_cfg in prod.items():
                                 if p_name.lower() != prod_name.lower():
                                     continue
                                 log.debug ("processing product %s:" % (p_name))
@@ -143,14 +143,14 @@ def load_config (cfg_file):
     
     log.debug ("cfg: %s" % WolfinchConfig)
     # sanitize the config
-    for k, v in WolfinchConfig.iteritems():
+    for k, v in WolfinchConfig.items():
         if k == 'exchanges':
             if v == None:
                 print ("Atleast one exchange need to be configured")
                 return False
             prim = False
             for exch in v:
-                for ex_k, ex_v in exch.iteritems():
+                for ex_k, ex_v in exch.items():
                     log.debug ("processing exch: %s val:%s" % (ex_k, ex_v))
                     #setup backfill config per exch, from global
                     if WolfinchConfig.get('backfill') :
@@ -164,7 +164,7 @@ def load_config (cfg_file):
                     if products != None and len(products):
                         log.debug ("processing exch products")
                         for prod in products:
-                            for prod_name, _ in prod.iteritems():
+                            for prod_name, _ in prod.items():
                                 log.debug ("processing product %s:" % (prod_name))
 #                                 tcfg, dcfg = get_product_config(prod_val)
                     role = ex_v.get('role')
@@ -178,7 +178,7 @@ def load_config (cfg_file):
                 print ("No primary exchange configured!!")
                 return False
         elif k == 'stop_loss':
-            for ex_k, ex_v in v.iteritems():
+            for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
                     gTradingConfig ['stop_loss_enabled'] = ex_v
                 elif ex_k == 'smart':
@@ -186,19 +186,19 @@ def load_config (cfg_file):
                 elif ex_k == 'rate':
                     gTradingConfig ['stop_loss_rate'] = ex_v                    
         elif k == 'take_profit':
-            for ex_k, ex_v in v.iteritems():
+            for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
                     gTradingConfig ['take_profit_enabled'] = ex_v
                 elif ex_k == 'rate':
                     gTradingConfig ['take_profit_rate'] = ex_v                                    
         elif k == 'decision':
-            for ex_k, ex_v in v.iteritems():
+            for ex_k, ex_v in v.items():
                 if ex_k == 'model':
                     gDecisionConfig ['model_type'] = ex_v
                 elif ex_k == 'config':
                     gDecisionConfig ['model_config'] = ex_v     
         elif k == 'simulator':
-            for ex_k, ex_v in v.iteritems():
+            for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
                     if ex_v == True:
                         log.debug ("simulator enabled")
@@ -215,7 +215,7 @@ def load_config (cfg_file):
                         sims.backtesting_on = False
 
         elif k == 'genetic_optimizer':
-            for ex_k, ex_v in v.iteritems():
+            for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
                     if ex_v == True:
                         log.debug ("genetic_optimizer on")
@@ -260,7 +260,7 @@ def load_config (cfg_file):
                 elif ex_k == 'strategy':
                     sims.ga_config["strategy"] = ex_v
         elif k == 'ui':
-            for ex_k, ex_v in v.iteritems():
+            for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
                     if ex_v == True:
                         log.debug ("ui enabled")

@@ -34,10 +34,10 @@ exchanges:
             stop_loss:
                enabled: true
                smart: true #track price movement and update stop_loss
-               rate : 0.3 #-3%
+               rate : 4 #-3%
             take_profit:
                enabled: true
-               rate: 0.5 # 10percent
+               rate: 9 # 10percent
             decision:
                model    : simple
                config   :
@@ -69,7 +69,7 @@ genetic_optimizer:
    N_MP : 1
    strategy : EMA_DEV
 ui:
-   enabled : false
+   enabled : true
    port : 8080
    
 #EOF

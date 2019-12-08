@@ -19,9 +19,7 @@
 
 from abc import ABCMeta, abstractmethod
 
-class Strategy:
-    __metaclass__ = ABCMeta
-
+class Strategy(metaclass=ABCMeta):
     @abstractmethod
     def __init__ (self):
         ''' 

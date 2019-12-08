@@ -21,7 +21,7 @@
 
 
 # from decimal import Decimal
-from strategy_base import Strategy
+from .strategy_base import Strategy
 
 # from utils import getLogger
 # 

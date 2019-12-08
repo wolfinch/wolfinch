@@ -31,7 +31,7 @@ class Decision ():
             log.critical("strategy not configured for simple decision")
             raise ("strategy not configured for simple decision")
         
-        for strategy in config.iterkeys():
+        for strategy in config.keys():
             self.strategy = strategy
             ##TODO: TBD: do we need to support multi strategies here?? for now not supported
             break

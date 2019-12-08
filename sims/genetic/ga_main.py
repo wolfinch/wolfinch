@@ -18,6 +18,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
+
 import random
 import numpy
 from deap import algorithms
@@ -32,8 +33,8 @@ import time
 import copy
 
 from utils import getLogger
-import ga_ops
-import eval_strategy
+from . import ga_ops
+from . import eval_strategy
 
 N_GEN = 1000
 N_POP = 100
@@ -51,16 +52,15 @@ def ga_init (ga_config, evalfn = None):
     
     #init config:
 #     print (ga_config)
-    for ga_k, ga_v in ga_config.iteritems():
-        if ga_v > 0:
-            if ga_k == "GA_NGEN":
-                N_GEN = ga_v
-            if ga_k == "GA_NPOP":
-                N_POP = ga_v            
-            if ga_k == "GA_NMP":
-                N_MP = ga_v
-            if ga_k == "strategy":
-                ga_strategy_name = ga_v
+    for ga_k, ga_v in ga_config.items():
+        if ga_k == "GA_NGEN":
+            N_GEN = ga_v
+        if ga_k == "GA_NPOP":
+            N_POP = ga_v            
+        if ga_k == "GA_NMP":
+            N_MP = ga_v
+        if ga_k == "strategy":
+            ga_strategy_name = ga_v
                     
 #     print ("N_GEN: %d N_POP: %d N_MP:%d"%(N_GEN, N_POP, N_MP))
 #     raise 
@@ -155,7 +155,7 @@ def eval_exec_async (eval_fn, ind_iter):
 #                         del(res_list[i][2])                        
                     p_num -= 1                        
     print ("all jobs evaluated res_num(%d)"%(len(res_list)))
-    fit_l = map (lambda x: x[4], res_list)
+    fit_l = [x[4] for x in res_list]
     del(m)
     del(res_list)
     return fit_l

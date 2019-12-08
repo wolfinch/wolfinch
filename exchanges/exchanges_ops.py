@@ -20,7 +20,7 @@
 '''
 
 from utils import getLogger
-from exchanges_config import all_exchanges
+from .exchanges_config import all_exchanges
 import sims
 
 __name__ = "EXCH-OPS"
@@ -36,7 +36,7 @@ def init_exchanges (WolfinchConfig):
     for exch_cls in all_exchanges:
         log.debug ("Initializing exchange (%s)"%(exch_cls.name))
         for exch in WolfinchConfig['exchanges']:
-            for name, exch_cfg in exch.iteritems():
+            for name, exch_cfg in exch.items():
                 if name.lower() == exch_cls.name.lower():
                     role = exch_cfg['role']
 #                     cfg = exch_cfg['config']

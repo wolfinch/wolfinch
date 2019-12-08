@@ -20,7 +20,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 # from decimal import Decimal
-from strategy_base import Strategy
+from .strategy_base import Strategy
 
 class EMA_DEV(Strategy):
     #HoF :       #EMA_DEV{'strategy_cfg': {'ema_sell_s': 45, 'timeout_sell': 66, 'rsi': 34,

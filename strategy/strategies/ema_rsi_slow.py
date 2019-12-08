@@ -20,7 +20,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 # from decimal import Decimal
-from strategy_base import Strategy
+from .strategy_base import Strategy
 import numpy as np
 
 class EMA_RSI_SLOW(Strategy):

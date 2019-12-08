@@ -27,7 +27,7 @@ exchanges:
 #      config: 'config/binance.yml'
    - 'cbpro' : 
       role: 'primary'
-      config: 'config/cbpro_btc.yml'
+      config: 'config/cbpro.yml'
       products:
          - 'BTC-USD':
             fund_max_liquidity : 900 #$$               
@@ -61,8 +61,8 @@ backfill:
    period   : 30  #in Days
 
 simulator:
-   enabled : true
-   backtesting : true
+   enabled : false
+   backtesting : false
 
 genetic_optimizer: 
    enabled : false

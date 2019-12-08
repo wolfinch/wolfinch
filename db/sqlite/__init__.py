@@ -1,1 +1,1 @@
-from sqlite import SqliteDb
+from .sqlite import SqliteDb
