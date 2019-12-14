@@ -27,6 +27,7 @@ exchanges:
       config: 'config/binanceus.yml'
       products:
          - 'BTCUSD':
+            active: true         
             fund_max_liquidity : 900 #$$               
             fund_max_per_buy_value : 30 #$100 max per buy
             asset_max_per_trade_size: 1000 #per sell asset size max
@@ -44,6 +45,7 @@ exchanges:
                   strategy: EMA_DEV
                   params : {'ema_sell_s': 85, 'timeout_sell': 10, 'rsi': 76, 'treshold_pct_buy_l': 1.31, 'ema_buy_s': 90, 'timeout_buy': 10, 'period': 195, 'treshold_pct_sell_s': 0.61, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.0, 'treshold_pct_buy_s': 1.69, 'ema_sell_l': 70}
          - 'XLMUSD':
+            active: false         
             fund_max_liquidity : 500 #$$               
             fund_max_per_buy_value : 20 #$100 max per buy
             asset_max_per_trade_size: 1000 #per sell asset size max

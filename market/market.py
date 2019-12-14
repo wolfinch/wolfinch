@@ -290,8 +290,6 @@ class Market:
         self.exchange_name = None if exchange == None else exchange.name
         self.exchange = exchange  # exchange module
         
-        # set primary?
-        self.primary = exchange.primary
         self.trading_paused_buy = False
         self.trading_paused_sell = False
         
@@ -329,6 +327,10 @@ class Market:
             
         # order type
         self.order_type = tcfg.get('order_type', "market")
+        
+        #set whether trading on this market is active or not, default True
+        # set primary?
+        self.primary = True if exchange.primary == True and tcfg.get('active', True) else False
         
         # Market Strategy related Data
         # [{'ohlc':(time, open, high, low, close, volume), 'sma':val, 'ema': val, name:val...}]

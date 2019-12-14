@@ -49,7 +49,8 @@ def parse_product_config (cfg):
             parsed_tcfg ['asset_max_per_trade_size'] = v
         if k == 'asset_min_per_trade_size':
             parsed_tcfg ['asset_min_per_trade_size'] = v
-        
+        if k == 'active':
+            parsed_tcfg ['active'] = v        
         if k == 'stop_loss':
             for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
