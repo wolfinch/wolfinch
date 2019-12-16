@@ -18,7 +18,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from .strategy_base import Strategy
+from .strategy import Strategy
 
 class TREND_BOLLINGER(Strategy):
     config = {
@@ -52,8 +52,8 @@ class TREND_BOLLINGER(Strategy):
         if len_candles < self.period:
             return 0
         
-        (upperBound, _, lowerBound) = self.get_indicator_current(candles, 'BBANDS')
-        close = self.get_indicator_current(candles, 'close')
+        (upperBound, _, lowerBound) = self.indicator(candles, 'BBANDS')
+        close = self.indicator(candles, 'close')
 
         self.signal = 0 # hold        
         if (upperBound and lowerBound):

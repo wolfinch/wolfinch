@@ -20,7 +20,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 # from decimal import Decimal
-from .strategy_base import Strategy
+from .strategy import Strategy
 # import numpy as np
 
 class EMA_RSI(Strategy):
@@ -65,11 +65,11 @@ class EMA_RSI(Strategy):
         
 #         rsi = np.array(map(lambda c: c['RSI21'], candles[:]))
 #         cur_rsi = rsi[-1]
-        rsi21 = self.get_indicator_current(candles, 'RSI', self.rsi)        
-        ema5 = self.get_indicator_current(candles, 'EMA', self.ema_s)
-        ema13 = self.get_indicator_current(candles, 'EMA', self.ema_m)
-        ema21 = self.get_indicator_current(candles, 'EMA', self.ema_l)
-        ema80 = self.get_indicator_current(candles, 'EMA', self.ema_ll)
+        rsi21 = self.indicator(candles, 'RSI', self.rsi)        
+        ema5 = self.indicator(candles, 'EMA', self.ema_s)
+        ema13 = self.indicator(candles, 'EMA', self.ema_m)
+        ema21 = self.indicator(candles, 'EMA', self.ema_l)
+        ema80 = self.indicator(candles, 'EMA', self.ema_ll)
         
         if ema13 > ema21:
             self.trend = 'bullish'

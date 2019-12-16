@@ -20,7 +20,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 from decimal import Decimal
-from .strategy_base import Strategy
+from .strategy import Strategy
 
 class MINMAX(Strategy):
     #{'strategy_cfg': {'timeout_sell': 56, 'period': 32, 'timeout_buy': 36}, 'trading_cfg': {'take_profit_rate': 0, 'stop_loss_smart_rate': True, 'take_profit_enabled': False, 'stop_loss_enabled': True, 'stop_loss_rate': 8}}

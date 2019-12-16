@@ -50,12 +50,22 @@ class Strategy(metaclass=ABCMeta):
         else:        
             return self._indicator_list
 
-    def get_indicator_current (self, candles, name, period=0):
+    def indicator (self, candles, name, period=0, history=-1):
         if period == 0:
-            return candles[-1][name]
-        else:    
-            return candles[-1]['%s%d'%(name, period)]
+            i_name = name
+        else:
+            i_name = '%s%d'%(name, period)
+        if history == -1:
+            return candles[-1][i_name]
+        else:
+            return [c[i_name] for c in candles[-history:]]
+            
+    def crossover (self, x, y):
+        pass
         
+    def slope (self, x, y):
+        pass
+    
     @abstractmethod
     def generate_signal (self):
         '''

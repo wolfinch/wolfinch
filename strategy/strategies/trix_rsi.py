@@ -21,7 +21,7 @@
 
 
 # from decimal import Decimal
-from .strategy_base import Strategy
+from .strategy import Strategy
 
 # from utils import getLogger
 # 
@@ -65,8 +65,8 @@ class TRIX_RSI(Strategy):
         if len_candles < self.period:
             return 0
         
-        rsi21 = self.get_indicator_current(candles, 'RSI', self.rsi)
-        trix30 = round(self.get_indicator_current(candles, 'TRIX', self.trix), 2)
+        rsi21 = self.indicator(candles, 'RSI', self.rsi)
+        trix30 = round(self.indicator(candles, 'TRIX', self.trix), 2)
 
         if trix30 > 0:
             #'up' trend

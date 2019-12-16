@@ -18,7 +18,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from .strategy_base import Strategy
+from .strategy import Strategy
 import numpy as np
 
 class TREND_RSI(Strategy):
@@ -78,7 +78,7 @@ class TREND_RSI(Strategy):
 #         rsi = np.array(map(lambda c: c['RSI14'], candles[:]))
 #         cur_rsi = rsi[-1]
         
-        cur_rsi = self.get_indicator_current(candles, 'RSI', self.rsi_periods)
+        cur_rsi = self.indicator(candles, 'RSI', self.rsi_periods)
         
         if cur_rsi == np.NaN:
             return 0
