@@ -456,9 +456,7 @@ class Market:
 
     def _handle_tp_and_sl (self):
  
-        trade_pos_l = []
-        if self.tradeConfig.get("take_profit_enabled", False):
-            trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())
+        trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())
                 
         # TODO: TBD: Disabled aggressive SL closing. SL is assessed based on candle close.
 #         if self.tradeConfig.get("stop_loss_enabled", False):
@@ -693,16 +691,16 @@ class Market:
         
         trade_req_l = []
         trade_pos_l = []
-        # 1. if stop loss enabled, get stop loss hit positions
 
-        if self.tradeConfig["stop_loss_enabled"] and self.trading_paused_sell == False:
+        cur_m_rate = self.get_market_rate()
+        if self.trading_paused_sell == False:
+            # 1. if stop loss enabled, get stop loss hit positions            
             log.debug ("find pos hit stop loss")
-            trade_pos_l += self.order_book.get_stop_loss_positions(self.get_market_rate())
+            trade_pos_l += self.order_book.get_stop_loss_positions(cur_m_rate)
         
-        # 2. if take profit enabled, get TP hit positions
-        if self.tradeConfig["take_profit_enabled"] and self.trading_paused_sell == False:
+            # 2. if take profit enabled, get TP hit positions
             log.debug ("find pos hit take profit")
-            trade_pos_l += self.order_book.get_take_profit_positions(self.get_market_rate())
+            trade_pos_l += self.order_book.get_take_profit_positions(cur_m_rate)
         
         for pos in trade_pos_l:
             asset_size = pos.buy.get_asset()
@@ -735,7 +733,7 @@ class Market:
                 self.num_buy_req += 1
                 fund = self.fund.get_fund_to_trade(1)
                 if fund > 0:
-                    size = fund / self.get_market_rate()
+                    size = fund / cur_m_rate
                     # normalize size
                     size_norm = round(float((size - size % self.asset.min_per_trade_size)), 8)
                     if size_norm == 0 :

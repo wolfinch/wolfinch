@@ -325,7 +325,7 @@ class OrderBook():
                 if len(pos_list) == 0:
                     del(self.sl_dict[sl_price])
             return pos
-        except IndexError:
+        except (IndexError, ValueError):
             return None
     def get_stop_loss_positions(self, market_rate):
         sl_pos_list =[]
@@ -405,7 +405,7 @@ class OrderBook():
                 if len(pos_list) == 0:
                     del(self.tp_dict[tp_price])
             return pos
-        except IndexError:
+        except (IndexError, ValueError):
             return None
                 
     def get_all_pending_orders(self):
