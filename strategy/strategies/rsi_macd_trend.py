@@ -18,6 +18,21 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
+# Strategy:
+# True range Breakeout
+# Calculate the true range (daily high minus daily low).
+# Buy signal is the closing price plus the true range.
+# Sell signal is the closing price minus the true range.
+# If long, the profit target is the daily high on the day of entry.
+# If long, the protective stop is the low on the day of entry.
+# If short, the profit target is the daily low on the day of entry.
+# If short, the protective stop is the high on the day of entry.
+
+#confirmation :
+# 1. MFI - money flow index (MFI) should follow the market price. f.e. when asset making new high, MFI should make new high and vice versa
+# 2. RSI - should follow market as above. (rule of thumb on RSI >70 overbought, <30, oversold)
+# 3. Volume 
+
 # from decimal import Decimal
 from .strategy import Strategy
 
