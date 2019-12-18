@@ -100,7 +100,11 @@ def Configure (exchange_name, product_id, config_list):
             market_indicators[exchange_name][product_id].append(indicator(ind_name))
         else:
             for period in period_list:
-                market_indicators[exchange_name][product_id].append(indicator("%s%d"%(ind_name, period), period))
+                if type(period) == tuple:
+                    #where indicator has more than one param to configure
+                    market_indicators[exchange_name][product_id].append(indicator("%s%s"%(ind_name, str(period)), *period))
+                else:
+                    market_indicators[exchange_name][product_id].append(indicator("%s%s"%(ind_name, str(period)), period))
                     
     
     #### Configure the Strategies - end ######

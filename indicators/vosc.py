@@ -27,11 +27,13 @@ class VOSC (Indicator):
     Desc: Volume Oscilator (VOSC) implementation using tulip market indicator implementation using TA library
     '''
     
-    def __init__(self, name, period=14):
+    def __init__(self, name, short_period=14, long_period=21):
         self.name = name
-        self.period = period
+        self.period = max(short_period, long_period)
+        self.short_period = short_period
+        self.long_period = long_period
                 
-    def calculate(self, candles):        
+    def calculate(self, candles):
         candles_len = len(candles)
         if candles_len < self.period+1:
             return float(0)
@@ -39,7 +41,7 @@ class VOSC (Indicator):
         val_array = np.array([float(x['ohlc'].volume) for x in candles[-(self.period+1):]])
         
         #calculate 
-        cur_vosc = ti.vosc (val_array, period=self.period)
-        
-        return float(cur_vosc[-1])
-        
+        vosc = ti.vosc (val_array, self.short_period, self.long_period)
+#         print (vosc)
+        return  float(vosc[-1])
+                

@@ -21,6 +21,7 @@
 # ## 2. Use Fee and enhance to maker/taker fees
 
 ##############################################
+import traceback
 import json
 import sys
 import os
@@ -839,7 +840,7 @@ class Market:
         try:
             self.exchange.get_historic_rates
         except NameError:
-            log.critical("method 'get_historic_rates()' not defined for exchange!!")
+            log.critical("method 'get_historic_rates()' not defined for exchange!! e: %s"%(traceback.format_exc()))
         else:
             start = db_candle_list[-1].time if (db_candle_list and db_candle_list[-1]) else 0
             log.debug ("Importing Historic rates #num Candles from exchange starting from time: %s to now" % (start))
@@ -979,7 +980,8 @@ class Market:
             with open(MARKET_STATS_FILE % (self.exchange_name, self.product_id), "r") as fd:
                 mstats = json.load(fd)
         except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
-            log.error ("unable to open file to restore %s:%s" % (self.exchange_name, self.product_id))
+            log.error ("unable to open file to restore %s:%s e: %s" % (
+                self.exchange_name, self.product_id, traceback.format_exc()))
             return
         
         log.info ("loading market stats")
@@ -1266,8 +1268,9 @@ def market_init (exchange_list, get_product_config_hook):
                 try:
                     log.info ("configuring market for exch: %s prod: %s" % (exchange, product))
                     market = Market(product=product, exchange=exchange)
-                except Exception as e:
-                    log.critical ("Unable to get Market for exchange: %s product: %s e: %s" % (exchange.name, str(product), str(e)))
+                except:
+                    log.critical ("Unable to get Market for exchange: %s product: %s e: %s" % (
+                        exchange.name, str(product), traceback.format_exc()))
                 else:
                     market = exchange.market_init (market)
                     if (market == None):

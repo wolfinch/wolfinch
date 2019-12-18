@@ -66,7 +66,6 @@ def Configure_indicators(exchange_name, product_id):
     if not len(market_strategies):
         print ("no strategies configured!!")
         raise ("no strategies configured!!")
-#     req_indicators = market_strategies[exchange_name][product_id][-1]._indicator_list
     req_indicators = gen_product_indicators_list (exchange_name, product_id)
     return indicators.Configure(exchange_name, product_id, req_indicators)
 

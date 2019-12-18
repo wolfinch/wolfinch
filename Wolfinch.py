@@ -22,7 +22,7 @@
 
 import time
 import sys
-import os
+# import os
 import traceback
 import argparse
 from decimal import getcontext
@@ -330,8 +330,8 @@ if __name__ == '__main__':
         Wolfinch_end()
         sys.exit()
     except Exception as e:
-        log.critical("Unexpected error: %s exception: %s" %(sys.exc_info(), str(e)))
-        print("Unexpected error: %s exception: %s" %(sys.exc_info(), str(e)))
+        log.critical("Unexpected error: exception: %s" %(traceback.format_exc()))
+        print("Unexpected error: exception: %s" %(traceback.format_exc()))
         Wolfinch_end()
         raise
 #         traceback.print_exc()

@@ -47,19 +47,21 @@ class MFI_RSI_VOSC(Strategy):
         'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'mfi' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'rsi' : {'default': 21, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
-        'vosc' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
+        'vosc_short' : {'default': 20, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
+        'vosc_long' : {'default': 40, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},        
         'timeout_buy' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},
         'timeout_sell' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},
         }
     
-    def __init__ (self, name, period=120, mfi=50, rsi=120, vosc=50, ema_sell_l=120,
+    def __init__ (self, name, period=120, mfi=50, rsi=120, vosc_short=20, vosc_long=40,
                   timeout_buy=50, timeout_sell=50):     
         self.name = name
         self.period = period
     
         self.mfi = mfi
         self.rsi = rsi
-        self.vosc = vosc
+        self.vosc_short = vosc_short
+        self.vosc_long = vosc_long
         self.timeout_buy = timeout_buy
         self.timeout_sell = timeout_sell
         # internal states
@@ -71,7 +73,7 @@ class MFI_RSI_VOSC(Strategy):
         # configure required indicators
         self.set_indicator("MFI", {mfi})
         self.set_indicator("RSI", {rsi})
-        self.set_indicator("VOSC", {vosc})        
+        self.set_indicator("VOSC", {(vosc_short, vosc_long)})        
         self.set_indicator("close")
         
 
@@ -87,9 +89,10 @@ class MFI_RSI_VOSC(Strategy):
         
         rsi21 = self.indicator(candles, 'RSI', self.rsi)        
         mfi = self.indicator(candles, 'MFI', self.mfi)
-        vosc = self.indicator(candles, 'VO', self.vosc)
-        
+        vosc = self.indicator(candles, 'VOSC', (self.vosc_short, self.vosc_long))
         cur_close = self.indicator(candles, 'close')
+        
+#         print (rsi21, mfi, vosc)
 
         return signal
     

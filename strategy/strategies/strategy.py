@@ -54,7 +54,7 @@ class Strategy(metaclass=ABCMeta):
         if period == 0:
             i_name = name
         else:
-            i_name = '%s%d'%(name, period)
+            i_name = '%s%s'%(name, str(period))
         if history == -1:
             return candles[-1][i_name]
         else:
