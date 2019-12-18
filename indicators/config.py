@@ -33,6 +33,10 @@ from indicators.cci import CCI
 from indicators.rsi import RSI
 from indicators.sar import SAR
 from indicators.macd import MACD
+from indicators.mfi import MFI
+from indicators.vosc import VOSC
+
+
 from indicators import indicator
 
 market_indicators = {}
@@ -50,7 +54,9 @@ indicators_list = {
     "CCI": CCI,
     "RSI": RSI,
     "SAR": SAR,
-    "MACD": MACD
+    "MACD": MACD,
+    "MFI": MFI,
+    "VOSC": VOSC    
     }
 
 # Manually configure all required indicators. Should be used with auto-generation strategy 
