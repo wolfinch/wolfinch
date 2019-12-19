@@ -399,8 +399,13 @@ class Market:
     def get_candle_list (self):
         return map(lambda x: x["ohlc"], self.market_indicators_data)
     
-    def get_indicator_list (self):
-        return self.market_indicators_data
+    def get_indicator_list (self, num_period=0, start_time=0):
+        if num_period == 0:
+            return self.market_indicators_data
+        elif start_time == 0:
+            return self.market_indicators_data[-num_period:]
+        else:
+            return self.market_indicators_data[-num_period:]            
     
     def get_strategies_list (self):
         return self.market_strategies_data

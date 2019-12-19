@@ -36,6 +36,7 @@ from market import market_init, market_setup, get_market_list, \
 import db
 import stats
 import ui
+from ui import ui_conn_pipe
 
 mpl_logger = logging.getLogger('matplotlib')
 mpl_logger.setLevel(logging.WARNING)
@@ -189,7 +190,20 @@ def process_ui_get_markets_rr(msg, ui_conn_pipe):
     msg["data"] = m_dict
     ui_conn_pipe.send(msg)
 
-
+def process_ui_get_market_indicators_rr(msg, ui_conn_pipe):
+    log.debug("enter")
+    exch = msg.get("exchange")
+    product = msg.get("product")
+    num_periods = msg.get("periods", 0)
+    start_time = msg.get("start_time", 0)
+    market = get_market_by_product(exch, product)
+    ind_list = {}
+    if market:
+        ind_list = market.get_indicator_list(num_periods, start_time)
+    msg["type"] = "GET_MARKET_INDICATORS_RESP"
+    msg["data"] = ind_list
+    ui_conn_pipe.send(msg)
+    
 def process_ui_msgs(ui_conn_pipe):
     try:
         while ui_conn_pipe.poll():
@@ -204,6 +218,8 @@ def process_ui_msgs(ui_conn_pipe):
                     process_ui_trade_notif(msg)
                 elif msg_type == "GET_MARKETS":
                     process_ui_get_markets_rr(msg, ui_conn_pipe)
+                elif msg_type == "GET_MARKET_INDICATORS":
+                    process_ui_get_market_indicators_rr(msg, ui_conn_pipe)                    
                 elif msg_type == "PAUSE_TRADING":
                     process_ui_pause_trading_notif(msg)
                 else:
