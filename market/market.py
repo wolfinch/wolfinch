@@ -55,7 +55,6 @@ Wolfinch_market_list = []
 
 class OHLC(object):
     __slots__ = ['time', 'open', 'high', 'low', 'close', 'volume']
-
     def __init__ (self, time=0, open=0, high=0, low=0, close=0, volume=0):
         self.time = time
         self.open = float(open)
@@ -63,11 +62,11 @@ class OHLC(object):
         self.low = float(low)
         self.close = float(close)
         self.volume = float(volume)
-
+    def serialize (self):
+        return {'time': self.time, 'open': self.open, 'high': self.high, 'low': self.low, 'close': self.close, 'volume': self.volume}
     def __str__ (self):
         return '{"time": "%s", "open": %g, "high": %g, "low": %g, "close": %g, "volume": %g}' % (
             str(self.time), self.open, self.high, self.low, self.close, self.volume)
-
     def __repr__ (self):
         return self.__str__()
 
@@ -400,12 +399,16 @@ class Market:
         return map(lambda x: x["ohlc"], self.market_indicators_data)
     
     def get_indicator_list (self, num_period=0, start_time=0):
+        #normalize period in days to num_candles
+        num_period  = (num_period * 24*60*60) // self.candle_interval
+        log.info ("num_period: %d start_time: %d"%(num_period, start_time))
         if num_period == 0:
             return self.market_indicators_data
         elif start_time == 0:
             return self.market_indicators_data[-num_period:]
         else:
-            return self.market_indicators_data[-num_period:]            
+            start_candle_idx = (time.time() - start_time)//self.candle_interval
+            return self.market_indicators_data[-start_candle_idx:-(start_candle_idx+num_period)]         
     
     def get_strategies_list (self):
         return self.market_strategies_data

@@ -248,7 +248,10 @@
 				get_param : 'value'
 			},
 			dataType : 'json',
-			success : load_trades
+			success : load_trades,
+			error : function(xhr, error) {
+				console.log("get positions failed!"+error+xhr);
+			}			
 		});
 	}
 
@@ -258,10 +261,15 @@
 			type : 'GET',
 			url : '/api/candles?period=' + g_chart_period,
 			data : {
-				get_param : 'value'
+				start_time : 0,
+				exch_name : active_exch,
+				product : active_market
 			},
 			dataType : 'json',
-			success : load_candles
+			success : load_candles,
+			error : function(xhr, error) {
+				console.log("get candles failed!"+error+xhr);
+			}			
 		});
 	}
 
@@ -306,9 +314,8 @@
 
 		//data = data.slice(data.length - 201, data.length - 1);
 
-		data = data.map(function(d) {
-
-			//console.log(d)
+		data = data.map(function(dd) {
+			d = dd['ohlc']
 			return {
 				date : parseDate(d.time),
 				open : +d.open,

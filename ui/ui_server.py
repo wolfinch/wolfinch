@@ -239,7 +239,48 @@ def server_main (port=8080, mp_pipe=None):
             log.error ("active market not set")
             return "[]"        
         period = request.args.get('period', default=1, type=int)
-        return db_events.get_all_candles(period)
+        start_time = request.args.get('start_time', default=0, type=int)
+        exch_name = str(request.args.get('exch_name', ""))
+        prod_id = str(request.args.get('product', ""))
+        
+#         return db_events.get_all_candles(period)
+        try:
+            msg = {"type": "GET_MARKET_INDICATORS",
+                   "start_time": start_time,
+                   "periods": period,
+                   "exchange": exch_name,
+                   "product": prod_id
+                   }
+            if mp_pipe:
+                msg = mp_send_recv_msg (mp_pipe, msg, True)
+                if msg:
+                    msg_type = msg.get("type")
+                    if msg_type == "GET_MARKET_INDICATORS_RESP":
+                        log.debug ("GET_MARKET_INDICATORS_RESP recv")
+                        candle_list = msg.get("data")
+                        if not candle_list:
+                            err = "invalid candle_list payload"
+                            log.error (err)
+                            raise Exception (err)
+                        else:
+                            log.info ("num candles - %d"%(len(candle_list)))
+                    else:
+                        err = "invalid ui resp msg type: %s" % msg_type
+                        log.error (err)
+                        raise Exception (err)
+            else:
+                err = "server connection can't be found!"
+                log.error (err)
+                raise Exception (err)
+            def serialize (obj):
+                if  hasattr(obj, "__dict__" ):
+                    return obj.__dict__
+                if hasattr(obj, "__slots__" ):
+                    return obj.serialize()
+            return json.dumps(candle_list, default=serialize)
+        except Exception as e:
+            log.error ("Unable to get market list. Exception: %s", e)
+            return "[]"        
         
     @app.route('/api/positions')
     def position_list_api():
