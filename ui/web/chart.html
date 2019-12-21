@@ -207,7 +207,7 @@
 
 	var g_big_data = {
 		name : "BTC-USD",
-		ohlc : [],
+		indicators: {ohlc: []},
 		positions : [],
 		preroll : 0
 	};
@@ -313,22 +313,44 @@
 		console.log("candles data len: " + data.length);
 
 		//data = data.slice(data.length - 201, data.length - 1);
+		
+		data = data.sort(function(a, b) {
+			return d3.ascending(a['ohlc'].time, b['ohlc'].time);
+		});
 
+		if (!data.length) {
+			return;
+		}
+		
+		d = data[0];
+		//create indicators lists
+		Object.keys(d).forEach(function(key) {
+			console.log ("indiactor_name:"+key);
+			g_big_data.indicators[key] = [];
+		});
+		
 		data = data.map(function(dd) {
-			d = dd['ohlc']
-			return {
-				date : parseDate(d.time),
+			d = dd['ohlc'];
+			var date = parseDate(d.time);
+			g_big_data.indicators['ohlc'].push({
+				date : date,
 				open : +d.open,
 				high : +d.high,
 				low : +d.low,
 				close : +d.close,
 				volume : +d.volume
-			};
-		}).sort(function(a, b) {
-			return d3.ascending(a.date, b.date);
+			});
+			
+			Object.keys(dd).forEach(function(key) {
+				//console.log ("date:"+date);
+				if (key != "ohlc") {
+					d = dd[key];
+					g_big_data.indicators[key].push({date: date, value: d});
+				}
+			});
 		});
 
-		g_big_data.ohlc = data;
+		//g_big_data.indicators.ohlc = data;
 
 		d3.select("#chart").call(g_big_chart);
 	}
@@ -444,11 +466,18 @@
 				.yAnnotation(
 						[ ohlcAnnotation, percentAnnotation, volumeAnnotation ]);
 
+		////////////// TODO: generic
+	    var sma = techan.plot.sma()
+        				.xScale(x)
+        				.yScale(y);
+		
+		////////////////////
+	    
 		function bigchart(selection) {
 
-			var data = g_big_data.ohlc;
+			var ohlc_list = g_big_data.indicators.ohlc;
 
-			if (data.length == 0)
+			if (ohlc_list.length == 0)
 				return;
 
 			var svg = selection.select("svg"), defs = svg.append("defs");
@@ -475,77 +504,85 @@
 
 			svg.append('text').attr("class", "symbol").attr("x", 5).attr("y",
 					15).text(g_big_data.name);
-
 			svg.append("g").attr("class", "x axis bottom");
-
 			svg.append("g").attr("class", "x axis top");
-
 			svg.append('text').style("text-anchor", "end").attr("class",
 					"coords").attr("x", 5).attr("y", 35);
-
 			var ohlcSelection = svg.append("g").attr("class", "ohlc").attr(
 					"transform", "translate(0,0)");
-
 			ohlcSelection.append("g").attr("class", "y axis");
-
 			ohlcSelection.append("g").attr("class", "closeValue annotation up");
-
 			ohlcSelection.append("g").attr("class", "volume").attr("clip-path",
 					"url(#ohlcClip)");
-
 			ohlcSelection.append("g").attr("class", "candlestick").attr(
 					"clip-path", "url(#ohlcClip)");
-
-/* 			ohlcSelection.append("g").attr("class", "indicator sma ma-0").attr(
-					"clip-path", "url(#ohlcClip)");
-
-			ohlcSelection.append("g").attr("class", "indicator sma ma-1").attr(
-					"clip-path", "url(#ohlcClip)");
-
-			ohlcSelection.append("g").attr("class", "indicator ema ma-2").attr(
-					"clip-path", "url(#ohlcClip)"); */
-
 			ohlcSelection.append("g").attr("class", "percent axis");
-
 			ohlcSelection.append("g").attr("class", "volume axis");
 
 			// Add trendlines and other interactions last to be above zoom pane
 			svg.append('g').attr("class", "crosshair ohlc");
-
 			svg.append("g").attr("class", "tradearrow").attr("clip-path",
 					"url(#ohlcClip)");
 
+			
+			///////// TODO: generic
+ 			ohlcSelection.append("g").attr("class", "indicator ema ma-3").attr(
+					"clip-path", "url(#ohlcClip)");	
+			
+ 			ohlcSelection.append("g").attr("class", "indicator ema ma-0").attr(
+					"clip-path", "url(#ohlcClip)");
+
+ 			
+			ohlcSelection.append("g").attr("class", "indicator ema ma-1").attr(
+					"clip-path", "url(#ohlcClip)");
+
+			ohlcSelection.append("g").attr("class", "indicator ema ma-2").attr(
+					"clip-path", "url(#ohlcClip)"); 
+
+
+			////////////////
+			
 			var accessor = candlestick.accessor();
 			var indicatorPreRoll = g_big_data.preroll;
-			var postRollData = data.slice(indicatorPreRoll); // Don't show where indicators don't have data 
+			var postRollData = ohlc_list.slice(indicatorPreRoll); // Don't show where indicators don't have data 
 
-			x.domain(techan.scale.plot.time(data).domain());
+			x.domain(techan.scale.plot.time(ohlc_list).domain());
 			y.domain(techan.scale.plot.ohlc(postRollData).domain());
 
 			yPercent.domain(techan.scale.plot.percent(y,
-					accessor(data[indicatorPreRoll])).domain());
+					accessor(ohlc_list[indicatorPreRoll])).domain());
 			yVolume.domain(techan.scale.plot.volume(postRollData).domain());
 
 			// Stash for zooming
 			//zoomableInit = x.zoomable().domain(
-			//		[ indicatorPreRoll, data.length ]).copy(); // Zoom in a little to hide indicator preroll
+			//		[ indicatorPreRoll, ohlc_list.length ]).copy(); // Zoom in a little to hide indicator preroll
 			zoomableInit = x.zoomable().clamp(false).copy();
 			//zoomableInit = x.copy();
 			yInit = y.copy();
 			yPercentInit = yPercent.copy();
 
-			//x.zoomable().domain([ indicatorPreRoll, data.length ]); // Zoom in a little to hide indicator preroll
+			//x.zoomable().domain([ indicatorPreRoll, ohlc_list.length ]); // Zoom in a little to hide indicator preroll
 
 			resize(selection);
 
-			svg.select("g.candlestick").datum(data).call(candlestick);
+			svg.select("g.candlestick").datum(ohlc_list).call(candlestick);
 			svg.select("g.closeValue.annotation").datum(
-					[ data[data.length - 1] ]).call(closeAnnotation);
-			svg.select("g.volume").datum(data).call(volume);
+					[ ohlc_list[ohlc_list.length - 1] ]).call(closeAnnotation);
+			svg.select("g.volume").datum(ohlc_list).call(volume);
 					
 			
 			svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
 			//svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
+			
+			////////////// TODO: generic
+			
+	        svg.select("g.ema.ma-3").datum(g_big_data.indicators.close).call(sma);
+			
+	        svg.select("g.ema.ma-0").datum(g_big_data.indicators.EMA70).call(sma);
+	        svg.select("g.ema.ma-1").datum(g_big_data.indicators.EMA85).call(sma);
+	        svg.select("g.ema.ma-2").datum(g_big_data.indicators.EMA90).call(sma);
+			
+			//////////////
 
 			selection.call(draw);
 		}
@@ -614,14 +651,15 @@
 			svg.select("g.volume.axis").call(volumeAxis);
 			svg.select("g.percent.axis").call(percentAxis);
 
-			if (g_big_data.ohlc.length == 0)
+
+			if (g_big_data.indicators.ohlc.length == 0)
 				return;
 
 			var i = 0;
 			var pos_list = [];
-			if (g_big_data.ohlc.length > 0 && g_big_data.positions.length > 0) {
+			if (g_big_data.indicators.ohlc.length > 0 && g_big_data.positions.length > 0) {
 				for (i = 0; i < g_big_data.positions.length; i++) {
-					if (g_big_data.positions[i].date >= g_big_data.ohlc[0].date)
+					if (g_big_data.positions[i].date >= g_big_data.indicators.ohlc[0].date)
 						break;
 				}
 
@@ -642,6 +680,14 @@
 
 			svg.select("g.crosshair.ohlc").call(ohlcCrosshair.refresh);
 
+			////TODO: generic
+			svg.select("g .ema.ma-3").call(sma.refresh);
+			
+			svg.select("g .ema.ma-0").call(sma.refresh);
+			svg.select("g .ema.ma-1").call(sma.refresh);
+			svg.select("g .ema.ma-2").call(sma.refresh);
+			
+			////			
 		}
 
 		return bigchart;

@@ -198,6 +198,10 @@ path.volume {
 	stroke: #ff7f0e;
 }
 
+.ma-3 path.line {
+	stroke: #ff7fae;
+}
+
 button {
 	position: absolute;
 	right: 110px;
