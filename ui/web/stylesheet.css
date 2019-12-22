@@ -202,6 +202,22 @@ path.volume {
 	stroke: #ff7fae;
 }
 
+.ma-4 path.line {
+	stroke: #1f78b4;
+}
+
+.ma-5 path.line {
+	stroke: #aec9e8;
+}
+
+.ma-6 path.line {
+	stroke: #ff740e;
+}
+
+.ma-7 path.line {
+	stroke: #ff70ae;
+}
+
 button {
 	position: absolute;
 	right: 110px;

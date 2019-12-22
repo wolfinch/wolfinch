@@ -369,20 +369,16 @@
 	function BigChart() {
 
 		var dim = {
-			width : 0,
-			height : 0,
+			width : 700,
+			height : 500,
 			margin : {
 				top : 25,
 				right : 50,
 				bottom : 25,
 				left : 50
 			},
-			plot : {
-				width : null,
-				height : null
-			},
 			ohlc : {
-				height : null
+				height : 300
 			},
 			indicator : {
 				height : 65,
@@ -391,18 +387,24 @@
 				bottom: 0
 			}
 		};
-
-		var x = techan.scale.financetime().range([0, 700]);;
-		var y = d3.scaleLinear().range([500, 0]);;
-		var yPercent = y.copy();
-		var yVolume = d3.scaleLinear();
-		var candlestick = techan.plot.candlestick().xScale(x).yScale(y);
+	    dim.plot = {
+	            width: dim.width - dim.margin.left - dim.margin.right,
+	            height: dim.height - dim.margin.top - dim.margin.bottom
+	        };
 		
 	    dim.indicator.top = dim.ohlc.height+dim.indicator.padding;
 	    dim.indicator.bottom = dim.indicator.top+dim.indicator.height+dim.indicator.padding;
 		
 	    var indicatorTop = d3.scaleLinear().range([dim.indicator.top, dim.indicator.bottom]);
 	    
+	    
+		var x = techan.scale.financetime().range([0, dim.plot.width]);;
+		var y = d3.scaleLinear().range([dim.plot.height, 0]);;
+		
+		var yPercent = y.copy();
+		var yVolume = d3.scaleLinear();
+		var candlestick = techan.plot.candlestick().xScale(x).yScale(y);
+
 		function zoomed() {
 
 			console.log("zoomed");
@@ -541,7 +543,7 @@
 		            .attr("width", dim.plot.width)
 		            .attr("height", dim.ohlc.height);
     		
-			defs.selectAll("indicatorClip").data([0, 1])
+			defs.selectAll("indicatorClip").data([0]) //TODO: add list for >1 indi[0,1,2..]
         		.enter()
 	            .append("clipPath")
 	            .attr("id", function(d, i) { return "indicatorClip-" + i; })
@@ -692,13 +694,20 @@
 			dim.height = selection.node().clientHeight;
 			dim.plot.width = dim.width - dim.margin.left - dim.margin.right;
 			dim.plot.height = dim.height - dim.margin.top - dim.margin.bottom;
-			dim.ohlc.height = dim.plot.height;
-
+			dim.ohlc.height = dim.plot.height - dim.indicator.height;
+			
+		    dim.indicator.top = dim.ohlc.height+dim.indicator.padding;
+		    dim.indicator.bottom = dim.indicator.top+dim.indicator.height+dim.indicator.padding;
+		    
+		    indicatorTop = d3.scaleLinear().range([dim.indicator.top, dim.indicator.bottom]);
+		    
+			//indicatorTop.range([dim.indicator.top, dim.indicator.bottom]);
+			
+			
 			var xRange = [ 0, dim.plot.width ], yRange = [ dim.ohlc.height, 0 ], ohlcVerticalTicks = Math
 					.min(10, Math.round(dim.height / 70)), xTicks = Math.min(
 					10, Math.round(dim.width / 130));
 
-			//indicatorTop.range([dim.indicator.top, dim.indicator.bottom]);
 			x.range(xRange);
 			xAxis.ticks(xTicks);
 			xAxisTop.ticks(xTicks);
@@ -735,6 +744,26 @@
 			selection.select("g.ohlc g.y.axis").attr("transform",
 					"translate(" + xRange[1] + ",0)");
 
+			selection.selectAll("defs #ohlcClip > rect").attr("width",
+					dim.plot.width).attr("height", dim.ohlc.height);
+			
+            selection.selectAll("defs .indicatorClip > rect").attr("y", function(d, i) {
+            	return indicatorTop(i); })
+            	.attr("id", function(d, i) { return "indicatorClip-" + i; })
+            	.attr("width", dim.plot.width).attr("height", dim.indicator.height);
+            
+            console.log("resize dim:"+JSON.stringify(dim)+" indTop: "+indicatorTop(0));
+            /*
+			defs.selectAll("indicatorClip").data([0]) //TODO: add list for >1 indi[0,1,2..]
+    		.enter()
+            .append("clipPath")
+            .attr("id", function(d, i) { return "indicatorClip-" + i; })
+        	.append("rect")
+            .attr("x", 0)
+            .attr("y", function(d, i) { return indicatorTop(i); })
+            .attr("width", dim.plot.width)
+            .attr("height", dim.indicator.height);    		
+*/
 		}
 
 		function draw(selection) {
