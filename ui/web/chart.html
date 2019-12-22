@@ -329,6 +329,8 @@
 			g_big_data.indicators[key] = [];
 		});
 		
+		
+		// Candles Indicator Values 
 		data = data.map(function(dd) {
 			d = dd['ohlc'];
 			var date = parseDate(d.time);
@@ -343,7 +345,16 @@
 			
 			Object.keys(dd).forEach(function(key) {
 				//console.log ("date:"+date);
-				if (key != "ohlc") {
+				if (key.toLowerCase().indexOf("rsi") != -1) {
+					// RSIs
+					g_big_data.indicators[key].push({					
+					  date: date,
+					  rsi: dd[key],
+					  middle: 30,
+					  overbought: 70,
+					  oversold: 20
+					});
+				} else if (key.toLowerCase().indexOf("ohlc") != -1) {
 					d = dd[key];
 					g_big_data.indicators[key].push({date: date, value: d});
 				}
@@ -358,8 +369,8 @@
 	function BigChart() {
 
 		var dim = {
-			width : null,
-			height : null,
+			width : 0,
+			height : 0,
 			margin : {
 				top : 25,
 				right : 50,
@@ -374,10 +385,10 @@
 				height : null
 			},
 			indicator : {
-				height : null,
-				padding : null,
-				top : null,
-				bottom : null
+				height : 65,
+				padding : 5,
+				top: 0,
+				bottom: 0
 			}
 		};
 
@@ -386,7 +397,12 @@
 		var yPercent = y.copy();
 		var yVolume = d3.scaleLinear();
 		var candlestick = techan.plot.candlestick().xScale(x).yScale(y);
-
+		
+	    dim.indicator.top = dim.ohlc.height+dim.indicator.padding;
+	    dim.indicator.bottom = dim.indicator.top+dim.indicator.height+dim.indicator.padding;
+		
+	    var indicatorTop = d3.scaleLinear().range([dim.indicator.top, dim.indicator.bottom]);
+	    
 		function zoomed() {
 
 			console.log("zoomed");
@@ -467,10 +483,14 @@
 						[ ohlcAnnotation, percentAnnotation, volumeAnnotation ]);
 
 		////////////// TODO: generic
-	    var sma = techan.plot.sma()
+	    var ind_line = techan.plot.sma()
         				.xScale(x)
         				.yScale(y);
-		
+		//RSI
+		var rsiScale = d3.scaleLinear()
+    		.range([indicatorTop(0)+dim.indicator.height, indicatorTop(0)]);
+	    var rsi = techan.plot.rsi().xScale(x).yScale(rsiScale);
+	    // RSI end
 		////////////////////
 	    
 		function bigchart(selection) {
@@ -508,6 +528,31 @@
 			svg.append("g").attr("class", "x axis top");
 			svg.append('text').style("text-anchor", "end").attr("class",
 					"coords").attr("x", 5).attr("y", 35);
+			
+			////// TODO: generic:
+				//indicator
+    		var defs = svg.append("defs");
+
+    		defs.append("clipPath")
+		            .attr("id", "ohlcClip")
+		        	.append("rect")
+		            .attr("x", 0)
+		            .attr("y", 0)
+		            .attr("width", dim.plot.width)
+		            .attr("height", dim.ohlc.height);
+    		
+			defs.selectAll("indicatorClip").data([0, 1])
+        		.enter()
+	            .append("clipPath")
+	            .attr("id", function(d, i) { return "indicatorClip-" + i; })
+	        	.append("rect")
+	            .attr("x", 0)
+	            .attr("y", function(d, i) { return indicatorTop(i); })
+	            .attr("width", dim.plot.width)
+	            .attr("height", dim.indicator.height);
+			////
+			
+			
 			var ohlcSelection = svg.append("g").attr("class", "ohlc").attr(
 					"transform", "translate(0,0)");
 			ohlcSelection.append("g").attr("class", "y axis");
@@ -539,7 +584,32 @@
 			ohlcSelection.append("g").attr("class", "indicator ema ma-2").attr(
 					"clip-path", "url(#ohlcClip)"); 
 
+			//RSI:
 
+		    var rsiAxis = d3.axisRight(rsiScale)
+		            .ticks(3);
+		
+		    var rsiAnnotation = techan.plot.axisannotation()
+		            .axis(rsiAxis)
+		            .orient("right")
+		            .format(d3.format(',.2f'))
+		            .translate([x(1), 0]);
+		
+		    var rsiAxisLeft = d3.axisLeft(rsiScale)
+		            .ticks(3);
+		
+		    var rsiAnnotationLeft = techan.plot.axisannotation()
+		            .axis(rsiAxisLeft)
+		            .orient("left")
+		            .format(d3.format(',.2f'));
+		    var rsiCrosshair = techan.plot.crosshair()
+            .xScale(timeAnnotation.axis().scale())
+            .yScale(rsiAnnotation.axis().scale())
+            .xAnnotation(timeAnnotation)
+            .yAnnotation([rsiAnnotation, rsiAnnotationLeft])
+            .verticalWireRange([0, dim.plot.height]);
+		    
+		    // RSI -end
 			////////////////
 			
 			var accessor = candlestick.accessor();
@@ -575,12 +645,38 @@
 			//svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
 			
 			////////////// TODO: generic
+			// RSI
+		    var indicatorSelection = svg.selectAll("svg > g.indicator").data(["rsi"]).enter()
+		             .append("g")
+		                .attr("class", function(d) { return d + " indicator"; });
+		
+		    indicatorSelection.append("g")
+		            .attr("class", "axis right")
+		            .attr("transform", "translate(" + x(0) + ",0)");
+		
+/* 		    indicatorSelection.append("g")
+		            .attr("class", "axis left")
+		            .attr("transform", "translate(" + x(1) + ",0)");
+		
+
+		     */
+		    indicatorSelection.append("g")
+	            .attr("class", "indicator-plot")
+	            .attr("clip-path", function(d, i) { 
+	            	console.log ("here:"+i+" d:"+d);
+	            	return "url(#indicatorClip-" + i + ")"; 
+	            	}); 		     
+		    // RSI plot
+		    rsiScale.domain(techan.scale.plot.rsi(g_big_data.indicators.RSI76).domain());
+	        svg.select("g.rsi .indicator-plot").datum(g_big_data.indicators.RSI76).call(rsi);
+
+			//RSI end
 			
-	        svg.select("g.ema.ma-3").datum(g_big_data.indicators.close).call(sma);
+	        svg.select("g.ema.ma-3").datum(g_big_data.indicators.close).call(ind_line);
 			
-	        svg.select("g.ema.ma-0").datum(g_big_data.indicators.EMA70).call(sma);
-	        svg.select("g.ema.ma-1").datum(g_big_data.indicators.EMA85).call(sma);
-	        svg.select("g.ema.ma-2").datum(g_big_data.indicators.EMA90).call(sma);
+	        svg.select("g.ema.ma-0").datum(g_big_data.indicators.EMA70).call(ind_line);
+	        svg.select("g.ema.ma-1").datum(g_big_data.indicators.EMA85).call(ind_line);
+	        svg.select("g.ema.ma-2").datum(g_big_data.indicators.EMA90).call(ind_line);
 			
 			//////////////
 
@@ -681,12 +777,19 @@
 			svg.select("g.crosshair.ohlc").call(ohlcCrosshair.refresh);
 
 			////TODO: generic
-			svg.select("g .ema.ma-3").call(sma.refresh);
+			svg.select("g .ema.ma-3").call(ind_line.refresh);
 			
-			svg.select("g .ema.ma-0").call(sma.refresh);
-			svg.select("g .ema.ma-1").call(sma.refresh);
-			svg.select("g .ema.ma-2").call(sma.refresh);
+			svg.select("g .ema.ma-0").call(ind_line.refresh);
+			svg.select("g .ema.ma-1").call(ind_line.refresh);
+			svg.select("g .ema.ma-2").call(ind_line.refresh);
 			
+			//RSI 
+			//svg.select("g.rsi .axis.right").call(rsiAxis);
+			//svg.select("g.rsi .axis.left").call(rsiAxisLeft);
+			svg.select("g.rsi .indicator-plot").call(rsi.refresh);
+			//svg.select("g.crosshair.rsi").call(rsiCrosshair.refresh);
+			 
+			//RSI end
 			////			
 		}
 
