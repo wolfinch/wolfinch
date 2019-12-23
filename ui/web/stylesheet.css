@@ -244,7 +244,7 @@ path.difference {
 }
 
 path.rsi {
-	stroke: #000000;
+	stroke: cyan;
 }
 
 path.overbought, path.oversold {
