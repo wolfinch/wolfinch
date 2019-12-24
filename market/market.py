@@ -409,6 +409,7 @@ class Market:
         else:
             start_candle_idx = (time.time() - start_time)//self.candle_interval
             return self.market_indicators_data[-start_candle_idx:-(start_candle_idx+num_period)]         
+
     
     def get_strategies_list (self):
         return self.market_strategies_data
@@ -462,7 +463,11 @@ class Market:
         log.info ("pause_trading: buy_pause:%d sell_pause: %d" % (buy_pause, sell_pause))
         self.trading_paused_buy = buy_pause
         self.trading_paused_sell = sell_pause
-
+    
+    def get_positions_list(self, from_time=0, to_time=0):
+        log.info ("from_time: %d to_time: %d"%(from_time, to_time))
+        return self.order_book.get_positions(from_time, to_time)
+    
     def _handle_tp_and_sl (self):
  
         trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())

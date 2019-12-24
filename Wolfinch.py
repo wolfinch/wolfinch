@@ -204,6 +204,21 @@ def process_ui_get_market_indicators_rr(msg, ui_conn_pipe):
     msg["data"] = ind_list
     ui_conn_pipe.send(msg)
     
+def process_ui_get_positions_rr(msg, ui_conn_pipe):
+    log.debug("enter")
+    exch = msg.get("exchange")
+    product = msg.get("product")
+    start_time = msg.get("start_time", 0)
+    end_time = msg.get("end_time", 0)
+    market = get_market_by_product(exch, product)
+    pos_list = {}
+    if market:
+        log.info ("get positions ")
+        pos_list = market.get_positions_list(start_time, end_time)
+    msg["type"] = "GET_MARKET_POSITIONS_RESP"
+    msg["data"] = pos_list
+    ui_conn_pipe.send(msg)    
+    
 def process_ui_msgs(ui_conn_pipe):
     try:
         while ui_conn_pipe.poll():
@@ -213,6 +228,7 @@ def process_ui_msgs(ui_conn_pipe):
                 log.error("error in the pipe, ui finished: msg:%s" %(err))
                 raise Exception("UI error - %s" %(err))
             else:
+                log.info ("ui_msg: %s"%(msg))
                 msg_type = msg.get("type")
                 if msg_type == "TRADE":
                     process_ui_trade_notif(msg)
@@ -220,6 +236,8 @@ def process_ui_msgs(ui_conn_pipe):
                     process_ui_get_markets_rr(msg, ui_conn_pipe)
                 elif msg_type == "GET_MARKET_INDICATORS":
                     process_ui_get_market_indicators_rr(msg, ui_conn_pipe)                    
+                elif msg_type == "GET_MARKET_POSITIONS":
+                    process_ui_get_positions_rr(msg, ui_conn_pipe)                        
                 elif msg_type == "PAUSE_TRADING":
                     process_ui_pause_trading_notif(msg)
                 else:

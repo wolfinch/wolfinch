@@ -24,7 +24,7 @@ from decimal import getcontext
 import argparse
 import os
 import json
-import time
+from multiprocessing import Lock
 from flask import Flask, request, send_from_directory
 
 from utils import getLogger
@@ -45,6 +45,8 @@ UI_CODES_FILE = "data/ui_codes.json"
 UI_TRADE_SECRET = "1234"
 UI_PAGE_SECRET = "1234"
 
+g_mp_lock = None
+
 def load_ui_codes ():
     global UI_TRADE_SECRET, UI_PAGE_SECRET
     log.info ("loading ui codes")
@@ -63,6 +65,9 @@ def server_main (port=8080, mp_pipe=None):
 #     if not db_events.init(EXCH_NAME, PRODUCT_ID):
 #         log.error ("db_events init failure")
 #         return
+    
+    global g_mp_lock
+    g_mp_lock = Lock()
     
     load_ui_codes ()
     
@@ -234,17 +239,17 @@ def server_main (port=8080, mp_pipe=None):
             return "{}"
             
     @app.route('/api/candles')
-    def candle_list_api():
-        if len(g_active_market) <= 0:
-            log.error ("active market not set")
-            return "[]"        
+    def candle_list_api():       
         period = request.args.get('period', default=1, type=int)
         start_time = request.args.get('start_time', default=0, type=int)
         exch_name = str(request.args.get('exch_name', ""))
         prod_id = str(request.args.get('product', ""))
         
-#         return db_events.get_all_candles(period)
         try:
+            if exch_name == "" or prod_id == "":
+                log.error ("invalid markets")
+                return "[]"
+                        
             msg = {"type": "GET_MARKET_INDICATORS",
                    "start_time": start_time,
                    "periods": period,
@@ -283,11 +288,61 @@ def server_main (port=8080, mp_pipe=None):
             return "[]"        
         
     @app.route('/api/positions')
-    def position_list_api():
-        if len(g_active_market) <= 0:
-            log.error ("active market not set")
-            return "[]"        
-        return db_events.get_all_positions()
+    def position_list_api():     
+        from_time = request.args.get('from_time', default=0, type=int)
+        to_time = request.args.get('to_time', default=0, type=int)        
+        exch_name = str(request.args.get('exch_name', ""))
+        prod_id = str(request.args.get('product', ""))
+        
+#         return db_events.get_all_candles(period)
+        try:
+            if exch_name == "" or prod_id == "":
+                log.error ("invalid markets")
+                return "[]"
+            
+            msg = {"type": "GET_MARKET_POSITIONS",
+                   "from_time": from_time,
+                   "to_time": to_time,                   
+                   "exchange": exch_name,
+                   "product": prod_id
+                   }
+            if mp_pipe:
+                msg = mp_send_recv_msg (mp_pipe, msg, True)
+                if msg:
+                    msg_type = msg.get("type")
+                    if msg_type == "GET_MARKET_POSITIONS_RESP":
+                        log.debug ("GET_MARKET_POSITIONS_RESP recv")
+                        pos_list = msg.get("data")
+                        if not pos_list:
+                            err = "invalid pos_list payload"
+                            log.error (err)
+                            raise Exception (err)
+                        else:
+                            log.info ("num pos - %d"%(len(pos_list)))
+                    else:
+                        err = "invalid ui resp msg type: %s" % msg_type
+                        log.error (err)
+                        raise Exception (err)
+            else:
+                err = "server connection can't be found!"
+                log.error (err)
+                raise Exception (err)
+            def serialize (obj):
+                if  hasattr(obj, "__dict__" ):
+                    return obj.__dict__
+                if hasattr(obj, "__slots__" ):
+                    return obj.serialize()
+            return json.dumps(pos_list, default=serialize)
+        except Exception as e:
+            log.error ("Unable to get market list. Exception: %s", e)
+            return "[]" 
+            
+#     @app.route('/api/positions')
+#     def position_list_api():
+#         if len(g_active_market) <= 0:
+#             log.error ("active market not set")
+#             return "[]"        
+#         return db_events.get_all_positions()
             
     @app.route('/api/manual_order', methods=["POST"])
     def exec_manual_order_api():
@@ -352,9 +407,12 @@ def server_main (port=8080, mp_pipe=None):
 
         
 def mp_send_recv_msg(mp_pipe, msg, wait_resp=False):
+    global g_mp_lock
     try:
+        g_mp_lock.acquire()
         mp_pipe.send(msg)
         if False == wait_resp:
+            g_mp_lock.release()
             return
         # wait for 10 secs for resp
         while mp_pipe.poll(10):
@@ -364,10 +422,13 @@ def mp_send_recv_msg(mp_pipe, msg, wait_resp=False):
                 log.error ("error in the pipe, ui finished: msg:%s" % (err))
                 raise Exception("UI error - %s" % (err))
             else:
+                g_mp_lock.release()
                 return msg
+        g_mp_lock.release()        
         return None
     except Exception as e:
         log.critical ("exception %s on ui" % (e))
+        g_mp_lock.release()        
         raise e
 
     

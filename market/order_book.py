@@ -518,6 +518,10 @@ class OrderBook():
         log.info("all positions and orders are restored")
 #         sys.exit()
                 
+    def get_positions (self, from_time=0, to_time=0):
+        log.info("get positions ", from_time, to_time)
+        return self.all_positions[:]
+        
     def dump_traded_orders(self, fd=sys.stdout):
         traded = str(list(self.traded_buy_orders_db.values()) + list(self.traded_sell_orders_db.values()))
         fd.write(traded)

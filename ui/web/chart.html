@@ -245,9 +245,12 @@
 		console.log("load positions");
 		$.ajax({
 			type : 'GET',
-			url : '/api/positions?period=' + g_chart_period,
+			url : '/api/positions',
 			data : {
-				get_param : 'value'
+				from_time : 0,
+				to_time: 0,
+				exch_name : active_exch,
+				product : active_market
 			},
 			dataType : 'json',
 			success : load_trades,
@@ -468,22 +471,44 @@
 		}).on("mouseenter", enter).on("mouseout", out);
 
 		function enter(d) {
+			console.log ("enter");			
 			d3.select("text.coords").style("display", "inline");
 			refreshText(d);
 		}
 
 		function out() {
+			console.log ("out");
 			d3.select("text.coords").style("display", "none");
 		}
 
 		function refreshText(d) {
+			console.log ("refresh");			
 			d3.select("text.coords").text(
 					"Trade: " + dateFormat(d.date) + ", " + d.type + ", "
 							+ valueFormat(d.price));
 		}
 
 		////////////// TODO: generic, add more supported indicators here to plot.
+
+		function lineenter(d) {
+			console.log ("line enter");			
+			d3.select("text.coords").style("display", "inline");
+			refreshText(d);
+		}
+
+		function lineout() {
+			console.log ("line out");
+			d3.select("text.coords").style("display", "none");
+		}
+
+		function linerefreshText(d) {
+			console.log ("line refresh");			
+			d3.select("text.coords").text(
+					"Trade: " + dateFormat(d.date) + ", " + d.type + ", "
+							+ valueFormat(d.price));
+		}		
 	    var ind_line = techan.plot.sma().xScale(x).yScale(y);
+		//.on("mouseenter", lineenter).on("mouseout", lineout);		
 		
 		console.log ("check and declare plots");
 		//if (listContains(g_big_data.indicator_plots, "macd")){
