@@ -229,8 +229,8 @@
 		console.log("load stats");
 		loadPositions();
 		setTimeout(loadCandles, 1000);
-		//setInterval(loadPositions, 120000);
-		//setInterval(loadCandles, 120000);
+		setInterval(loadPositions, 120000);
+		setInterval(loadCandles, 120000);
 	}
 
 	var dateFormat = d3.timeFormat("%c"), valueFormat = d3.format(',.4f');
