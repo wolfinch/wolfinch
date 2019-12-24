@@ -186,38 +186,6 @@ path.volume {
 	stroke-width: 1;
 }
 
-.ma-0 path.line {
-	stroke: #1f77b4;
-}
-
-.ma-1 path.line {
-	stroke: #aec7e8;
-}
-
-.ma-2 path.line {
-	stroke: #ff7f0e;
-}
-
-.ma-3 path.line {
-	stroke: #ff7fae;
-}
-
-.ma-4 path.line {
-	stroke: #1f78b4;
-}
-
-.ma-5 path.line {
-	stroke: #aec9e8;
-}
-
-.ma-6 path.line {
-	stroke: #ff740e;
-}
-
-.ma-7 path.line {
-	stroke: #ff70ae;
-}
-
 button {
 	position: absolute;
 	right: 110px;
@@ -326,6 +294,66 @@ path.middle, path.zero {
 
 .crosshair .axisannotation path {
     fill: #777777;
+}
+
+.y.annotation.right path {
+    fill: #FF0000;
+}
+
+.ma-0 path.line {
+	stroke: #1f77b4;
+}
+
+.ma-1 path.line {
+	stroke: #aec7e8;
+}
+
+.ma-2 path.line {
+	stroke: #ff7f0e;
+}
+
+.ma-3 path.line {
+	stroke: #ff7fae;
+}
+
+.ma-4 path.line {
+	stroke: #1f78b4;
+}
+
+.ma-5 path.line {
+	stroke: #aec9e8;
+}
+
+.ma-6 path.line {
+	stroke: #ff740e;
+}
+
+.ma-7 path.line {
+	stroke: #ff70ae;
+}
+
+.indicator.annotation.ma-0 path {
+    fill: #1f77b4;
+}
+
+.indicator.annotation.ma-1 path {
+    fill: #aec7e8;
+}
+
+.indicator.annotation.ma-2 path {
+    fill: #ff7f0e;
+}
+
+.indicator.annotation.ma-3 path {
+    fill: #ff7fae;
+}
+
+.indicator.annotation.ma-4 path {
+    fill: #1f78b4;
+}
+
+.indicator.annotation.ma-5 path {
+    fill: #aec9e8;
 }
 
 .tradearrow path.tradearrow {

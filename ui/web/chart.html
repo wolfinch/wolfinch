@@ -325,6 +325,11 @@
 		}
 
 		//create indicators lists
+		 
+		g_big_data.indicator_plots = [],
+			g_big_data.indicator_lines = [],	
+			g_big_data.indicators = {ohlc: []},
+			g_big_data.preroll = 0;
 	
 		d = data[0];
 		Object.keys(d).forEach(function(key) {
@@ -364,7 +369,7 @@
 					g_big_data.indicators[key].push({					
 					  date: date,
 					  rsi: dd[key],
-					  middle: 30,
+					  middle: 50,
 					  overbought: 70,
 					  oversold: 20
 					});
@@ -421,6 +426,10 @@
    	        volumeAnnotation = techan.plot.axisannotation().orient('right').axis(volumeAxis).width(35),
    	        ohlcCrosshair = techan.plot.crosshair().xScale(x).yScale(y).xAnnotation([timeAnnotation, timeAnnotationTop])
    	        				.yAnnotation([ohlcAnnotation, percentAnnotation, volumeAnnotation]);
+   	    var ohlcIndicatorAnnotation = techan.plot.axisannotation()
+    	    .axis(yAxis)//.accessor(candlestick.accessor())
+        	.orient('right').format(d3.format(',.2f'))
+        	.width(32);
    	        
    	    // trendline = techan.plot.trendline().xScale(x).yScale(y),
    	       // supstance = techan.plot.supstance().xScale(x).yScale(y).annotation([ohlcAnnotation, percentAnnotation]);
@@ -575,9 +584,11 @@
       // indicator lines
       for (i=0; i< g_big_data.indicator_lines.length; i++) {
 			console.log ("add indicator line-"+i);
-	       	ohlcSelection.append("g")
+	       	var indline = ohlcSelection.append("g")
 	        	.attr("class", "indicator sma ma-"+i)
-	        	.attr("clip-path", "url(#ohlcClip)"); 
+	        	.attr("clip-path", "url(#ohlcClip)");
+	       	ohlcSelection.append("g")
+            	.attr("class", "indicator annotation ma-"+i+" up");      	
       }
       
       ohlcSelection.append("g")
@@ -611,13 +622,15 @@
       
       svg.select("g.candlestick").datum(ohlc_list).call(candlestick);
       svg.select("g.closeValue.annotation").datum([ohlc_list[ohlc_list.length - 1] ]).call(closeAnnotation);
+      
       svg.select("g.volume").datum(ohlc_list).call(volume);
       
       svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
       
       console.log ("indi selection");
       ////////// TODO: generic g_big_data.indicator_plots).enter() // svg.selectAll("svg > g.indicator")
-      var indicatorSelection = svg.selectAll("svg > g.indicator").data(g_big_data.indicator_plots).enter()//["macd", "rsi54"]).enter()
+      var indicatorSelection = svg.selectAll("svg > g.indicator")
+      	.data(g_big_data.indicator_plots.filter(function (d) {return (d != "ohlc")})).enter()
         .append("g")
         .attr("class", function(d) { 
         	console.log("indi "+d);
@@ -654,7 +667,10 @@
       }
 
       for (var i=0; i<g_big_data.indicator_lines.length; i++){
-	      svg.select("g.sma.ma-"+i).datum(g_big_data.indicators[g_big_data.indicator_lines[i]]).call(ind_line);    
+	      var data = g_big_data.indicators[g_big_data.indicator_lines[i]];    	  
+	      svg.select("g.sma.ma-"+i).datum(data).call(ind_line); 
+	      svg.select("g.indicator.annotation.ma-"+i)
+	      .datum([data[data.length-1]]).call(ohlcIndicatorAnnotation);
       }
       ////////////
       
@@ -699,6 +715,7 @@
 		      timeAnnotation.translate([0, dim.plot.height]);
 		      ohlcAnnotation.translate([xRange[1], 0]);
 		      closeAnnotation.translate([xRange[1], 0]);
+		      ohlcIndicatorAnnotation.translate([xRange[1], 0]);
 		      ohlcCrosshair.verticalWireRange([0, dim.plot.height]);
 
 	          for (var i=0, j=0; i<g_big_data.indicator_plots.length; i++){
@@ -750,7 +767,7 @@
 		      selection.selectAll("g.indicator g.axis.left")
 		        .attr("transform", "translate(" + xRange[0] + ",0)");
 	       
-		      console.log("resize dim:"+JSON.stringify(dim)+" indTop: "+indicatorTop(0));
+		      //console.log("resize dim:"+JSON.stringify(dim)+" indTop: "+indicatorTop(0));
 		}
 
 	    function draw(selection) {
@@ -804,9 +821,7 @@
 	        
 		    for (i=0; i<g_big_data.indicator_lines.length; i++) {		    
 				svg.select("g .sma.ma-"+i).call(ind_line.refresh);
-/* 	        svg.select("g .sma.ma-1").call(ind_line.refresh);
-	        svg.select("g .sma.ma-2").call(ind_line.refresh);
-	        svg.select("g .sma.ma-3").call(ind_line.refresh); */
+			    svg.select("g.indicator.annotation.ma-"+i).call(ohlcIndicatorAnnotation.refresh);
 		    }
 
 	        ////
