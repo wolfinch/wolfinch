@@ -327,12 +327,7 @@ def server_main (port=8080, mp_pipe=None):
                 err = "server connection can't be found!"
                 log.error (err)
                 raise Exception (err)
-            def serialize (obj):
-                if  hasattr(obj, "__dict__" ):
-                    return obj.__dict__
-                if hasattr(obj, "__slots__" ):
-                    return obj.serialize()
-            return json.dumps(pos_list, default=serialize)
+            return str(pos_list)
         except Exception as e:
             log.error ("Unable to get market list. Exception: %s", e)
             return "[]" 
