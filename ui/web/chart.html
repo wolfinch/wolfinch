@@ -264,8 +264,9 @@
 		console.log("load candles");
 		$.ajax({
 			type : 'GET',
-			url : '/api/candles?period=' + g_chart_period,
+			url : '/api/candles',
 			data : {
+				period: g_chart_period,
 				start_time : 0,
 				exch_name : active_exch,
 				product : active_market

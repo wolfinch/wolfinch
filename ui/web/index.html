@@ -323,7 +323,13 @@
 					"processing" : true,
 					pageLength : 25,
 					ajax : {
-						url : "/api/positions?abcd=1",
+						url : "/api/positions",
+			 			data : {
+							from_time : 0,
+							to_time: 0,
+							exch_name : active_exch,
+							product : active_market
+						},
 						dataSrc : ''
 					},
 
