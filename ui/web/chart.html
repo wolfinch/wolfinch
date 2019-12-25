@@ -345,7 +345,9 @@
 				// Add supported indicators
 				g_big_data.indicator_plots.push(key);
 			} else {
-				g_big_data.indicator_lines.push(key);
+				if (key != "close"){
+					g_big_data.indicator_lines.push(key);
+				}
 			}
 			
 			g_big_data.indicators[key] = [];
@@ -433,7 +435,7 @@
     	    .axis(yAxis)//.accessor(candlestick.accessor())
         	.orient('right').format(d3.format(',.2f'))
         	.width(32);
-   	        
+
    	    // trendline = techan.plot.trendline().xScale(x).yScale(y),
    	       // supstance = techan.plot.supstance().xScale(x).yScale(y).annotation([ohlcAnnotation, percentAnnotation]);
 		var yInit, yPercentInit, zoomableInit;
@@ -472,42 +474,39 @@
 
 		function enter(d) {
 			console.log ("enter");			
-			d3.select("text.coords").style("display", "inline");
+	        valueText.style("display", "inline");
 			refreshText(d);
 		}
 
 		function out() {
 			console.log ("out");
-			d3.select("text.coords").style("display", "none");
+	        valueText.style("display", "none");
 		}
 
 		function refreshText(d) {
 			console.log ("refresh");			
-			d3.select("text.coords").text(
-					"Trade: " + dateFormat(d.date) + ", " + d.type + ", "
-							+ valueFormat(d.price));
+	        valueText.text("Trade: " + dateFormat(d.date) + ", " + d.type + ", " + valueFormat(d.price));
 		}
 
 		////////////// TODO: generic, add more supported indicators here to plot.
 
 		function lineenter(d) {
 			console.log ("line enter");			
-			d3.select("text.coords").style("display", "inline");
+	        valueText.style("display", "inline");
 			refreshText(d);
 		}
 
 		function lineout() {
 			console.log ("line out");
-			d3.select("text.coords").style("display", "none");
+	        valueText.style("display", "none");
 		}
 
 		function linerefreshText(d) {
 			console.log ("line refresh");			
-			d3.select("text.coords").text(
-					"Trade: " + dateFormat(d.date) + ", " + d.type + ", "
-							+ valueFormat(d.price));
-		}		
-	    var ind_line = techan.plot.sma().xScale(x).yScale(y);
+	        valueText.text("Trade: " + dateFormat(d.date) + ", " + d.type + ", " + valueFormat(d.price));
+		}
+
+		var ind_line = techan.plot.sma().xScale(x).yScale(y);
 		//.on("mouseenter", lineenter).on("mouseout", lineout);		
 		
 		console.log ("check and declare plots");
@@ -552,6 +551,7 @@
       var svg = selection.append("svg"),
       defs = svg.append("defs");
       
+
       defs.append("clipPath")
           .attr("id", "ohlcClip")
         .append("rect")
@@ -582,6 +582,13 @@
         .attr("y", 15)
         .text(g_big_data.name);
 
+ 	  valueText = svg.append('tooltiptext')
+ 	 	.style("text-anchor", "end")
+	  	.attr("class", "coords")
+	  	.attr("x", dim.plot.width - 5)
+	  	.attr("y", 15);
+	          
+      
       svg.append("g")
         .attr("class", "x axis bottom");
 
@@ -693,7 +700,8 @@
 
       for (var i=0; i<g_big_data.indicator_lines.length; i++){
 	      var data = g_big_data.indicators[g_big_data.indicator_lines[i]];    	  
-	      svg.select("g.sma.ma-"+i).datum(data).call(ind_line); 
+	      svg.select("g.sma.ma-"+i).datum(data).call(ind_line).append("title").text(g_big_data.indicator_lines[i])
+	       	.on("mouseenter", lineenter).on("mouseout", lineout);
 	      svg.select("g.indicator.annotation.ma-"+i)
 	      .datum([data[data.length-1]]).call(ohlcIndicatorAnnotation);
       }
@@ -758,6 +766,12 @@
 				      j++;
 					}
 		      }
+
+	          selection.select('tooltiptext')
+	       	 	.style("text-anchor", "end")
+	        	.attr("class", "coords")
+	        	.attr("x", dim.plot.width - 5)
+	        	.attr("y", dim.plot.top + 15);	          
 		      
 		      selection.select("svg")
 		        .attr("width", dim.width)
