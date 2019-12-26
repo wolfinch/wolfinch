@@ -103,7 +103,7 @@ class Order(object):
 "fees":%f, "create_time":"%s", "update_time":"%s"}""") %(
             self.id, self.product_id, self.side, self.order_type, self.status,
             self.request_size, self.filled_size, self.remaining_size,
-             self.price, self.funds, self.fees, self.create_time, self.update_time)
+             round(self.price, 4), self.funds, self.fees, self.create_time, self.update_time)
     def __repr__(self):
         return self.__str__()
             

@@ -86,7 +86,8 @@ class Position(object):
         buy_str = str(self.buy) if self.buy else "null"
         sell_str = str(self.sell) if self.sell else "null"
         return """{\n"id":"%s", "status":"%s", "open_time":"%s", "closed_time":"%s", "profit": %f, "stop_loss": %f, "take_profit":%f,
-"buy":%s\n,"sell":%s\n}"""%(self.id, self.status, self.open_time, self.closed_time, self.profit, self.stop_loss, self.take_profit,
+"buy":%s\n,"sell":%s\n}"""%(self.id, self.status, self.open_time, self.closed_time, round(self.profit,4), round(self.stop_loss,4),
+                             round(self.take_profit,4),
                             buy_str, sell_str)
     def __repr__(self):
         return self.__str__()
