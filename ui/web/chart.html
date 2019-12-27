@@ -229,8 +229,8 @@
 		console.log("load stats");
 		loadPositions();
 		setTimeout(loadCandles, 1000);
-		setInterval(loadPositions, 120000);
-		setInterval(loadCandles, 120000);
+		//setInterval(loadPositions, 120000);
+		//setInterval(loadCandles, 120000);
 	}
 
 	var dateFormat = d3.timeFormat("%c"), valueFormat = d3.format(',.4f');
@@ -726,10 +726,12 @@
 		    svg.select("g."+key+" .indicator-plot").datum(Data).call(indi_plot[key]);
 	    
 		    svg.select("g.crosshair."+key).call(Crosshair[key]);		
-		    svg.select(".indicatorClip").append('text')
-	        .attr("class", "indicator_id-"+key)
-	        .attr("x", 0)
-	        .attr("y", 15)
+		    
+		    svg.select("g.crosshair."+key).append('text')
+	        .attr("class", "symbol")
+	        .attr("id", "symbol-"+key)
+ 	        .attr("x", 5)
+	        .attr("y", 0)
 	        .text(key);			    
       }
 
@@ -792,11 +794,7 @@
 				    Scale[key].range([indicatorTop(j) + dim.indicator.height, indicatorTop(j)]);
 				    Annotation[key].translate([xRange[1], 0]);
 				    Crosshair[key].verticalWireRange([0, dim.plot.height]);		
-				    console.log("abcd");
-				    selection.select("indicator_id-"+key)
-			        .attr("x", 150)
-			        .attr("y", indicatorTop(j))
-			        .text(key);	    
+				    d3.select("#symbol-"+key).attr("y", indicatorTop(j)+7);	    
 			        j++;
 		      }
 
