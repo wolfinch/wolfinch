@@ -320,6 +320,7 @@
 
 		//data = data.slice(data.length - 201, data.length - 1);
 		
+		
 		data = data.sort(function(a, b) {
 			return d3.ascending(a['ohlc'].time, b['ohlc'].time);
 		});
@@ -329,6 +330,7 @@
 		}
 
 		//create indicators lists
+		regexp = /[\s\(\),]/g;
 		 
 		g_big_data.indicator_plots = [],
 			g_big_data.indicator_lines = [],	
@@ -339,19 +341,24 @@
 		Object.keys(d).forEach(function(key) {
 			console.log ("indiactor_name:"+key);
 			
-			if ((key.toLowerCase().indexOf("ohlc") != -1 ) ||
-					(key.toLowerCase().indexOf("rsi") != -1 ) || 
-					(key.toLowerCase().indexOf("macd") != -1) ||
-					(key.toLowerCase().indexOf("obv") != -1)){
-				// Add supported indicators
-				g_big_data.indicator_plots.push(key);
+			if (key.toLowerCase().indexOf("ohlc") != -1 ) {
+				g_big_data.indicator_plots [key.replace(regexp, '')] = "candlestick";				
+			} else if ((key.toLowerCase().indexOf("rsi") != -1 ) || 
+					(key.toLowerCase().indexOf("mfi") != -1) ||
+					(key.toLowerCase().indexOf("vosc") != -1) ||
+					(key.toLowerCase().indexOf("obv") != -1)) {
+				g_big_data.indicator_plots [key.replace(regexp, '')] = "rsi";
+			} else if (key.toLowerCase().indexOf("macd") != -1) {
+				// Add supported indicators to plot in separate pane				
+				g_big_data.indicator_plots [key.replace(regexp, '')] = "macd";				
 			} else {
+				// overlay lines
 				if (key != "close"){
-					g_big_data.indicator_lines.push(key);
+					g_big_data.indicator_lines.push(key.replace(regexp, ''));
 				}
 			}
 			
-			g_big_data.indicators[key] = [];
+			g_big_data.indicators[key.replace(regexp, '')] = [];
 			
 		});
 		
@@ -370,9 +377,37 @@
 			
 			Object.keys(dd).forEach(function(key) {
 				//console.log ("date:"+date);
-				if (key.toLowerCase().indexOf("rsi") != -1) {
+				if (key.toLowerCase().indexOf("macd") != -1) {
+					// MACD
+					g_big_data.indicators[key.replace(regexp, '')].push({	
+						//TODO: fixme: FIXME:
+					  date: date,
+					  macd: dd[key],
+					  zero: 50,
+					  signal: 70,
+					  difference: 20
+					});
+				} else if (key.toLowerCase().indexOf("rsi") != -1) {
 					// RSIs
-					g_big_data.indicators[key].push({					
+					g_big_data.indicators[key.replace(regexp, '')].push({					
+					  date: date,
+					  rsi: dd[key],
+					  middle: 50,
+					  overbought: 70,
+					  oversold: 20
+					});
+				} else if (key.toLowerCase().indexOf("vosc") != -1) {
+					// Mimic Vosc plot with RSI plot as techan doesn't support VOSC out of the box
+					g_big_data.indicators[key.replace(regexp, '')].push({					
+					  date: date,
+					  rsi: dd[key],
+					  middle: 50,
+					  overbought: 70,
+					  oversold: 20
+					});
+				} else if (key.toLowerCase().indexOf("mfi") != -1) {
+					// Mimic MFI plot with an RSI style plot
+					g_big_data.indicators[key.replace(regexp, '')].push({					
 					  date: date,
 					  rsi: dd[key],
 					  middle: 50,
@@ -382,7 +417,7 @@
 				} else if (key.toLowerCase().indexOf("ohlc") == -1) {
 					// all other indicators except ohlc
 					d = dd[key];
-					g_big_data.indicators[key].push({date: date, value: d});
+					g_big_data.indicators[key.replace(regexp, '')].push({date: date, value: d});
 				}
 			});
 		});
@@ -410,7 +445,6 @@
 	    	      ohlc: { height: null },
 	    	      indicator: { height: null, padding: null, top: null, bottom: null }
 	    	    };
-
 
 		var x = techan.scale.financetime();
 		var y = d3.scaleLinear();
@@ -511,30 +545,23 @@
 		//.on("mouseenter", lineenter).on("mouseout", lineout);		
 		
 		console.log ("check and declare plots");
-		//if (listContains(g_big_data.indicator_plots, "macd")){
-			console.log("Macd");
-   	    	macdScale = d3.scaleLinear(),
-				macd = techan.plot.macd().xScale(x).yScale(macdScale),
-		        macdAxis = d3.axisRight(macdScale).ticks(3),
-				macdAnnotation = techan.plot.axisannotation().orient('right').axis(macdAxis).format(d3.format(',.2s')),
-			    macdAxisLeft = d3.axisLeft(macdScale).ticks(3),
-			    macdAnnotationLeft = techan.plot.axisannotation().orient('left').axis(macdAxisLeft).format(d3.format(',.2s')),  
-	   	        macdCrosshair = techan.plot.crosshair().xScale(x).yScale(macdScale)
-	       		.xAnnotation([timeAnnotation, timeAnnotationTop]).yAnnotation([macdAnnotation, macdAnnotationLeft]);	    
-		//}
-		
-		//if (listContains(g_big_data.indicator_plots, "rsi")) {
-			console.log("RSI");
-        	rsiScale = d3.scaleLinear(),
-   	        	rsi = techan.plot.rsi().xScale(x).yScale(rsiScale),
-	   	        rsiAxis = d3.axisRight(rsiScale).ticks(3),
-	   	        rsiAnnotation = techan.plot.axisannotation().orient('right').axis(rsiAxis).format(d3.format(',.2s')),
-	   	        rsiAxisLeft = d3.axisLeft(rsiScale).ticks(3),
-	   	        rsiAnnotationLeft = techan.plot.axisannotation().orient('left').axis(rsiAxisLeft).format(d3.format(',.2s')),
-	   	        rsiCrosshair = techan.plot.crosshair().xScale(x).yScale(rsiScale)
-	   	        		.xAnnotation([timeAnnotation, timeAnnotationTop]).yAnnotation([rsiAnnotation, rsiAnnotationLeft]);
-		//}
-	    // Plots end
+/* 
+	  	rsiScale = d3.scaleLinear(),
+    	rsi = techan.plot.rsi().xScale(x).yScale(rsiScale),
+     rsiAxis = d3.axisRight(rsiScale).ticks(3),
+     rsiAnnotation = techan.plot.axisannotation().orient('right').axis(rsiAxis).format(d3.format(',.2s')),
+     rsiAxisLeft = d3.axisLeft(rsiScale).ticks(3),
+     rsiAnnotationLeft = techan.plot.axisannotation().orient('left').axis(rsiAxisLeft).format(d3.format(',.2s')),
+     rsiCrosshair = techan.plot.crosshair().xScale(x).yScale(rsiScale)
+     		.xAnnotation([timeAnnotation, timeAnnotationTop]).yAnnotation([rsiAnnotation, rsiAnnotationLeft]);	 */	
+     		rsiScale = [];
+     		rsi = [];
+     		rsiAxis = [];
+     		rsiAnnotation = [];
+     		rsiAxisLeft = [];
+     		rsiAnnotationLeft = [];
+     		rsiCrosshair = [];
+     		
 		////////////////////
 	    
   function bigchart(selection) {
@@ -565,7 +592,7 @@
           .attr("x", -dim.margin.left)
           .attr("y", 0);
  */
-      defs.selectAll(".indicatorClip").data(d3.range(g_big_data.indicator_plots.length-1))
+      defs.selectAll(".indicatorClip").data(d3.range(Object.keys(g_big_data.indicator_plots).length-1))
         .enter()
         .append("clipPath")
           .attr("id", function(d, i) { return "indicatorClip-" + i; })
@@ -652,10 +679,8 @@
 		svg.append("g").attr("class", "tradearrow").attr("clip-path",
 					"url(#ohlcClip)");
 
-      
       svg.select("g.candlestick").datum(ohlc_list).call(candlestick);
       svg.select("g.closeValue.annotation").datum([ohlc_list[ohlc_list.length - 1] ]).call(closeAnnotation);
-      
       svg.select("g.volume").datum(ohlc_list).call(volume);
       
       svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
@@ -663,9 +688,9 @@
       console.log ("indi selection");
       ////////// TODO: generic g_big_data.indicator_plots).enter() // svg.selectAll("svg > g.indicator")
       var indicatorSelection = svg.selectAll("svg > g.indicator")
-      	.data(g_big_data.indicator_plots.filter(function (d) {return (d != "ohlc")})).enter()
+      	.data(Object.keys(g_big_data.indicator_plots).filter(function (d) {return (d != "ohlc")})).enter()
         .append("g")
-        .attr("class", function(d) { 
+        .attr("class", function(d) {
         	console.log("indi "+d);
         	return d + " indicator"; });
 
@@ -681,20 +706,48 @@
       svg.select("g.crosshair.ohlc").call(ohlcCrosshair);
 
 
-      for (var i=0; i<g_big_data.indicator_plots.length; i++){
-	        key = g_big_data.indicator_plots[i];
-			if (key.toLowerCase().indexOf("rsi") != -1) {
+		//if (listContains(g_big_data.indicator_plots, "macd")){
+		console.log("Macd");
+	    	macdScale = d3.scaleLinear(),
+			macd = techan.plot.macd().xScale(x).yScale(macdScale),
+	        macdAxis = d3.axisRight(macdScale).ticks(3),
+			macdAnnotation = techan.plot.axisannotation().orient('right').axis(macdAxis).format(d3.format(',.2s')),
+		    macdAxisLeft = d3.axisLeft(macdScale).ticks(3),
+		    macdAnnotationLeft = techan.plot.axisannotation().orient('left').axis(macdAxisLeft).format(d3.format(',.2s')),  
+ 	        macdCrosshair = techan.plot.crosshair().xScale(x).yScale(macdScale)
+     		.xAnnotation([timeAnnotation, timeAnnotationTop]).yAnnotation([macdAnnotation, macdAnnotationLeft]);	    
+	//}
+	
+	//if (listContains(g_big_data.indicator_plots, "rsi")) {
+
+	//}
+  // Plots end
+  
+      for (key in g_big_data.indicator_plots){
+	        val = g_big_data.indicator_plots[key];
+			if (val.toLowerCase().indexOf("rsi") != -1) {
+				console.log("RSI");
+
+			  	rsiScale[key] = d3.scaleLinear(),
+	        	rsi[key] = techan.plot.rsi().xScale(x).yScale(rsiScale[key]),
+	 	        rsiAxis[key] = d3.axisRight(rsiScale[key]).ticks(3),
+	 	        rsiAnnotation[key] = techan.plot.axisannotation().orient('right').axis(rsiAxis[key]).format(d3.format(',.2s')),
+	 	        rsiAxisLeft[key] = d3.axisLeft(rsiScale[key]).ticks(3),
+	 	        rsiAnnotationLeft[key] = techan.plot.axisannotation().orient('left').axis(rsiAxisLeft[key]).format(d3.format(',.2s')),
+	 	        rsiCrosshair[key] = techan.plot.crosshair().xScale(x).yScale(rsiScale[key])
+	 	        		.xAnnotation([timeAnnotation, timeAnnotationTop]).yAnnotation([rsiAnnotation[key], rsiAnnotationLeft[key]]);				
+				
 			      svg.append('g').attr("class", "crosshair "+key);
-			      var rsiData = g_big_data.indicators[key];
-			      rsiScale.domain(techan.scale.plot.rsi(rsiData).domain()); 
-			      svg.select("g."+key+" .indicator-plot").datum(rsiData).call(rsi);
-			      svg.select("g.crosshair."+key).call(rsiCrosshair);			      
+			      var Data = g_big_data.indicators[key];
+			      rsiScale[key].domain(techan.scale.plot.rsi(Data).domain()); 
+			      svg.select("g."+key+" .indicator-plot").datum(Data).call(rsi[key]);
+			      svg.select("g.crosshair."+key).call(rsiCrosshair[key]);			      
 	      	}
-	      	if (key.toLowerCase().indexOf("macd") != -1) {      
+	      	if (val.toLowerCase().indexOf("macd") != -1) {      
 			      svg.append('g').attr("class", "crosshair "+key);      
-			      var macdData = g_big_data.indicators[key];
-			      macdScale.domain(techan.scale.plot.macd(macdData).domain()); 
-			      svg.select("g."+key+" .indicator-plot").datum(macdData).call(macd);
+			      var Data = g_big_data.indicators[key];
+			      macdScale.domain(techan.scale.plot.macd(Data).domain()); 
+			      svg.select("g."+key+" .indicator-plot").datum(Data).call(macd);
 			      svg.select("g.crosshair."+key).call(macdCrosshair);
 			}
       }
@@ -725,7 +778,7 @@
 		      dim.plot.width = dim.width - dim.margin.left - dim.margin.right;
 		      dim.plot.height = dim.height - dim.margin.top - dim.margin.bottom;
 		      dim.ohlc.height = dim.plot.height * (1 - 
-		    		  ((g_big_data.indicator_plots.length-1)?0.151*(g_big_data.indicator_plots.length-1):0.001)); //0.67777777;
+		    		  ((Object.keys(g_big_data.indicator_plots).length-1)?0.151*(Object.keys(g_big_data.indicator_plots).length-1):0.001)); //0.67777777;
 		      dim.indicator.height = dim.plot.height * 0.144444;
 		      dim.indicator.padding = dim.plot.height * 0.01111111111;
 		      dim.indicator.top = dim.ohlc.height + dim.indicator.padding;
@@ -752,18 +805,19 @@
 		      ohlcIndicatorAnnotation.translate([xRange[1], 0]);
 		      ohlcCrosshair.verticalWireRange([0, dim.plot.height]);
 
-	          for (var i=0, j=0; i<g_big_data.indicator_plots.length; i++){
-					key = g_big_data.indicator_plots[i];
-					if (key.toLowerCase().indexOf("macd") != -1) {
+		      var j = 0;
+	          for (key in g_big_data.indicator_plots){
+					val = g_big_data.indicator_plots[key];
+					if (val.toLowerCase().indexOf("macd") != -1) {
 					      macdScale.range([indicatorTop(j) + dim.indicator.height, indicatorTop(j)]);
 					      macdAnnotation.translate([xRange[1], 0]);
 					      macdCrosshair.verticalWireRange([0, dim.plot.height]);
 					      j++;
 					}
-					if (key.toLowerCase().indexOf("rsi") != -1) {
-				      rsiScale.range([indicatorTop(j) + dim.indicator.height, indicatorTop(j)]);
-				      rsiAnnotation.translate([xRange[1], 0]);
-				      rsiCrosshair.verticalWireRange([0, dim.plot.height]);				      
+					if (val.toLowerCase().indexOf("rsi") != -1) {
+				      rsiScale[key].range([indicatorTop(j) + dim.indicator.height, indicatorTop(j)]);
+				      rsiAnnotation[key].translate([xRange[1], 0]);
+				      rsiCrosshair[key].verticalWireRange([0, dim.plot.height]);				      
 				      j++;
 					}
 		      }
@@ -842,20 +896,20 @@
 	        svg.select("g.volume").call(volume.refresh);	        
 	        svg.select("g.crosshair.ohlc").call(ohlcCrosshair.refresh);
 	        
-	        for (var i=0; i<g_big_data.indicator_plots.length; i++){
-		        key = g_big_data.indicator_plots[i];
-				if (key.toLowerCase().indexOf("macd") != -1) {	        
+	        for (key in g_big_data.indicator_plots){
+		        val = g_big_data.indicator_plots[key];
+				if (val.toLowerCase().indexOf("macd") != -1) {	        
 			        //// TODO: generic
 			        svg.select("g."+key+" .axis.right").call(macdAxis);
 			        svg.select("g."+key+" .axis.left").call(macdAxisLeft);
 			        svg.select("g."+key+" .indicator-plot").call(macd.refresh);
 			        svg.select("g.crosshair."+key).call(macdCrosshair.refresh);
 				}
-				if (key.toLowerCase().indexOf("rsi") != -1) {	        
-			        svg.select("g."+key+" .axis.right").call(rsiAxis);
-			        svg.select("g."+key+" .axis.left").call(rsiAxisLeft);	        
-			        svg.select("g."+key+" .indicator-plot").call(rsi.refresh);
-			        svg.select("g.crosshair."+key).call(rsiCrosshair.refresh);
+				if (val.toLowerCase().indexOf("rsi") != -1) {
+			        svg.select("g."+key+" .axis.right").call(rsiAxis[key]);
+			        svg.select("g."+key+" .axis.left").call(rsiAxisLeft[key]);	        
+			        svg.select("g."+key+" .indicator-plot").call(rsi[key].refresh);
+			        svg.select("g.crosshair."+key).call(rsiCrosshair[key].refresh);
 				}
 		    }
 	        
