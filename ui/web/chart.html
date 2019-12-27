@@ -710,7 +710,7 @@
  	        Crosshair[key] = techan.plot.crosshair().xScale(x).yScale(Scale[key])
  	        		.xAnnotation([timeAnnotation, timeAnnotationTop]).yAnnotation([Annotation[key], AnnotationLeft[key]]);				
 				        
-		    var Data = g_big_data.indicators[key];		  	
+		    var Data = g_big_data.indicators[key];
 			if (val.toLowerCase().indexOf("rsi") != -1) {
 				console.log("RSI plot");
 	        	indi_plot[key] = techan.plot.rsi().xScale(x).yScale(Scale[key]),
@@ -721,9 +721,16 @@
 			    svg.append('g').attr("class", "crosshair "+key);      
 			    Scale[key].domain(techan.scale.plot.macd(Data).domain()); 
 			}
+	      	
 	        svg.append('g').attr("class", "crosshair "+key);	        	
 		    svg.select("g."+key+" .indicator-plot").datum(Data).call(indi_plot[key]);
-		    svg.select("g.crosshair."+key).call(Crosshair[key]);		      	
+	    
+		    svg.select("g.crosshair."+key).call(Crosshair[key]);		
+		    svg.select(".indicatorClip").append('text')
+	        .attr("class", "indicator_id-"+key)
+	        .attr("x", 0)
+	        .attr("y", 15)
+	        .text(key);			    
       }
 
       for (var i=0; i<g_big_data.indicator_lines.length; i++){
@@ -784,7 +791,12 @@
 					val = g_big_data.indicator_plots[key];
 				    Scale[key].range([indicatorTop(j) + dim.indicator.height, indicatorTop(j)]);
 				    Annotation[key].translate([xRange[1], 0]);
-				    Crosshair[key].verticalWireRange([0, dim.plot.height]);				      
+				    Crosshair[key].verticalWireRange([0, dim.plot.height]);		
+				    console.log("abcd");
+				    selection.select("indicator_id-"+key)
+			        .attr("x", 150)
+			        .attr("y", indicatorTop(j))
+			        .text(key);	    
 			        j++;
 		      }
 
@@ -875,8 +887,6 @@
 				svg.select("g .sma.ma-"+i).call(ind_line.refresh);
 			    svg.select("g.indicator.annotation.ma-"+i).call(ohlcIndicatorAnnotation.refresh);
 		    }
-
-	        ////
 	        
 	       // svg.select("g.trendlines").call(trendline.refresh);
 	        //svg.select("g.supstances").call(supstance.refresh)
