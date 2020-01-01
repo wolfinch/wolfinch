@@ -493,7 +493,7 @@ class Market:
                                    Fund=round(float(0), 8),
                                    Type="market",
                                    Price=round(float(0), 8),
-                                   Stop=0, id=pos.id))
+                                   Stop=0, Profit=0, id=pos.id))
             
             self._execute_market_trade(trade_req_l)
                 
@@ -573,6 +573,8 @@ class Market:
             order = sims.exch_obj.buy (trade_req)
         else:
             order = self.exchange.buy (trade_req)
+        order.stop = trade_req.stop
+        order.profit = trade_req.profit
         market_order = self.order_book.add_or_update_my_order(order)
         if(market_order):  # successful order
             log.debug ("BUY Order Sent to exchange. ")
@@ -688,12 +690,12 @@ class Market:
                                                Fund=round(float(0), 8),  # TODO: FIXME: make sure correct fund/size
                                                 Type=trade_req_dict['type'],
                                                  Price=round(float(trade_req_dict['price']), 8),
-                                                 Stop=trade_req_dict['stop'])
+                                                 Stop=trade_req_dict['stop'], Profit=trade_req_dict['profit'])
                     log.info("Valid manual order : %s" % (str(trade_req)))
                     trade_req_list.append(trade_req)
         return trade_req_list
     
-    def _generate_trade_request (self, signal):
+    def _generate_trade_request (self, signal, sl=0, tp=0):
         '''
         Desc: Consider various parameters and generate a trade request
         param : Trade signal (-3-0-3) (strong-sell - hold - strong-buy)
@@ -729,7 +731,7 @@ class Market:
                                Fund=round(float(0), 8),
                                Type=self.order_type,
                                Price=round(float(0), 8),
-                               Stop=0, id=pos.id))
+                               Stop=0, Profit=0, id=pos.id))
     
         if self.trading_paused_sell == True and signal < 0:
             log.info ("sell paused on market: ignore signal (%d)" % (signal))
@@ -760,7 +762,7 @@ class Market:
                                        Fund=round(float(fund), 8),
                                        Type="market",
                                        Price=round(float(0), 8),
-                                       Stop=0))
+                                       Stop=sl, Profit=tp))
                 else:
                     log.debug ("Unable to generate BUY request for signal (%d). Too low fund" % (signal))
                     self.num_buy_req_reject += 1
@@ -784,7 +786,7 @@ class Market:
                                        Fund=round(float(0), 8),
                                        Type="market",
                                        Price=round(float(0), 8),
-                                       Stop=0, id=position.id))
+                                       Stop=0, Profit=0, id=position.id))
                 else:
                     log.error ("Unable to generate SELL request for signal (%d)."
                      "Unable to get open positions to sell" % (signal))
@@ -1154,7 +1156,7 @@ class Market:
                  -3 strong sell
                  +3 strong buy
         """
-        signal = self.decision.generate_signal((idx if idx != -1 else (self.num_candles - 1)))
+        signal, sl, tp = self.decision.generate_signal((idx if idx != -1 else (self.num_candles - 1)))
         
         if signal != 0:
             log.info ("Generated Trade Signal(%d) for product(%s) idx(%d)" % (signal, self.product_id, idx))
@@ -1163,9 +1165,9 @@ class Market:
                 
         # processed the new candle
         self.new_candle = False
-        return signal
+        return signal, sl, tp
     
-    def consume_trade_signal (self, signal):
+    def consume_trade_signal (self, signal, sl=0, tp=0):
 #         """
 #         Execute the trade based on signal
 #          - Policy can be applied on the behavior of signal strength
@@ -1192,7 +1194,7 @@ class Market:
         
         # Now generate auto trade req list
         log.info ("Trade Signal strength:" + str(signal))
-        trade_req_list += self._generate_trade_request(signal)
+        trade_req_list += self._generate_trade_request(signal, sl, tp)
         # validate the trade Req
         if (len(trade_req_list)):
             self._execute_market_trade(trade_req_list)
@@ -1219,7 +1221,7 @@ class Market:
                                    Fund=round(float(0), 8),
                                    Type="market",
                                    Price=round(float(0), 8),
-                                   Stop=0, id=position.id))
+                                   Stop=0, Profit=0, id=position.id))
             else:
                 break
         self._execute_market_trade(trade_req_l)

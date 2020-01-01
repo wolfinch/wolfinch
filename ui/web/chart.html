@@ -794,7 +794,7 @@
 				    Scale[key].range([indicatorTop(j) + dim.indicator.height, indicatorTop(j)]);
 				    Annotation[key].translate([xRange[1], 0]);
 				    Crosshair[key].verticalWireRange([0, dim.plot.height]);		
-				    d3.select("#symbol-"+key).attr("y", indicatorTop(j)+7);	    
+				    d3.select("#symbol-"+key).attr("y", indicatorTop(j)+7).attr("color", "blue");	    
 			        j++;
 		      }
 

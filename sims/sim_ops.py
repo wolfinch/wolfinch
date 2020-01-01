@@ -78,8 +78,8 @@ def do_backtesting (simulator_on=False):
             if (market.primary == True and (market.backtesting_idx < market.num_candles - 1)):
 #                 log.info ("BACKTEST(%d): processing on market: exchange (%s) product: %s"%(
 #                     market.backtesting_idx, market.exchange_name, market.name))     
-                signal = market.generate_trade_signal (market.backtesting_idx)
-                market.consume_trade_signal (signal)
+                signal, sl, tp = market.generate_trade_signal (market.backtesting_idx)
+                market.consume_trade_signal (signal, sl, tp)
                 
                 if (simulator_on):
                     sim_exchange.market_simulator_run (market)

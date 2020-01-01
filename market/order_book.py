@@ -146,9 +146,9 @@ class OrderBook():
         position = Position(id=buy_order.id)
         position.add_buy(buy_order)
         if self.market.tradeConfig["stop_loss_enabled"]:
-            self.add_stop_loss_position(position, buy_order.get_price(), self.market.tradeConfig["stop_loss_rate"])
+            self.add_stop_loss_position(position, buy_order.get_price(), self.market.tradeConfig["stop_loss_rate"], buy_order.stop)
         if self.market.tradeConfig["take_profit_enabled"]:
-            self.add_take_profit_position(position, buy_order.get_price(), self.market.tradeConfig["take_profit_rate"])
+            self.add_take_profit_position(position, buy_order.get_price(), self.market.tradeConfig["take_profit_rate"], buy_order.profit)
                 
         self.all_positions.append(position)
         self.open_positions.append(position)
@@ -235,9 +235,11 @@ class OrderBook():
             self.close_pending_positions.pop(pos_id, None)
             self.open_positions.append(position)
             if self.market.tradeConfig["stop_loss_enabled"]:
-                self.add_stop_loss_position(position, position.buy.get_price(), self.market.tradeConfig["stop_loss_rate"])
+                self.add_stop_loss_position(position, position.buy.get_price(),
+                                             self.market.tradeConfig["stop_loss_rate"], position.get_stop_loss())
             if self.market.tradeConfig["take_profit_enabled"]:
-                self.add_take_profit_position(position, position.buy.get_price(), self.market.tradeConfig["take_profit_rate"])
+                self.add_take_profit_position(position, position.buy.get_price(),
+                                               self.market.tradeConfig["take_profit_rate"], position.get_take_profit())
         else:
             log.critical("Unable to get close_pending position. order_id: %s"%(pos_id))
     def close_position(self, sell_order):
@@ -263,8 +265,9 @@ class OrderBook():
 #         log.debug("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)\n pos:%s"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))
             
-    def add_stop_loss_position(self, position, market_rate, sl_rate):
-        stop_price = float(round(market_rate*(1 - sl_rate*float(.01)), 4))
+    def add_stop_loss_position(self, position, market_rate, sl_rate, stop_price=0):
+        if stop_price == 0:
+            stop_price = float(round(market_rate*(1 - sl_rate*float(.01)), 4))
         
         position.set_stop_loss(stop_price)
         
@@ -378,8 +381,9 @@ class OrderBook():
         return tp_pos_list
             
             
-    def add_take_profit_position(self, position, market_rate, tp_rate):
-        new_tp = float(round(market_rate*(1 + tp_rate*float(.01)), 4))
+    def add_take_profit_position(self, position, market_rate, tp_rate, tp_price=0):
+        if tp_price == 0:
+            new_tp = float(round(market_rate*(1 + tp_rate*float(.01)), 4))
         
         position.set_take_profit(new_tp)
         pos_list = self.tp_dict.get(new_tp, None)
@@ -417,13 +421,23 @@ class OrderBook():
         
     def add_or_update_pending_buy_order(self, order):
         id = order.id
-        if not self.pending_buy_orders_db.get(id):
+        cur_order = self.pending_buy_orders_db.get(id)
+        if not cur_order:
             self.total_open_order_count += 1
             self.total_order_count += 1
+        else:
+            #copy required fields
+            order.stop = cur_order.stop
+            order.profit = cur_order.profit
         self.pending_buy_orders_db[id] = order
     def get_pending_buy_order(self, order_id):
         return self.pending_buy_orders_db.get(order_id)
     def add_traded_buy_order(self, order):
+        cur_order = self.pending_buy_orders_db.get(order.id)
+        if cur_order:
+            #copy required fields            
+            order.stop = cur_order.stop
+            order.profit = cur_order.profit        
         self.total_open_order_count -= 1
         del(self.pending_buy_orders_db[order.id])
         self.traded_buy_orders_db[order.id] = order
@@ -510,9 +524,11 @@ class OrderBook():
             if pos.status == "open":
                 self.open_positions.append(pos)
                 if self.market.tradeConfig["stop_loss_enabled"]:
-                    self.add_stop_loss_position(pos, pos.buy.get_price(), self.market.tradeConfig["stop_loss_rate"])
+                    self.add_stop_loss_position(pos, pos.buy.get_price(),
+                                                 self.market.tradeConfig["stop_loss_rate"], pos.get_stop_loss())
                 if self.market.tradeConfig["take_profit_enabled"]:
-                    self.add_take_profit_position(pos, pos.buy.get_price(), self.market.tradeConfig["take_profit_rate"])
+                    self.add_take_profit_position(pos, pos.buy.get_price(),
+                                                   self.market.tradeConfig["take_profit_rate"], pos.get_take_profit())
             else:
                 self.closed_positions.append(pos)
         

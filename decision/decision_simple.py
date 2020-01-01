@@ -40,7 +40,11 @@ class Decision ():
         self.market_list = market_list
                 
     def generate_signal(self, idx):
-        return self.market.market_strategies_data[idx][self.strategy]
+        d = self.market.market_strategies_data[idx][self.strategy]
+        if type(d) == tuple:
+            # strategy provides signal, SL, TP
+            return d[0], d[1], d[2]
+        return d, 0, 0
          
     def summary(self):
         pass

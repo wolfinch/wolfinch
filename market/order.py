@@ -27,7 +27,7 @@ class TradeRequest:
 #            price: <limit/market-price>
 #            }
 #    '''
-    def __init__(self, Product, Side, Size, Fund, Type, Price, Stop, id=None):
+    def __init__(self, Product, Side, Size, Fund, Type, Price, Stop, Profit, id=None):
         self.id = id
         self.product = Product
         self.side = Side
@@ -36,10 +36,11 @@ class TradeRequest:
         self.type = Type
         self.price = Price
         self.stop = float(Stop or 0)
+        self.profit = float(Profit or 0)
 
     def __str__(self):
-        return "{'product':%s, 'side':%s, 'size':%f, 'fund':%f, 'type':%s, 'price':%f, 'stop':%f}" %(
-            self.product, self.side, self.size, self.fund, self.type, self.price, self.stop)
+        return "{'product':%s, 'side':%s, 'size':%f, 'fund':%f, 'type':%s, 'price':%f, 'stop':%f 'profit': %f}" %(
+            self.product, self.side, self.size, self.fund, self.type, self.price, self.stop, self.profit)
 
 
 class Order(object):
