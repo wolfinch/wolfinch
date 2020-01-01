@@ -63,7 +63,7 @@ backfill:
    period   : 10  #in Days
 
 simulator:
-   enabled : true
+   enabled : false
    backtesting : true
    
 genetic_optimizer: 
