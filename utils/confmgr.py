@@ -29,6 +29,7 @@ log.setLevel(log.INFO)
 WolfinchConfig = None
 gDecisionConfig = {}
 gTradingConfig = {"stop_loss_enabled": False,
+                  "stop_loss_kind" : "simple",
                   "stop_loss_smart_rate": False,
                   "stop_loss_rate": 0,
                   "take_profit_enabled": False,
@@ -55,8 +56,10 @@ def parse_product_config (cfg):
             for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
                     parsed_tcfg ['stop_loss_enabled'] = ex_v
-                elif ex_k == 'smart':
-                    parsed_tcfg ['stop_loss_smart_rate'] = ex_v
+                elif ex_k == 'kind':
+                    parsed_tcfg ['stop_loss_kind'] = ex_v
+                    if ex_v != 'simple':        
+                        parsed_tcfg ['stop_loss_smart_rate'] = True
                 elif ex_k == 'rate':
                     parsed_tcfg ['stop_loss_rate'] = ex_v                    
         elif k == 'take_profit':
@@ -182,10 +185,12 @@ def load_config (cfg_file):
             for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
                     gTradingConfig ['stop_loss_enabled'] = ex_v
-                elif ex_k == 'smart':
-                    gTradingConfig ['stop_loss_smart_rate'] = ex_v
+                elif ex_k == 'kind':
+                    gTradingConfig ['stop_loss_kind'] = ex_v
+                    if ex_v != 'simple':        
+                        gTradingConfig ['stop_loss_smart_rate'] = True
                 elif ex_k == 'rate':
-                    gTradingConfig ['stop_loss_rate'] = ex_v                    
+                    gTradingConfig ['stop_loss_rate'] = ex_v                 
         elif k == 'take_profit':
             for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
@@ -223,35 +228,7 @@ def load_config (cfg_file):
                         sims.genetic_optimizer_on = True
                     else:
                         log.debug ("genetic_optimizer_on disabled")
-                        sims.genetic_optimizer_on = False
-#                 elif ex_k == 'config':
-#                     sims.gaDecisionConfig ['model_config'] = {"strategy": ex_v["strategy"]} 
-#                     sims.gaDecisionConfig ['model_type'] = 'simple'
-#                     for t_k, t_v in ex_v.get("trading", {}).iteritems():
-#                         if t_k == 'currency':
-#                             sims.gaTradingConfig ['currency'] = t_v
-#                         if t_k == 'fund_max_liquidity':
-#                             sims.gaTradingConfig ['fund_max_liquidity'] = t_v
-#                         if t_k == 'fund_max_per_buy_value':
-#                             sims.gaTradingConfig ['fund_max_per_buy_value'] = t_v
-#                         if t_k == 'asset_max_per_trade_size':
-#                             sims.gaTradingConfig ['asset_max_per_trade_size'] = t_v
-#                         if t_k == 'asset_min_per_trade_size':
-#                             sims.gaTradingConfig ['asset_min_per_trade_size'] = t_v                        
-#                         if t_k == 'stop_loss':
-#                             for ex_tk, ex_tv in t_v.iteritems():
-#                                 if ex_tk == 'enabled':
-#                                     sims.gaTradingConfig ['stop_loss_enabled'] = ex_tv
-#                                 elif ex_tk == 'smart':
-#                                     sims.gaTradingConfig ['stop_loss_smart_rate'] = ex_tv
-#                                 elif ex_tk == 'rate':
-#                                     sims.gaTradingConfig ['stop_loss_rate'] = ex_v                    
-#                         elif t_k == 'take_profit':
-#                             for ex_tk, ex_tv in t_v.iteritems():
-#                                 if ex_tk == 'enabled':
-#                                     sims.gaTradingConfig ['take_profit_enabled'] = ex_tv
-#                                 elif ex_tk == 'rate':
-#                                     sims.gaTradingConfig ['take_profit_rate'] = ex_tv                       
+                        sims.genetic_optimizer_on = False                     
                 elif ex_k == 'N_POP':
                     sims.ga_config["GA_NPOP"] = ex_v
                 elif ex_k == 'N_GEN':

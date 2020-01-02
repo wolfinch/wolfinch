@@ -36,7 +36,7 @@ exchanges:
             asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)      
             stop_loss:
                enabled: true
-               smart: false #track price movement and update stop_loss
+               kind : trailing      #simple(default) | trailing | ATRXX | 
                rate : 6 #-3%
             take_profit:
                enabled: true

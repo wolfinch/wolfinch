@@ -289,8 +289,14 @@ class OrderBook():
     def remove_all_positions_at_stop(self, stop_price):
         return self.sl_dict.pop(stop_price, None)
            
-    def smart_stop_loss_update_positions(self, market_rate, sl_rate):
-        new_sl = float(round(market_rate*(1 - sl_rate*float(.01)), 4))
+    def smart_stop_loss_update_positions(self, market_rate, tcfg):
+        
+        if tcfg['stop_loss_kind'] == 'trailing':
+            sl_rate = tcfg["stop_loss_rate"]
+            new_sl = float(round(market_rate*(1 - sl_rate*float(.01)), 4))
+        elif 'ATR' in tcfg['stop_loss_kind']:
+            log.critical("ATR stop loss not implemented")
+            raise
         
         key_list = list(self.sl_dict.irange(maximum=new_sl, inclusive=(False, False)))
         

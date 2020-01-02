@@ -1095,7 +1095,7 @@ class Market:
         
         if sims.backtesting_on == True:
             if self.tradeConfig.get("stop_loss_smart_rate", False) == True:
-                self.order_book.smart_stop_loss_update_positions(self.get_market_rate(), self.tradeConfig["stop_loss_rate"])
+                self.order_book.smart_stop_loss_update_positions(self.get_market_rate(), self.tradeConfig)
             return
         
         # 1.take profit handling, this is aggressive take profit, not waiting for candle period
@@ -1139,7 +1139,7 @@ class Market:
         cur_rate = self.get_market_rate()
         # bit of conservative approach for smart-SL. update SL only on candle time
         if self.tradeConfig["stop_loss_smart_rate"] == True:
-            self.order_book.smart_stop_loss_update_positions(cur_rate, self.tradeConfig["stop_loss_rate"])
+            self.order_book.smart_stop_loss_update_positions(cur_rate, self.tradeConfig)
                     
         self.O = self.H = self.L = self.C = cur_rate
         self.V = 0
