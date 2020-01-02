@@ -36,7 +36,7 @@ class ATR (Indicator):
         if candles_len < self.period+1:
             return float(0)
         
-        high_array = np.array([float(x['ohlc'].hiigh) for x in candles[-(self.period+1):]])
+        high_array = np.array([float(x['ohlc'].high) for x in candles[-(self.period+1):]])
         low_array = np.array([float(x['ohlc'].low) for x in candles[-(self.period+1):]])        
         close_array = np.array([float(x['ohlc'].close) for x in candles[-(self.period+1):]])
         

@@ -345,7 +345,13 @@ class Market:
             log.critical ("invalid strategy_list!!")
             raise ("invalid strategy_list")
         self.market_strategies = strategy.Configure(self.exchange_name, self.product_id, strategy_list)
-        self.indicator_calculators = strategy.Configure_indicators(self.exchange_name, self.product_id)
+        #find non-strategy indicators (stop_loss may use ATR)
+        if 'ATR' in tcfg['stop_loss_kind'] :
+            ext_ind = {"ATR": {int(tcfg['stop_loss_kind'].split('ATR')[1])}}
+        else:
+            ext_ind = None
+        
+        self.indicator_calculators = strategy.Configure_indicators(self.exchange_name, self.product_id, ext_ind)
         self.new_candle = False
         self.candle_interval = 0
         self.O = self.H = self.L = self.C = self.V = 0

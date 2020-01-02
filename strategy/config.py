@@ -60,13 +60,15 @@ def Configure (exchange_name, product_id, strategy_list={}):
     return market_strategies[exchange_name][product_id]
 
 
-def Configure_indicators(exchange_name, product_id):
+def Configure_indicators(exchange_name, product_id, ext_indicators = None):
     global market_strategies
     # _indicator_list var in abstract class is a central place for all reqd. indicators
     if not len(market_strategies):
         print ("no strategies configured!!")
         raise ("no strategies configured!!")
     req_indicators = gen_product_indicators_list (exchange_name, product_id)
+    if ext_indicators:
+        req_indicators.update(ext_indicators)
     return indicators.Configure(exchange_name, product_id, req_indicators)
 
 

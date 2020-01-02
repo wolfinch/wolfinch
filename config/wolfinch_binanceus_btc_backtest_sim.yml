@@ -34,7 +34,7 @@ exchanges:
             asset_min_per_trade_size: .001 #Min asset size to trade with (may come from exch limits or asset limits)
             stop_loss:
                enabled: true
-               kind : simple      #simple(default) | trailing | ATR | 
+               kind : ATR50      #simple(default) | trailing | ATR | 
                rate : 4 #-3%
             take_profit:
                enabled: true

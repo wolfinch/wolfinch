@@ -35,6 +35,7 @@ from indicators.sar import SAR
 from indicators.macd import MACD
 from indicators.mfi import MFI
 from indicators.vosc import VOSC
+from indicators.atr import ATR
 
 
 from indicators import indicator
@@ -56,7 +57,8 @@ indicators_list = {
     "SAR": SAR,
     "MACD": MACD,
     "MFI": MFI,
-    "VOSC": VOSC    
+    "VOSC": VOSC,
+    "ATR": ATR
     }
 
 # Manually configure all required indicators. Should be used with auto-generation strategy 
