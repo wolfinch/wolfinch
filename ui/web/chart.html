@@ -348,13 +348,16 @@
 			} else if ((key.toLowerCase().indexOf("rsi") != -1 ) || 
 					(key.toLowerCase().indexOf("mfi") != -1) ||
 					(key.toLowerCase().indexOf("vosc") != -1) ||
-					(key.toLowerCase().indexOf("atr") != -1) ||					
+					(key.toLowerCase().indexOf("atr") != -1 ) ||
 					(key.toLowerCase().indexOf("obv") != -1)) {
 				g_big_data.indicator_plots [key.replace(regexp, '')] = "rsi";
 			} else if (key.toLowerCase().indexOf("macd") != -1) {
 				// Add supported indicators to plot in separate pane				
 				g_big_data.indicator_plots [key.replace(regexp, '')] = "macd";				
-			} else {
+			} /* else if (key.toLowerCase().indexOf("atr") != -1 ) {
+				console.log("atr freestyle plot");
+				g_big_data.indicator_plots [key.replace(regexp, '')] = "atr";				
+			} */ else {
 				// overlay lines
 				if (key != "close"){
 					g_big_data.indicator_lines.push(key.replace(regexp, ''));
@@ -407,13 +410,13 @@
 					g_big_data.indicators[key.replace(regexp, '')].push({					
 					  date: date,
 					  rsi: dd[key],
-					});					
-				}  else if (key.toLowerCase().indexOf("atr") != -1) {
+					});
+ 				}  else if (key.toLowerCase().indexOf("atr") != -1) {
 					// Mimic ATR plot with an RSI style plot
 					g_big_data.indicators[key.replace(regexp, '')].push({					
 					  date: date,
 					  rsi: dd[key],
-					});
+					}); 
 				} else if (key.toLowerCase().indexOf("ohlc") == -1) {
 					// all other indicators except ohlc
 					d = dd[key];
@@ -433,20 +436,20 @@
 		Object.keys(g_big_data.indicators).forEach(function(key) {
 			var data = g_big_data.indicators[key];
 			
-			if (key.toLowerCase().indexOf("rsi") ||
-					key.toLowerCase().indexOf("atr") || 
-					key.toLowerCase().indexOf("vosc") || 
-					key.toLowerCase().indexOf("mfi") ) {
+			if ((key.toLowerCase().indexOf("rsi") != -1) ||
+					(key.toLowerCase().indexOf("vosc")  != -1) || 
+					(key.toLowerCase().indexOf("atr")  != -1) || 					
+					(key.toLowerCase().indexOf("mfi")  != -1) ) {
 				min = getMinRsi(data);
 				max = getMaxRsi(data);
-				console.log ("min "+min+" max "+max);
+				console.log ("key "+key+" min "+min+" max "+max);
 				
 				data.forEach (function addMinMaxRsi (di) {
 					di.overbought = max;
 					di.oversold = min;
 					di.middle = (max+min)/2
 					});
-			} else if (key.toLowerCase().indexOf("macd")) {
+			} else if ((key.toLowerCase().indexOf("macd")) != -1) {
 				//do something else
 					console.log ("############## normalize impl. macd ##########");
 			}
@@ -575,7 +578,7 @@
 		
 		console.log ("check and declare plots");
 
-     		Scale = [];
+     		yScale = [];
      		indi_plot = [];
      		Axis = [];
      		Annotation = [];
@@ -730,25 +733,31 @@
       for (key in g_big_data.indicator_plots){
 	        val = g_big_data.indicator_plots[key];
 	        
-		  	Scale[key] = d3.scaleLinear(),	        
- 	        Axis[key] = d3.axisRight(Scale[key]).ticks(3),
+		  	yScale[key] = d3.scaleLinear(),	        
+ 	        Axis[key] = d3.axisRight(yScale[key]).ticks(3),
  	        Annotation[key] = techan.plot.axisannotation().orient('right').axis(Axis[key]).format(d3.format(',.2s')),
- 	        AxisLeft[key] = d3.axisLeft(Scale[key]).ticks(3),
+ 	        AxisLeft[key] = d3.axisLeft(yScale[key]).ticks(3),
  	        AnnotationLeft[key] = techan.plot.axisannotation().orient('left').axis(AxisLeft[key]).format(d3.format(',.2s')),
- 	        Crosshair[key] = techan.plot.crosshair().xScale(x).yScale(Scale[key])
+ 	        Crosshair[key] = techan.plot.crosshair().xScale(x).yScale(yScale[key])
  	        		.xAnnotation([timeAnnotation, timeAnnotationTop]).yAnnotation([Annotation[key], AnnotationLeft[key]]);				
 				        
 		    var Data = g_big_data.indicators[key];
 			if (val.toLowerCase().indexOf("rsi") != -1) {
 				console.log("RSI plot");
-	        	indi_plot[key] = techan.plot.rsi().xScale(x).yScale(Scale[key]),
-			    Scale[key].domain(techan.scale.plot.rsi(Data).domain()); 
+//	        	yScale[key].domain(techan.scale.plot.rsi(Data).domain());
+	        	yScale[key].domain([Data[0].oversold, Data[0].overbought]); 		
+	        	indi_plot[key] = techan.plot.rsi().xScale(x).yScale(yScale[key]);
 	      	}
 	      	if (val.toLowerCase().indexOf("macd") != -1) {      
 				console.log("MACD plot");	      		
-			    svg.append('g').attr("class", "crosshair "+key);      
-			    Scale[key].domain(techan.scale.plot.macd(Data).domain()); 
+			    yScale[key].domain(techan.scale.plot.macd(Data).domain()); 				
+	        	indi_plot[key] = techan.plot.macd().xScale(x).yScale(yScale[key]);			    
 			}
+/* 	      	if (key.toLowerCase().indexOf("atr") != -1) {      
+				console.log("ATR plot");	      		
+			    yScale[key].domain([0,50]);//techan.scale.plot.atr(Data).domain()); 				
+	        	//indi_plot[key] = techan.plot.atr().xScale(x).yScale(yScale[key]);	        	
+			} */	      	
 	      	
 	        svg.append('g').attr("class", "crosshair "+key);	        	
 		    svg.select("g."+key+" .indicator-plot").datum(Data).call(indi_plot[key]);
@@ -770,7 +779,6 @@
 	      svg.select("g.indicator.annotation.ma-"+i)
 	      .datum([data[data.length-1]]).call(ohlcIndicatorAnnotation);
       }
-      ////////////
       
       //svg.select("g.trendlines").datum(stock.trendlines).call(trendline).call(trendline.drag);
       //svg.select("g.supstances").datum(stock.supstances).call(supstance).call(supstance.drag);
@@ -819,7 +827,7 @@
 		      var j = 0;
 	          for (key in g_big_data.indicator_plots){
 					val = g_big_data.indicator_plots[key];
-				    Scale[key].range([indicatorTop(j) + dim.indicator.height, indicatorTop(j)]);
+					yScale[key].range([indicatorTop(j) + dim.indicator.height, indicatorTop(j)]);
 				    Annotation[key].translate([xRange[1], 0]);
 				    Crosshair[key].verticalWireRange([0, dim.plot.height]);		
 				    d3.select("#symbol-"+key).attr("y", indicatorTop(j)+7).attr("color", "blue");	    
