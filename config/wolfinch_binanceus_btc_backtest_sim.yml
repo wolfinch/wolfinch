@@ -50,7 +50,7 @@ exchanges:
       order_type    : market
       fee     : 
          maker : 0.075 #make fee %
-         taker : 0.075df #taker fee %
+         taker : 0.075 #taker fee %
    #cbpro - end
 # exchanges - end
 
@@ -72,7 +72,7 @@ genetic_optimizer:
    N_MP : 1
    strategy : EMA_DEV
 ui:
-   enabled : false
+   enabled : true
    port : 8080
    
 #EOF

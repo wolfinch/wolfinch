@@ -330,6 +330,7 @@
 		}
 
 		//create indicators lists
+		// normalize OBV(2, 4) => OBV24
 		regexp = /[\s\(\),]/g;
 		 
 		g_big_data.indicator_plots = [],
@@ -347,6 +348,7 @@
 			} else if ((key.toLowerCase().indexOf("rsi") != -1 ) || 
 					(key.toLowerCase().indexOf("mfi") != -1) ||
 					(key.toLowerCase().indexOf("vosc") != -1) ||
+					(key.toLowerCase().indexOf("atr") != -1) ||					
 					(key.toLowerCase().indexOf("obv") != -1)) {
 				g_big_data.indicator_plots [key.replace(regexp, '')] = "rsi";
 			} else if (key.toLowerCase().indexOf("macd") != -1) {
@@ -393,27 +395,24 @@
 					g_big_data.indicators[key.replace(regexp, '')].push({					
 					  date: date,
 					  rsi: dd[key],
-					  middle: 50,
-					  overbought: 70,
-					  oversold: 20
 					});
 				} else if (key.toLowerCase().indexOf("vosc") != -1) {
 					// Mimic Vosc plot with RSI plot as techan doesn't support VOSC out of the box
 					g_big_data.indicators[key.replace(regexp, '')].push({					
 					  date: date,
 					  rsi: dd[key],
-					  middle: 50,
-					  overbought: 70,
-					  oversold: 20
 					});
 				} else if (key.toLowerCase().indexOf("mfi") != -1) {
 					// Mimic MFI plot with an RSI style plot
 					g_big_data.indicators[key.replace(regexp, '')].push({					
 					  date: date,
 					  rsi: dd[key],
-					  middle: 50,
-					  overbought: 70,
-					  oversold: 20
+					});					
+				}  else if (key.toLowerCase().indexOf("atr") != -1) {
+					// Mimic ATR plot with an RSI style plot
+					g_big_data.indicators[key.replace(regexp, '')].push({					
+					  date: date,
+					  rsi: dd[key],
 					});
 				} else if (key.toLowerCase().indexOf("ohlc") == -1) {
 					// all other indicators except ohlc
@@ -423,6 +422,35 @@
 			});
 		});
 
+		// normalize
+		function getMinRsi(data ){
+			  return data.reduce((min, b) => Math.min(min, b.rsi), data[0].rsi);
+			}
+		function getMaxRsi(data){
+			  return data.reduce((max, b) => Math.max(max, b.rsi), data[0].rsi);
+			}
+		
+		Object.keys(g_big_data.indicators).forEach(function(key) {
+			var data = g_big_data.indicators[key];
+			
+			if (key.toLowerCase().indexOf("rsi") ||
+					key.toLowerCase().indexOf("atr") || 
+					key.toLowerCase().indexOf("vosc") || 
+					key.toLowerCase().indexOf("mfi") ) {
+				min = getMinRsi(data);
+				max = getMaxRsi(data);
+				console.log ("min "+min+" max "+max);
+				
+				data.forEach (function addMinMaxRsi (di) {
+					di.overbought = max;
+					di.oversold = min;
+					di.middle = (max+min)/2
+					});
+			} else if (key.toLowerCase().indexOf("macd")) {
+				//do something else
+					console.log ("############## normalize impl. macd ##########");
+			}
+		});
 		//g_big_data.indicators.ohlc = data;
 
 		d3.select("#chart").call(g_big_chart);

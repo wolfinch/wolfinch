@@ -415,7 +415,11 @@ class Market:
         else:
             start_candle_idx = (time.time() - start_time)//self.candle_interval
             return self.market_indicators_data[-start_candle_idx:-(start_candle_idx+num_period)]         
-
+    def get_cur_indicators (self):
+        if sims.backtesting_on == True:
+            return self.market_indicators_data[self.backtesting_idx]
+        else:
+            return self.market_indicators_data[-1]
     
     def get_strategies_list (self):
         return self.market_strategies_data
@@ -1101,7 +1105,8 @@ class Market:
         
         if sims.backtesting_on == True:
             if self.tradeConfig.get("stop_loss_smart_rate", False) == True:
-                self.order_book.smart_stop_loss_update_positions(self.get_market_rate(), self.tradeConfig)
+                self.order_book.smart_stop_loss_update_positions(self.get_cur_indicators(),
+                                                                  self.get_market_rate(), self.tradeConfig)
             return
         
         # 1.take profit handling, this is aggressive take profit, not waiting for candle period
@@ -1145,7 +1150,8 @@ class Market:
         cur_rate = self.get_market_rate()
         # bit of conservative approach for smart-SL. update SL only on candle time
         if self.tradeConfig["stop_loss_smart_rate"] == True:
-            self.order_book.smart_stop_loss_update_positions(cur_rate, self.tradeConfig)
+            self.order_book.smart_stop_loss_update_positions(self.get_cur_indicators(),
+                                                              cur_rate, self.tradeConfig)
                     
         self.O = self.H = self.L = self.C = cur_rate
         self.V = 0
