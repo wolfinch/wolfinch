@@ -346,7 +346,7 @@ class Market:
             raise ("invalid strategy_list")
         self.market_strategies = strategy.Configure(self.exchange_name, self.product_id, strategy_list)
         #find non-strategy indicators (stop_loss may use ATR)
-        if 'ATR' in tcfg['stop_loss_kind'] :
+        if tcfg['stop_loss_enabled'] == True and 'ATR' in tcfg['stop_loss_kind'] :
             ext_ind = {"ATR": {int(tcfg['stop_loss_kind'].split('ATR')[1])}}
         else:
             ext_ind = None

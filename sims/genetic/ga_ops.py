@@ -118,9 +118,14 @@ def createMutantTradecfg(indT, indpb):
     if (indT["stop_loss_enabled"] == False):
         indT["stop_loss_smart_rate"] = False
         indT["stop_loss_rate"] = 0
-    elif indT["stop_loss_rate"] == 0:
+    elif indT["stop_loss_rate"] == 0 and 'ATR' not in cfg_gen["stop_loss_kind"]:
         indT["stop_loss_enabled"] = False
         indT["stop_loss_smart_rate"] = False
+        
+    if 'ATR' == indT["stop_loss_kind"]:
+        #just mutated, need to find ATR rate too. 
+        period = genParamVal(conf, "stop_loss_atr_period")
+        indT["stop_loss_kind"] = "ATR%d"%period
         
     if (indT["take_profit_enabled"] == False):
         indT["take_profit_rate"] = 0
@@ -128,14 +133,12 @@ def createMutantTradecfg(indT, indpb):
         indT["take_profit_enabled"] = False
 
     individual = indT
-    log.debug ("mutant: %s"%(indT))    
+    log.debug ("mutant: %s"%(indT))
     return individual
 
 def createMutant (individual, indpb):
-    
     individual["strategy_cfg"] = createMutantStrategy(individual["strategy_cfg"], indpb)
     individual["trading_cfg"] = createMutantTradecfg(individual["trading_cfg"], indpb)
-    
     return individual,
 
 def configGenerator ():
@@ -143,8 +146,9 @@ def configGenerator ():
 
 TradingConfig = {
         'stop_loss_enabled' : {'default': True, 'var': {'type': bool}},
-        'stop_loss_smart_rate' : {'default': True, 'var': {'type': bool}},
-        'stop_loss_rate' : {'default': 5, 'var': {'type': int, 'min': 1, 'max': 10, 'step': 1 }},
+        'stop_loss_rate' : {'default': 5, 'var': {'type': int, 'min': 1, 'max': 10, 'step': 1 }},        
+        'stop_loss_kind' : {'default': True, 'var': {'type': str, 'choices': ['simple', 'trailing', 'ATR']}},
+        'stop_loss_atr_period' : {'default': 50, 'var': {'type': int, 'min': 10, 'max': 200, 'step': 10 }},          
         'take_profit_enabled' : {'default': True, 'var': {'type': bool}},
         'take_profit_rate' : {'default': 10, 'var': {'type': int, 'min': 2, 'max': 20, 'step': 1 }}
         }
@@ -164,14 +168,26 @@ def tradingcfgGenerator ():
         
     cfg_gen = police_tradingcfg_gen(cfg_gen)
 
+    print ("************888cfg: %s"%str(cfg_gen))
+    
     if (cfg_gen["stop_loss_enabled"] == False):
-        cfg_gen["stop_loss_smart_rate"] = False
         cfg_gen["stop_loss_rate"] = 0
+        cfg_gen["stop_loss_smart_rate"] = False
+    elif 'ATR' == cfg_gen["stop_loss_kind"]:
+        cfg_gen["stop_loss_kind"] = "ATR%d"%cfg_gen['stop_loss_atr_period']
+        print ("******dafdfsd******888cfg: %s"%str(cfg_gen))
+        
+    elif cfg_gen["stop_loss_rate"] == 0 :
+        cfg_gen["stop_loss_enabled"] = False
+        cfg_gen["stop_loss_smart_rate"] = False        
+    if cfg_gen["stop_loss_kind"] != "simple":
+        cfg_gen["stop_loss_smart_rate"] = True
+    del(cfg_gen['stop_loss_atr_period'])
         
     if (cfg_gen["take_profit_enabled"] == False):
         cfg_gen["take_profit_rate"] = 0
                 
-    log.debug ("strat: %s"%(cfg_gen))
+    log.critical ("strat: %s"%(cfg_gen))
 
     return cfg_gen
 
@@ -211,7 +227,8 @@ def genParamVal (conf, param_key):
     elif tp == bool:
         val = random.choice([False, True])
     elif tp == str:
-        raise Exception("Unsupported var type str")
+        choices = var['choices']
+        val = random.choice(choices)
     else:
         raise Exception( "Unsupported var type (%s)"%(repr(tp))) 
     
