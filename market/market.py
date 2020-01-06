@@ -1291,6 +1291,11 @@ def market_init (exchange_list, get_product_config_hook):
         products = exchange.get_products()
         if products:
             for product in products:
+                tcfg, dcfg = exchange.get_product_config (exchange.name, product.get('id', None))
+                if tcfg == None or dcfg == None:
+                    log.critical ("""Unable to get product config for exch: %s prod: %s
+                    skip configuring market""" % (exchange.name, product.get('id', None)))
+                    continue
                 # init new Market for product
                 try:
                     log.info ("configuring market for exch: %s prod: %s" % (exchange, product))

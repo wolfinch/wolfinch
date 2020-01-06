@@ -153,6 +153,7 @@ def configGenerator ():
 
 TradingConfig = {
         'stop_loss_enabled' : {'default': True, 'var': {'type': bool}},
+        'stop_loss_smart_rate' : {'default': False, 'var': {'type': bool}},        
         'stop_loss_rate' : {'default': 5, 'var': {'type': int, 'min': 1, 'max': 10, 'step': 1 }},        
         'stop_loss_kind' : {'default': True, 'var': {'type': str, 'choices': ['simple', 'trailing', 'ATR', 'strategy']}},
         'stop_loss_atr_period' : {'default': 50, 'var': {'type': int, 'min': 10, 'max': 200, 'step': 10 }},          
