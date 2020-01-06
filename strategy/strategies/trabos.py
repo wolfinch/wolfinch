@@ -97,9 +97,9 @@ class TRABOS(Strategy):
         if cur_close > sma + atr and vosc > 0:
             if (all( mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1))):
                 return 1, cur_close-2*atr, cur_close+2*atr
-        elif cur_close < sma + atr and vosc > 0:
-            if (all( mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1))):            
-                return -1
+        elif cur_close < sma - atr and vosc > 0:
+#             if (all( mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1))):            
+            return -1
         return signal
     
 # EOF

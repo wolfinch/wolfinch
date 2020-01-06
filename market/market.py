@@ -1149,7 +1149,7 @@ class Market:
         
         cur_rate = self.get_market_rate()
         # bit of conservative approach for smart-SL. update SL only on candle time
-        if self.tradeConfig["stop_loss_smart_rate"] == True:
+        if self.tradeConfig.get("stop_loss_smart_rate", False) == True:
             self.order_book.smart_stop_loss_update_positions(self.get_cur_indicators(),
                                                               cur_rate, self.tradeConfig)
                     
