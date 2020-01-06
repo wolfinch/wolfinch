@@ -112,6 +112,8 @@ def sim_ga_init (decisionConfig, tradingConfig):
         if exch_name == None or prod_name == None:
             return None, None
         tcfg, _ = get_prod_cfg_fn (exch_name, prod_name)
+        if tcfg == None:
+            return None, None        
         tradingConfig.update(tcfg)
         
         return tradingConfig, decisionConfig
