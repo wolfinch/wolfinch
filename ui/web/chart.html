@@ -237,7 +237,7 @@
 
 	var parseDate = function(utcSeconds) {
 		var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
-		d.setUTCSeconds(utcSeconds);
+		d.setUTCSeconds(utcSeconds+d.getTimezoneOffset()*60);
 		return d;
 	}
 
@@ -552,7 +552,9 @@
 
 		function refreshText(d) {
 			console.log ("refresh");			
-	        valueText.text("Trade: " + dateFormat(d.date) + ", " + d.type + ", " + valueFormat(d.price));
+	        valueText.text("Trade: " + dateFormat(d.date) + ", " + d.type + ", " + valueFormat(d.price))
+	        .attr("x", dim.plot.width - 5)
+		  	.attr("y", 15);
 		}
 
 		////////////// TODO: generic, add more supported indicators here to plot.
@@ -634,7 +636,7 @@
         .attr("y", 15)
         .text(g_big_data.name);
 
- 	  valueText = svg.append('tooltiptext')
+ 	  valueText = svg.append('text')
  	 	.style("text-anchor", "end")
 	  	.attr("class", "coords")
 	  	.attr("x", dim.plot.width - 5)
