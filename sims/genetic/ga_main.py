@@ -138,6 +138,8 @@ def eval_exec_async (eval_fn, ind_iter):
                     if not res_list[i][1].is_alive():
                         res_list[i][0] = False
                         res_list[i][4] = copy.deepcopy(res_list[i][2]["res"])
+                        if type(res_list[i][4]) == int:
+                            res_list[i][4] = (0.0,)
                         print ("res i(%d/%d) - %s"%(i,len(res_list), res_list[i][4]))
                         p.join()
     #                         del(res_list[i][2])                        
@@ -150,6 +152,9 @@ def eval_exec_async (eval_fn, ind_iter):
                 if not res_list[i][1].is_alive():
                     res_list[i][0] = False
                     res_list[i][4] = copy.deepcopy(res_list[i][2]["res"])
+                    print ("rest ------------------------------------- %s"%(str(res_list[i][2]["res"])))                    
+                    if type(res_list[i][4]) == int:
+                        res_list[i][4] = (0.0,)                    
                     print ("res i(%d/%d) - %s"%(i, len(res_list), res_list[i][4]))
                     p.join()
 #                         del(res_list[i][2])                        
