@@ -41,6 +41,7 @@ from .strategy import Strategy
 class TRABOS(Strategy):
     config = {
         'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
+        'sma' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},                
         'atr' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},        
         'mfi' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'mfi_dir_len' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},        
@@ -48,8 +49,8 @@ class TRABOS(Strategy):
         'vosc_long' : {'default': 40, 'var': {'type': int, 'min': 40, 'max': 200, 'step': 5 }},        
         }
     
-    def __init__ (self, name, period=120, atr=60, mfi=50, mfi_dir_len=20,
-                  sma=60, vosc_short=20, vosc_long=40,
+    def __init__ (self, name, period=120, sma=60, atr=60, mfi=50, mfi_dir_len=20,
+                  vosc_short=20, vosc_long=40,
                  ):     
         self.name = name
         self.period = period
@@ -62,7 +63,7 @@ class TRABOS(Strategy):
         self.vosc_long = vosc_long
 
         # internal states
-        self.position = ''
+#         self.position = ''
         self.signal = 0
 #         self.cur_timeout_buy = timeout_buy
 #         self.cur_timeout_sell = timeout_sell    

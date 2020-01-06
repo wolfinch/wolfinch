@@ -92,7 +92,8 @@ def parse_product_config (cfg):
         print ("trading config not set")
         raise Exception ("trading config not set")
     
-    if parsed_tcfg ['stop_loss_enabled'] == False:
+    if parsed_tcfg.get('stop_loss_enabled', False) == False:
+        parsed_tcfg ['stop_loss_enabled'] = False        
         parsed_tcfg ['stop_loss_smart_rate'] = False
     
     return parsed_tcfg, parsed_dcfg
