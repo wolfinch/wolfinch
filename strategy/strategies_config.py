@@ -29,7 +29,7 @@ from .strategies.ema_dev import EMA_DEV
 from .strategies.trend_bollinger import TREND_BOLLINGER
 from .strategies.trix_rsi import TRIX_RSI
 from .strategies.minmax import MINMAX
-from .strategies.mfi_rsi_vosc import MFI_RSI_VOSC
+from .strategies.trabos import TRABOS
 
 #### List all available strategies below ###
 strategies_list = {
@@ -40,7 +40,7 @@ strategies_list = {
     "TREND_BOLLINGER": TREND_BOLLINGER,
     "TRIX_RSI": TRIX_RSI,
     "MINMAX": MINMAX,
-    "MFI_RSI_VOSC" : MFI_RSI_VOSC
+    "TRABOS" : TRABOS
     }
 #### List all available strategies above ###
 

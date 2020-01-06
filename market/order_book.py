@@ -146,7 +146,7 @@ class OrderBook():
         position = Position(id=buy_order.id)
         position.add_buy(buy_order)
         if self.market.tradeConfig["stop_loss_enabled"]:
-            self.add_stop_loss_position(position, buy_order.get_price(), self.market.tradeConfig["stop_loss_rate"], buy_order.stop)
+            self.add_stop_loss_position(position, buy_order.get_price(), self.market, buy_order.stop)
         if self.market.tradeConfig["take_profit_enabled"]:
             self.add_take_profit_position(position, buy_order.get_price(), self.market.tradeConfig["take_profit_rate"], buy_order.profit)
                 
@@ -236,7 +236,7 @@ class OrderBook():
             self.open_positions.append(position)
             if self.market.tradeConfig["stop_loss_enabled"]:
                 self.add_stop_loss_position(position, position.buy.get_price(),
-                                             self.market.tradeConfig["stop_loss_rate"], position.get_stop_loss())
+                                             self.market, position.get_stop_loss())
             if self.market.tradeConfig["take_profit_enabled"]:
                 self.add_take_profit_position(position, position.buy.get_price(),
                                                self.market.tradeConfig["take_profit_rate"], position.get_take_profit())
@@ -265,10 +265,18 @@ class OrderBook():
 #         log.debug("\n\n\n***close_position: open(%d) closed(%d) close_pend(%d)\n pos:%s"%(
 #             len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions), position))
             
-    def add_stop_loss_position(self, position, market_rate, sl_rate, stop_price=0):
-        if stop_price == 0:
-            stop_price = float(round(market_rate*(1 - sl_rate*float(.01)), 4))
+    def add_stop_loss_position(self, position, market_rate, market, stop_price=0):
         
+        if stop_price == 0:
+            if market.tradeConfig['stop_loss_kind'] in ['trailing', 'simple']:
+                sl_rate = market.tradeConfig["stop_loss_rate"]
+                stop_price = float(round(market_rate*(1 - sl_rate*float(.01)), 4))
+            elif 'ATR' in market.tradeConfig['stop_loss_kind']:
+                atr = market.get_cur_indicators()[market.tradeConfig['stop_loss_kind']]
+                stop_price = float(round(market_rate - 2*atr, 4))
+            else:
+                raise Exception("Unknown  stop_loss kind - "+market.tradeConfig['stop_loss_kind'])
+                                
         position.set_stop_loss(stop_price)
         
         pos_list = self.sl_dict.get(stop_price, None)
@@ -297,6 +305,8 @@ class OrderBook():
         elif 'ATR' in tcfg['stop_loss_kind']:
             atr = cur_indicators[tcfg['stop_loss_kind']]
             new_sl = float(round(market_rate - 2*atr, 4))
+        else:
+            raise Exception("Unaknown  smart stop_loss kind %s"%(tcfg['stop_loss_kind']))
         
         key_list = list(self.sl_dict.irange(maximum=new_sl, inclusive=(False, False)))
         
@@ -531,7 +541,7 @@ class OrderBook():
                 self.open_positions.append(pos)
                 if self.market.tradeConfig["stop_loss_enabled"]:
                     self.add_stop_loss_position(pos, pos.buy.get_price(),
-                                                 self.market.tradeConfig["stop_loss_rate"], pos.get_stop_loss())
+                                                 self.market, pos.get_stop_loss())
                 if self.market.tradeConfig["take_profit_enabled"]:
                     self.add_take_profit_position(pos, pos.buy.get_price(),
                                                    self.market.tradeConfig["take_profit_rate"], pos.get_take_profit())

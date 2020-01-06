@@ -58,7 +58,7 @@ def parse_product_config (cfg):
                     parsed_tcfg ['stop_loss_enabled'] = ex_v
                 elif ex_k == 'kind':
                     parsed_tcfg ['stop_loss_kind'] = ex_v
-                    if ex_v != 'simple':        
+                    if ex_v not in ['simple', 'strategy']:        
                         parsed_tcfg ['stop_loss_smart_rate'] = True
                 elif ex_k == 'rate':
                     parsed_tcfg ['stop_loss_rate'] = ex_v                    
@@ -91,6 +91,10 @@ def parse_product_config (cfg):
          not parsed_tcfg.get('asset_min_per_trade_size')) :
         print ("trading config not set")
         raise Exception ("trading config not set")
+    
+    if parsed_tcfg ['stop_loss_enabled'] == False:
+        parsed_tcfg ['stop_loss_smart_rate'] = False
+    
     return parsed_tcfg, parsed_dcfg
 
 
@@ -187,7 +191,7 @@ def load_config (cfg_file):
                     gTradingConfig ['stop_loss_enabled'] = ex_v
                 elif ex_k == 'kind':
                     gTradingConfig ['stop_loss_kind'] = ex_v
-                    if ex_v != 'simple':        
+                    if ex_v not in ['simple', 'strategy']:        
                         gTradingConfig ['stop_loss_smart_rate'] = True
                 elif ex_k == 'rate':
                     gTradingConfig ['stop_loss_rate'] = ex_v                 
@@ -249,6 +253,9 @@ def load_config (cfg_file):
                 if ex_k == 'port':
                     ui.port = ex_v                           
                 
+    if gTradingConfig ['stop_loss_enabled'] == False:
+        gTradingConfig ['stop_loss_smart_rate'] = False
+                        
 #     print ("v: %s"%str(tradingConfig))
 #     exit(1)
     log.debug ("config loaded successfully!")

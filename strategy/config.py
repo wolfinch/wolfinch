@@ -68,7 +68,11 @@ def Configure_indicators(exchange_name, product_id, ext_indicators = None):
         raise ("no strategies configured!!")
     req_indicators = gen_product_indicators_list (exchange_name, product_id)
     if ext_indicators:
-        req_indicators.update(ext_indicators)
+        for key in ext_indicators:
+            if req_indicators.get (key):
+                req_indicators[key].update(ext_indicators[key])
+            else:
+                req_indicators[key] = ext_indicators[key]
     return indicators.Configure(exchange_name, product_id, req_indicators)
 
 
