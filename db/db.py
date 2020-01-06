@@ -39,8 +39,8 @@ def clear_db ():
         DB.clear_db()
         
 def is_db_enabled():
-    import sims, ui    
-    if sims.simulator_on and not ui.integrated_ui:
+    import sims  
+    if sims.simulator_on:
         return False
     return  True
 
