@@ -17,7 +17,14 @@ Wolfinch is a trading bot implemented in Python. It is primarily focused on cryp
 * Paper trading (Simulation) mode
 * Genetic optimizer support for tuning strategies
 * Machine Learning mode - supports training and using trained models and ML decision engines
-* Take profit and stop Stop Loss support ( Plus Smart Stop loss)
+* Positional Stop Stop Loss support, multiple smart stop strategies available
+	- Fixed Percent
+	- Trailing with fixed percent
+	- ATR trailing stop (with variable ATR period support)
+	- Strategy provided
+* Positional Take profit support
+	- Fixed percent
+	- Strategy provided
 * Supports trading multiple exchanges at the same time
 * Supports trading multiple trading pairs at the same time
 * Supports cross exchange, cross pair trading (Using signals and indicators on one exchange/trading-pair to make trading decision on another exchange/trading-pair)
@@ -52,11 +59,11 @@ Strategies are experimental. Use them at your own risk.
 
 Not based on priority.
 
-1. add more indicators
-2. add more strategies 
+1. more indicators
+2. more strategies 
 3. improve Decision/Model
-5. more exchanges, inter exchange strategy, tie with model
-7. integrate news source
+5. more exchanges
+7. integrate news source, sentiment analysis input for decision 
 10. high frequency trading
 11. **Any additional feature requests**
 
