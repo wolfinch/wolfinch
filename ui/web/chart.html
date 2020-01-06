@@ -696,7 +696,7 @@
 		//zoomableInit = x.copy();
 		yInit = y.copy();
 		yPercentInit = yPercent.copy();
-		//x.zoomable().domain([ indicatorPreRoll, data.length ]); // Zoom in a little to hide indicator preroll
+		x.zoomable().domain([ indicatorPreRoll, ohlc_list.length ]); // Zoom in a little to hide indicator preroll
 
       // Add trendlines and other interactions last to be above zoom pane
 		svg.append('g').attr("class", "crosshair ohlc");

@@ -397,8 +397,8 @@ class OrderBook():
         return tp_pos_list
             
             
-    def add_take_profit_position(self, position, market_rate, tp_rate, tp_price=0):
-        if tp_price == 0:
+    def add_take_profit_position(self, position, market_rate, tp_rate, new_tp=0):
+        if new_tp == 0:
             new_tp = float(round(market_rate*(1 + tp_rate*float(.01)), 4))
         
         position.set_take_profit(new_tp)

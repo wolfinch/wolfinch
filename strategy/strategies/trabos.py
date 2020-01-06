@@ -35,52 +35,43 @@
 # def gen_sig():
     
 
-
-# from decimal import Decimal
 from .strategy import Strategy
 
 
 class TRABOS(Strategy):
-    # HoF :       #EMA_DEV{'strategy_cfg': {'ema_sell_s': 45, 'timeout_sell': 66, 'rsi': 34,
-    # 'treshold_pct_buy_l': 1.71, 'ema_buy_s': 135, 'timeout_buy': 2, 'period': 110, 'treshold_pct_sell_s': 0.38,
-    # 'ema_buy_l': 75, 'treshold_pct_sell_l': 0.49, 'treshold_pct_buy_s': 1.42, 'ema_sell_l': 95},
-    # 'trading_cfg': {'take_profit_enabled': True, 'stop_loss_smart_rate': False, 'take_profit_rate': 20,
-    # 'stop_loss_enabled': False, 'stop_loss_rate': 0}}
     config = {
         'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'atr' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},        
         'mfi' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
-        'rsi' : {'default': 21, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
-        'vosc_short' : {'default': 20, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
-        'vosc_long' : {'default': 40, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},        
-        'timeout_buy' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},
-        'timeout_sell' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},
+        'mfi_dir_len' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},        
+        'vosc_short' : {'default': 20, 'var': {'type': int, 'min': 10, 'max': 80, 'step': 5 }},
+        'vosc_long' : {'default': 40, 'var': {'type': int, 'min': 40, 'max': 200, 'step': 5 }},        
         }
     
-    def __init__ (self, name, period=120, atr=60, mfi=50, sma=60, rsi=120, vosc_short=20, vosc_long=40,
-                  timeout_buy=50, timeout_sell=50):     
+    def __init__ (self, name, period=120, atr=60, mfi=50, mfi_dir_len=20,
+                  sma=60, vosc_short=20, vosc_long=40,
+                 ):     
         self.name = name
         self.period = period
     
         self.atr = atr
         self.sma = sma
         self.mfi = mfi
-        self.rsi = rsi
+        self.mfi_dir_len = mfi_dir_len
         self.vosc_short = vosc_short
         self.vosc_long = vosc_long
-        self.timeout_buy = timeout_buy
-        self.timeout_sell = timeout_sell
+
         # internal states
         self.position = ''
         self.signal = 0
-        self.cur_timeout_buy = timeout_buy
-        self.cur_timeout_sell = timeout_sell    
+#         self.cur_timeout_buy = timeout_buy
+#         self.cur_timeout_sell = timeout_sell    
         
         # configure required indicators
         self.set_indicator("ATR", {atr})        
         self.set_indicator("SMA", {sma})                
         self.set_indicator("MFI", {mfi})
-        self.set_indicator("RSI", {rsi})
+        #self.set_indicator("RSI", {rsi})
         self.set_indicator("VOSC", {(vosc_short, vosc_long)})        
         self.set_indicator("close")
         
@@ -94,23 +85,20 @@ class TRABOS(Strategy):
         signal = 0
         if len_candles < self.period:
             return 0
-        
-        
-        rsi21 = self.indicator(candles, 'RSI', self.rsi)        
-        mfi = self.indicator(candles, 'MFI', self.mfi)
+                
+        mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
         vosc = self.indicator(candles, 'VOSC', (self.vosc_short, self.vosc_long))
         cur_close = self.indicator(candles, 'close')
         
         atr = self.indicator(candles, 'ATR', self.atr)        
         sma = self.indicator(candles, 'SMA', self.sma)
         
-        if cur_close > sma + atr:
-#             print ("sma %f atr: %f close: %f"%(sma, atr, cur_close))
-            return 1
-        elif cur_close < sma + atr:
-            return -1
-#         print (rsi21, mfi, vosc)
-
+        if cur_close > sma + atr and vosc > 0:
+            if (all( mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1))):
+                return 1, cur_close-2*atr, cur_close+2*atr
+        elif cur_close < sma + atr and vosc > 0:
+            if (all( mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1))):            
+                return -1
         return signal
     
 # EOF
