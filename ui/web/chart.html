@@ -417,6 +417,12 @@
 					  date: date,
 					  rsi: dd[key],
 					}); 
+				}   else if (key.toLowerCase().indexOf("obv") != -1) {
+					// Mimic OBV plot with an RSI style plot
+					g_big_data.indicators[key.replace(regexp, '')].push({					
+					  date: date,
+					  rsi: dd[key],
+					}); 
 				} else if (key.toLowerCase().indexOf("ohlc") == -1) {
 					// all other indicators except ohlc
 					d = dd[key];
@@ -438,6 +444,7 @@
 			
 			if ((key.toLowerCase().indexOf("rsi") != -1) ||
 					(key.toLowerCase().indexOf("vosc")  != -1) || 
+					(key.toLowerCase().indexOf("obv")  != -1) || 					
 					(key.toLowerCase().indexOf("atr")  != -1) || 					
 					(key.toLowerCase().indexOf("mfi")  != -1) ) {
 				min = getMinRsi(data);

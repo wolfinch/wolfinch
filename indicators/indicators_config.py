@@ -36,6 +36,7 @@ from indicators.macd import MACD
 from indicators.mfi import MFI
 from indicators.vosc import VOSC
 from indicators.atr import ATR
+from indicators.obv import OBV
 
 
 from indicators import indicator
@@ -58,7 +59,8 @@ indicators_list = {
     "MACD": MACD,
     "MFI": MFI,
     "VOSC": VOSC,
-    "ATR": ATR
+    "ATR": ATR,
+    "OBV":OBV
     }
 
 # Manually configure all required indicators. Should be used with auto-generation strategy 
