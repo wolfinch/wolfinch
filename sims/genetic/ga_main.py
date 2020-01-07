@@ -102,7 +102,7 @@ def log_hof (ngen, hof):
         s = "**** hall of fame: ngen (%d) ****\n"%(ngen)
         fp.write (s)
         for e in hof:
-            s = str(e) + "\n"
+            s = "config: %s profit: %s \n"%(str(e), str(e.fitness.values))
             fp.write(s)
             
 def log_stats (stats_stream):
@@ -229,6 +229,7 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, sgen=1, ngen=1, stats=None,
 
         # Replace the current population by the offspring
         population[:] = offspring
+        population += halloffame
         population_persist (population, gen)
         
         # Append the current generation statistics to the logbook
