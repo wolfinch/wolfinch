@@ -92,7 +92,7 @@ def do_trade (market):
         market.order_status_update (order)
         #now trade
         this_order = copy.deepcopy(order_struct) # Note: this at the top
-        this_order['created_at'] = datetime.utcfromtimestamp(market.cur_candle_time).isoformat()
+        this_order['created_at'] = datetime.fromtimestamp(market.cur_candle_time).isoformat()
         this_order['product_id'] = market.product_id
         this_order['id'] = order.id
         this_order['type'] = "done"
@@ -319,7 +319,7 @@ class SIM_EXCH (exchanges.Exchange):
         sell_order = Order(str(uuid.uuid1()), trade_req.product, "open", order_type=trade_req.type, 
                           side='sell', request_size=trade_req.size,
                        filled_size=0,  price=trade_req.price, funds=0,
-                     fees=0, create_time=time.ctime()) 
+                     fees=0, create_time=time.ctime())
         open_orders_pvt = open_orders.get(trade_req.product) 
         if open_orders_pvt == None:
             open_orders[trade_req.product] = [sell_order]
