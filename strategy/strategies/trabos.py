@@ -44,14 +44,19 @@ class TRABOS(Strategy):
         'sma' : {'default': 5, 'var': {'type': int, 'min': 2, 'max': 30, 'step': 1 }},                
         'atr' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},        
         'mfi' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
-        'mfi_dir_len' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},        
+        'mfi_dir_len' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},  
+        'stop_x' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},        
+        'profit_x' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},                      
         'vosc_short' : {'default': 20, 'var': {'type': int, 'min': 10, 'max': 80, 'step': 5 }},
-        'vosc_long' : {'default': 40, 'var': {'type': int, 'min': 40, 'max': 200, 'step': 5 }},        
+        'vosc_long' : {'default': 40, 'var': {'type': int, 'min': 40, 'max': 200, 'step': 5 }},    
+        'timeout_buy' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},
+        'timeout_sell' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},            
         }
     
     def __init__ (self, name, period=120, sma=6, atr=60, mfi=50, mfi_dir_len=20,
-                  vosc_short=20, vosc_long=40,
-                 ):     
+                  vosc_short=20, vosc_long=40, stop_x=2, profit_x=2,
+                  timeout_buy=50, timeout_sell=50
+                 ):
         self.name = name
         self.period = period
     
@@ -59,23 +64,25 @@ class TRABOS(Strategy):
         self.sma = sma
         self.mfi = mfi
         self.mfi_dir_len = mfi_dir_len
+        self.stop_x = stop_x
+        self.profit_x = profit_x
         self.vosc_short = vosc_short
         self.vosc_long = vosc_long
-
+        self.timeout_buy = timeout_buy
+        self.timeout_sell = timeout_sell
+        
         # internal states
-#         self.position = ''
         self.signal = 0
-#         self.cur_timeout_buy = timeout_buy
-#         self.cur_timeout_sell = timeout_sell    
+        self.cur_timeout_buy = timeout_buy
+        self.cur_timeout_sell = timeout_sell    
         
         # configure required indicators
         self.set_indicator("ATR", {atr})        
         self.set_indicator("SMA", {sma})                
         self.set_indicator("MFI", {mfi})
-        #self.set_indicator("RSI", {rsi})
-        self.set_indicator("VOSC", {(vosc_short, vosc_long)})        
-        self.set_indicator("close")
+        self.set_indicator("VOSC", {(vosc_short, vosc_long)}) 
         self.set_indicator("OBV")
+        self.set_indicator("close")
         
 
     def generate_signal (self, candles):
@@ -91,16 +98,25 @@ class TRABOS(Strategy):
         mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
         vosc = self.indicator(candles, 'VOSC', (self.vosc_short, self.vosc_long))
         cur_close = self.indicator(candles, 'close')
+        obv_l = self.indicator(candles, 'OBV', history=4)
         
         atr = self.indicator(candles, 'ATR', self.atr)        
         sma = self.indicator(candles, 'SMA', self.sma)
         
-        if cur_close > sma + atr and vosc > 0:
-            if (all( mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1))):
-                return 1, cur_close-2*atr, cur_close+2*atr
-        elif cur_close < sma - atr and vosc > 0:
-#             if (all( mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1))):            
+        if ((cur_close > sma + atr and vosc > 0) 
+            and all( mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1)) 
+            and all( obv_l[i] <= obv_l[i+1] for i in range(len(obv_l)-1))
+            and (self.cur_timeout_buy < 0)):      
+            self.cur_timeout_buy = self.timeout_buy           
+            return 1, cur_close-self.stop_x*atr, cur_close+self.profit_x*atr
+        elif ((cur_close < sma - atr and vosc > 0)
+              and (self.cur_timeout_sell < 0)):
+#             if (all( mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1))):    
+            self.cur_timeout_sell = self.timeout_sell        
             return -1
-        return signal
+        else:
+            self.cur_timeout_buy -= 1
+            self.cur_timeout_sell -= 1            
+            return signal
     
 # EOF

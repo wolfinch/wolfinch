@@ -152,7 +152,6 @@ def eval_exec_async (eval_fn, ind_iter):
                 if not res_list[i][1].is_alive():
                     res_list[i][0] = False
                     res_list[i][4] = copy.deepcopy(res_list[i][2]["res"])
-                    print ("rest ------------------------------------- %s"%(str(res_list[i][2]["res"])))                    
                     if type(res_list[i][4]) == int:
                         res_list[i][4] = (0.0,)                    
                     print ("res i(%d/%d) - %s"%(i, len(res_list), res_list[i][4]))
@@ -177,10 +176,19 @@ def population_load ():
             return data["pop"], data["ngen"]
     return None, 0  
 
+def eliminate_duplicates(pop_list):
+    new_pop = []
+    for ind in pop_list:
+        if ind not in new_pop:
+            new_pop.append(ind)
+    return new_pop
+    
 def eaSimpleCustom(population, toolbox, cxpb, mutpb, sgen=1, ngen=1, stats=None,
              halloffame=None, verbose=__debug__):
     logbook = tools.Logbook()
     logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
+
+    population = eliminate_duplicates(population)
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
@@ -205,14 +213,15 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, sgen=1, ngen=1, stats=None,
 
         # Vary the pool of individuals
         offspring = algorithms.varAnd(offspring, toolbox, cxpb, mutpb)
-
+        offspring = eliminate_duplicates(offspring)        
+        
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         
         fitnesses = eval_exec_async(toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit            
-        
+                
         # Update the hall of fame with the generated individuals
         if halloffame is not None:
             halloffame.update(offspring)
