@@ -82,11 +82,11 @@ def createOffSpringTradecfg(indA, indB):
             
     indA= ind1
     indB= ind2
-    return indA, indB
+    return police_tradingcfg_gen(indA), police_tradingcfg_gen(indB)
 
 def createOffSpring(indA, indB):
 
-    indA["strategy_cfg"], indB["strategy_cfg"] = createOffSpringTradecfg(indA["strategy_cfg"], indB["strategy_cfg"])
+    indA["strategy_cfg"], indB["strategy_cfg"] = createOffSpringStrategy(indA["strategy_cfg"], indB["strategy_cfg"])
     indA["trading_cfg"], indB["trading_cfg"] = createOffSpringTradecfg(indA["trading_cfg"], indB["trading_cfg"])
 
     return indA, indB
@@ -115,29 +115,6 @@ def createMutantTradecfg(indT, indpb):
 #             raise Exception("rand: %f %s"%(rand, ind))
 
     indT = police_tradingcfg_gen (indT)
-    if (indT["stop_loss_enabled"] == False):
-        indT["stop_loss_smart_rate"] = False
-        indT["stop_loss_rate"] = 0
-    elif indT["stop_loss_rate"] == 0 :
-        if ('ATR' in indT["stop_loss_kind"] ):
-            indT["stop_loss_enabled"] = True
-            indT["stop_loss_smart_rate"] = True
-        elif 'strategy' == indT["stop_loss_kind"]:
-            indT["stop_loss_enabled"] = True
-            indT["stop_loss_smart_rate"] = False
-        else:
-            indT["stop_loss_enabled"] = False
-            indT["stop_loss_smart_rate"] = False            
-                
-    if 'ATR' == indT["stop_loss_kind"]:
-        #just mutated, need to find ATR rate too. 
-        period = genParamVal(conf, "stop_loss_atr_period")
-        indT["stop_loss_kind"] = "ATR%d"%period
-        
-    if (indT["take_profit_enabled"] == False):
-        indT["take_profit_rate"] = 0
-    elif indT["take_profit_rate"] == 0:
-        indT["take_profit_enabled"] = False
 
     individual = indT
     log.debug ("mutant: %s"%(indT))
@@ -166,6 +143,33 @@ def police_tradingcfg_gen (t_cfg):
     for param_key, param_val in GaTradingConfig.items():
         t_cfg [param_key] = param_val
     
+    if (t_cfg["stop_loss_enabled"] == False):
+        t_cfg["stop_loss_smart_rate"] = False
+        t_cfg["stop_loss_rate"] = 0
+        t_cfg["stop_loss_kind"] = "simple"
+    elif t_cfg["stop_loss_rate"] == 0 :
+        if ('ATR' in t_cfg["stop_loss_kind"] ):
+            t_cfg["stop_loss_enabled"] = True
+            t_cfg["stop_loss_smart_rate"] = True
+        elif 'strategy' == t_cfg["stop_loss_kind"]:
+            t_cfg["stop_loss_enabled"] = True
+            t_cfg["stop_loss_smart_rate"] = False
+        else:
+            t_cfg["stop_loss_enabled"] = False
+            t_cfg["stop_loss_smart_rate"] = False            
+            t_cfg["stop_loss_kind"] = "simple"
+    if 'ATR' == t_cfg["stop_loss_kind"]:
+        #just mutated, need to find ATR rate too. 
+        if not t_cfg.get("stop_loss_atr_period"):
+            t_cfg["stop_loss_atr_period"] = genParamVal(TradingConfig, "stop_loss_atr_period")
+        t_cfg["stop_loss_kind"] = "ATR%d"%t_cfg["stop_loss_atr_period"]
+    if (t_cfg["take_profit_enabled"] == False):
+        t_cfg["take_profit_rate"] = 0
+    elif t_cfg["take_profit_rate"] == 0:
+        t_cfg["take_profit_enabled"] = False
+    
+    if t_cfg.get("stop_loss_atr_period"):
+        del(t_cfg["stop_loss_atr_period"])    
     return t_cfg
     
 def tradingcfgGenerator ():
@@ -175,29 +179,6 @@ def tradingcfgGenerator ():
         cfg_gen [param_key] = genParamVal(TradingConfig, param_key)
         
     cfg_gen = police_tradingcfg_gen(cfg_gen)
-    
-    if (cfg_gen["stop_loss_enabled"] == False):
-        cfg_gen["stop_loss_rate"] = 0
-        cfg_gen["stop_loss_smart_rate"] = False
-    elif 'ATR' == cfg_gen["stop_loss_kind"]:
-        cfg_gen["stop_loss_kind"] = "ATR%d"%cfg_gen['stop_loss_atr_period']
-        
-    elif cfg_gen["stop_loss_rate"] == 0 :
-        if ('ATR' in cfg_gen["stop_loss_kind"] ):
-            cfg_gen["stop_loss_enabled"] = True
-            cfg_gen["stop_loss_smart_rate"] = True
-        elif 'strategy' == cfg_gen["stop_loss_kind"]:
-            cfg_gen["stop_loss_enabled"] = True
-            cfg_gen["stop_loss_smart_rate"] = False
-        else:
-            cfg_gen["stop_loss_enabled"] = False
-            cfg_gen["stop_loss_smart_rate"] = False          
-    if cfg_gen["stop_loss_kind"] == "simple":
-        cfg_gen["stop_loss_smart_rate"] = False
-    del(cfg_gen['stop_loss_atr_period'])
-        
-    if (cfg_gen["take_profit_enabled"] == False):
-        cfg_gen["take_profit_rate"] = 0
                 
     log.critical ("strat: %s"%(cfg_gen))
 
