@@ -49,13 +49,13 @@ class TRABOS(Strategy):
         'profit_x' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},                      
         'vosc_short' : {'default': 20, 'var': {'type': int, 'min': 10, 'max': 80, 'step': 5 }},
         'vosc_long' : {'default': 40, 'var': {'type': int, 'min': 40, 'max': 200, 'step': 5 }},    
-        'timeout_buy' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},
-        'timeout_sell' : {'default': 50, 'var': {'type': int, 'min': 0, 'max': 100, 'step': 2 }},            
+        'timeout_buy' : {'default': 5, 'var': {'type': int, 'min': 0, 'max': 50, 'step': 2 }},
+        'timeout_sell' : {'default': 5, 'var': {'type': int, 'min': 0, 'max': 50, 'step': 2 }},            
         }
     
     def __init__ (self, name, period=120, sma=6, atr=60, mfi=50, mfi_dir_len=20,
                   vosc_short=20, vosc_long=40, stop_x=2, profit_x=2,
-                  timeout_buy=50, timeout_sell=50
+                  timeout_buy=5, timeout_sell=5
                  ):
         self.name = name
         self.period = period
