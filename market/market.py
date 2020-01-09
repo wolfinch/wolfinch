@@ -406,15 +406,15 @@ class Market:
     
     def get_indicator_list (self, num_period=0, start_time=0):
         #normalize period in days to num_candles
-        num_period  = (num_period * 24*60*60) // self.candle_interval
+        num_candles  = (num_period * 24*60*60) // self.candle_interval
         log.info ("num_period: %d start_time: %d"%(num_period, start_time))
-        if num_period == 0:
+        if num_candles == 0:
             return self.market_indicators_data
         elif start_time == 0:
-            return self.market_indicators_data[-num_period:]
+            return self.market_indicators_data[-num_candles:]
         else:
-            start_candle_idx = (time.time() - start_time)//self.candle_interval
-            return self.market_indicators_data[-start_candle_idx:-(start_candle_idx+num_period)]         
+            start_candle_idx = int((time.time() - start_time)//self.candle_interval)
+            return self.market_indicators_data[-start_candle_idx:-(start_candle_idx)+num_candles or len(self.market_indicators_data)] 
     def get_cur_indicators (self):
         if sims.backtesting_on == True:
             return self.market_indicators_data[self.backtesting_idx]

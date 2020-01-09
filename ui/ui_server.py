@@ -110,7 +110,7 @@ def server_main (port=8080, mp_pipe=None):
 
     @app.route('/api/get_markets')
     def get_markets_api():
-        global g_markets_list
+        global g_markets_list, g_active_market
         try:
             if not g_markets_list:
                 msg = {"type": "GET_MARKETS"}
@@ -134,11 +134,22 @@ def server_main (port=8080, mp_pipe=None):
                     log.error (err)
                     raise Exception (err)
             data = {"all": g_markets_list}
-            if g_active_market.get("EXCH_NAME") and  g_active_market.get("PRODUCT_ID"):
+            if not( g_active_market.get("EXCH_NAME") and  g_active_market.get("PRODUCT_ID")):
+                #set the first one in the list as default active
+                if (len(g_markets_list)):
+                    exch_name  = list(g_markets_list.keys())[0]
+                if (len(g_markets_list[exch_name])):
+                    market = g_markets_list[exch_name][0]
+                
+                if exch_name and market:
+                    g_active_market = {"EXCH_NAME": exch_name, "PRODUCT_ID": market['product_id'],
+                            "BUY_PAUSED": market["buy_paused"], "SELL_PAUSED": market["sell_paused"]}
+            if g_active_market.get("EXCH_NAME") and  g_active_market.get("PRODUCT_ID"): 
                 data["active"] = {"EXCH_NAME": g_active_market["EXCH_NAME"],
                                   "PRODUCT_ID": g_active_market["PRODUCT_ID"],
                                   "BUY_PAUSED": g_active_market["BUY_PAUSED"],
                                   "SELL_PAUSED": g_active_market["SELL_PAUSED"]}
+
             return json.dumps(data)
         except Exception as e:
             log.error ("Unable to get market list. Exception: %s", e)

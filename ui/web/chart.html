@@ -267,7 +267,7 @@
 			url : '/api/candles',
 			data : {
 				period: g_chart_period,
-				start_time : 0,
+				start_time : g_chart_start_time,
 				exch_name : active_exch,
 				product : active_market
 			},
@@ -805,9 +805,14 @@
 		      dim.height = selection.node().clientHeight;
 		      dim.plot.width = dim.width - dim.margin.left - dim.margin.right;
 		      dim.plot.height = dim.height - dim.margin.top - dim.margin.bottom;
+		      
+		      var ind_plot_num = Object.keys(g_big_data.indicator_plots).length;
+		      
 		      dim.ohlc.height = dim.plot.height * (1 - 
-		    		  ((Object.keys(g_big_data.indicator_plots).length)?0.151*(Object.keys(g_big_data.indicator_plots).length):0.001)); //0.67777777;
-		      dim.indicator.height = dim.plot.height * 0.144444;
+		    		 (ind_plot_num?0.151*(Math.min(ind_plot_num, 3)):0.001)); //0.67777777;
+		    
+			  var ind_h = Math.min(dim.plot.height * 0.144444, dim.plot.height*.42/(ind_plot_num || 1));		    		 
+		      dim.indicator.height = ind_h;
 		      dim.indicator.padding = dim.plot.height * 0.01111111111;
 		      dim.indicator.top = dim.ohlc.height + dim.indicator.padding;
 		      dim.indicator.bottom = dim.indicator.top + dim.indicator.height + dim.indicator.padding;
@@ -939,7 +944,9 @@
 		return bigchart;
 	}
 
+	var ONE_DAY_IN_SEC = 24*60*60;
 	var g_chart_period = 1;
+	var g_chart_start_time = Math.floor(Date.now()/1000) - ONE_DAY_IN_SEC;
 
 	function btn_onclick(id) {
 
@@ -949,16 +956,31 @@
 		switch (id) {
 		case "btn1":
 			g_chart_period = 1;
+			g_chart_start_time -= g_chart_period*ONE_DAY_IN_SEC;
 			break;
 		case "btn3":
 			g_chart_period = 3;
+			g_chart_start_time -= g_chart_period*ONE_DAY_IN_SEC;			
 			break;
 		case "btn7":
 			g_chart_period = 7;
+			g_chart_start_time -= g_chart_period*ONE_DAY_IN_SEC;			
 			break;
 		case "btn30":
 			g_chart_period = 30;
+			g_chart_start_time -= g_chart_period*ONE_DAY_IN_SEC;			
 			break;
+		case "btn_prev":
+			console.log("load prev candles");
+			g_chart_start_time -= g_chart_period*ONE_DAY_IN_SEC;
+			break;
+		case "btn_next":
+			console.log("load prev candles");
+			g_chart_start_time += g_chart_period*ONE_DAY_IN_SEC;
+			if (g_chart_start_time > Math.floor(Date.now()/1000)) {
+				g_chart_start_time = Math.floor(Date.now()/1000)
+			}
+			break;			
 		default:
 			console.log("Unknown button");
 			break;
