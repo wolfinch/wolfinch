@@ -2,7 +2,7 @@
 # Wolfinch Auto trading Bot
 # Desc:  TRABOS (True Range Breakout) strategy
 #
-#  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify

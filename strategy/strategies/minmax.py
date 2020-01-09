@@ -3,7 +3,7 @@
 # Desc:  MINMAX strategy (Trade if candle close is min or max of history periods.)
 # strategy based on - https://www.reddit.com/r/zenbot/comments/b92mis/minmax_strategy/
 #
-#  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify

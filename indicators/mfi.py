@@ -1,7 +1,7 @@
 # '''
 #  Desc: Money Flow Index (MFI) implementation using tulip
 #  https://tulipindicators.org/mfi
-#  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
