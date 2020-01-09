@@ -106,11 +106,11 @@ class TRABOS(Strategy):
         if ((cur_close > sma + atr and vosc > 0) 
             and all( mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1)) 
             and all( obv_l[i] <= obv_l[i+1] for i in range(len(obv_l)-1))
-            and (self.cur_timeout_buy < 0)):      
+            and (self.cur_timeout_buy <= 0)):      
             self.cur_timeout_buy = self.timeout_buy           
             return 1, cur_close-self.stop_x*atr, cur_close+self.profit_x*atr
         elif ((cur_close < sma - atr and vosc > 0)
-              and (self.cur_timeout_sell < 0)):
+              and (self.cur_timeout_sell <= 0)):
 #             if (all( mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1))):    
             self.cur_timeout_sell = self.timeout_sell        
             return -1
