@@ -31,7 +31,7 @@ exchanges:
             fund_max_liquidity : 900 #$$               
             fund_max_per_buy_value : 30 #$100 max per buy
             asset_max_per_trade_size: 1000 #per sell asset size max
-            asset_min_per_trade_size: 0.001 #Min asset size to trade with (may come from exch limits or asset limits)
+            asset_min_per_trade_size: 0.0001 #Min asset size to trade with (may come from exch limits or asset limits)
             stop_loss:
                enabled: true
                kind : strategy      #simple(default) | trailing | ATR | strategy
@@ -43,7 +43,7 @@ exchanges:
                model    : simple
                config   :
                   strategy: TRABOS
-                  params: {'period': 35, 'sma': 50, 'atr': 20, 'mfi': 135, 'mfi_dir_len': 2, 'vosc_short': 65, 'vosc_long': 200}
+                  params: {'period': 35, 'sma': 6, 'atr': 20, 'mfi': 135, 'mfi_dir_len': 2, 'vosc_short': 55, 'vosc_long': 200, 'stop_x':2, 'profit_x':5, 'timeout_buy': 0, 'timeout_sell': 0}
                   #strategy: EMA_DEV
                   #params : {'ema_sell_s': 85, 'timeout_sell': 10, 'rsi': 76, 'treshold_pct_buy_l': 1.31, 'ema_buy_s': 90, 'timeout_buy': 10, 'period': 195, 'treshold_pct_sell_s': 0.61, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.0, 'treshold_pct_buy_s': 1.69, 'ema_sell_l': 70}
       # products - end
