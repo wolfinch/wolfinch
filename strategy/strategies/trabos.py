@@ -45,6 +45,7 @@ class TRABOS(Strategy):
         'atr' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},        
         'mfi' : {'default': 50, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
         'mfi_dir_len' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},  
+        'obv_dir_len' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},          
         'stop_x' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},        
         'profit_x' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},                      
         'vosc_short' : {'default': 20, 'var': {'type': int, 'min': 10, 'max': 80, 'step': 5 }},
@@ -53,7 +54,7 @@ class TRABOS(Strategy):
         'timeout_sell' : {'default': 5, 'var': {'type': int, 'min': 0, 'max': 50, 'step': 2 }},            
         }
     
-    def __init__ (self, name, period=120, sma=6, atr=60, mfi=50, mfi_dir_len=20,
+    def __init__ (self, name, period=120, sma=6, atr=60, mfi=50, mfi_dir_len=20, obv_dir_len=20,
                   vosc_short=20, vosc_long=40, stop_x=2, profit_x=2,
                   timeout_buy=5, timeout_sell=5
                  ):
@@ -64,6 +65,7 @@ class TRABOS(Strategy):
         self.sma = sma
         self.mfi = mfi
         self.mfi_dir_len = mfi_dir_len
+        self.obv_dir_len = obv_dir_len
         self.stop_x = stop_x
         self.profit_x = profit_x
         self.vosc_short = vosc_short
@@ -98,7 +100,7 @@ class TRABOS(Strategy):
         mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
         vosc = self.indicator(candles, 'VOSC', (self.vosc_short, self.vosc_long))
         cur_close = self.indicator(candles, 'close')
-        obv_l = self.indicator(candles, 'OBV', history=4)
+        obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
         
         atr = self.indicator(candles, 'ATR', self.atr)        
         sma = self.indicator(candles, 'SMA', self.sma)
