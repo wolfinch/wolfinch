@@ -76,9 +76,9 @@ def server_main (port=8080, mp_pipe=None):
     def get_ui_secret():
         return str(UI_PAGE_SECRET)
     
-    @app.route('/js/<path:path>')
-    def send_js_api(path):
-        return send_from_directory('js', path)
+    @app.route('/<secret>/wolfinch/js/<path>')
+    def send_js_api(secret, path):
+        return app.send_static_file('js/'+path)
 
     @app.route('/<secret>/wolfinch/stylesheet.css')
     def stylesheet_page_api(secret):
