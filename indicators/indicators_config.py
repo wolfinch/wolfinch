@@ -35,6 +35,7 @@ from indicators.sar import SAR
 from indicators.macd import MACD
 from indicators.mfi import MFI
 from indicators.vosc import VOSC
+from indicators.vemaosc import VEMAOSC
 from indicators.atr import ATR
 from indicators.obv import OBV
 from indicators.vwap import VWAP
@@ -60,6 +61,7 @@ indicators_list = {
     "MACD": MACD,
     "MFI": MFI,
     "VOSC": VOSC,
+    "VEMAOSC": VEMAOSC,
     "ATR": ATR,
     "OBV":OBV,
     "VWAP":VWAP

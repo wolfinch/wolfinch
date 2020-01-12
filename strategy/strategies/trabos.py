@@ -82,8 +82,9 @@ class TRABOS(Strategy):
         self.set_indicator("ATR", {atr})        
         self.set_indicator("SMA", {sma})                
         self.set_indicator("MFI", {mfi})
-        self.set_indicator("VOSC", {(vosc_short, vosc_long)}) 
+        #self.set_indicator("VOSC", {(vosc_short, vosc_long)}) 
         self.set_indicator("OBV")
+        self.set_indicator("VEMAOSC", {(vosc_short, vosc_long)})        
         self.set_indicator("close")
         self.set_indicator("VWAP", {20})
         
@@ -99,14 +100,14 @@ class TRABOS(Strategy):
             return 0
                 
         mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
-        vosc = self.indicator(candles, 'VOSC', (self.vosc_short, self.vosc_long))
+        vosc = self.indicator(candles, 'VEMAOSC', (self.vosc_short, self.vosc_long))
         cur_close = self.indicator(candles, 'close')
         obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
         
         atr = self.indicator(candles, 'ATR', self.atr)        
         sma = self.indicator(candles, 'SMA', self.sma)
         
-        if ((cur_close > sma + atr and vosc > 0) 
+        if ((cur_close > sma + atr) and (vosc > 0) 
             and all( mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1)) 
             and all( obv_l[i] <= obv_l[i+1] for i in range(len(obv_l)-1))
             and (self.cur_timeout_buy <= 0)):      
