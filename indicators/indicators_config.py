@@ -37,6 +37,7 @@ from indicators.mfi import MFI
 from indicators.vosc import VOSC
 from indicators.atr import ATR
 from indicators.obv import OBV
+from indicators.vwap import VWAP
 
 
 from indicators import indicator
@@ -60,7 +61,8 @@ indicators_list = {
     "MFI": MFI,
     "VOSC": VOSC,
     "ATR": ATR,
-    "OBV":OBV
+    "OBV":OBV,
+    "VWAP":VWAP
     }
 
 # Manually configure all required indicators. Should be used with auto-generation strategy 

@@ -85,6 +85,7 @@ class TRABOS(Strategy):
         self.set_indicator("VOSC", {(vosc_short, vosc_long)}) 
         self.set_indicator("OBV")
         self.set_indicator("close")
+        self.set_indicator("VWAP", {20})
         
 
     def generate_signal (self, candles):
