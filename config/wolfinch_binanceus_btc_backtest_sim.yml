@@ -37,13 +37,14 @@ exchanges:
                kind : strategy      #simple(default) | trailing | ATRXX | strategy |
                rate : 4 #-3%
             take_profit:
-               enabled: false
+               enabled: true 
                rate: 9 # 10percent
             decision:
                model    : simple
                config   :
                   strategy: TRABOS
-                  params : {'period': 140, 'sma': 7, 'atr': 160, 'mfi': 125, 'mfi_dir_len': 2, 'obv_dir_len':2, 'stop_x': 2, 'profit_x': 4, 'vosc_short': 50, 'vosc_long': 185, 'timeout_buy': 1, 'timeout_sell': 3}
+                  params: {'period': 110, 'ema': 27, 'atr': 50, 'mfi': 70, 'mfi_dir_len': 2, 'obv_dir_len': 2, 'stop_x': 8, 'profit_x': 6, 'vosc_short': 75, 'vosc_long': 150, 'timeout_buy': 0, 'timeout_sell': 36}
+                  #params : {'period': 140, 'ema': 7, 'atr': 160, 'mfi': 125, 'mfi_dir_len': 2, 'obv_dir_len':2, 'stop_x': 2, 'profit_x': 4, 'vosc_short': 50, 'vosc_long': 185, 'timeout_buy': 1, 'timeout_sell': 3}
                   #strategy: EMA_DEV
                   #params : {'ema_sell_s': 85, 'timeout_sell': 74, 'rsi': 76, 'treshold_pct_buy_l': 1.31, 'ema_buy_s': 90, 'timeout_buy': 4, 'period': 195, 'treshold_pct_sell_s': 0.61, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.0, 'treshold_pct_buy_s': 1.69, 'ema_sell_l': 70} 
       # products - end
