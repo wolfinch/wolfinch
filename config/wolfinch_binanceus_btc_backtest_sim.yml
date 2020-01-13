@@ -38,7 +38,7 @@ exchanges:
                rate : 4 #-3%
             take_profit:
                enabled: true 
-               rate: 9 # 10percent
+               rate: 9 # 10percent   
             decision:
                model    : simple
                config   :

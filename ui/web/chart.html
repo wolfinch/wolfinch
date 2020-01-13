@@ -14,7 +14,8 @@
 # 
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
---!>
+-->
+
 <html lang="en">
 
 <head>
@@ -28,12 +29,6 @@
 <script
 	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
 </head>
-
-<!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-<script
-	src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-	integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-	crossorigin="anonymous"></script> -->
 
 <link href="stylesheet.css" rel="stylesheet">
 <script
@@ -654,7 +649,7 @@
         .attr("class", "symbol")
         .attr("x", 5)
         .attr("y", 15)
-        .text(g_big_data.name);
+        .text(g_big_data.name);   
 
  	  valueText = svg.append('text')
  	 	.style("text-anchor", "end")
@@ -693,8 +688,13 @@
 	       	var indline = ohlcSelection.append("g")
 	        	.attr("class", "indicator sma ma-"+i)
 	        	.attr("clip-path", "url(#ohlcClip)");
-	       	ohlcSelection.append("g")
-            	.attr("class", "indicator annotation ma-"+i+" up");      	
+	       //	ohlcSelection.append("g")
+           // 	.attr("class", "indicator annotation ma-"+i+" up");
+	        svg.append('text')
+	        .attr("class", "ma-"+i)
+	        .attr("x", 5)
+	        .attr("y", 25+i*10)
+	        .text(g_big_data.indicator_lines[i]);	       	
       }
       
       ohlcSelection.append("g")
@@ -798,8 +798,8 @@
 	      var data = g_big_data.indicators[g_big_data.indicator_lines[i]];    	  
 	      svg.select("g.sma.ma-"+i).datum(data).call(ind_line).append("title").text(g_big_data.indicator_lines[i])
 	       	.on("mouseenter", lineenter).on("mouseout", lineout);
-	      svg.select("g.indicator.annotation.ma-"+i)
-	      .datum([data[data.length-1]]).call(ohlcIndicatorAnnotation);
+	      //svg.select("g.indicator.annotation.ma-"+i)
+	      //.datum([data[data.length-1]]).call(ohlcIndicatorAnnotation);
       }
       
       //svg.select("g.trendlines").datum(stock.trendlines).call(trendline).call(trendline.drag);
@@ -946,7 +946,7 @@
 	        
 		    for (i=0; i<g_big_data.indicator_lines.length; i++) {		    
 				svg.select("g .sma.ma-"+i).call(ind_line.refresh);
-			    svg.select("g.indicator.annotation.ma-"+i).call(ohlcIndicatorAnnotation.refresh);
+			    //svg.select("g.indicator.annotation.ma-"+i).call(ohlcIndicatorAnnotation.refresh);
 		    }
 	        
 	       // svg.select("g.trendlines").call(trendline.refresh);

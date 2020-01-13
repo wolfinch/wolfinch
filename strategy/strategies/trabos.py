@@ -86,9 +86,10 @@ class TRABOS(Strategy):
         self.set_indicator("MFI", {mfi})
         #self.set_indicator("VOSC", {(vosc_short, vosc_long)}) 
         self.set_indicator("OBV")
-        self.set_indicator("VEMAOSC", {(vosc_short, vosc_long)})        
+        self.set_indicator("VEMAOSC", {(vosc_short, vosc_long)})
         self.set_indicator("close")
         self.set_indicator("VWAP", {vwap})
+#         self.set_indicator("BBANDS")
         
 
     def generate_signal (self, candles):

@@ -300,6 +300,38 @@ path.middle, path.zero {
     fill: #FF0000;
 }
 
+.ma-0  {
+	fill: #1f77b4;
+}
+
+.ma-1  {
+	fill: #aec7e8;
+}
+
+.ma-2  {
+	fill: #ff7f0e;
+}
+
+.ma-3  {
+	fill: #ff7fae;
+}
+
+.ma-4  {
+	fill: #1f78b4;
+}
+
+.ma-5  {
+	fill: #aec9e8;
+}
+
+.ma-6  {
+	fill: #ff740e;
+}
+
+.ma-7  {
+	fill: #ff70ae;
+}
+
 .ma-0 path.line {
 	stroke: #1f77b4;
 }
