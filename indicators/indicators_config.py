@@ -39,6 +39,7 @@ from indicators.vemaosc import VEMAOSC
 from indicators.atr import ATR
 from indicators.obv import OBV
 from indicators.vwap import VWAP
+from indicators.mvwap import MVWAP
 
 
 from indicators import indicator
@@ -64,7 +65,8 @@ indicators_list = {
     "VEMAOSC": VEMAOSC,
     "ATR": ATR,
     "OBV":OBV,
-    "VWAP":VWAP
+    "VWAP":VWAP,
+    "MVWAP":MVWAP    
     }
 
 # Manually configure all required indicators. Should be used with auto-generation strategy 
