@@ -62,7 +62,7 @@ class TREND_RSI(Strategy):
         self.rsi_high = 0
         
         #CONFIGURE indicators
-        self.set_indicator("RSI", {self.rsi_periods})
+        self.set_indicator("RSI", self.rsi_periods)
         self.set_indicator("close")
                 
     def generate_signal (self, candles):

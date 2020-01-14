@@ -81,15 +81,15 @@ class TRABOS(Strategy):
         self.cur_timeout_sell = timeout_sell    
         
         # configure required indicators
-        self.set_indicator("ATR", {atr})        
-        self.set_indicator("EMA", {ema})                
-        self.set_indicator("MFI", {mfi})
+        self.set_indicator("ATR", atr)        
+        self.set_indicator("EMA", ema)                
+        self.set_indicator("MFI", mfi)
         #self.set_indicator("VOSC", {(vosc_short, vosc_long)}) 
         self.set_indicator("OBV")
-        self.set_indicator("VEMAOSC", {(vosc_short, vosc_long)})
+        self.set_indicator("VEMAOSC", (vosc_short, vosc_long))
         self.set_indicator("close")
-        self.set_indicator("VWAP", {vwap})
-        self.set_indicator("MVWAP", {(50, vwap)})
+        self.set_indicator("VWAP", vwap)
+        self.set_indicator("MVWAP", (50, vwap))
         
 
     def generate_signal (self, candles):

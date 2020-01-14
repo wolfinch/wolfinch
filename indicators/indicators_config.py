@@ -114,7 +114,10 @@ def Configure (exchange_name, product_id, config_list):
                     #where indicator has more than one param to configure
                     market_indicators[exchange_name][product_id].append(indicator("%s%s"%(ind_name, str(period)), *period))
                 else:
-                    market_indicators[exchange_name][product_id].append(indicator("%s%s"%(ind_name, str(period)), period))
+                    if period == 0:
+                        market_indicators[exchange_name][product_id].append(indicator(ind_name))
+                    else:
+                        market_indicators[exchange_name][product_id].append(indicator("%s%s"%(ind_name, str(period)), period))
                     
     
     #### Configure the Strategies - end ######

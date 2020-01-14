@@ -52,8 +52,8 @@ class TRIX_RSI(Strategy):
         self.acted_on_trend = False
         
         #Configure indicators
-        self.set_indicator("RSI", {self.rsi})
-        self.set_indicator("TRIX", {self.trix})
+        self.set_indicator("RSI", self.rsi)
+        self.set_indicator("TRIX", self.trix)
                 
     def generate_signal (self, candles):
         '''

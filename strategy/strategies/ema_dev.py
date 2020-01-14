@@ -69,7 +69,7 @@ class EMA_DEV(Strategy):
         
         # configure required indicators
         self.set_indicator("EMA", {ema_buy_s, ema_buy_l, ema_sell_s, ema_sell_l})
-        self.set_indicator("RSI", {rsi})
+        self.set_indicator("RSI", rsi)
         self.set_indicator("close")
         
 #         self.num_buy = 0

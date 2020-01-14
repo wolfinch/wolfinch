@@ -59,7 +59,7 @@ class EMA_RSI_SLOW(Strategy):
         
         #configure required indicators
         self.set_indicator("EMA", {self.ema_s, self.ema_m, self.ema_l, self.ema_ll})
-        self.set_indicator("RSI", {self.rsi})
+        self.set_indicator("RSI", self.rsi)
         #self.set_indicator("close")
                 
     def generate_signal (self, candles):

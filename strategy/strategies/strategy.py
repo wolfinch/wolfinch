@@ -34,15 +34,25 @@ class Strategy(metaclass=ABCMeta):
     def configure (self):
         pass
     
-    def set_indicator (self, name, periods=[]):
+    def set_indicator (self, name, periods=0):
         
         if not hasattr(self, "_indicator_list"):
             self._indicator_list = {}
         ind = self._indicator_list.get(name, None)
         if ind:
-            ind.update(periods)
+            if type(periods) == tuple:
+                ind.update({periods})
+            elif type(periods) == set:
+                ind.update(periods)
+            else:
+                ind.update({periods})
         else:
-            self._indicator_list[name] = set(periods)
+            if type(periods) == tuple:
+                self._indicator_list[name] = set({periods})
+            elif type(periods) == set:
+                self._indicator_list[name] = set(periods)
+            else:
+                self._indicator_list[name] = set({periods})
             
     def get_indicators (self):
         if not hasattr(self, "_indicator_list"):
