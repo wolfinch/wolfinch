@@ -27,18 +27,34 @@ log = getLogger ('confmgr')
 log.setLevel(log.INFO)
 # Global Config 
 WolfinchConfig = None
-gDecisionConfig = {}
-gTradingConfig = {"stop_loss_enabled": False,
-                  "stop_loss_kind" : "simple",
-                  "stop_loss_smart_rate": False,
-                  "stop_loss_rate": 0,
-                  "take_profit_enabled": False,
-                  "take_profit_rate": 0}
+gDecisionConfig = {"decision": {"model": "simple"}}
+gTradingConfig = {"stop_loss": {"kind": "simple", "enabled": False, "rate": 0},
+                  "take_profit": {"enabled": False, "rate": 0}}
+# gTradingConfig = {"stop_loss_enabled": False,
+#                   "stop_loss_kind" : "simple",
+#                   "stop_loss_smart_rate": False,
+#                   "stop_loss_rate": 0,
+#                   "take_profit_enabled": False,
+#                   "take_profit_kind" : "simple",
+#                   "take_profit_rate": 0}
 
 def parse_product_config (cfg):
     global gDecisionConfig, gTradingConfig    
     parsed_tcfg = {}
-    parsed_dcfg = {}    
+    parsed_dcfg = {}
+                    
+    if not cfg.get("take_profit") :
+        if gTradingConfig.get("take_profit"):
+            cfg["take_profit"] = gTradingConfig.get("take_profit")
+            
+    if not cfg.get("stop_loss") :
+        if gTradingConfig.get("stop_loss"):
+            cfg["stop_loss"] = gTradingConfig.get("stop_loss")
+                        
+    if not cfg.get("decision") :
+        if gDecisionConfig.get("decision"):
+            cfg["decision"] = gDecisionConfig.get("decision")
+                
     for k, v in cfg.items():
         if k == 'currency':
             parsed_tcfg ['currency'] = v
@@ -66,35 +82,36 @@ def parse_product_config (cfg):
             for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
                     parsed_tcfg ['take_profit_enabled'] = ex_v
+                elif ex_k == 'kind':
+                    parsed_tcfg ['take_profit_kind'] = ex_v
                 elif ex_k == 'rate':
-                    parsed_tcfg ['take_profit_rate'] = ex_v                                    
+                    parsed_tcfg ['take_profit_rate'] = ex_v                
         elif k == 'decision':
             for ex_k, ex_v in v.items():
                 if ex_k == 'model':
                     parsed_dcfg ['model_type'] = ex_v
                 elif ex_k == 'config':
                     parsed_dcfg ['model_config'] = ex_v
-                    
-    if not parsed_tcfg.get("take_profit") :
-        if gTradingConfig.get("take_profit"):
-            parsed_tcfg["take_profit"] = gTradingConfig.get("take_profit")
-            
-    if not parsed_tcfg.get("stop_loss") :
-        if gTradingConfig.get("stop_loss"):
-            parsed_tcfg["stop_loss"] = gTradingConfig.get("stop_loss")
-                        
-    if not parsed_dcfg.get("decision") :
-        if gDecisionConfig.get("decision"):
-            parsed_dcfg["decision"] = gDecisionConfig.get("decision")
+
                                     
     if ( not parsed_tcfg.get('fund_max_liquidity') or not parsed_tcfg.get('fund_max_per_buy_value') or 
          not parsed_tcfg.get('asset_min_per_trade_size')) :
         print ("trading config not set")
         raise Exception ("trading config not set")
     
-    if parsed_tcfg.get('stop_loss_enabled', False) == False:
+    if parsed_tcfg.get('stop_loss_enabled') == False:
         parsed_tcfg ['stop_loss_enabled'] = False        
         parsed_tcfg ['stop_loss_smart_rate'] = False
+        parsed_tcfg ['stop_loss_kind'] = 'simple'
+
+    if (parsed_tcfg.get('stop_loss_kind') != None and
+         (parsed_tcfg.get('stop_loss_kind').rstrip(str(list(range(9)))) not in ["simple", "strategy", "ATR"])):
+        s = "Unknown Stop Loss kind %s"%parsed_tcfg
+        raise Exception(s)
+    
+    if parsed_tcfg.get('take_profit_kind') != None and parsed_tcfg.get('take_profit_kind') not in ["simple", "strategy"]:
+        s = "Unknown Take Profit kind %s"%parsed_tcfg.get('take_profit_kind')
+        raise Exception(s)    
     
     return parsed_tcfg, parsed_dcfg
 
@@ -186,28 +203,10 @@ def load_config (cfg_file):
             if prim == False:
                 print ("No primary exchange configured!!")
                 return False
-        elif k == 'stop_loss':
-            for ex_k, ex_v in v.items():
-                if ex_k == 'enabled':
-                    gTradingConfig ['stop_loss_enabled'] = ex_v
-                elif ex_k == 'kind':
-                    gTradingConfig ['stop_loss_kind'] = ex_v
-                    if ex_v not in ['simple', 'strategy']:        
-                        gTradingConfig ['stop_loss_smart_rate'] = True
-                elif ex_k == 'rate':
-                    gTradingConfig ['stop_loss_rate'] = ex_v                 
-        elif k == 'take_profit':
-            for ex_k, ex_v in v.items():
-                if ex_k == 'enabled':
-                    gTradingConfig ['take_profit_enabled'] = ex_v
-                elif ex_k == 'rate':
-                    gTradingConfig ['take_profit_rate'] = ex_v                                    
+        elif k in ['stop_loss', 'take_profit']:
+            gTradingConfig [k] = v                                                
         elif k == 'decision':
-            for ex_k, ex_v in v.items():
-                if ex_k == 'model':
-                    gDecisionConfig ['model_type'] = ex_v
-                elif ex_k == 'config':
-                    gDecisionConfig ['model_config'] = ex_v     
+            gDecisionConfig[k] = v   
         elif k == 'simulator':
             for ex_k, ex_v in v.items():
                 if ex_k == 'enabled':
@@ -254,9 +253,6 @@ def load_config (cfg_file):
                 if ex_k == 'port':
                     ui.port = ex_v                           
                 
-    if gTradingConfig ['stop_loss_enabled'] == False:
-        gTradingConfig ['stop_loss_smart_rate'] = False
-                        
 #     print ("v: %s"%str(tradingConfig))
 #     exit(1)
     log.debug ("config loaded successfully!")

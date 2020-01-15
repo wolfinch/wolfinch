@@ -148,7 +148,7 @@ class OrderBook():
         if self.market.tradeConfig["stop_loss_enabled"]:
             self.add_stop_loss_position(position, buy_order.get_price(), self.market, buy_order.stop)
         if self.market.tradeConfig["take_profit_enabled"]:
-            self.add_take_profit_position(position, buy_order.get_price(), self.market.tradeConfig["take_profit_rate"], buy_order.profit)
+            self.add_take_profit_position(position, buy_order.get_price(), self.market, buy_order.profit)
                 
         self.all_positions.append(position)
         self.open_positions.append(position)
@@ -239,7 +239,7 @@ class OrderBook():
                                              self.market, position.get_stop_loss())
             if self.market.tradeConfig["take_profit_enabled"]:
                 self.add_take_profit_position(position, position.buy.get_price(),
-                                               self.market.tradeConfig["take_profit_rate"], position.get_take_profit())
+                                               self.market, position.get_take_profit())
         else:
             log.critical("Unable to get close_pending position. order_id: %s"%(pos_id))
     def close_position(self, sell_order):
@@ -267,15 +267,19 @@ class OrderBook():
             
     def add_stop_loss_position(self, position, market_rate, market, stop_price=0):
         
-        if stop_price == 0:
-            if market.tradeConfig['stop_loss_kind'] in ['trailing', 'simple']:
-                sl_rate = market.tradeConfig["stop_loss_rate"]
-                stop_price = float(round(market_rate*(1 - sl_rate*float(.01)), 4))
-            elif 'ATR' in market.tradeConfig['stop_loss_kind']:
-                atr = market.get_cur_indicators()[market.tradeConfig['stop_loss_kind']]
-                stop_price = float(round(market_rate - 2*atr, 4))
-            else:
-                raise Exception("Unknown  stop_loss kind - "+market.tradeConfig['stop_loss_kind'])
+        sl_kind = market.tradeConfig['stop_loss_kind']
+        if sl_kind in ['trailing', 'simple']:
+            sl_rate = market.tradeConfig["stop_loss_rate"]
+            stop_price = float(round(market_rate*(1 - sl_rate*float(.01)), 4))
+        elif 'ATR' in sl_kind:
+            atr = market.get_cur_indicators()[market.tradeConfig['stop_loss_kind']]
+            stop_price = float(round(market_rate - 2*atr, 4))
+        elif sl_kind == "strategy":
+            if stop_price == 0:
+                log.critical ("strategy provided invalid stop loss value")
+                return
+        else:
+            raise Exception("Unknown  stop_loss kind - "+market.tradeConfig['stop_loss_kind'])
                                 
         position.set_stop_loss(stop_price)
         
@@ -397,9 +401,18 @@ class OrderBook():
         return tp_pos_list
             
             
-    def add_take_profit_position(self, position, market_rate, tp_rate, new_tp=0):
-        if new_tp == 0:
-            new_tp = float(round(market_rate*(1 + tp_rate*float(.01)), 4))
+    def add_take_profit_position(self, position, market_rate, market, new_tp=0):
+        tp_kind = market.tradeConfig['take_profit_kind']
+        if tp_kind == 'simple':
+            tp_rate = market.tradeConfig["take_profit_rate"]
+            new_tp = float(round(market_rate*(1 + tp_rate*float(.01)), 4))            
+        elif tp_kind == 'strategy':
+            if new_tp == 0:
+                log.critical ("strategy provided invalid take profit value")
+                return
+        else:
+            raise Exception("Unknown  take profit kind - "+market.tradeConfig['take_profit_kind'])
+                                            
         
         position.set_take_profit(new_tp)
         pos_list = self.tp_dict.get(new_tp, None)
@@ -544,7 +557,7 @@ class OrderBook():
                                                  self.market, pos.get_stop_loss())
                 if self.market.tradeConfig["take_profit_enabled"]:
                     self.add_take_profit_position(pos, pos.buy.get_price(),
-                                                   self.market.tradeConfig["take_profit_rate"], pos.get_take_profit())
+                                                   self.market, pos.get_take_profit())
             else:
                 self.closed_positions.append(pos)
         

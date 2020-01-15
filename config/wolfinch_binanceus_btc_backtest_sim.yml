@@ -33,12 +33,13 @@ exchanges:
             asset_max_per_trade_size: 1000 #per sell asset size max
             asset_min_per_trade_size: .001 #Min asset size to trade with (may come from exch limits or asset limits)
             stop_loss:
-               enabled: false
+               enabled: true
                kind : strategy      #simple(default) | trailing | ATRXX | strategy |
                rate : 4 #-3%
             take_profit:
                enabled: true 
-               rate: 9 # 10percent   
+               kind : strategy # simple (default) | strategy |
+               rate: 9 # 10percent
             decision:
                model    : simple
                config   :

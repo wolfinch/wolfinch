@@ -132,9 +132,10 @@ TradingConfig = {
         'stop_loss_enabled' : {'default': True, 'var': {'type': bool}},
         'stop_loss_smart_rate' : {'default': False, 'var': {'type': bool}},        
         'stop_loss_rate' : {'default': 5, 'var': {'type': int, 'min': 1, 'max': 10, 'step': 1 }},        
-        'stop_loss_kind' : {'default': True, 'var': {'type': str, 'choices': ['simple', 'trailing', 'ATR', 'strategy']}},
+        'stop_loss_kind' : {'default': 'simple', 'var': {'type': str, 'choices': ['simple', 'strategy', 'trailing', 'ATR']}},
         'stop_loss_atr_period' : {'default': 50, 'var': {'type': int, 'min': 10, 'max': 200, 'step': 10 }},          
         'take_profit_enabled' : {'default': True, 'var': {'type': bool}},
+        'take_profit_kind' : {'default': 'simple', 'var': {'type': str, 'choices': ['simple', 'strategy']}},        
         'take_profit_rate' : {'default': 10, 'var': {'type': int, 'min': 2, 'max': 20, 'step': 1 }}
         }
 GaTradingConfig = {}
@@ -163,8 +164,15 @@ def police_tradingcfg_gen (t_cfg):
         if not t_cfg.get("stop_loss_atr_period"):
             t_cfg["stop_loss_atr_period"] = genParamVal(TradingConfig, "stop_loss_atr_period")
         t_cfg["stop_loss_kind"] = "ATR%d"%t_cfg["stop_loss_atr_period"]
+        t_cfg["stop_loss_rate"] = 0
+    if 'strategy' == t_cfg["stop_loss_kind"]:
+        t_cfg["stop_loss_rate"] = 0
+                
     if (t_cfg["take_profit_enabled"] == False):
         t_cfg["take_profit_rate"] = 0
+        t_cfg["take_profit_kind"] = "simple"
+    elif t_cfg["take_profit_kind"] == "strategy":
+        t_cfg["take_profit_rate"] = 0                  
     elif t_cfg["take_profit_rate"] == 0:
         t_cfg["take_profit_enabled"] = False
     
