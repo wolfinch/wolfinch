@@ -1,5 +1,8 @@
 #! /usr/bin/env python
 # '''
+#  Wolfinch Auto trading Bot
+#  Desc: Robinhood exchange interactions for Wolfinch
+#
 #  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -17,10 +20,8 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-
 import json
 import pprint
-from decimal import Decimal
 from datetime import datetime, timedelta
 from time import sleep
 import time
@@ -29,20 +30,22 @@ from twisted.internet import reactor
 
 import pyrh
 
-# from robinhood.client import Client
-# import robinhood.helpers
-# from robinhood.websockets import RobinhoodSocketManager
+# from .robinhood.enums import *
+# from .robinhood.client import Client
+# from . import robinhood
+# from .robinhood.websockets import RobinhoodSocketManager
 
 from utils import getLogger, readConf
 from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 
 log = getLogger ('Robinhood')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.DEBUG)
 
-#ROBINHOOD CONFIG FILE
+# ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
-BNC_INTERVAL_MAPPING = {300 :'5m', 600: '10m'}
+RBH_INTERVAL_MAPPING = {300 :'5m', 600: '10m'}
+
 
 class Robinhood (Exchange):
     name = "robinhood"
@@ -50,52 +53,59 @@ class Robinhood (Exchange):
     robinhood_products = []
     robinhood_accounts = {}
     public_client = None
-    auth_client   = None
+    auth_client = None
     ws_client = None
+    ws_auth_client = None
     symbol_to_id = {}
     primary = False
-    def __init__ (self, config=ROBINHOOD_CONF, primary=False):
+
+    def __init__(self, config, primary=False):
         log.info ("Init Robinhood exchange")
         
-        conf = readConf (config)
+        exch_cfg_file = config['config']
+        
+        conf = readConf (exch_cfg_file)
         if (conf != None and len(conf)):
             self.robinhood_conf = conf['exchange']
         else:
             return None
         
-        self.primary = primary
-        #get config
+        self.primary = True if primary else False
+        # get config
         if config.get('candle_interval'):
             # map interval in to robinhood format
-            interval = BNC_INTERVAL_MAPPING[int(config['candle_interval']) ]
+            interval = RBH_INTERVAL_MAPPING[int(config['candle_interval']) ]
             self.robinhood_conf['backfill_interval'] =  interval
             self.candle_interval = int(config['candle_interval'])        
-                        
-        backfill = self.robinhood_conf.get('backfill')
+                
+        # get config
+        backfill = config.get('backfill')
         if not backfill:
-            log.fatal("Invalid Config file")
+            log.fatal("Invalid backfill config")            
             return None
     
-        for entry in backfill:
-            if entry.get('enabled'):
-                self.robinhood_conf['backfill_enabled'] = entry['enabled']
-            if entry.get('period'):
-                self.robinhood_conf['backfill_period'] = int(entry['period'])
+        if backfill.get('enabled'):
+            self.robinhood_conf['backfill_enabled'] = backfill['enabled']
+        if backfill.get('period'):
+            self.robinhood_conf['backfill_period'] = int(backfill['period'])
 
+        
         # for public client, no need of api key
         self.public_client = Client("", "")
         if (self.public_client) == None :
             log.critical("robinhood public client init failed")
             return None
         
-        key = self.robinhood_conf.get('apiKey')
-        b64secret = self.robinhood_conf.get('apiSecret')
+        #get data from exch conf
+        self.key = self.robinhood_conf.get('apiKey')
+        self.b64secret = self.robinhood_conf.get('apiSecret')
+        self.test_mode = self.robinhood_conf.get('test_mode') or False
         
-        if ((key and b64secret ) == False):
+        if ((self.key and self.b64secret) == False):
             log.critical ("Invalid API Credentials in robinhood Config!! ")
             return None
         
-        self.auth_client = Client(key, b64secret)
+        self.auth_client = Client(self.key, self.b64secret)
         
         if self.auth_client == None:
             log.critical("Unable to Authenticate with robinhood exchange. Abort!!")
@@ -104,135 +114,239 @@ class Robinhood (Exchange):
 #         global robinhood_products
         exch_info = self.public_client.get_exchange_info()
         serverTime = int(exch_info['serverTime'])
-        localTime = int(time.time()*1000)
-        self.timeOffset = (serverTime - localTime)//1000
-        #if time diff is less the 5s, ignore. 
+        localTime = int(time.time() * 1000)
+        self.timeOffset = (serverTime - localTime) // 1000
+        # if time diff is less the 5s, ignore. 
         if abs(self.timeOffset) < 5: 
             self.timeOffset = 0
         
-        log.info ("servertime: %d localtime: %d offset: %d"%(serverTime, localTime, self.timeOffset))
+        log.info ("servertime: %d localtime: %d offset: %d" % (serverTime, localTime, self.timeOffset))
         
+#         self.robinhood_conf['products'] = []
+#         for p in config['products']:
+#             # add the product ids
+#             self.robinhood_conf['products'] += p.keys()
+                    
         products = exch_info.get("symbols")
+        log.info ("products: %s" % (pprint.pformat(products, 4)))
+                
         if (len(products) and len (self.robinhood_conf['products'])):
             for prod in products:
                 for p in self.robinhood_conf['products']:
-                    for k,v in p.items():
+                    for k, v in p.items():
 #                         log.debug ("pk: %s s: %s"%(k, prod['symbol']))
                         if prod['symbol'] == k:
-                            log.debug ("product found: %s p: %s"%(prod, v))
-                            prod['id'] = v[0]['id']
+                            log.debug ("product found: %s v: %s" % (prod, v))
+                            prod['id'] = v['id']
                             prod['display_name'] = k
                             self.symbol_to_id[k] = prod['id']
+                            prod ['asset_type'] = prod['baseAsset']
+                            prod ['fund_type'] = prod['quoteAsset']
+                                                  
                             self.robinhood_products.append(prod)
         
         # EXH supported in spectator mode. 
-#         # Popoulate the account details for each interested currencies
-#         accounts =  self.auth_client.get_account()
-#         if (accounts == None):
-#             log.critical("Unable to get account details!!")
-#             return False
-#         #log.debug ("Exchange Accounts: %s"%(pprint.pformat(accounts, 4)))
-#         for account in accounts:
-#             for prod in self.robinhood_conf['products']:
-#                 for prod_id in prod.keys():
-#                     currency = prod[prod_id][0]['currency']            
-#                     if account['currency'] in currency:
-#                         log.debug ("Interested Account Found for Currency: "+account['currency'])
-#                         self.robinhood_accounts[account['currency']] = account
-#                         break  
+        # Popoulate the account details for each interested currencies
+        accounts = self.auth_client.get_account()
+        if (accounts == None):
+            log.critical("Unable to get account details!!")
+            return False
+        log.debug ("Exchange Accounts: %s" % (pprint.pformat(accounts, 4)))
+        balances = accounts ['balances']
+        for balance in balances:
+#             log.debug ("balance: %s"%(balance))
+            for prod in self.robinhood_products:
+                log.debug ("prod_id: %s" % (prod['id']))               
+                if balance['asset'] in [prod ['asset_type'], prod ['fund_type']]:
+                    log.debug ("Interested Account Found for Currency: " + balance['asset'])
+                    self.robinhood_accounts[balance['asset']] = balance
+                    break  
         
+        ### Start WebSocket Streams ###
         self.ws_client = bm = RobinhoodSocketManager(self.public_client)
+        symbol_list = []
         for prod in self.get_products():
             # Start Kline socket
-            backfill_interval = self.robinhood_conf.get('backfill_interval')
-            bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg, interval=backfill_interval)
+#             backfill_interval = self.robinhood_conf.get('backfill_interval')
+#             bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg, interval=backfill_interval)
+#             bm.start_aggtrade_socket(prod['symbol'], self._feed_enQ_msg)
+            symbol_list.append(prod['symbol'].lower()+"@trade")
+            
+        if len(symbol_list):
+            #start mux ws socket now
+            log.info ("starting mux ws sockets for syms: %s"%(symbol_list))
+            bm.start_multiplex_socket(symbol_list, self._feed_enQ_msg)
+            
+        self.ws_auth_client = bm_auth = RobinhoodSocketManager(self.auth_client)
+        # Start user socket for interested symbols
+        log.info ("starting user sockets")
+        bm_auth.start_user_socket(self._feed_enQ_msg)            
+
         bm.start()
-                
-        log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
+        bm_auth.start()
+        
+        log.info("**Robinhood init success**\n Products: %s\n Accounts: %s" % (
                         pprint.pformat(self.robinhood_products, 4), pprint.pformat(self.robinhood_accounts, 4)))
         
     def __str__ (self):
         return "{Message: Robinhood Exchange }"
+
     ######## Feed Consume #######
-    def _feed_enQ_msg (self, msg):
-            log.debug("message :%s "%msg)      
-            msg_type = msg.get('e') 
-            symbol = msg.get("s")
-            product_id = self.symbol_to_id[symbol]
-            if (msg_type == 'kline'):
-                log.debug ("kline")
+    def _feed_enQ_msg (self, msg_raw):
+#             log.debug("message :%s " % msg_raw)
+            
+            if msg_raw.get('stream'):
+                msg = msg_raw.get('data')
+            else:
+                msg = msg_raw
+
+            msg_type = msg.get('e')
+            
+            if (msg_type == 'aggTrade' or msg_type == 'trade'):
+                log.debug ("aggTrade/trade")
+                symbol = msg.get("s")            
+                product_id = self.symbol_to_id.get(symbol)
+                if not product_id:
+                    log.error ("unknown market(%s)"%(symbol))
+                    return 
                 market = get_market_by_product (self.name, product_id)
                 if (market == None):
-                    log.error ("Feed Thread: Unknown market product: %s: msg %s"%(product_id, json.dumps(msg, indent=4, sort_keys=True)))
+                    log.error ("Feed Thread: Unknown market product: %s: msg %s" % (
+                        product_id, json.dumps(msg, indent=4, sort_keys=True)))
                     return
+                feed_enQ(market, msg)
+            elif (msg_type == 'kline'):
+                log.debug ("kline")
+                symbol = msg.get("s")            
+                product_id = self.symbol_to_id.get(symbol)
+                if not product_id:
+                    log.error ("unknown market(%s)"%(symbol))
+                    return 
                 k = msg.get('k')
                 if k.get('x') == True:
-                    #This kline closed, this is a candle
+                    # This kline closed, this is a candle
+                    market = get_market_by_product (self.name, product_id)
+                    if (market == None):
+                        log.error ("Feed Thread: Unknown market product: %s: msg %s" % (
+                            product_id, json.dumps(msg, indent=4, sort_keys=True)))
+                        return                    
                     feed_enQ(market, msg)
                 else:
                     # not interested
-                    pass                            
+                    pass                
+            elif (msg_type == 'executionReport'):
+                log.debug ("USER DATA: executionReport")
+                symbol = msg.get("s")            
+                product_id = self.symbol_to_id.get(symbol)
+                if not product_id:
+                    log.error ("unknown market(%s)"%(symbol))
+                    return         
+                market = get_market_by_product (self.name, product_id)
+                if (market == None):
+                    log.error ("Feed Thread: Unknown market product: %s: msg %s" % (
+                        product_id, json.dumps(msg, indent=4, sort_keys=True)))
+                    return
+                feed_enQ(market, msg)
+            elif (msg_type == 'error'):
+                log.critical("websocket connection retries exceeded!!")
+                raise Exception("websocket connection retries exceeded!!")
             else:
-                log.error ("Unknown feed. message type: %s prod: %s"%(msg_type, product_id))
+                log.error ("Unknown feed. message type: %s" % (msg_type))
             return
                 
     def _robinhood_consume_feed (self, market, msg):
-        ''' 
-        Feed Call back for Robinhood    
-        This is where we do all the useful stuff with Feed
-        '''
-        log.info ("msg: %s"%msg)
+#                         ''' 
+#         Feed Call back for Robinhood    
+#         This is where we do all the useful stuff with Feed
+#         '''
+        msg_type = msg.get('e') 
+        if (msg_type == 'trade' or msg_type == 'aggTrade'):
+            self._robinhood_consume_trade_feed (market, msg)            
+        elif (msg_type == 'executionReport'):
+            log.debug ("Feed: executionReport msg: %s " % (msg))
+            self._robinhood_consume_order_update_feed(market, msg)
+        elif (msg_type == 'kline'):
+            self._robinhood_consume_candle_feed(market, msg)
+                    
+    def _robinhood_consume_order_update_feed (self, market, msg):
+#         ''' 
+#         Process the order status update feed msg 
+#         '''
+        order = self._normalized_order(msg)
+        if order == None:
+            log.error ("order update ignored")
+            return None
+        log.debug ("Order Status Update id:%s side: %s status: %s"%(order.id, order.side, order.status))
+        market.order_status_update (order)        
+        
+        
+    def _robinhood_consume_trade_feed (self, market, msg):
+#         {
+#           "e": "aggTrade|trade",  // Event type
+#           "E": 123456789,   // Event time
+#           "s": "BNBBTC",    // Symbol
+#           "a": 12345,       // Aggregate trade ID
+#           "p": "0.001",     // Price
+#           "q": "100",       // Quantity
+#           "f": 100,         // First trade ID
+#           "l": 105,         // Last trade ID
+#           "T": 123456785,   // Trade time
+#           "m": true,        // Is the buyer the market maker?
+#           "M": true         // Ignore
+#         }        
+#         log.debug ("Trade feed: %s" % (msg))
+        price = float(msg.get('p'))
+        last_size = float(msg.get('q'))
+        log.debug ("Trade feed: price: %f size: %f" % (price, last_size))  
+        market.tick (price, last_size)
+                
+    def _robinhood_consume_candle_feed (self, market, msg):
+#         log.info ("msg: %s" % msg)
 #         msg_type = msg.get('e')
         k = msg.get('k')
-        t = int(k.get('T')+1)//1000 + self.timeOffset
-        o = Decimal(k.get('o'))
-        h = Decimal(k.get('h'))
-        l = Decimal(k.get('l'))
-        c = Decimal(k.get('c'))
-        v = Decimal(k.get('v'))
+        t = int(k.get('T') + 1) // 1000 + self.timeOffset
+        o = float(k.get('o'))
+        h = float(k.get('h'))
+        l = float(k.get('l'))
+        c = float(k.get('c'))
+        v = float(k.get('v'))
         
-#         if now >= market.cur_candle_time + interval:
             # close the current candle period and start a new candle period
         candle = OHLC(int(t), o, h, l, c, v)
-        log.debug ("New candle identified %s"%(candle))        
+        log.debug ("New candle identified %s" % (candle))        
         market.O = market.V = market.H = market.L = 0
         market.add_new_candle (candle)
         
-        #TODO: FIXME: jork: might need to rate-limit the logic here after
+        # TODO: FIXME: jork: might need to rate-limit the logic here after
         market.set_market_rate (c)
 #         market.update_market_states()        
             
     #### Feed consume done #####    
-    
-    #TODO: FIXME: Spectator mode, make full operational    
-    def market_init (self, product):
-#         usd_acc = self.robinhood_accounts['USD']
-#         crypto_acc = self.robinhood_accounts.get(product['base_currency'])
-#         if (usd_acc == None or crypto_acc == None): 
-#             log.error ("No account available for product: %s"%(product['id']))
-#             return None
-        #Setup the initial params
-#         log.debug ("product: %s"%product)
-        market = Market(product=product, exchange=self)    
-        market.fund.set_initial_value(Decimal(0))#usd_acc['available']))
-        market.fund.set_hold_value(Decimal(0))#usd_acc['hold']))
-        market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%
-        market.fund.set_max_per_buy_fund_value(100)
-        market.asset.set_initial_size(Decimal(0)) #crypto_acc['available']))
-        market.asset.set_hold_size(0) #Decimal(crypto_acc['hold']))
-    
+    def market_init (self, market):
+#         global ws_client
+        usd_acc = self.robinhood_accounts[market.get_fund_type()]
+        crypto_acc = self.robinhood_accounts.get(market.get_asset_type())
+        if (usd_acc == None or crypto_acc == None): 
+            log.error ("No account available for product: %s"%(market.product_id))
+            return None
+        
+#         #Setup the initial params
+        market.fund.set_initial_value(float(usd_acc['free']))
+        market.fund.set_hold_value(float(usd_acc['locked']))
+        market.asset.set_initial_size(float( crypto_acc['free']))
+        market.asset.set_hold_size( float(crypto_acc['locked']))
+        
         ## Feed Cb
-        market.consume_feed = self._robinhood_consume_feed
+        market.register_feed_processor(self._robinhood_consume_feed)
         
         ## Init Exchange specific private state variables
-        market.O = market.H = market.L = market.C = market.V = 0
-        market.candle_interval = self.candle_interval
-        log.info ("Market init complete: %s"%(product['id']))
+        market.set_candle_interval (self.candle_interval)
         
-        #set whether primary or secondary
-        market.primary = self.primary
-        
+#         #set whether primary or secondary
+        log.info ("Market init complete: %s" % (market.product_id))
+                
         return market
+
     def close (self):
         log.debug("Closing exchange...")    
 #         global self.ws_client
@@ -240,16 +354,25 @@ class Robinhood (Exchange):
             log.debug("Closing WebSocket Client")
             self.ws_client.close ()
             self.ws_client.join(1)
+        if (self.ws_auth_client):
+            log.debug("Closing WebSocket Auth Client")
+            self.ws_auth_client.close ()
+            self.ws_auth_client.join(1)
+        
+        if (self.ws_auth_client or self.ws_client):
             if not reactor._stopped:
                 reactor.stop()
-            log.debug("Closed websockets")
+        log.debug("Closed websockets")
+
     def get_products (self):
-        log.debug ("products num %d"%(len(self.robinhood_products)))
+        log.debug ("products num %d" % (len(self.robinhood_products)))
         return self.robinhood_products    
+
     def get_accounts (self):
     #     log.debug (pprint.pformat(self.robinhood_accounts))
         log.debug ("get accounts")
         return self.robinhood_accounts    
+
     def get_historic_rates (self, product_id, start=None, end=None):
         '''
             Args:
@@ -259,19 +382,19 @@ class Robinhood (Exchange):
         interval (Optional[str]): Desired time slice in 
          seconds
          '''
-        #Max Candles in one call
+        # Max Candles in one call
         epoch = datetime.utcfromtimestamp(0).replace(tzinfo=tzutc())
         max_candles = 200
         candles_list = []
         
-        #get config
+        # get config
         enabled = self.robinhood_conf.get('backfill_enabled')
         period = int(self.robinhood_conf.get('backfill_period'))
         interval_str = self.robinhood_conf.get('backfill_interval')
         
         interval = robinhood.helpers.interval_to_milliseconds(interval_str)
         if (interval == None):
-            log.error ("Invalid Interval - %s"%interval_str)
+            log.error ("Invalid Interval - %s" % interval_str)
         
         product = None
         for p in self.get_products():
@@ -279,7 +402,7 @@ class Robinhood (Exchange):
                 product = p
         
         if product is None:
-            log.error ("Invalid Product Id: %s"%product_id)
+            log.error ("Invalid Product Id: %s" % product_id)
             return None
         
         if not enabled:
@@ -293,36 +416,36 @@ class Robinhood (Exchange):
              
         if not start:
             # if no start given, use the config
-            real_start = start = end - timedelta(days = period) - timedelta(seconds = interval//1000)
+            real_start = start = end - timedelta(days=period) - timedelta(seconds=interval // 1000)
         else:
             real_start = start
             
         real_start = start = start.replace(tzinfo=tzlocal())
         
-        log.debug ("Retrieving Historic candles for period: %s to %s"%(
+        log.debug ("Retrieving Historic candles for period: %s to %s" % (
                     real_start.isoformat(), end.isoformat()))
         
-        td = max_candles*interval//1000
-        tmp_end = start + timedelta(seconds = td)
+        td = max_candles * interval // 1000
+        tmp_end = start + timedelta(seconds=td)
         tmp_end = min(tmp_end, end)
         
-        #adjust time with server time
-        start = start + timedelta(seconds = self.timeOffset)
-        tmp_end = tmp_end + timedelta(seconds = self.timeOffset)
+        # adjust time with server time
+        start = start + timedelta(seconds=self.timeOffset)
+        tmp_end = tmp_end + timedelta(seconds=self.timeOffset)
         
         count = 0
         while (start < end):
-            ## looks like there is a rate=limiting in force, we will have to slow down
+            # # looks like there is a rate=limiting in force, we will have to slow down
             count += 1
             if (count > 3):
-                #rate-limiting
+                # rate-limiting
                 count = 0
                 sleep (2)
             
             start_ts = int((start - epoch).total_seconds() * 1000.0)
             end_ts = int((tmp_end - epoch).total_seconds() * 1000.0)
             
-            log.debug ("Start: %s end: %s"%(start_ts, end_ts))
+            log.debug ("Start: %s end: %s" % (start_ts, end_ts))
             candles = self.public_client.get_klines (
                 symbol=product['symbol'],
                 interval=Client.KLINE_INTERVAL_5MINUTE,
@@ -332,63 +455,291 @@ class Robinhood (Exchange):
             )
             if candles:
                 if isinstance(candles, dict):
-                    ## Error Case
+                    # # Error Case
                     err_msg = candles.get('message')
                     if (err_msg):
-                        log.error ("Error while retrieving Historic rates: msg: %s\n will retry.."%(err_msg))
+                        log.error ("Error while retrieving Historic rates: msg: %s\n will retry.." % (err_msg))
                 else:
-                    #candles are of struct [[time, o, h, l,c, V]]
-                    candles_list += [OHLC(time=int(candle[6] + 1)//1000, 
-                                            low=candle[3], high=candle[2], open=candle[1], 
+                    # candles are of struct [[time, o, h, l,c, V]]
+                    candles_list += [OHLC(time=int(candle[6] + 1) // 1000,
+                                            low=candle[3], high=candle[2], open=candle[1],
                                             close=candle[4], volume=candle[5]) for candle in candles]
     #                 log.debug ("%s"%(candles))
-                    log.debug ("Historic candles for period: %s to %s num_candles: %d "%(
+                    log.debug ("Historic candles for period: %s to %s num_candles: %d " % (
                         start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))
                     
                     # new period, start from the (last +1)th position
-                    start = tmp_end #+ timedelta(seconds = (interval//1000))
-                    tmp_end = start + timedelta(seconds = td)
+                    start = tmp_end  # + timedelta(seconds = (interval//1000))
+                    tmp_end = start + timedelta(seconds=td)
                     tmp_end = min(tmp_end, end)
 
 #                     log.debug ("c: %s"%(candles))
             else:
-                log.error ("Error While Retrieving Historic candles for period: %s to %s num: %d"%(
+                log.error ("Error While Retrieving Historic candles for period: %s to %s num: %d" % (
                     start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))
                 return None
         
-        log.debug ("Retrieved Historic candles for period: %s to %s num: %d"%(
+        log.debug ("Retrieved Historic candles for period: %s to %s num: %d" % (
                     real_start.isoformat(), end.isoformat(), (0 if not candles_list else len(candles_list))))
     #     log.debug ("%s"%(candles_list))
         return candles_list
         
-    def get_product_order_book (self, product, level = 1):
+    def _normalized_order (self, order):
+#         '''
+#         Desc:
+#          Error Handle and Normalize the order json returned by gdax
+#           to return the normalized order detail back to callers
+#           Handles -
+#           1. Initial Order Creation/Order Query
+#           2. Order Update Feed Messages
+#           Ref: https://docs.gdax.com/#the-code-classprettyprintfullcode-channel
+#         Sample order:
+# {
+#   "symbol": "BTCUSDT",
+#   "orderId": 28,
+#   "orderListId": -1, //Unless OCO, value will be -1
+#   "clientOrderId": "6gCrw2kRUAF9CvJDGP16IP",
+#   "transactTime": 1507725176595,
+#   "price": "1.00000000",
+#   "origQty": "10.00000000",
+#   "executedQty": "10.00000000",
+#   "cummulativeQuoteQty": "10.00000000",
+#   "status": "FILLED",
+#   "timeInForce": "GTC",
+#   "type": "MARKET",
+#   "side": "SELL",
+#   "fills": [
+#     {
+#       "price": "4000.00000000",
+#       "qty": "1.00000000",
+#       "commission": "4.00000000",
+#       "commissionAsset": "USDT"
+#     },
+#     {
+#       "price": "3999.00000000",
+#       "qty": "5.00000000",
+#       "commission": "19.99500000",
+#       "commissionAsset": "USDT"
+#     },
+#     {
+#       "price": "3998.00000000",
+#       "qty": "2.00000000",
+#       "commission": "7.99600000",
+#       "commissionAsset": "USDT"
+#     },   
+#         Known Errors: 
+#           1. {u'message': u'request timestamp expired'}
+#           2. {u'message': u'Insufficient funds'}
+#           3. {'status' : 'rejected', 'reject_reason': 'post-only'}
+#         '''
+#         error_status_codes = ['rejected']
+        log.debug ("Order msg: \n%s" % (pprint.pformat(order, 4)))
+        
+        msg = order.get('msg')
+        status = order.get('status')  or order.get('X')
+        if (msg):
+            log.error("FAILED Order: error msg: %s status: %s" % (msg, status))
+            return None
+        
+        # Valid Order
+        product_id = order.get('symbol') or order.get("s")
+        order_id = order.get('clientOrderId') or order.get('c')
+        order_type = order.get('type') or order.get("o")
+        
+        if order_type == "MARKET":
+            order_type = "market"
+        elif order_type == "LIMIT":
+            order_type = 'limit'
+
+        if (status == None and (product_id != None and order_id != None)):
+            log.debug ("must be an ACK for order_id (%s)" % (order_id))
+            # For ACK all values might be 0, careful with calculations
+            status = "NEW"
+                
+        if status in ['NEW', 'PARTIALLY_FILLED', 'FILLED', 'CANCELED', 'PENDING_CANCEL', 'REJECTED', 'EXPIRED' ]:
+            if status == "NEW":
+                status_type = "open"
+            elif status == 'FILLED':
+                status_type = "filled"
+            elif status in ['CANCELED', 'EXPIRED']:
+                # order status update message
+                status_type = "canceled"
+            elif status == 'REJECTED':
+                log.error ("order rejected msg:%s" % (order))
+                return None
+            else: #, 'PARTIALLY_FILLED'
+                log.critical ('unhandled order status(%s)' % (status))
+                return None
+#             order_type = order.get('order_type') #could be None
+        else:
+            s = "****** unknown order status: %s" % (status)
+            log.critical (s)
+            raise Exception (s)
+            
+        create_time = order.get('O') or order.get('time') 
+        if create_time:
+            create_time = datetime.utcfromtimestamp(int(create_time)/1000).replace(tzinfo=tzutc()).astimezone(tzlocal()).isoformat()
+#         else:
+#             create_time = datetime.now().isoformat()
+        update_time = order.get('updateTime') or order.get('transactTime') or order.get('T') or order.get('O') or None
+        if update_time:
+            update_time = datetime.utcfromtimestamp(int(update_time)/1000).replace(tzinfo=tzutc()).astimezone(tzlocal()).isoformat()
+        else:
+            update_time = datetime.now().isoformat()
+                    
+        side = order.get('side') or order.get('S') or None
+        if side == None:
+            log.critical("unable to get order side %s(%s)"%(product_id, order_id))
+            raise Exception ("unable to get order side")
+        elif side == 'BUY':
+            side = 'buy'
+        elif side == 'SELL':
+            side = 'sell'
+        
+        # Money matters
+        price = float(order.get('price') or 0)
+        request_size = float(order.get('q') or order.get('origQty') or 0)
+        filled_size = float(order.get('z') or order.get('executedQty') or 0)
+        remaining_size = float(0)  # FIXME: jork:
+        funds = float(order.get('Z') or order.get('cummulativeQuoteQty') or 0)
+        fees = float(order.get('n') or 0)
+        
+        if price == 0 and funds != 0 and filled_size != 0 :
+            price = funds / filled_size  # avg size calculation
+        fills = float(order.get('fills') or 0)
+        if fills :
+            qty = float(0.0)
+            comm = float(0.0)
+            for fill in fills:
+                qty += float(fill.get('qty') or 0)
+                comm += float(fill.get('commission') or 0)
+            if fees == 0:
+                fees = float(comm)
+        
+#         if status == "FILLED":
+#             total_val = float(order.get('executed_value') or 0)
+#             if total_val and filled_size and not price:
+#                 price = total_val/filled_size
+#             if (funds == 0):
+#                 funds = total_val + fees
+                # log.debug ("calculated fill price: %g size: %g"%(price, filled_size))
+    #         if filled_size and remaining_size:
+    #             request_size = filled_size + remaining_size
+                        
+        if (request_size == 0):
+            request_size = remaining_size + filled_size  
+            
+        log.debug ("price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g" % (
+            price, funds, request_size, filled_size, remaining_size, fees))
+        norm_order = Order (order_id, product_id, status_type, order_type=order_type,
+                            side=side, request_size=request_size, filled_size=filled_size, remaining_size=remaining_size,
+                             price=price, funds=funds, fees=fees, create_time=create_time, update_time=update_time)
+        return norm_order        
+        
+    def get_product_order_book (self, product, level=1):
         log.debug ("get_product_order_book: ***********Not-Implemented******")
         return None
-    def buy (self):
-        log.debug ("buy: ***********Not-Implemented******")
+
+    def buy (self, trade_req) :
+        # TODO: FIXME: Implement Market/STOP orders
+        log.debug ("BUY - Placing Order on exchange --")
+        
+        params = {'symbol':trade_req.product, 'side' : SIDE_BUY, 'quantity':trade_req.size, "newOrderRespType": ORDER_RESP_TYPE_ACK }  # asset
+        if trade_req.type == "market":
+            params['type'] = ORDER_TYPE_MARKET
+        else:
+            params['type'] = ORDER_TYPE_LIMIT
+            params['price'] = trade_req.price,  # USD
+        
+        try:
+            if self.test_mode == False:    
+                order = self.auth_client.create_order(**params)
+            else:
+                log.info ("placing order in test mode")            
+                order = self.auth_client.create_test_order(**params)
+        except Exception as e:
+            log.error ("exception while placing order - %s"%(e))
+            return None
+        order["side"] = 'buy'     
+        return self._normalized_order (order);
+    
+    def sell (self, trade_req) :
+        # TODO: FIXME: Implement Market/STOP orders        
+        log.debug ("SELL - Placing Order on exchange --")
+        params = {'symbol':trade_req.product, 'side' : SIDE_SELL, 'quantity':trade_req.size, "newOrderRespType": ORDER_RESP_TYPE_ACK  }  # asset
+        if trade_req.type == "market":
+            params['type'] = ORDER_TYPE_MARKET
+        else:
+            params['type'] = ORDER_TYPE_LIMIT
+            params['price'] = trade_req.price,  # USD            
+                    
+        try:
+            if self.test_mode == False:    
+                order = self.auth_client.create_order(**params)
+            else:            
+                log.info ("placing order in test mode")
+                order = self.auth_client.create_test_order(**params)     
+        except Exception as e:
+            log.error ("exception while placing order - %s"%(e))
+            return None            
+        order["side"] = 'sell'
+        return self._normalized_order (order);
+    
+    def get_order (self, prod_id, order_id):
+        log.debug ("GET - order (%s) " % (order_id))
+        try:
+            order = self.auth_client.get_order(symbol=prod_id, origClientOrderId=order_id)
+        except Exception as e:
+            log.error ("exception while placing order - %s"%(e))
+            return None        
+        return self._normalized_order (order);
+    
+    def cancel_order (self, prod_id, order_id):
+        log.debug ("CANCEL - order (%s) " % (order_id))
+        self.auth_client.client.cancel_order(
+                symbol=prod_id,
+                origClientOrderId=order_id)
         return None
-    def sell (self):
-        log.debug ("sell: ***********Not-Implemented******")
-        return None
-    def get_order (self):
-        log.debug ("get_order: ***********Not-Implemented******")
-        return None
-    def cancel_order (self):
-        log.debug ("cancel_order: ***********Not-Implemented******")
-        return None
+
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
+    from market import TradeRequest
     
     print ("Testing Robinhood exch:")
     
-    rh = Robinhood ()
+    config = {"config": "config/robinhood.yml",
+              'backfill': {
+                  'enabled'  : True,
+                  'period'   : 1,  # in Days
+                  'interval' : 300,  # 300s == 5m  
+                }
+              }
+    
+    bnc = Robinhood (config)
     
 #     m = bnc.market_init('BTC-USD')
-    
-    rh.get_historic_rates('BTC-USD')
-    
-    sleep(20)
-    rh.close()
+
+    # test historic rates
+#     bnc.get_historic_rates('XLMUSDT')
+#     
+    # test buy order
+#     tr = TradeRequest("XLMUSDT", 'BUY', 200, 200, "market", 100, 90)
+#     order = bnc.buy(tr)
+#     print ("buy order: %s" % (order))
+#       
+#     order = bnc.get_order("XLMUSDT", order.id)
+#     print ("get buy order: %s" % (order))
+#       
+#     # test sell order
+#     tr = TradeRequest("XLMUSDT", 'SELL', 200, 200, "market", 100, 90)
+#     order = bnc.sell(tr)
+#     print ("sell order: %s" % (order))        
+#      
+#     order = bnc.get_order("XLMUSDT", order.id)
+#     print ("get sell order: %s" % (order))    
+     
+    sleep(10)
+    bnc.close()
     print ("Done")
-#EOF    
+# EOF    
