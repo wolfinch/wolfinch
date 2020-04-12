@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # '''
 #  Wolfinch Auto trading Bot
 #  Desc: Robinhood exchange interactions for Wolfinch
@@ -52,11 +52,11 @@ class Robinhood (Exchange):
     robinhood_conf = {}
     robinhood_products = []
     robinhood_accounts = {}
-    public_client = None
+#     public_client = None
     auth_client = None
-    ws_client = None
-    ws_auth_client = None
-    symbol_to_id = {}
+#     ws_client = None
+#     ws_auth_client = None
+#     symbol_to_id = {}
     primary = False
 
     def __init__(self, config, primary=False):
@@ -91,59 +91,62 @@ class Robinhood (Exchange):
 
         
         # for public client, no need of api key
-        self.public_client = Client("", "")
-        if (self.public_client) == None :
-            log.critical("robinhood public client init failed")
-            return None
+#         self.public_client =  Robinhood()
+#         if (self.public_client) == None :
+#             log.critical("robinhood public client init failed")
+#             return None
         
         #get data from exch conf
-        self.key = self.robinhood_conf.get('apiKey')
-        self.b64secret = self.robinhood_conf.get('apiSecret')
-        self.test_mode = self.robinhood_conf.get('test_mode') or False
+        self.user = self.robinhood_conf.get('user')
+        self.password = self.robinhood_conf.get('password')
+        self.mfa_key = self.robinhood_conf.get('MFAcode')
         
-        if ((self.key and self.b64secret) == False):
+        if ((self.user and self.password) == False):
             log.critical ("Invalid API Credentials in robinhood Config!! ")
             return None
         
-        self.auth_client = Client(self.key, self.b64secret)
+        try :
+            self.auth_client = pyrh.Robinhood()
+            if self.auth_client.login(username=self.user, password=self.password, qr_code=self.mfa_key) == False:
+                log.critical("Unable to Authenticate with robinhood exchange. Abort!!")
+                raise Exception("login failed")
+        except Exception as e:
+            log.critical ("exception while logging in e:%s"%(e))        
+            raise e
         
-        if self.auth_client == None:
-            log.critical("Unable to Authenticate with robinhood exchange. Abort!!")
-            return None
-            
 #         global robinhood_products
-        exch_info = self.public_client.get_exchange_info()
-        serverTime = int(exch_info['serverTime'])
-        localTime = int(time.time() * 1000)
-        self.timeOffset = (serverTime - localTime) // 1000
-        # if time diff is less the 5s, ignore. 
-        if abs(self.timeOffset) < 5: 
-            self.timeOffset = 0
-        
-        log.info ("servertime: %d localtime: %d offset: %d" % (serverTime, localTime, self.timeOffset))
+#         exch_info = self.public_client.get_exchange_info()
+#         serverTime = int(exch_info['serverTime'])
+#         localTime = int(time.time() * 1000)
+#         self.timeOffset = (serverTime - localTime) // 1000
+#         # if time diff is less the 5s, ignore. 
+#         if abs(self.timeOffset) < 5: 
+#             self.timeOffset = 0
+#    
+#         log.info ("servertime: %d localtime: %d offset: %d" % (serverTime, localTime, self.timeOffset))
         
 #         self.robinhood_conf['products'] = []
 #         for p in config['products']:
 #             # add the product ids
 #             self.robinhood_conf['products'] += p.keys()
                     
-        products = exch_info.get("symbols")
-        log.info ("products: %s" % (pprint.pformat(products, 4)))
+        portforlio = self.auth_client.portfolios()
+        log.info ("products: %s" % (pprint.pformat(portforlio, 4)))
                 
-        if (len(products) and len (self.robinhood_conf['products'])):
-            for prod in products:
-                for p in self.robinhood_conf['products']:
-                    for k, v in p.items():
-#                         log.debug ("pk: %s s: %s"%(k, prod['symbol']))
-                        if prod['symbol'] == k:
-                            log.debug ("product found: %s v: %s" % (prod, v))
-                            prod['id'] = v['id']
-                            prod['display_name'] = k
-                            self.symbol_to_id[k] = prod['id']
-                            prod ['asset_type'] = prod['baseAsset']
-                            prod ['fund_type'] = prod['quoteAsset']
-                                                  
-                            self.robinhood_products.append(prod)
+#         if (len(products) and len (self.robinhood_conf['products'])):
+#             for prod in products:
+#                 for p in self.robinhood_conf['products']:
+#                     for k, v in p.items():
+# #                         log.debug ("pk: %s s: %s"%(k, prod['symbol']))
+#                         if prod['symbol'] == k:
+#                             log.debug ("product found: %s v: %s" % (prod, v))
+#                             prod['id'] = v['id']
+#                             prod['display_name'] = k
+#                             self.symbol_to_id[k] = prod['id']
+#                             prod ['asset_type'] = prod['baseAsset']
+#                             prod ['fund_type'] = prod['quoteAsset']
+#                                                   
+#                             self.robinhood_products.append(prod)
         
         # EXH supported in spectator mode. 
         # Popoulate the account details for each interested currencies
@@ -152,189 +155,59 @@ class Robinhood (Exchange):
             log.critical("Unable to get account details!!")
             return False
         log.debug ("Exchange Accounts: %s" % (pprint.pformat(accounts, 4)))
-        balances = accounts ['balances']
-        for balance in balances:
-#             log.debug ("balance: %s"%(balance))
-            for prod in self.robinhood_products:
-                log.debug ("prod_id: %s" % (prod['id']))               
-                if balance['asset'] in [prod ['asset_type'], prod ['fund_type']]:
-                    log.debug ("Interested Account Found for Currency: " + balance['asset'])
-                    self.robinhood_accounts[balance['asset']] = balance
-                    break  
+#         balances = accounts ['balances']
+#         for balance in balances:
+# #             log.debug ("balance: %s"%(balance))
+#             for prod in self.robinhood_products:
+#                 log.debug ("prod_id: %s" % (prod['id']))               
+#                 if balance['asset'] in [prod ['asset_type'], prod ['fund_type']]:
+#                     log.debug ("Interested Account Found for Currency: " + balance['asset'])
+#                     self.robinhood_accounts[balance['asset']] = balance
+#                     break  
         
         ### Start WebSocket Streams ###
-        self.ws_client = bm = RobinhoodSocketManager(self.public_client)
-        symbol_list = []
-        for prod in self.get_products():
-            # Start Kline socket
-#             backfill_interval = self.robinhood_conf.get('backfill_interval')
-#             bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg, interval=backfill_interval)
-#             bm.start_aggtrade_socket(prod['symbol'], self._feed_enQ_msg)
-            symbol_list.append(prod['symbol'].lower()+"@trade")
-            
-        if len(symbol_list):
-            #start mux ws socket now
-            log.info ("starting mux ws sockets for syms: %s"%(symbol_list))
-            bm.start_multiplex_socket(symbol_list, self._feed_enQ_msg)
-            
-        self.ws_auth_client = bm_auth = RobinhoodSocketManager(self.auth_client)
-        # Start user socket for interested symbols
-        log.info ("starting user sockets")
-        bm_auth.start_user_socket(self._feed_enQ_msg)            
-
-        bm.start()
-        bm_auth.start()
+#         self.ws_client = bm = RobinhoodSocketManager(self.public_client)
+#         symbol_list = []
+#         for prod in self.get_products():
+#             # Start Kline socket
+# #             backfill_interval = self.robinhood_conf.get('backfill_interval')
+# #             bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg, interval=backfill_interval)
+# #             bm.start_aggtrade_socket(prod['symbol'], self._feed_enQ_msg)
+#             symbol_list.append(prod['symbol'].lower()+"@trade")
+#             
+#         if len(symbol_list):
+#             #start mux ws socket now
+#             log.info ("starting mux ws sockets for syms: %s"%(symbol_list))
+#             bm.start_multiplex_socket(symbol_list, self._feed_enQ_msg)
+#             
+#         self.ws_auth_client = bm_auth = RobinhoodSocketManager(self.auth_client)
+#         # Start user socket for interested symbols
+#         log.info ("starting user sockets")
+#         bm_auth.start_user_socket(self._feed_enQ_msg)            
+# 
+#         bm.start()
+#         bm_auth.start()
         
         log.info("**Robinhood init success**\n Products: %s\n Accounts: %s" % (
                         pprint.pformat(self.robinhood_products, 4), pprint.pformat(self.robinhood_accounts, 4)))
         
     def __str__ (self):
         return "{Message: Robinhood Exchange }"
-
-    ######## Feed Consume #######
-    def _feed_enQ_msg (self, msg_raw):
-#             log.debug("message :%s " % msg_raw)
+       
             
-            if msg_raw.get('stream'):
-                msg = msg_raw.get('data')
-            else:
-                msg = msg_raw
-
-            msg_type = msg.get('e')
-            
-            if (msg_type == 'aggTrade' or msg_type == 'trade'):
-                log.debug ("aggTrade/trade")
-                symbol = msg.get("s")            
-                product_id = self.symbol_to_id.get(symbol)
-                if not product_id:
-                    log.error ("unknown market(%s)"%(symbol))
-                    return 
-                market = get_market_by_product (self.name, product_id)
-                if (market == None):
-                    log.error ("Feed Thread: Unknown market product: %s: msg %s" % (
-                        product_id, json.dumps(msg, indent=4, sort_keys=True)))
-                    return
-                feed_enQ(market, msg)
-            elif (msg_type == 'kline'):
-                log.debug ("kline")
-                symbol = msg.get("s")            
-                product_id = self.symbol_to_id.get(symbol)
-                if not product_id:
-                    log.error ("unknown market(%s)"%(symbol))
-                    return 
-                k = msg.get('k')
-                if k.get('x') == True:
-                    # This kline closed, this is a candle
-                    market = get_market_by_product (self.name, product_id)
-                    if (market == None):
-                        log.error ("Feed Thread: Unknown market product: %s: msg %s" % (
-                            product_id, json.dumps(msg, indent=4, sort_keys=True)))
-                        return                    
-                    feed_enQ(market, msg)
-                else:
-                    # not interested
-                    pass                
-            elif (msg_type == 'executionReport'):
-                log.debug ("USER DATA: executionReport")
-                symbol = msg.get("s")            
-                product_id = self.symbol_to_id.get(symbol)
-                if not product_id:
-                    log.error ("unknown market(%s)"%(symbol))
-                    return         
-                market = get_market_by_product (self.name, product_id)
-                if (market == None):
-                    log.error ("Feed Thread: Unknown market product: %s: msg %s" % (
-                        product_id, json.dumps(msg, indent=4, sort_keys=True)))
-                    return
-                feed_enQ(market, msg)
-            elif (msg_type == 'error'):
-                log.critical("websocket connection retries exceeded!!")
-                raise Exception("websocket connection retries exceeded!!")
-            else:
-                log.error ("Unknown feed. message type: %s" % (msg_type))
-            return
-                
-    def _robinhood_consume_feed (self, market, msg):
-#                         ''' 
-#         Feed Call back for Robinhood    
-#         This is where we do all the useful stuff with Feed
-#         '''
-        msg_type = msg.get('e') 
-        if (msg_type == 'trade' or msg_type == 'aggTrade'):
-            self._robinhood_consume_trade_feed (market, msg)            
-        elif (msg_type == 'executionReport'):
-            log.debug ("Feed: executionReport msg: %s " % (msg))
-            self._robinhood_consume_order_update_feed(market, msg)
-        elif (msg_type == 'kline'):
-            self._robinhood_consume_candle_feed(market, msg)
-                    
-    def _robinhood_consume_order_update_feed (self, market, msg):
-#         ''' 
-#         Process the order status update feed msg 
-#         '''
-        order = self._normalized_order(msg)
-        if order == None:
-            log.error ("order update ignored")
-            return None
-        log.debug ("Order Status Update id:%s side: %s status: %s"%(order.id, order.side, order.status))
-        market.order_status_update (order)        
-        
-        
-    def _robinhood_consume_trade_feed (self, market, msg):
-#         {
-#           "e": "aggTrade|trade",  // Event type
-#           "E": 123456789,   // Event time
-#           "s": "BNBBTC",    // Symbol
-#           "a": 12345,       // Aggregate trade ID
-#           "p": "0.001",     // Price
-#           "q": "100",       // Quantity
-#           "f": 100,         // First trade ID
-#           "l": 105,         // Last trade ID
-#           "T": 123456785,   // Trade time
-#           "m": true,        // Is the buyer the market maker?
-#           "M": true         // Ignore
-#         }        
-#         log.debug ("Trade feed: %s" % (msg))
-        price = float(msg.get('p'))
-        last_size = float(msg.get('q'))
-        log.debug ("Trade feed: price: %f size: %f" % (price, last_size))  
-        market.tick (price, last_size)
-                
-    def _robinhood_consume_candle_feed (self, market, msg):
-#         log.info ("msg: %s" % msg)
-#         msg_type = msg.get('e')
-        k = msg.get('k')
-        t = int(k.get('T') + 1) // 1000 + self.timeOffset
-        o = float(k.get('o'))
-        h = float(k.get('h'))
-        l = float(k.get('l'))
-        c = float(k.get('c'))
-        v = float(k.get('v'))
-        
-            # close the current candle period and start a new candle period
-        candle = OHLC(int(t), o, h, l, c, v)
-        log.debug ("New candle identified %s" % (candle))        
-        market.O = market.V = market.H = market.L = 0
-        market.add_new_candle (candle)
-        
-        # TODO: FIXME: jork: might need to rate-limit the logic here after
-        market.set_market_rate (c)
-#         market.update_market_states()        
-            
-    #### Feed consume done #####    
     def market_init (self, market):
 #         global ws_client
         usd_acc = self.robinhood_accounts[market.get_fund_type()]
-        crypto_acc = self.robinhood_accounts.get(market.get_asset_type())
-        if (usd_acc == None or crypto_acc == None): 
+        asset_acc = self.robinhood_accounts.get(market.get_asset_type())
+        if (usd_acc == None or asset_acc == None): 
             log.error ("No account available for product: %s"%(market.product_id))
             return None
         
 #         #Setup the initial params
         market.fund.set_initial_value(float(usd_acc['free']))
         market.fund.set_hold_value(float(usd_acc['locked']))
-        market.asset.set_initial_size(float( crypto_acc['free']))
-        market.asset.set_hold_size( float(crypto_acc['locked']))
+        market.asset.set_initial_size(float( asset_acc['free']))
+        market.asset.set_hold_size( float(asset_acc['locked']))
         
         ## Feed Cb
         market.register_feed_processor(self._robinhood_consume_feed)
@@ -348,20 +221,19 @@ class Robinhood (Exchange):
         return market
 
     def close (self):
-        log.debug("Closing exchange...")    
-#         global self.ws_client
-        if (self.ws_client):
-            log.debug("Closing WebSocket Client")
-            self.ws_client.close ()
-            self.ws_client.join(1)
-        if (self.ws_auth_client):
-            log.debug("Closing WebSocket Auth Client")
-            self.ws_auth_client.close ()
-            self.ws_auth_client.join(1)
+        log.debug("Closing exchange...")
+# #         global self.ws_client
+#         if (self.ws_client):
+#             log.debug("Closing WebSocket Client")
+#             self.ws_client.close ()
+#             self.ws_client.join(1)
+#         if (self.ws_auth_client):
+#             log.debug("Closing WebSocket Auth Client")
+#             self.ws_auth_client.close ()
+#             self.ws_auth_client.join(1)
         
-        if (self.ws_auth_client or self.ws_client):
-            if not reactor._stopped:
-                reactor.stop()
+        #log out now. 
+        self.auth_client.logout()
         log.debug("Closed websockets")
 
     def get_products (self):
@@ -716,7 +588,7 @@ if __name__ == '__main__':
                 }
               }
     
-    bnc = Robinhood (config)
+    rbh = Robinhood (config)
     
 #     m = bnc.market_init('BTC-USD')
 
@@ -738,8 +610,9 @@ if __name__ == '__main__':
 #      
 #     order = bnc.get_order("XLMUSDT", order.id)
 #     print ("get sell order: %s" % (order))    
-     
+    
+    rbh.auth_client.print_quote("AAPL")
     sleep(10)
-    bnc.close()
+    rbh.close()
     print ("Done")
 # EOF    
