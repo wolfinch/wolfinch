@@ -61,7 +61,7 @@ class Robinhood (Exchange):
 
     def __init__(self, config, primary=False):
         log.info ("Init Robinhood exchange")
-        
+        self.symbols = {}
         exch_cfg_file = config['config']
         
         conf = readConf (exch_cfg_file)
@@ -572,7 +572,59 @@ class Robinhood (Exchange):
                 symbol=prod_id,
                 origClientOrderId=order_id)
         return None
+    def _fetch_json_by_url(self, url):
+        return self.auth_client.get_url(url)
 
+    def get_all_history_orders(self):
+        orders = []
+        past_orders = self.auth_client.order_history()
+        orders.extend(past_orders['results'])
+        log.info("%d order fetched first page"%(len(orders)))    
+        while past_orders['next']:
+            next_url = past_orders['next']
+            past_orders = self._fetch_json_by_url(next_url)
+            orders.extend(past_orders['results'])
+        log.info("%d  order fetched"%(len(orders)))
+        return orders
+
+    def get_all_history_options_orders(self):
+    
+        options_orders = []
+        past_options_orders = self.auth_client.options_order_history()
+        options_orders.extend(past_options_orders['results'])
+    
+        while past_options_orders['next']:
+            # print("{} order fetched".format(len(orders)))
+            next_url = past_options_orders['next']
+            past_options_orders = fetch_json_by_url(my_trader, next_url)
+            options_orders.extend(past_options_orders['results'])
+        # print("{} order fetched".format(len(orders)))
+        
+        options_orders_cleaned = []
+        
+        for each in options_orders:
+            if float(each['processed_premium']) < 1:
+                continue
+            else:
+    #             print(each['chain_symbol'])
+    #             print(each['processed_premium'])
+    #             print(each['created_at'])
+    #             print(each['legs'][0]['position_effect'])
+    #             print("~~~")
+                if each['legs'][0]['position_effect'] == 'open':
+                    value = round(float(each['processed_premium']), 2)*-1
+                else:
+                    value = round(float(each['processed_premium']), 2)
+                    
+                one_order = [pd.to_datetime(each['created_at']), each['chain_symbol'], value, each['legs'][0]['position_effect']]
+                options_orders_cleaned.append(one_order)
+        
+        df_options_orders_cleaned = pd.DataFrame(options_orders_cleaned)
+        df_options_orders_cleaned.columns = ['date', 'ticker', 'value', 'position_effect']
+        df_options_orders_cleaned = df_options_orders_cleaned.sort_values('date')
+        df_options_orders_cleaned = df_options_orders_cleaned.set_index('date')
+    
+        return df_options_orders_cleaned
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
@@ -612,6 +664,9 @@ if __name__ == '__main__':
 #     print ("get sell order: %s" % (order))    
     
     rbh.auth_client.print_quote("AAPL")
+    orders = rbh.get_all_history_orders()
+    
+    print ("orders: %s"%orders)
     sleep(10)
     rbh.close()
     print ("Done")
