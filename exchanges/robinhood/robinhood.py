@@ -575,6 +575,20 @@ class Robinhood (Exchange):
     def _fetch_json_by_url(self, url):
         return self.auth_client.get_url(url)
 
+    def _get_symbol_from_instrument(self, instr):
+        i_id = instr.rstrip('/').split('/')[-1]
+        sym = self.symbols.get(i_id)
+        if sym:
+            log.debug ("found cached symbol for id: %s symbol: %s"%(i_id, sym['symbol']))
+            return sym
+        else:
+            sym = self._fetch_json_by_url(instr)
+            if sym :
+                log.error("got symbol for id %s symbol: %s"%(i_id, sym))   
+                self.symbols[i_id] = sym
+                return sym
+            else:
+                log.error("unable to get symbol for id %s"%(i_id))
     def get_all_history_orders(self):
         orders = []
         past_orders = self.auth_client.order_history()
@@ -585,6 +599,14 @@ class Robinhood (Exchange):
             past_orders = self._fetch_json_by_url(next_url)
             orders.extend(past_orders['results'])
         log.info("%d  order fetched"%(len(orders)))
+        for order in orders:
+            instrument = order['instrument']
+            symbol = self._get_symbol_from_instrument(instrument)
+            if symbol:
+                order['symbol'] = symbol['symbol']
+                order['bloomberg_unique'] = symbol['bloomberg_unique']
+            else:
+                log.error ('unable to get symbol for instrument')  
         return orders
 
     def get_all_history_options_orders(self):
