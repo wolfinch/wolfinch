@@ -19,7 +19,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
-
+import argparse
 import json
 import pprint
 from datetime import datetime, timedelta
@@ -39,8 +39,9 @@ from utils import getLogger, readConf
 from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 
+args = None
 log = getLogger ('Robinhood')
-log.setLevel(log.DEBUG)
+log.setLevel(log.INFO)
 
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
@@ -584,16 +585,28 @@ class Robinhood (Exchange):
         else:
             sym = self._fetch_json_by_url(instr)
             if sym :
-                log.error("got symbol for id %s symbol: %s"%(i_id, sym))   
+                log.debug("got symbol for id %s symbol: %s"%(i_id, sym))   
                 self.symbols[i_id] = sym
                 return sym
             else:
                 log.error("unable to get symbol for id %s"%(i_id))
+    def get_order_history(self, symbol=None, from_date=None, to_date=None):
+        #TODO: FIXME: this is the shittiest way of doing this. There must be another way
+        all_orders = self.get_all_history_orders()
+        orders = []
+        if symbol == None or symbol == "":
+            orders = all_orders
+        else:
+            for order in all_orders:
+                if order['symbol'] == symbol.upper():
+                    orders.append(order)
+        #TODO: FIXME: filter time
+        return orders
     def get_all_history_orders(self):
         orders = []
         past_orders = self.auth_client.order_history()
         orders.extend(past_orders['results'])
-        log.info("%d order fetched first page"%(len(orders)))    
+        log.debug("%d order fetched first page"%(len(orders)))    
         while past_orders['next']:
             next_url = past_orders['next']
             past_orders = self._fetch_json_by_url(next_url)
@@ -648,13 +661,27 @@ class Robinhood (Exchange):
     
         return df_options_orders_cleaned
 
+def arg_parse():    
+    global args, ROBINHOOD_CONF
+    parser = argparse.ArgumentParser(description='Robinhood Exch implementation')
+    parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
+    parser.add_argument("--config", help='config file', required=False)
+    parser.add_argument("--s", help='symbol', required=False)
+    parser.add_argument("--oh", help='dump order history', required=False, action='store_true')
+    parser.add_argument("--profit", help='total profit loss', required=False, action='store_true')
+    parser.add_argument("--start", help='from date', required=False, action='store_true')          
+    parser.add_argument("--end", help='to date', required=False, action='store_true')
+    args = parser.parse_args()
+    if args.config:
+        log.info ("using config file - %s"%(args.config))
+        ROBINHOOD_CONF = args.config
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     from market import TradeRequest
     
     print ("Testing Robinhood exch:")
-    
-    config = {"config": "config/robinhood.yml",
+    arg_parse()
+    config = {"config": ROBINHOOD_CONF,
               'backfill': {
                   'enabled'  : True,
                   'period'   : 1,  # in Days
@@ -685,11 +712,16 @@ if __name__ == '__main__':
 #     order = bnc.get_order("XLMUSDT", order.id)
 #     print ("get sell order: %s" % (order))    
     
-    rbh.auth_client.print_quote("AAPL")
-    orders = rbh.get_all_history_orders()
-    
-    print ("orders: %s"%orders)
-    sleep(10)
+#     rbh.auth_client.print_quote("AAPL")
+
+    if args.oh:
+        print ("printing order history")
+        orders = rbh.get_order_history(args.s, args.start, args.end)
+        if len(orders):
+            print ("retrieved %d orders: %s"%(len(orders), pprint.pformat(orders, 4)))
+        else:
+            print("unable to find order history")
+#     sleep(10)
     rbh.close()
     print ("Done")
 # EOF    
