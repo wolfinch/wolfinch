@@ -590,6 +590,7 @@ class Robinhood (Exchange):
                 return sym
             else:
                 log.error("unable to get symbol for id %s"%(i_id))
+    
     def get_order_history(self, symbol=None, from_date=None, to_date=None):
         #TODO: FIXME: this is the shittiest way of doing this. There must be another way
         all_orders = self.get_all_history_orders()
@@ -621,45 +622,56 @@ class Robinhood (Exchange):
             else:
                 log.error ('unable to get symbol for instrument')  
         return orders
-
+    def options_order_history(self):
+        options_api_url = "https://api.robinhood.com/options/orders/"
+        return self._fetch_json_by_url(options_api_url)
+    def get_options_order_history(self, symbol=None, from_date=None, to_date=None):
+        #TODO: FIXME: this is the shittiest way of doing this. There must be another way
+        all_orders = self.get_all_history_options_orders()
+        orders = []
+        if symbol == None or symbol == "":
+            orders = all_orders
+        else:
+            for order in all_orders:
+                if order['chain_symbol'] == symbol.upper():
+                    orders.append(order)
+        #TODO: FIXME: filter time
+        return orders    
     def get_all_history_options_orders(self):
-    
         options_orders = []
-        past_options_orders = self.auth_client.options_order_history()
+        past_options_orders = self.options_order_history()
         options_orders.extend(past_options_orders['results'])
-    
         while past_options_orders['next']:
             # print("{} order fetched".format(len(orders)))
             next_url = past_options_orders['next']
-            past_options_orders = fetch_json_by_url(my_trader, next_url)
+            past_options_orders = self._fetch_json_by_url(next_url)
             options_orders.extend(past_options_orders['results'])
-        # print("{} order fetched".format(len(orders)))
-        
-        options_orders_cleaned = []
-        
-        for each in options_orders:
-            if float(each['processed_premium']) < 1:
-                continue
-            else:
-    #             print(each['chain_symbol'])
-    #             print(each['processed_premium'])
-    #             print(each['created_at'])
-    #             print(each['legs'][0]['position_effect'])
-    #             print("~~~")
-                if each['legs'][0]['position_effect'] == 'open':
-                    value = round(float(each['processed_premium']), 2)*-1
-                else:
-                    value = round(float(each['processed_premium']), 2)
-                    
-                one_order = [pd.to_datetime(each['created_at']), each['chain_symbol'], value, each['legs'][0]['position_effect']]
-                options_orders_cleaned.append(one_order)
-        
-        df_options_orders_cleaned = pd.DataFrame(options_orders_cleaned)
-        df_options_orders_cleaned.columns = ['date', 'ticker', 'value', 'position_effect']
-        df_options_orders_cleaned = df_options_orders_cleaned.sort_values('date')
-        df_options_orders_cleaned = df_options_orders_cleaned.set_index('date')
-    
-        return df_options_orders_cleaned
+        log.info("%d order fetched"%(len(options_orders)))
+        return options_orders
+#         options_orders_cleaned = []
+#         for each in options_orders:
+#             if float(each['processed_premium']) < 1:
+#                 continue
+#             else:
+#     #             print(each['chain_symbol'])
+#     #             print(each['processed_premium'])
+#     #             print(each['created_at'])
+#     #             print(each['legs'][0]['position_effect'])
+#     #             print("~~~")
+#                 if each['legs'][0]['position_effect'] == 'open':
+#                     value = round(float(each['processed_premium']), 2)*-1
+#                 else:
+#                     value = round(float(each['processed_premium']), 2)
+#                     
+#                 one_order = [pd.to_datetime(each['created_at']), each['chain_symbol'], value, each['legs'][0]['position_effect']]
+#                 options_orders_cleaned.append(one_order)
+#         
+#         df_options_orders_cleaned = pd.DataFrame(options_orders_cleaned)
+#         df_options_orders_cleaned.columns = ['date', 'ticker', 'value', 'position_effect']
+#         df_options_orders_cleaned = df_options_orders_cleaned.sort_values('date')
+#         df_options_orders_cleaned = df_options_orders_cleaned.set_index('date')
+#     
+#         return df_options_orders_cleaned
 
 def arg_parse():    
     global args, ROBINHOOD_CONF
@@ -668,6 +680,7 @@ def arg_parse():
     parser.add_argument("--config", help='config file', required=False)
     parser.add_argument("--s", help='symbol', required=False)
     parser.add_argument("--oh", help='dump order history', required=False, action='store_true')
+    parser.add_argument("--ooh", help='dump options order history', required=False, action='store_true')    
     parser.add_argument("--profit", help='total profit loss', required=False, action='store_true')
     parser.add_argument("--start", help='from date', required=False, action='store_true')          
     parser.add_argument("--end", help='to date', required=False, action='store_true')
@@ -675,6 +688,22 @@ def arg_parse():
     if args.config:
         log.info ("using config file - %s"%(args.config))
         ROBINHOOD_CONF = args.config
+######## Functions for Main exec flow ########
+def print_order_history(symbol, from_date, to_date):
+    print ("printing order history")    
+    orders = rbh.get_order_history(symbol, from_date, to_date)
+    if len(orders):
+        print ("retrieved %d orders: %s"%(len(orders), pprint.pformat(orders, 4)))
+        print ("{:<6}{:^6}{:^6}{:^10}{:^10}{:^15}{:^15}".format("Ticker", "Side", "Size", "Price", "Type", "Status", "Date"))
+        for o in orders:
+            print ("{:<6}{:^6}{:^6.0f}{:^10.3f}{:^10}{:^15}{:^15}".format(o["symbol"], o["side"],
+                         float(0 if o["quantity"]==None else o["quantity"]), float(0 if o["average_price"]==None else o["average_price"]), o["type"], o["state"], o["created_at"]))
+    else:
+        print("unable to find order history")
+def print_options_order_history(symbol, from_date, to_date):
+    print ("printing options order history")    
+    orders = rbh.get_options_order_history(symbol, from_date, to_date)
+    print ("options orders: %s"%(orders))
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     from market import TradeRequest
@@ -715,12 +744,9 @@ if __name__ == '__main__':
 #     rbh.auth_client.print_quote("AAPL")
 
     if args.oh:
-        print ("printing order history")
-        orders = rbh.get_order_history(args.s, args.start, args.end)
-        if len(orders):
-            print ("retrieved %d orders: %s"%(len(orders), pprint.pformat(orders, 4)))
-        else:
-            print("unable to find order history")
+        print_order_history(args.s, args.start, args.end)
+    if args.ooh:
+        print_options_order_history(args.s, args.start, args.end)         
 #     sleep(10)
     rbh.close()
     print ("Done")
