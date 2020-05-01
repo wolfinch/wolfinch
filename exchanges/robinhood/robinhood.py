@@ -693,11 +693,26 @@ def print_order_history(symbol, from_date, to_date):
     print ("printing order history")    
     orders = rbh.get_order_history(symbol, from_date, to_date)
     if len(orders):
+        num_sell = num_buy = amt_sell = amt_buy = 0
         print ("retrieved %d orders: %s"%(len(orders), pprint.pformat(orders, 4)))
         print ("{:<6}{:^6}{:^6}{:^10}{:^10}{:^15}{:^15}".format("Ticker", "Side", "Size", "Price", "Type", "Status", "Date"))
         for o in orders:
-            print ("{:<6}{:^6}{:^6.0f}{:^10.3f}{:^10}{:^15}{:^15}".format(o["symbol"], o["side"],
-                         float(0 if o["quantity"]==None else o["quantity"]), float(0 if o["average_price"]==None else o["average_price"]), o["type"], o["state"], o["created_at"]))
+            side        = o["side"]
+            quant       = float(0 if o["quantity"]==None else o["quantity"])
+            avg_price   = float(0 if o["average_price"]==None else o["average_price"])
+            typ         = o["type"]
+            status      = o["state"]
+            if status == "filled":
+                if side == "sell":
+                    num_sell += quant
+                    amt_sell += quant*avg_price
+                else:
+                    num_buy += quant
+                    amt_buy += quant*avg_price                            
+            print ("{:<6}{:^6}{:^6.0f}{:^10.3f}{:^10}{:^15}{:^15}".format(o["symbol"], side,
+                         quant, avg_price, typ, status, o["created_at"]))
+        print("Summary:\n num_buy: %d \n amt_buy: %.2f \n num_sell: %d \n amt_sell: %.2f\n profit: %.2f"%(
+            num_buy, amt_buy, num_sell, amt_sell, (amt_sell-amt_buy)))
     else:
         print("unable to find order history")
 def print_options_order_history(symbol, from_date, to_date):
