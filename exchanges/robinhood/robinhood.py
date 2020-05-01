@@ -636,6 +636,7 @@ class Robinhood (Exchange):
                 if order['chain_symbol'] == symbol.upper():
                     orders.append(order)
         #TODO: FIXME: filter time
+        log.info ("order: %s"%(pprint.pformat(orders, 4)))
         return orders    
     def get_all_history_options_orders(self):
         options_orders = []
@@ -718,7 +719,56 @@ def print_order_history(symbol, from_date, to_date):
 def print_options_order_history(symbol, from_date, to_date):
     print ("printing options order history")    
     orders = rbh.get_options_order_history(symbol, from_date, to_date)
-    print ("options orders: %s"%(orders))
+    if len(orders):
+        num_sell = num_buy = amt_sell = amt_buy = 0
+        print ("retrieved %d orders"%(len(orders)))
+        print ("{:<6}{:^6}{:^8}{:^8}{:^10}{:^10}{:^15}{:^10}{:^25}{:^15}".format(
+            "Ticker", "Side", "Action", "Size", "Price", "Type", "Status","dir", "strat", "Date"))
+        for o in orders:
+            sym         = o["chain_symbol"]
+            side        = "NONE"# o["side"]
+            status      = o["state"]            
+            proc_quant       = float(0 if o["processed_quantity"]==None else o["processed_quantity"])
+            quant       = float(0 if o["quantity"]==None else o["quantity"])
+            if status == "cancelled" or status == "rejected":
+                continue
+            if o["closing_strategy"]:
+                strat = o["closing_strategy"]
+            else:
+                strat = o["opening_strategy"]            
+            if proc_quant != quant :# or strat == "long_call_spread":
+                log.critical("ERROR!!! proc_quant != quant:: FIXME:: %s"%(pprint.pformat(o, 4)))
+                raise
+            avg_price   = float(0 if o["premium"]==None else o["premium"])
+            typ         = o["type"]
+            dir         = o["direction"]
+            for leg in o["legs"]:
+                exec_l = leg["executions"]
+#                 if len(exec_l) > 1:
+#                     log.critical ("FIXME: TODO: multi leg multi option o: %s"%(pprint.pformat(o, 4)))
+#                     raise
+                price = 0
+                quant = 0
+                for e in exec_l:
+                    price_p = float(e["price"])*100
+                    quant_p = float(e["quantity"])
+                    price += price_p*quant_p
+                    quant += quant_p
+                side        = leg["side"]
+                pos_effect  = leg["position_effect"]
+                if status == "filled":
+                    if side == "sell":
+                        num_sell += quant
+                        amt_sell += quant*price
+                    else:
+                        num_buy += quant
+                        amt_buy += quant*price                
+                print ("{:<6}{:^6}{:^8}{:^8.0f}{:^10.3f}{:^10}{:^15}{:^10}{:^25}{:^15}".format(sym, side, pos_effect,
+                         quant, price, typ, status, dir, strat, o["created_at"]))
+        print("Summary:\n num_buy: %d \n amt_buy: %.2f \n num_sell: %d \n amt_sell: %.2f\n profit: %.2f"%(
+            num_buy, amt_buy, num_sell, amt_sell, (amt_sell-amt_buy)))
+    else:
+        print("unable to find order history")
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     from market import TradeRequest
