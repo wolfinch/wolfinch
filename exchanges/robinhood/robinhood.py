@@ -63,7 +63,8 @@ class Robinhood (Exchange):
 
     def __init__(self, config, primary=False):
         log.info ("Init Robinhood exchange")
-        self.symbols = {}
+        self.symbol_id_map = {}
+        self.option_id_map = {}
         exch_cfg_file = config['config']
         
         conf = readConf (exch_cfg_file)
@@ -578,7 +579,7 @@ class Robinhood (Exchange):
 
     def _get_symbol_from_instrument(self, instr):
         i_id = instr.rstrip('/').split('/')[-1]
-        sym = self.symbols.get(i_id)
+        sym = self.symbol_id_map.get(i_id)
         if sym:
             log.debug ("found cached symbol for id: %s symbol: %s"%(i_id, sym['symbol']))
             return sym
@@ -586,7 +587,7 @@ class Robinhood (Exchange):
             sym = self._fetch_json_by_url(instr)
             if sym :
                 log.debug("got symbol for id %s symbol: %s"%(i_id, sym))   
-                self.symbols[i_id] = sym
+                self.symbol_id_map[i_id] = sym
                 return sym
             else:
                 log.error("unable to get symbol for id %s"%(i_id))
@@ -623,6 +624,20 @@ class Robinhood (Exchange):
                 log.error ('unable to get symbol for instrument')  
         return orders
     ##################### OPTIONS######################
+    def _get_option_from_instrument(self, instr):
+        i_id = instr.rstrip('/').split('/')[-1]
+        sym = self.option_id_map.get(i_id)
+        if sym:
+            log.debug ("found cached option for id: %s symbol: %s"%(i_id, sym['chain_symbol']))
+            return sym
+        else:
+            sym = self._fetch_json_by_url(instr)
+            if sym :
+                log.debug("got option for id %s symbol: %s"%(i_id, sym))   
+                self.option_id_map[i_id] = sym
+                return sym
+            else:
+                log.error("unable to get option for id %s"%(i_id))
     def get_option_positions (self, symbol=None):
         options_api_url = "https://api.robinhood.com/options/positions/?nonzero=true"
         option_positions = []
@@ -644,7 +659,7 @@ class Robinhood (Exchange):
                         positions_l.append(pos)            
         log.info("%d option positions fetched"%(len(positions_l)))
         for pos in positions_l:
-            pos["option_det"] = self._fetch_json_by_url(pos["option"])         
+            pos["option_det"] = self._get_option_from_instrument(pos["option"])         
         log.debug ("options owned: %s"%(pprint.pformat(positions_l, 4)))
         return positions_l
     def get_options_order_history(self, symbol=None, from_date=None, to_date=None):
@@ -661,7 +676,7 @@ class Robinhood (Exchange):
         #get option details
         for order in orders:
             for leg in order["legs"]:
-                leg["option_det"] = self._fetch_json_by_url(leg["option"])        
+                leg["option_det"] = self._get_option_from_instrument(leg["option"])        
         log.debug ("order: %s"%(pprint.pformat(orders, 4)))
         return orders
     def options_order_history(self):
