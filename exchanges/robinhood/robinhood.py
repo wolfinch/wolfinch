@@ -622,9 +622,29 @@ class Robinhood (Exchange):
             else:
                 log.error ('unable to get symbol for instrument')  
         return orders
-    def options_order_history(self):
-        options_api_url = "https://api.robinhood.com/options/orders/"
-        return self._fetch_json_by_url(options_api_url)
+    ##################### OPTIONS######################
+    def get_option_positions (self, symbol=None):
+        options_api_url = "https://api.robinhood.com/options/positions/?nonzero=true"
+        option_positions = []
+        options_l = self._fetch_json_by_url(options_api_url)
+        option_positions.extend(options_l['results'])
+        while options_l['next']:
+            # print("{} order fetched".format(len(orders)))
+            next_url = options_l['next']
+            options_l = self._fetch_json_by_url(next_url)
+            option_positions.extend(options_l['results'])
+        positions_l = []
+        if symbol == None or symbol == "":
+            positions_l = option_positions
+        else:
+            for pos in option_positions:
+                if pos['chain_symbol'] == symbol.upper():
+                    #filter noise 
+                    if int(float(pos["quantity"])) != 0 : 
+                        positions_l.append(pos)            
+        log.info("%d option positions fetched"%(len(positions_l))) 
+        log.info ("options owned: %s"%(pprint.pformat(positions_l, 4)))
+        return positions_l
     def get_options_order_history(self, symbol=None, from_date=None, to_date=None):
         #TODO: FIXME: this is the shittiest way of doing this. There must be another way
         all_orders = self.get_all_history_options_orders()
@@ -634,10 +654,16 @@ class Robinhood (Exchange):
         else:
             for order in all_orders:
                 if order['chain_symbol'] == symbol.upper():
+                    #get option details
+                    for leg in order["legs"]:
+                        leg["option_det"] = self._fetch_json_by_url(leg["option"])
                     orders.append(order)
         #TODO: FIXME: filter time
         log.info ("order: %s"%(pprint.pformat(orders, 4)))
-        return orders    
+        return orders
+    def options_order_history(self):
+        options_api_url = "https://api.robinhood.com/options/orders/"
+        return self._fetch_json_by_url(options_api_url)    
     def get_all_history_options_orders(self):
         options_orders = []
         past_options_orders = self.options_order_history()
@@ -674,21 +700,6 @@ class Robinhood (Exchange):
 #     
 #         return df_options_orders_cleaned
 
-def arg_parse():    
-    global args, ROBINHOOD_CONF
-    parser = argparse.ArgumentParser(description='Robinhood Exch implementation')
-    parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
-    parser.add_argument("--config", help='config file', required=False)
-    parser.add_argument("--s", help='symbol', required=False)
-    parser.add_argument("--oh", help='dump order history', required=False, action='store_true')
-    parser.add_argument("--ooh", help='dump options order history', required=False, action='store_true')    
-    parser.add_argument("--profit", help='total profit loss', required=False, action='store_true')
-    parser.add_argument("--start", help='from date', required=False, action='store_true')          
-    parser.add_argument("--end", help='to date', required=False, action='store_true')
-    args = parser.parse_args()
-    if args.config:
-        log.info ("using config file - %s"%(args.config))
-        ROBINHOOD_CONF = args.config
 ######## Functions for Main exec flow ########
 def print_order_history(symbol, from_date, to_date):
     print ("printing order history")    
@@ -722,8 +733,8 @@ def print_options_order_history(symbol, from_date, to_date):
     if len(orders):
         num_sell = num_buy = amt_sell = amt_buy = 0
         print ("retrieved %d orders"%(len(orders)))
-        print ("{:<6}{:^6}{:^8}{:^8}{:^10}{:^10}{:^15}{:^10}{:^25}{:^15}".format(
-            "Ticker", "Side", "Action", "Size", "Price", "Type", "Status","dir", "strat", "Date"))
+        print ("{:<6}{:^6}{:^8}{:^8}{:^10}{:^10}{:^10}{:^10}{:^25}{:^10}{:^10}{:^15}{:^15}".format(
+            "Ticker", "Side", "Action", "Size", "Price", "Type", "Status","dir", "strat", "type", "strike", "expiry", "Date"))
         for o in orders:
             sym         = o["chain_symbol"]
             side        = "NONE"# o["side"]
@@ -756,19 +767,45 @@ def print_options_order_history(symbol, from_date, to_date):
                     quant += quant_p
                 side        = leg["side"]
                 pos_effect  = leg["position_effect"]
+                expiry_date = leg["option_det"]["expiration_date"]
+                strike = leg["option_det"]["strike_price"]
+                opt_type = leg["option_det"]["type"]                
                 if status == "filled":
-                    if side == "sell":
+                    if dir == "credit":
                         num_sell += quant
-                        amt_sell += quant*price
+                        amt_sell += price
                     else:
                         num_buy += quant
-                        amt_buy += quant*price                
-                print ("{:<6}{:^6}{:^8}{:^8.0f}{:^10.3f}{:^10}{:^15}{:^10}{:^25}{:^15}".format(sym, side, pos_effect,
-                         quant, price, typ, status, dir, strat, o["created_at"]))
+                        amt_buy += price                
+                print ("{:<6}{:^6}{:^8}{:^8.0f}{:^10.3f}{:^10}{:^10}{:^10}{:^25}{:^10}{:^10}{:^15}{:^15}".format(sym, side, pos_effect,
+                         quant, price, typ, status, dir, strat, opt_type, strike, expiry_date, o["created_at"]))
         print("Summary:\n num_buy: %d \n amt_buy: %.2f \n num_sell: %d \n amt_sell: %.2f\n profit: %.2f"%(
             num_buy, amt_buy, num_sell, amt_sell, (amt_sell-amt_buy)))
     else:
         print("unable to find order history")
+def print_current_options_positions(sym):
+    print ("printing current option positions")    
+    options = rbh.get_option_positions(sym)
+    if len(options):
+        pass
+        
+def arg_parse():    
+    global args, ROBINHOOD_CONF
+    parser = argparse.ArgumentParser(description='Robinhood Exch implementation')
+    parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
+    parser.add_argument("--config", help='config file', required=False)
+    parser.add_argument("--s", help='symbol', required=False)
+    parser.add_argument("--oh", help='dump order history', required=False, action='store_true')
+    parser.add_argument("--ooh", help='dump options order history', required=False, action='store_true')
+    parser.add_argument("--cp", help='dump current positions', required=False, action='store_true')    
+    parser.add_argument("--cop", help='dump current options positions', required=False, action='store_true')    
+    parser.add_argument("--profit", help='total profit loss', required=False, action='store_true')
+    parser.add_argument("--start", help='from date', required=False, action='store_true')          
+    parser.add_argument("--end", help='to date', required=False, action='store_true')
+    args = parser.parse_args()
+    if args.config:
+        log.info ("using config file - %s"%(args.config))
+        ROBINHOOD_CONF = args.config
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     from market import TradeRequest
@@ -811,7 +848,11 @@ if __name__ == '__main__':
     if args.oh:
         print_order_history(args.s, args.start, args.end)
     if args.ooh:
-        print_options_order_history(args.s, args.start, args.end)         
+        print_options_order_history(args.s, args.start, args.end)
+    if args.cp:
+        print_current_positions(args.s)
+    if args.cop:
+        print_current_options_positions(args.s)                
 #     sleep(10)
     rbh.close()
     print ("Done")
