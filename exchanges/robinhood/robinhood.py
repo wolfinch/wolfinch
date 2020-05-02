@@ -39,7 +39,7 @@ from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 import logging
 
-args = None
+parser = args = None
 log = getLogger ('Robinhood')
 log.setLevel(log.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -47,7 +47,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
 RBH_INTERVAL_MAPPING = {300 :'5m', 600: '10m'}
-
+API_BASE="https://api.robinhood.com/"
 
 class Robinhood (Exchange):
     name = "robinhood"
@@ -574,9 +574,18 @@ class Robinhood (Exchange):
                 symbol=prod_id,
                 origClientOrderId=order_id)
         return None
+    def get_market_hrs(self, date=None):
+        if date==None:
+            date = datetime.now()
+        date_str = date.strftime("%Y-%m-%d")
+        api = API_BASE+"/markets/XASE/hours/"+date_str
+        m_hrs = self._fetch_json_by_url(api)
+        log.debug ("market hrs for %s is %s"%(date_str, m_hrs))
+        return m_hrs["is_open"], m_hrs
+    
     def _fetch_json_by_url(self, url):
         return self.auth_client.get_url(url)
-
+    
     def _get_symbol_from_instrument(self, instr):
         i_id = instr.rstrip('/').split('/')[-1]
         sym = self.symbol_id_map.get(i_id)
@@ -639,7 +648,7 @@ class Robinhood (Exchange):
             else:
                 log.error("unable to get option for id %s"%(i_id))
     def get_option_positions (self, symbol=None):
-        options_api_url = "https://api.robinhood.com/options/positions/?nonzero=true"
+        options_api_url = API_BASE+"/options/positions/?nonzero=true"
         option_positions = []
         options_l = self._fetch_json_by_url(options_api_url)
         option_positions.extend(options_l['results'])
@@ -680,7 +689,7 @@ class Robinhood (Exchange):
         log.debug ("order: %s"%(pprint.pformat(orders, 4)))
         return orders
     def options_order_history(self):
-        options_api_url = "https://api.robinhood.com/options/orders/"
+        options_api_url = API_BASE+"options/orders/"
         return self._fetch_json_by_url(options_api_url)    
     def get_all_history_options_orders(self):
         options_orders = []
@@ -818,9 +827,12 @@ def print_current_options_positions(sym):
             expiry_date    = pos["option_det"]["expiration_date"]            
             strike    = pos["option_det"]["strike_price"]                       
             print ("{:<6}{:^8.0f}{:^10.3f}{:^10}{:^10}{:^10}{:^15}{:^10}{:^15}".format(sym,
-                         quant, price, type, opt_type, strike, expiry_date, status, pos["created_at"]))            
+                         quant, price, type, opt_type, strike, expiry_date, status, pos["created_at"]))
+def print_market_hrs():
+    is_open, hrs = rbh.get_market_hrs()
+    print ("%s"%(pprint.pformat(hrs, 4)))                 
 def arg_parse():    
-    global args, ROBINHOOD_CONF
+    global args, parser, ROBINHOOD_CONF
     parser = argparse.ArgumentParser(description='Robinhood Exch implementation')
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
     parser.add_argument("--config", help='config file', required=False)
@@ -832,6 +844,7 @@ def arg_parse():
     parser.add_argument("--profit", help='total profit loss', required=False, action='store_true')
     parser.add_argument("--start", help='from date', required=False, action='store_true')          
     parser.add_argument("--end", help='to date', required=False, action='store_true')
+    parser.add_argument("--hrs", help='market hourse', required=False, action='store_true')    
     args = parser.parse_args()
     if args.config:
         log.info ("using config file - %s"%(args.config))
@@ -850,7 +863,6 @@ if __name__ == '__main__':
                 }
               }
     
-    rbh = Robinhood (config)
     
 #     m = bnc.market_init('BTC-USD')
 
@@ -876,13 +888,23 @@ if __name__ == '__main__':
 #     rbh.auth_client.print_quote("AAPL")
 
     if args.oh:
+        rbh = Robinhood (config)
         print_order_history(args.s, args.start, args.end)
-    if args.ooh:
+    elif args.ooh:
+        rbh = Robinhood (config)
         print_options_order_history(args.s, args.start, args.end)
-    if args.cp:
+    elif args.cp:
+        rbh = Robinhood (config)
         print_current_positions(args.s)
-    if args.cop:
-        print_current_options_positions(args.s)                
+    elif args.cop:
+        rbh = Robinhood (config)
+        print_current_options_positions(args.s)
+    elif args.hrs:
+        rbh = Robinhood (config)
+        print_market_hrs()        
+    else:
+        parser.print_help()
+        exit(1)                            
 #     sleep(10)
     rbh.close()
     print ("Done")
