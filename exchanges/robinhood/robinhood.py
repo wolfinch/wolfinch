@@ -26,8 +26,7 @@ from datetime import datetime, timedelta
 from time import sleep
 import time
 from dateutil.tz import tzlocal, tzutc
-from twisted.internet import reactor
-
+# from twisted.internet import reactor
 import pyrh
 
 # from .robinhood.enums import *
@@ -38,10 +37,12 @@ import pyrh
 from utils import getLogger, readConf
 from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
+import logging
 
 args = None
 log = getLogger ('Robinhood')
-log.setLevel(log.INFO)
+log.setLevel(log.DEBUG)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
@@ -235,7 +236,6 @@ class Robinhood (Exchange):
         
         #log out now. 
         self.auth_client.logout()
-        log.debug("Closed websockets")
 
     def get_products (self):
         log.debug ("products num %d" % (len(self.robinhood_products)))
@@ -642,8 +642,10 @@ class Robinhood (Exchange):
                     #filter noise 
                     if int(float(pos["quantity"])) != 0 : 
                         positions_l.append(pos)            
-        log.info("%d option positions fetched"%(len(positions_l))) 
-        log.info ("options owned: %s"%(pprint.pformat(positions_l, 4)))
+        log.info("%d option positions fetched"%(len(positions_l)))
+        for pos in positions_l:
+            pos["option_det"] = self._fetch_json_by_url(pos["option"])         
+        log.debug ("options owned: %s"%(pprint.pformat(positions_l, 4)))
         return positions_l
     def get_options_order_history(self, symbol=None, from_date=None, to_date=None):
         #TODO: FIXME: this is the shittiest way of doing this. There must be another way
@@ -654,12 +656,13 @@ class Robinhood (Exchange):
         else:
             for order in all_orders:
                 if order['chain_symbol'] == symbol.upper():
-                    #get option details
-                    for leg in order["legs"]:
-                        leg["option_det"] = self._fetch_json_by_url(leg["option"])
                     orders.append(order)
         #TODO: FIXME: filter time
-        log.info ("order: %s"%(pprint.pformat(orders, 4)))
+        #get option details
+        for order in orders:
+            for leg in order["legs"]:
+                leg["option_det"] = self._fetch_json_by_url(leg["option"])        
+        log.debug ("order: %s"%(pprint.pformat(orders, 4)))
         return orders
     def options_order_history(self):
         options_api_url = "https://api.robinhood.com/options/orders/"
@@ -771,7 +774,7 @@ def print_options_order_history(symbol, from_date, to_date):
                 strike = leg["option_det"]["strike_price"]
                 opt_type = leg["option_det"]["type"]                
                 if status == "filled":
-                    if dir == "credit":
+                    if side == "sell":
                         num_sell += quant
                         amt_sell += price
                     else:
@@ -785,10 +788,22 @@ def print_options_order_history(symbol, from_date, to_date):
         print("unable to find order history")
 def print_current_options_positions(sym):
     print ("printing current option positions")    
-    options = rbh.get_option_positions(sym)
-    if len(options):
-        pass
-        
+    options_l = rbh.get_option_positions(sym)
+    if len(options_l):
+        print ("retrieved %d orders"%(len(options_l)))
+        print ("{:<6}{:^8}{:^10}{:^10}{:^10}{:^10}{:^15}{:^10}{:^15}".format(
+            "Ticker", "Size", "Price", "Type", "opt_type", "strike", "expiry", "Status", "Date"))
+        for pos in options_l:
+            sym     = pos["chain_symbol"]
+            quant   = float(pos["quantity"])
+            price   = float(pos["average_price"])
+            type    = pos["type"]            
+            opt_type    = pos["option_det"]["type"]
+            status    = pos["option_det"]["state"]
+            expiry_date    = pos["option_det"]["expiration_date"]            
+            strike    = pos["option_det"]["strike_price"]                       
+            print ("{:<6}{:^8.0f}{:^10.3f}{:^10}{:^10}{:^10}{:^15}{:^10}{:^15}".format(sym,
+                         quant, price, type, opt_type, strike, expiry_date, status, pos["created_at"]))            
 def arg_parse():    
     global args, ROBINHOOD_CONF
     parser = argparse.ArgumentParser(description='Robinhood Exch implementation')
