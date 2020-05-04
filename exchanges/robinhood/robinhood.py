@@ -156,16 +156,29 @@ class Robinhood (Exchange):
             log.critical("Unable to get account details!!")
             return False
         log.debug ("Exchange Accounts: %s" % (pprint.pformat(accounts, 4)))
-#         balances = accounts ['balances']
-#         for balance in balances:
-# #             log.debug ("balance: %s"%(balance))
-#             for prod in self.robinhood_products:
-#                 log.debug ("prod_id: %s" % (prod['id']))               
-#                 if balance['asset'] in [prod ['asset_type'], prod ['fund_type']]:
-#                     log.debug ("Interested Account Found for Currency: " + balance['asset'])
-#                     self.robinhood_accounts[balance['asset']] = balance
-#                     break  
+        self.robinhood_accounts["USD"] = accounts["buying_power"]                    
         
+        portfolio = self.auth_client.portfolios()
+        if (portfolio == None):
+            log.critical("Unable to get portfolio details!!")
+            return False
+        log.debug ("Exchange portfolio: %s" % (pprint.pformat(portfolio, 4)))
+        positions = self.auth_client.positions()
+        if (positions == None):
+            log.critical("Unable to get positions details!!")
+            return False
+#         log.debug ("Exchange positions: %s" % (pprint.pformat(positions, 4)))
+
+        balances = positions ['results']
+        for prod in self.robinhood_products:
+            log.debug ("prod_id: %s" % (prod['id']))
+            instr = prod['instrument']
+            for balance in balances:
+                if balance['instrument'] == instr['url']:
+                    self.robinhood_accounts[prod['id']] = balance
+                    log.debug ("Interested Account Found for asset: %s size: %s"%( prod['id'], balance['quantity']))
+                    break
+            
         ### Start WebSocket Streams ###
 #         self.ws_client = bm = RobinhoodSocketManager(self.public_client)
 #         symbol_list = []
