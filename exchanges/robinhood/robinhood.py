@@ -42,11 +42,11 @@ import logging
 parser = args = None
 log = getLogger ('Robinhood')
 log.setLevel(log.DEBUG)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
+# logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
-RBH_INTERVAL_MAPPING = {300 :'5m', 600: '10m'}
+RBH_INTERVAL_MAPPING = {300 :'5minute', 600: '10minute'}
 API_BASE="https://api.robinhood.com/"
 
 class Robinhood (Exchange):
@@ -63,7 +63,8 @@ class Robinhood (Exchange):
 
     def __init__(self, config, primary=False):
         log.info ("Init Robinhood exchange")
-        self.symbol_id_map = {}
+        self.instr_to_symbol_map = {}
+        self.symbol_to_instr_map = {}
         self.option_id_map = {}
         exch_cfg_file = config['config']
         
@@ -79,7 +80,7 @@ class Robinhood (Exchange):
             # map interval in to robinhood format
             interval = RBH_INTERVAL_MAPPING[int(config['candle_interval']) ]
             self.robinhood_conf['backfill_interval'] =  interval
-            self.candle_interval = int(config['candle_interval'])        
+            self.candle_interval = int(config['candle_interval'])
                 
         # get config
         backfill = config.get('backfill')
@@ -116,40 +117,37 @@ class Robinhood (Exchange):
         except Exception as e:
             log.critical ("exception while logging in e:%s"%(e))        
             raise e
-        
 #         global robinhood_products
 #         exch_info = self.public_client.get_exchange_info()
 #         serverTime = int(exch_info['serverTime'])
 #         localTime = int(time.time() * 1000)
 #         self.timeOffset = (serverTime - localTime) // 1000
-#         # if time diff is less the 5s, ignore. 
-#         if abs(self.timeOffset) < 5: 
-#             self.timeOffset = 0
-#    
-#         log.info ("servertime: %d localtime: %d offset: %d" % (serverTime, localTime, self.timeOffset))
+
+#TODO: FIXME: RH is in EDT. Adjust with local time
+# (datetime.datetime.now(pytz.timezone('America/New_York')) - datetime.datetime(1970,1,1).).total_seconds()
+        self.timeOffset = 0
+        # if time diff is less the 5s, ignore.         
+        if abs(self.timeOffset) < 5: 
+            self.timeOffset = 0
+            
+        log.info ("**********TODO: FIXME: fix time offset ********\n")# servertime: %d localtime: %d offset: %d" % (serverTime, localTime, self.timeOffset))
         
-#         self.robinhood_conf['products'] = []
-#         for p in config['products']:
+        self.robinhood_conf['products'] = []
+        for p in config['products']:
 #             # add the product ids
-#             self.robinhood_conf['products'] += p.keys()
+            self.robinhood_conf['products'] += p.keys()
                     
         portforlio = self.auth_client.portfolios()
         log.info ("products: %s" % (pprint.pformat(portforlio, 4)))
                 
-#         if (len(products) and len (self.robinhood_conf['products'])):
-#             for prod in products:
-#                 for p in self.robinhood_conf['products']:
-#                     for k, v in p.items():
-# #                         log.debug ("pk: %s s: %s"%(k, prod['symbol']))
-#                         if prod['symbol'] == k:
-#                             log.debug ("product found: %s v: %s" % (prod, v))
-#                             prod['id'] = v['id']
-#                             prod['display_name'] = k
-#                             self.symbol_to_id[k] = prod['id']
-#                             prod ['asset_type'] = prod['baseAsset']
-#                             prod ['fund_type'] = prod['quoteAsset']
-#                                                   
-#                             self.robinhood_products.append(prod)
+        for p_id in self.robinhood_conf['products']:
+            instr = self._get_instrument_from_symbol(p_id)
+            prod = {"id": p_id}
+            prod['asset_type'] = p_id
+            prod['fund_type'] = "USD"
+            prod['name'] = instr['simple_name']
+            prod["instrument"] = instr
+            self.robinhood_products.append(prod)
         
         # EXH supported in spectator mode. 
         # Popoulate the account details for each interested currencies
@@ -586,9 +584,24 @@ class Robinhood (Exchange):
     def _fetch_json_by_url(self, url):
         return self.auth_client.get_url(url)
     
+    def _get_instrument_from_symbol(self, symbol):
+        instr = self.symbol_to_instr_map.get(symbol)
+        if instr:
+            log.debug ("found cached instr for id: %s symbol: %s"%(symbol, instr['id']))
+            return instr
+        else:
+            instr = self.auth_client.instrument(symbol)
+            if instr :
+                log.debug("got symbol for id %s symbol: %s"%(symbol, instr['id']))   
+                self.instr_to_symbol_map[symbol] = instr
+                return instr
+            else:
+                log.error("unable to get symbol for id %s"%(symbol))        
+        return None
+        
     def _get_symbol_from_instrument(self, instr):
         i_id = instr.rstrip('/').split('/')[-1]
-        sym = self.symbol_id_map.get(i_id)
+        sym = self.instr_to_symbol_map.get(i_id)
         if sym:
             log.debug ("found cached symbol for id: %s symbol: %s"%(i_id, sym['symbol']))
             return sym
@@ -596,14 +609,14 @@ class Robinhood (Exchange):
             sym = self._fetch_json_by_url(instr)
             if sym :
                 log.debug("got symbol for id %s symbol: %s"%(i_id, sym))   
-                self.symbol_id_map[i_id] = sym
+                self.instr_to_symbol_map[i_id] = sym
                 return sym
             else:
                 log.error("unable to get symbol for id %s"%(i_id))
     
     def get_order_history(self, symbol=None, from_date=None, to_date=None):
         #TODO: FIXME: this is the shittiest way of doing this. There must be another way
-        all_orders = self.get_all_history_orders()
+        all_orders = self.get_all_history_orders(symbol)
         orders = []
         if symbol == None or symbol == "":
             orders = all_orders
@@ -613,9 +626,17 @@ class Robinhood (Exchange):
                     orders.append(order)
         #TODO: FIXME: filter time
         return orders
-    def get_all_history_orders(self):
+    def get_all_history_orders(self, symbol=None):
         orders = []
-        past_orders = self.auth_client.order_history()
+        if symbol == None:
+            past_orders = self.auth_client.order_history()
+        else:
+            instr = self._get_instrument_from_symbol(symbol)
+            if not instr:
+                log.error("unable to get instrument from symbol")
+            instr_url = instr['url']
+            url = API_BASE +"/orders/?instrument="+instr_url
+            past_orders = self._fetch_json_by_url(url)
         orders.extend(past_orders['results'])
         log.debug("%d order fetched first page"%(len(orders)))    
         while past_orders['next']:
@@ -673,7 +694,7 @@ class Robinhood (Exchange):
         return positions_l
     def get_options_order_history(self, symbol=None, from_date=None, to_date=None):
         #TODO: FIXME: this is the shittiest way of doing this. There must be another way
-        all_orders = self.get_all_history_options_orders()
+        all_orders = self.get_all_history_options_orders(symbol)
         orders = []
         if symbol == None or symbol == "":
             orders = all_orders
@@ -688,12 +709,20 @@ class Robinhood (Exchange):
                 leg["option_det"] = self._get_option_from_instrument(leg["option"])        
         log.debug ("order: %s"%(pprint.pformat(orders, 4)))
         return orders
-    def options_order_history(self):
+    def options_order_history(self, symbol=None):
         options_api_url = API_BASE+"options/orders/"
-        return self._fetch_json_by_url(options_api_url)    
-    def get_all_history_options_orders(self):
+        if symbol == None:
+            return self._fetch_json_by_url(options_api_url)
+        else:
+            instr = self._get_instrument_from_symbol(symbol)
+            if not instr:
+                log.error("unable to get instrument from symbol")
+            instr_url = instr['url']
+            url = options_api_url +"?instrument="+instr_url
+            return self._fetch_json_by_url(url)        
+    def get_all_history_options_orders(self, symbol=None):
         options_orders = []
-        past_options_orders = self.options_order_history()
+        past_options_orders = self.options_order_history(symbol)
         options_orders.extend(past_options_orders['results'])
         while past_options_orders['next']:
             # print("{} order fetched".format(len(orders)))
@@ -830,7 +859,13 @@ def print_current_options_positions(sym):
                          quant, price, type, opt_type, strike, expiry_date, status, pos["created_at"]))
 def print_market_hrs():
     is_open, hrs = rbh.get_market_hrs()
-    print ("%s"%(pprint.pformat(hrs, 4)))                 
+    print ("%s"%(pprint.pformat(hrs, 4)))
+def print_market_quote (sym):
+    if sym==None or sym == "":
+        print ("invalid symbol")
+        return
+    rbh.auth_client.print_quote(sym)
+          
 def arg_parse():    
     global args, parser, ROBINHOOD_CONF
     parser = argparse.ArgumentParser(description='Robinhood Exch implementation')
@@ -844,7 +879,9 @@ def arg_parse():
     parser.add_argument("--profit", help='total profit loss', required=False, action='store_true')
     parser.add_argument("--start", help='from date', required=False, action='store_true')          
     parser.add_argument("--end", help='to date', required=False, action='store_true')
-    parser.add_argument("--hrs", help='market hourse', required=False, action='store_true')    
+    parser.add_argument("--hrs", help='market hourse', required=False, action='store_true')
+    parser.add_argument("--quote", help='print quote', required=False, action='store_true')
+    
     args = parser.parse_args()
     if args.config:
         log.info ("using config file - %s"%(args.config))
@@ -856,6 +893,7 @@ if __name__ == '__main__':
     print ("Testing Robinhood exch:")
     arg_parse()
     config = {"config": ROBINHOOD_CONF,
+              "products" : [{"NIO":{}}, {"AAPL":{}}],
               'backfill': {
                   'enabled'  : True,
                   'period'   : 1,  # in Days
@@ -885,8 +923,6 @@ if __name__ == '__main__':
 #     order = bnc.get_order("XLMUSDT", order.id)
 #     print ("get sell order: %s" % (order))    
     
-#     rbh.auth_client.print_quote("AAPL")
-
     if args.oh:
         rbh = Robinhood (config)
         print_order_history(args.s, args.start, args.end)
@@ -901,7 +937,13 @@ if __name__ == '__main__':
         print_current_options_positions(args.s)
     elif args.hrs:
         rbh = Robinhood (config)
-        print_market_hrs()        
+        print_market_hrs()
+    elif args.quote:
+        if args.s == None or args.s == "":
+            print ("invalid symbol")
+        else:    
+            rbh = Robinhood (config)
+            print_market_quote(args.s)               
     else:
         parser.print_help()
         exit(1)                            
