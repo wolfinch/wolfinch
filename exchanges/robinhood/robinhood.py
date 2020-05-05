@@ -35,7 +35,7 @@ import pyrh
 # from .robinhood.websockets import RobinhoodSocketManager
 
 from utils import getLogger, readConf
-from market import Market, OHLC, feed_enQ, get_market_by_product, Order
+from market import  OHLC, feed_enQ, get_market_by_product, Order, TradeRequest
 from exchanges import Exchange
 import logging
 
@@ -149,20 +149,22 @@ class Robinhood (Exchange):
             prod["instrument"] = instr
             self.robinhood_products.append(prod)
         
-        # EXH supported in spectator mode. 
-        # Popoulate the account details for each interested currencies
-        accounts = self.auth_client.get_account()
-        if (accounts == None):
-            log.critical("Unable to get account details!!")
-            return False
-        log.debug ("Exchange Accounts: %s" % (pprint.pformat(accounts, 4)))
-        self.robinhood_accounts["USD"] = accounts["buying_power"]                    
+        # EXH supported in spectator mode.                    
         
         portfolio = self.auth_client.portfolios()
         if (portfolio == None):
             log.critical("Unable to get portfolio details!!")
             return False
         log.debug ("Exchange portfolio: %s" % (pprint.pformat(portfolio, 4)))
+        
+        # Popoulate the account details for each interested currencies
+        accounts = self.auth_client.get_account()
+        if (accounts == None):
+            log.critical("Unable to get account details!!")
+            return False
+        log.debug ("Exchange Accounts: %s" % (pprint.pformat(accounts, 4)))
+        self.robinhood_accounts["USD"] = accounts 
+                
         positions = self.auth_client.positions()
         if (positions == None):
             log.critical("Unable to get positions details!!")
@@ -218,10 +220,10 @@ class Robinhood (Exchange):
             return None
         
 #         #Setup the initial params
-        market.fund.set_initial_value(float(usd_acc['free']))
-        market.fund.set_hold_value(float(usd_acc['locked']))
-        market.asset.set_initial_size(float( asset_acc['free']))
-        market.asset.set_hold_size( float(asset_acc['locked']))
+        market.fund.set_initial_value(float(usd_acc['buying_power']))
+        market.fund.set_hold_value(float(usd_acc['cash_held_for_orders']))
+        market.asset.set_initial_size(float( asset_acc['quantity']))
+        market.asset.set_hold_size( float(asset_acc['shares_held_for_sells']))
         
         ## Feed Cb
         market.register_feed_processor(self._robinhood_consume_feed)
@@ -372,84 +374,84 @@ class Robinhood (Exchange):
     def _normalized_order (self, order):
 #         '''
 #         Desc:
-#          Error Handle and Normalize the order json returned by gdax
+#          Error Handle and Normalize the order json returned by RBH
 #           to return the normalized order detail back to callers
 #           Handles -
 #           1. Initial Order Creation/Order Query
-#           2. Order Update Feed Messages
-#           Ref: https://docs.gdax.com/#the-code-classprettyprintfullcode-channel
 #         Sample order:
 # {
-#   "symbol": "BTCUSDT",
-#   "orderId": 28,
-#   "orderListId": -1, //Unless OCO, value will be -1
-#   "clientOrderId": "6gCrw2kRUAF9CvJDGP16IP",
-#   "transactTime": 1507725176595,
-#   "price": "1.00000000",
-#   "origQty": "10.00000000",
-#   "executedQty": "10.00000000",
-#   "cummulativeQuoteQty": "10.00000000",
-#   "status": "FILLED",
-#   "timeInForce": "GTC",
-#   "type": "MARKET",
-#   "side": "SELL",
-#   "fills": [
-#     {
-#       "price": "4000.00000000",
-#       "qty": "1.00000000",
-#       "commission": "4.00000000",
-#       "commissionAsset": "USDT"
-#     },
-#     {
-#       "price": "3999.00000000",
-#       "qty": "5.00000000",
-#       "commission": "19.99500000",
-#       "commissionAsset": "USDT"
-#     },
-#     {
-#       "price": "3998.00000000",
-#       "qty": "2.00000000",
-#       "commission": "7.99600000",
-#       "commissionAsset": "USDT"
-#     },   
+# id: "a5a7b4d8-7f16-44d5-9448-fa09a341e77b", ref_id: "<orig_ref_id>",…}
+# account: "https://api.robinhood.com/accounts/id/"
+# average_price: null
+# cancel: "https://api.robinhood.com/orders/<id>/cancel/"
+# created_at: "2020-05-05T04:02:49.045521Z"
+# cumulative_quantity: "0.00000000"
+# executed_notional: null
+# executions: []
+# extended_hours: false
+# fees: "0.00"
+# id: "a5a7buuidb"
+# instrument: "https://api.robinhood.com/instruments/uuid/"
+# investment_schedule_id: null
+# last_trail_price: null
+# last_trail_price_updated_at: null
+# last_transaction_at: "2020-05-05T04:02:49.045521Z"
+# override_day_trade_checks: false
+# override_dtbp_checks: false
+# position: "https://api.robinhood.com/positions/xxx/xxx"
+# price: "3.54000000"
+# quantity: "1.00000000"
+# ref_id: "4uuid6"
+# reject_reason: null
+# response_category: null
+# side: "buy"
+# state: "unconfirmed"
+# stop_price: null
+# stop_triggered_at: null
+# time_in_force: "gfd"
+# total_notional: {amount: "3.54", currency_code: "USD", currency_id: "1072fc76-1862-41ab-82c2-485837590762"}
+# amount: "3.54"
+# currency_code: "USD"
+# currency_id: "1072fc76-1862-41ab-82c2-485837590762"
+# trigger: "immediate"
+# type: "market"
+# updated_at: "2020-05-05T04:02:49.045534Z"
+# url: "https://api.robinhood.com/orders/uuid/"
+# }
 #         Known Errors: 
 #           1. {u'message': u'request timestamp expired'}
 #           2. {u'message': u'Insufficient funds'}
 #           3. {'status' : 'rejected', 'reject_reason': 'post-only'}
 #         '''
 #         error_status_codes = ['rejected']
-        log.debug ("Order msg: \n%s" % (pprint.pformat(order, 4)))
+#        status = [unconfirmed, queued]
+        log.critical ("Order msg: \n%s" % (pprint.pformat(order, 4)))
         
-        msg = order.get('msg')
-        status = order.get('status')  or order.get('X')
-        if (msg):
-            log.error("FAILED Order: error msg: %s status: %s" % (msg, status))
-            return None
+        status = order.get('state')
         
         # Valid Order
-        product_id = order.get('symbol') or order.get("s")
-        order_id = order.get('clientOrderId') or order.get('c')
-        order_type = order.get('type') or order.get("o")
+        instr = self._get_symbol_from_instrument(order.get('instrument'))
+        product_id = instr['symbol'] if instr != None else None
+        order_id = order.get('id')
+        order_type = order.get('type')
         
-        if order_type == "MARKET":
+        if order_id == "" or order_id == None or product_id == "" or product_id == None:
+            log.critical ("order placing failed %s"%(pprint.pformat(order, 4)))
+        
+        if order_type == "market":
             order_type = "market"
-        elif order_type == "LIMIT":
+        elif order_type == "limit":
             order_type = 'limit'
-
-        if (status == None and (product_id != None and order_id != None)):
-            log.debug ("must be an ACK for order_id (%s)" % (order_id))
-            # For ACK all values might be 0, careful with calculations
-            status = "NEW"
                 
-        if status in ['NEW', 'PARTIALLY_FILLED', 'FILLED', 'CANCELED', 'PENDING_CANCEL', 'REJECTED', 'EXPIRED' ]:
-            if status == "NEW":
+        if status in ['open', 'unconfirmed', 'queued', 'cancelled', 'filled', 'rejected', 'expired' ]:
+            if status in ["open", 'unconfirmed', 'queued']:
                 status_type = "open"
-            elif status == 'FILLED':
+            elif status == 'filled':
                 status_type = "filled"
-            elif status in ['CANCELED', 'EXPIRED']:
+            elif status in ['cancelled', 'expired']:
                 # order status update message
                 status_type = "canceled"
-            elif status == 'REJECTED':
+            elif status == 'rejected':
                 log.error ("order rejected msg:%s" % (order))
                 return None
             else: #, 'PARTIALLY_FILLED'
@@ -457,62 +459,34 @@ class Robinhood (Exchange):
                 return None
 #             order_type = order.get('order_type') #could be None
         else:
-            s = "****** unknown order status: %s" % (status)
+            s = "****** unknown order status: %s ********" % (status)
             log.critical (s)
             raise Exception (s)
             
-        create_time = order.get('O') or order.get('time') 
+        create_time = order.get('created_at') or None
         if create_time:
-            create_time = datetime.utcfromtimestamp(int(create_time)/1000).replace(tzinfo=tzutc()).astimezone(tzlocal()).isoformat()
-#         else:
-#             create_time = datetime.now().isoformat()
-        update_time = order.get('updateTime') or order.get('transactTime') or order.get('T') or order.get('O') or None
+            create_time = datetime.fromisoformat(create_time.rstrip("Z")).replace(tzinfo=tzutc()).astimezone(tzlocal()).isoformat()
+
+        update_time = order.get('updated_at') or None
         if update_time:
-            update_time = datetime.utcfromtimestamp(int(update_time)/1000).replace(tzinfo=tzutc()).astimezone(tzlocal()).isoformat()
+            update_time = datetime.fromisoformat(update_time.rstrip("Z")).replace(tzinfo=tzutc()).astimezone(tzlocal()).isoformat()
         else:
             update_time = datetime.now().isoformat()
                     
-        side = order.get('side') or order.get('S') or None
+        side = order.get('side') or None
         if side == None:
             log.critical("unable to get order side %s(%s)"%(product_id, order_id))
             raise Exception ("unable to get order side")
-        elif side == 'BUY':
-            side = 'buy'
-        elif side == 'SELL':
-            side = 'sell'
         
         # Money matters
-        price = float(order.get('price') or 0)
-        request_size = float(order.get('q') or order.get('origQty') or 0)
-        filled_size = float(order.get('z') or order.get('executedQty') or 0)
-        remaining_size = float(0)  # FIXME: jork:
-        funds = float(order.get('Z') or order.get('cummulativeQuoteQty') or 0)
-        fees = float(order.get('n') or 0)
-        
-        if price == 0 and funds != 0 and filled_size != 0 :
-            price = funds / filled_size  # avg size calculation
-        fills = float(order.get('fills') or 0)
-        if fills :
-            qty = float(0.0)
-            comm = float(0.0)
-            for fill in fills:
-                qty += float(fill.get('qty') or 0)
-                comm += float(fill.get('commission') or 0)
-            if fees == 0:
-                fees = float(comm)
-        
-#         if status == "FILLED":
-#             total_val = float(order.get('executed_value') or 0)
-#             if total_val and filled_size and not price:
-#                 price = total_val/filled_size
-#             if (funds == 0):
-#                 funds = total_val + fees
-                # log.debug ("calculated fill price: %g size: %g"%(price, filled_size))
-    #         if filled_size and remaining_size:
-    #             request_size = filled_size + remaining_size
-                        
-        if (request_size == 0):
-            request_size = remaining_size + filled_size  
+        price = float(order.get('average_price') or order.get('price') or 0)
+        request_size = float(order.get('quantity') or 0)
+        filled_size = 0
+        for exe in order["executions"]:
+            filled_size += float(exe.get('quantity') or 0)
+        remaining_size = float(request_size - filled_size)
+        funds = float(price * request_size)
+        fees = float(order.get('fees') or 0)
             
         log.debug ("price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g" % (
             price, funds, request_size, filled_size, remaining_size, fees))
@@ -526,65 +500,53 @@ class Robinhood (Exchange):
         return None
 
     def buy (self, trade_req) :
-        # TODO: FIXME: Implement Market/STOP orders
         log.debug ("BUY - Placing Order on exchange --")
         
-        params = {'symbol':trade_req.product, 'side' : SIDE_BUY, 'quantity':trade_req.size, "newOrderRespType": ORDER_RESP_TYPE_ACK }  # asset
+        instr = self._get_instrument_from_symbol(trade_req.product)
+        params = {'symbol':trade_req.product, 'side' : "buy", 'quantity':trade_req.size, "instrument_URL": instr["url"],
+                  "time_in_force": "GTC", 'trigger':"immediate" }  # asset
         if trade_req.type == "market":
-            params['type'] = ORDER_TYPE_MARKET
+            params['order_type'] = "market"
         else:
-            params['type'] = ORDER_TYPE_LIMIT
+            params['order_type'] = "limit"
             params['price'] = trade_req.price,  # USD
-        
         try:
-            if self.test_mode == False:    
-                order = self.auth_client.create_order(**params)
-            else:
-                log.info ("placing order in test mode")            
-                order = self.auth_client.create_test_order(**params)
+            order = self.auth_client.submit_buy_order(**params).json()
         except Exception as e:
             log.error ("exception while placing order - %s"%(e))
             return None
-        order["side"] = 'buy'     
         return self._normalized_order (order);
     
     def sell (self, trade_req) :
-        # TODO: FIXME: Implement Market/STOP orders        
         log.debug ("SELL - Placing Order on exchange --")
-        params = {'symbol':trade_req.product, 'side' : SIDE_SELL, 'quantity':trade_req.size, "newOrderRespType": ORDER_RESP_TYPE_ACK  }  # asset
+        instr = self._get_instrument_from_symbol(trade_req.product)
+        params = {'symbol':trade_req.product, 'side' : "sell", 'quantity':trade_req.size, "instrument_URL": instr["url"],
+                  "time_in_force": "GTC", 'trigger':"immediate" }  # asset
         if trade_req.type == "market":
-            params['type'] = ORDER_TYPE_MARKET
+            params['order_type'] = "market"
         else:
-            params['type'] = ORDER_TYPE_LIMIT
-            params['price'] = trade_req.price,  # USD            
-                    
+            params['order_type'] = "limit"
+            params['price'] = trade_req.price,  # USD
         try:
-            if self.test_mode == False:    
-                order = self.auth_client.create_order(**params)
-            else:            
-                log.info ("placing order in test mode")
-                order = self.auth_client.create_test_order(**params)     
+            order = self.auth_client.submit_sell_order(**params).json()
         except Exception as e:
             log.error ("exception while placing order - %s"%(e))
-            return None            
-        order["side"] = 'sell'
+            return None
         return self._normalized_order (order);
     
     def get_order (self, prod_id, order_id):
-        log.debug ("GET - order (%s) " % (order_id))
+        log.debug ("GET - prod(%s) order (%s) " % (prod_id, order_id))
         try:
-            order = self.auth_client.get_order(symbol=prod_id, origClientOrderId=order_id)
+            order = self.auth_client.order_history(orderId=order_id)
         except Exception as e:
             log.error ("exception while placing order - %s"%(e))
             return None        
         return self._normalized_order (order);
     
     def cancel_order (self, prod_id, order_id):
-        log.debug ("CANCEL - order (%s) " % (order_id))
-        self.auth_client.client.cancel_order(
-                symbol=prod_id,
-                origClientOrderId=order_id)
-        return None
+        log.debug ("CANCEL - prod(%s) order (%s) " % (prod_id, order_id))
+        return self.auth_client.client.cancel_order(order_id)
+    
     def get_market_hrs(self, date=None):
         if date==None:
             date = datetime.now()
@@ -878,7 +840,17 @@ def print_market_quote (sym):
         print ("invalid symbol")
         return
     rbh.auth_client.print_quote(sym)
-          
+def exec_market_order(sym, action):
+    if sym==None or sym == "":
+        print ("invalid symbol")
+        return
+    print ("exec order action (%s) on symbol(%s)"%(action, sym))
+    tr = TradeRequest(sym, action, 1, 0, 'market', 0, 0, 0) 
+    if action == "buy":
+        order = rbh.buy(tr)
+    else:
+        order = rbh.sell(tr)
+    print ("order: %s"%(order))
 def arg_parse():    
     global args, parser, ROBINHOOD_CONF
     parser = argparse.ArgumentParser(description='Robinhood Exch implementation')
@@ -894,6 +866,8 @@ def arg_parse():
     parser.add_argument("--end", help='to date', required=False, action='store_true')
     parser.add_argument("--hrs", help='market hourse', required=False, action='store_true')
     parser.add_argument("--quote", help='print quote', required=False, action='store_true')
+    parser.add_argument("--buy", help='buy asset', required=False, action='store_true')
+    parser.add_argument("--sell", help='sell asset', required=False, action='store_true')
     
     args = parser.parse_args()
     if args.config:
@@ -956,7 +930,13 @@ if __name__ == '__main__':
             print ("invalid symbol")
         else:    
             rbh = Robinhood (config)
-            print_market_quote(args.s)               
+            print_market_quote(args.s)
+    elif args.buy:
+        rbh = Robinhood (config)
+        exec_market_order(args.s, "buy")
+    elif args.sell:
+        rbh = Robinhood (config)
+        exec_market_order(args.s, "sell")    
     else:
         parser.print_help()
         exit(1)                            
