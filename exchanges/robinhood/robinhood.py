@@ -19,7 +19,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
-import argparse
 import json
 import pprint
 from datetime import datetime, timedelta
@@ -28,6 +27,7 @@ import time
 from dateutil.tz import tzlocal, tzutc
 # from twisted.internet import reactor
 import pyrh
+import yahoofin
 
 # from .robinhood.enums import *
 # from .robinhood.client import Client
@@ -35,7 +35,7 @@ import pyrh
 # from .robinhood.websockets import RobinhoodSocketManager
 
 from utils import getLogger, readConf
-from market import  OHLC, feed_enQ, get_market_by_product, Order, TradeRequest
+from market import  OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 import logging
 
@@ -46,7 +46,7 @@ log.setLevel(log.DEBUG)
 
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
-RBH_INTERVAL_MAPPING = {300 :'5minute', 600: '10minute'}
+RBH_INTERVAL_MAPPING = {300 :'5m', 600: '10m'}
 API_BASE="https://api.robinhood.com/"
 
 class Robinhood (Exchange):
@@ -279,9 +279,14 @@ class Robinhood (Exchange):
         period = int(self.robinhood_conf.get('backfill_period'))
         interval_str = self.robinhood_conf.get('backfill_interval')
         
+        if not enabled:
+            log.debug ("Historical data retrieval not enabled")
+            return None
+                
         interval = robinhood.helpers.interval_to_milliseconds(interval_str)
         if (interval == None):
             log.error ("Invalid Interval - %s" % interval_str)
+            raise Exception("Invalid Interval - %s" % interval_str)
         
         product = None
         for p in self.get_products():
@@ -291,10 +296,7 @@ class Robinhood (Exchange):
         if product is None:
             log.error ("Invalid Product Id: %s" % product_id)
             return None
-        
-        if not enabled:
-            log.debug ("Historical data retrieval not enabled")
-            return None
+
     
         if not end:
             # if no end, use current time
@@ -333,9 +335,9 @@ class Robinhood (Exchange):
             end_ts = int((tmp_end - epoch).total_seconds() * 1000.0)
             
             log.debug ("Start: %s end: %s" % (start_ts, end_ts))
-            candles = self.public_client.get_klines (
+            candles = yahoofin.get_historic_candles (
                 symbol=product['symbol'],
-                interval=Client.KLINE_INTERVAL_5MINUTE,
+                interval=interval_str,
                 limit=max_candles,
                 startTime=start_ts,
                 endTime=end_ts
@@ -875,6 +877,7 @@ def arg_parse():
         ROBINHOOD_CONF = args.config
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
+    import argparse
     from market import TradeRequest
     
     print ("Testing Robinhood exch:")
