@@ -1243,12 +1243,10 @@ class Market:
 # Feed Q routines
 feedQ = queue.Queue()
 
-
 def feed_enQ (market, msg):
     log.debug ("-------feed_enQ msg -------")
     obj = {"market":market, "msg":msg}
     feedQ.put(obj)
-
     
 def feed_deQ (timeout):
     try:
@@ -1260,7 +1258,6 @@ def feed_deQ (timeout):
         return None
     else:
         return msg
-
 
 def feed_Q_process_msg (msg):
     log.debug ("-------feed msg -------")

@@ -20,12 +20,12 @@
 
 from exchanges.cbpro import CBPRO
 from exchanges.binanceus import BinanceUS
+from exchanges.robinhood import Robinhood
 
 all_exchanges = [
         BinanceUS,
-        CBPRO
+        CBPRO,
+        Robinhood
     ]
-
-
                     
 #EOF    

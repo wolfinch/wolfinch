@@ -199,14 +199,14 @@ if __name__ == "__main__":
 
     class MyWebsocketClient(WebsocketClient):
         def on_open(self):
-            self.products = ["LYFT", "ES=F", "YM=F", "NQ=F", "RTY=F", "CL=F", "GC=F", "SI=F", "EURUSD=X", "^TNX", "^VIX"]
+            self.products = ["LYFT"] #, "ES=F", "YM=F", "NQ=F", "RTY=F", "CL=F", "GC=F", "SI=F", "EURUSD=X", "^TNX", "^VIX"]
             self.message_count = 0
             print("Let's count the messages!")
         def on_message(self, msg):
             pd = PricingData()
             pd.ParseFromString(base64.b64decode(msg))
 #             print(json.dumps(msg, indent=4, sort_keys=True))
-            print ("msg: %s"%pd)
+            print (" type:%s \n msg: %s time: %d"%(type(pd), pd, pd.time))
             self.message_count += 1
             
     wsClient = MyWebsocketClient()

@@ -25,21 +25,14 @@ from datetime import datetime, timedelta
 from time import sleep
 import time
 from dateutil.tz import tzlocal, tzutc
-# from twisted.internet import reactor
-import pyrh
-import yahoofin
-
-# from .robinhood.enums import *
-# from .robinhood.client import Client
-# from . import robinhood
-# from .robinhood.websockets import RobinhoodSocketManager
 
 from utils import getLogger, readConf
 from market import  OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 import logging
+import pyrh
+from . import yahoofin
 
-parser = args = None
 log = getLogger ('Robinhood')
 log.setLevel(log.DEBUG)
 # logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -180,30 +173,9 @@ class Robinhood (Exchange):
                     self.robinhood_accounts[prod['id']] = balance
                     log.debug ("Interested Account Found for asset: %s size: %s"%( prod['id'], balance['quantity']))
                     break
-            
-        ### Start WebSocket Streams ###
+        
+        ### Start WebSocket Streams ###        
         self.yahoofin_client.start_feed(self.robinhood_conf['products'], self._feed_enQ_msg)
-#         self.ws_client = bm = RobinhoodSocketManager(self.public_client)
-#         symbol_list = []
-#         for prod in self.get_products():
-#             # Start Kline socket
-# #             backfill_interval = self.robinhood_conf.get('backfill_interval')
-# #             bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg, interval=backfill_interval)
-# #             bm.start_aggtrade_socket(prod['symbol'], self._feed_enQ_msg)
-#             symbol_list.append(prod['symbol'].lower()+"@trade")
-#             
-#         if len(symbol_list):
-#             #start mux ws socket now
-#             log.info ("starting mux ws sockets for syms: %s"%(symbol_list))
-#             bm.start_multiplex_socket(symbol_list, self._feed_enQ_msg)
-#             
-#         self.ws_auth_client = bm_auth = RobinhoodSocketManager(self.auth_client)
-#         # Start user socket for interested symbols
-#         log.info ("starting user sockets")
-#         bm_auth.start_user_socket(self._feed_enQ_msg)            
-# 
-#         bm.start()
-#         bm_auth.start()
         
         log.info("**Robinhood init success**\n Products: %s\n Accounts: %s" % (
                         pprint.pformat(self.robinhood_products, 4), pprint.pformat(self.robinhood_accounts, 4)))
@@ -213,41 +185,55 @@ class Robinhood (Exchange):
 
 ######## WS Feed Helper routines ##############
     def _feed_enQ_msg(self, msg):
-        print ("msg: %s"%msg)
-    def start_wsfeed(self, yahoofin):
-        # register websocket feed 
-        self.ws_client = self._register_feed (api_key=self.key, api_secret=self.b64secret,
-                                               api_passphrase=self.passphrase, url=self.feed_base)
-        if self.ws_client == None:
-            log.critical("Unable to get websocket feed. Abort!!")
-            return None
+        log.debug ("feed msg: %s"%msg)
+        product_id = msg.id
+        if (product_id == None):
+            log.error ("Feed Thread: Invalid Product-id:  msg - \n %s"%(msg))
+            return
+        market = get_market_by_product (self.name, product_id)
+        if (market == None):
+            log.error ("Feed Thread: Unknown market: %s"%(msg))
+            return                
+        feed_enQ(market, msg)        
+######## Feed Consume #######
+    def _robinhood_consume_feed (self, market, msg):
+#         '''
+# msg: id: "SPY"
+# price: 288.8450012207031
+# time: 1588875362000
+# exchange: "PCX"
+# quoteType: ETF
+# marketHours: REGULAR_MARKET
+# changePercent: 1.6165351867675781
+# dayVolume: 49010892
+# change: 4.595001220703125
+# priceHint: 2
+# --
+# msg: id: "LYFT"
+# price: 33.04999923706055
+# time: 1588869571000
+# exchange: "NMS"
+# quoteType: EQUITY
+# marketHours: REGULAR_MARKET
+# changePercent: 26.531387329101562
+# dayVolume: 18366337
+# change: 6.929998397827148
+# priceHint: 2
+#         '''
+#         log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
         
-        #Start websocket Feed Client
-        if (self.ws_client != None):
-            log.debug ("Starting Websocket Feed... ")
-            self.ws_client.start()       
-    def _register_feed (self, api_key="", api_secret="", api_passphrase="", url=""):
-        products = self.gdax_conf['products'] #["BTC-USD", "ETH-USD"]
-            
-        channels = [
-#                 "level2",
-                "heartbeat",
-                "ticker",
-                "user"         #Receive details about our orders only
-            ]
-        message_type = "subscribe"
-        websocket_client = cbproWebsocketClient (url, products=products, message_type=message_type,
-                                                should_print=False, auth=True,
-                                                api_key=api_key, api_secret=api_secret,
-                                                 api_passphrase=api_passphrase, channels=channels)
-        if websocket_client == None:
-            log.error ("Unable to register websocket client")
-            return None
-        else:
-            log.debug ("Initialized websocket client for products: %s"%(products))        
-            return websocket_client
+        #log.debug ("consuming ticker feed")
+        price = float(msg.price)
+        last_size = msg.dayVolume - market.dayVolume
+        market.dayVolume = msg.dayVolume
+        
+        market.tick (price, last_size)
+
 ######## WS Feed ###################
     def market_init (self, market):
+        #init the day volume
+        market.dayVolume = 0
+                
 #         global ws_client
         usd_acc = self.robinhood_accounts[market.get_fund_type()]
         asset_acc = self.robinhood_accounts.get(market.get_asset_type())
@@ -921,6 +907,8 @@ if __name__ == '__main__':
     import argparse
     from market import TradeRequest
     
+    parser = args = None
+
     print ("Testing Robinhood exch:")
     arg_parse()
     config = {"config": ROBINHOOD_CONF,
