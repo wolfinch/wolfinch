@@ -182,6 +182,7 @@ class Robinhood (Exchange):
                     break
             
         ### Start WebSocket Streams ###
+        self.yahoofin_client.start_feed(self.robinhood_conf['products'], self._feed_enQ_msg)
 #         self.ws_client = bm = RobinhoodSocketManager(self.public_client)
 #         symbol_list = []
 #         for prod in self.get_products():
@@ -209,8 +210,43 @@ class Robinhood (Exchange):
         
     def __str__ (self):
         return "{Message: Robinhood Exchange }"
-       
+
+######## WS Feed Helper routines ##############
+    def _feed_enQ_msg(self, msg):
+        print ("msg: %s"%msg)
+    def start_wsfeed(self, yahoofin):
+        # register websocket feed 
+        self.ws_client = self._register_feed (api_key=self.key, api_secret=self.b64secret,
+                                               api_passphrase=self.passphrase, url=self.feed_base)
+        if self.ws_client == None:
+            log.critical("Unable to get websocket feed. Abort!!")
+            return None
+        
+        #Start websocket Feed Client
+        if (self.ws_client != None):
+            log.debug ("Starting Websocket Feed... ")
+            self.ws_client.start()       
+    def _register_feed (self, api_key="", api_secret="", api_passphrase="", url=""):
+        products = self.gdax_conf['products'] #["BTC-USD", "ETH-USD"]
             
+        channels = [
+#                 "level2",
+                "heartbeat",
+                "ticker",
+                "user"         #Receive details about our orders only
+            ]
+        message_type = "subscribe"
+        websocket_client = cbproWebsocketClient (url, products=products, message_type=message_type,
+                                                should_print=False, auth=True,
+                                                api_key=api_key, api_secret=api_secret,
+                                                 api_passphrase=api_passphrase, channels=channels)
+        if websocket_client == None:
+            log.error ("Unable to register websocket client")
+            return None
+        else:
+            log.debug ("Initialized websocket client for products: %s"%(products))        
+            return websocket_client
+######## WS Feed ###################
     def market_init (self, market):
 #         global ws_client
         usd_acc = self.robinhood_accounts[market.get_fund_type()]
@@ -238,15 +274,10 @@ class Robinhood (Exchange):
 
     def close (self):
         log.debug("Closing exchange...")
-# #         global self.ws_client
-#         if (self.ws_client):
-#             log.debug("Closing WebSocket Client")
-#             self.ws_client.close ()
-#             self.ws_client.join(1)
-#         if (self.ws_auth_client):
-#             log.debug("Closing WebSocket Auth Client")
-#             self.ws_auth_client.close ()
-#             self.ws_auth_client.join(1)
+        if (self.yahoofin_client):
+            log.debug("Closing yahoofin_client")
+            self.yahoofin_client.stop_feed ()        
+        log.critical ("exch being closed")
         
         #log out now. 
         self.auth_client.logout()
@@ -343,9 +374,9 @@ class Robinhood (Exchange):
                     l = ind['low']
                     c = ind['close']
                     v = ind['volume']
-                    candles_list += [OHLC(time=int(t[i]),
-                                            low=l[i], high=h[i], open=o[i],
-                                            close=c[i], volume=v[i]) for i in range(len(t))]
+                    candles_list += [OHLC(time=int(t[i]) or 0,
+                                            low=l[i] or 0, high=h[i] or 0, open=o[i] or 0,
+                                            close=c[i] or 0, volume=v[i] or 0) for i in range(len(t))]
     #                 log.debug ("%s"%(candles))
                     log.debug ("Historic candles for period: %s to %s num_candles: %d " % (
                         start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(t))))

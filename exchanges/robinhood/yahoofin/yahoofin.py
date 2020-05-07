@@ -26,11 +26,7 @@ from time import sleep
 import time
 from dateutil.tz import tzlocal, tzutc
 import requests
-
-# from .yahoofin.enums import *
-# from .yahoofin.client import Client
-# from . import yahoofin
-# from .yahoofin.websockets import YahoofinSocketManager
+from .yahoofin_websocket import WebsocketClient
 
 from utils import getLogger
 
@@ -40,8 +36,6 @@ log.setLevel(log.DEBUG)
 # logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 # YAHOOFIN CONFIG FILE
-YAHOOFIN_CONF = 'config/yahoofin.yml'
-RBH_INTERVAL_MAPPING = {300 :'5minute', 600: '10minute'}
 API_BASE="https://api.yahoofin.com/"
 
 class Yahoofin:
@@ -78,6 +72,13 @@ class Yahoofin:
             log.critical ("error while importing candles - %s"%(resp['chart']["error"]))
             return None, resp['chart']["error"]
         return resp['chart']['result'][0], None
+
+    def start_feed(self, products, cb_fn):
+        products += ["LYFT", "ES=F", "YM=F", "NQ=F", "RTY=F", "CL=F", "GC=F", "SI=F", "EURUSD=X", "^TNX", "^VIX"]
+        self.ws_client = WebsocketClient(products=products, feed_recv_hook=cb_fn)
+        self.ws_client.start()
+    def stop_feed(self):
+        self.ws_client.close()
 
 ######## Functions for Main exec flow ########
 def print_historic_candles(symbol, interval, from_date, to_date):

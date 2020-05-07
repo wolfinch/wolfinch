@@ -29,7 +29,7 @@ from threading import Thread
 import threading
 from websocket import create_connection, WebSocketConnectionClosedException
 from utils import getLogger
-from yahoofin_pricingdata_pb2 import PricingData
+from .yahoofin_pricingdata_pb2 import PricingData
 
 parser = args = None
 log = getLogger ('YahoofinWS')
@@ -116,7 +116,7 @@ class WebsocketClient(object):
     def _keepalive(self, interval=10):
         while not self.stop :
             #TODO: FIXME: potential race
-            if self.hearbeat_time + 30 < (time.time()):
+            if self.hearbeat_time + 300000 < (time.time()):
                 #heartbeat failed
                 log.error ("Heartbeat failed!! last_hb_time: %d cur_time: %d \
                 potential websocket death, restarting"%(self.hearbeat_time, time.time()))
@@ -134,7 +134,9 @@ class WebsocketClient(object):
         log.info("Let's count the messages!")
 
     def on_message(self, msg):
-        self.feed_recv_hook(msg)
+        pd = PricingData()
+        pd.ParseFromString(base64.b64decode(msg))        
+        self.feed_recv_hook(pd)
         #print(json.dumps(msg, indent=4, sort_keys=True))
         self.message_count += 1
 
