@@ -29,6 +29,7 @@ from threading import Thread
 import threading
 from websocket import create_connection, WebSocketConnectionClosedException
 from utils import getLogger
+from yahoofin_pricingdata_pb2 import PricingData
 
 parser = args = None
 log = getLogger ('YahoofinWS')
@@ -199,7 +200,13 @@ if __name__ == "__main__":
             self.products = ["LYFT", "ES=F", "YM=F", "NQ=F", "RTY=F", "CL=F", "GC=F", "SI=F", "EURUSD=X", "^TNX", "^VIX"]
             self.message_count = 0
             print("Let's count the messages!")
-
+        def on_message(self, msg):
+            pd = PricingData()
+            pd.ParseFromString(base64.b64decode(msg))
+#             print(json.dumps(msg, indent=4, sort_keys=True))
+            print ("msg: %s"%pd)
+            self.message_count += 1
+            
     wsClient = MyWebsocketClient()
     wsClient.start()
     print(wsClient.url, wsClient.products)
