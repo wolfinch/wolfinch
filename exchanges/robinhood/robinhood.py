@@ -46,7 +46,8 @@ log.setLevel(log.DEBUG)
 
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
-RBH_INTERVAL_MAPPING = {300 :'5m', 600: '10m'}
+RBH_INTERVAL_MAPPING_TO_STR = {300 :'5m', 15*60: '15m'}
+RBH_INTERVAL_MAPPING_TO_SEC = {'5m':300, '15m': 15*60}
 API_BASE="https://api.robinhood.com/"
 
 class Robinhood (Exchange):
@@ -56,11 +57,11 @@ class Robinhood (Exchange):
     robinhood_accounts = {}
 #     public_client = None
     auth_client = None
+    yahoofin_client = None    
 #     ws_client = None
 #     ws_auth_client = None
 #     symbol_to_id = {}
     primary = False
-
     def __init__(self, config, primary=False):
         log.info ("Init Robinhood exchange")
         self.instr_to_symbol_map = {}
@@ -78,8 +79,6 @@ class Robinhood (Exchange):
         # get config
         if config.get('candle_interval'):
             # map interval in to robinhood format
-            interval = RBH_INTERVAL_MAPPING[int(config['candle_interval']) ]
-            self.robinhood_conf['backfill_interval'] =  interval
             self.candle_interval = int(config['candle_interval'])
                 
         # get config
@@ -93,6 +92,7 @@ class Robinhood (Exchange):
         if backfill.get('period'):
             self.robinhood_conf['backfill_period'] = int(backfill['period'])
 
+        self.yahoofin_client = yahoofin.Yahoofin()
         
         # for public client, no need of api key
 #         self.public_client =  Robinhood()
@@ -259,7 +259,9 @@ class Robinhood (Exchange):
     #     log.debug (pprint.pformat(self.robinhood_accounts))
         log.debug ("get accounts")
         return self.robinhood_accounts    
-
+    def _interval_to_seconds(self, int_str):
+        log.debug("int_str: %s"%(int_str))
+        return RBH_INTERVAL_MAPPING_TO_SEC[int_str]
     def get_historic_rates (self, product_id, start=None, end=None):
         '''
             Args:
@@ -277,44 +279,34 @@ class Robinhood (Exchange):
         # get config
         enabled = self.robinhood_conf.get('backfill_enabled')
         period = int(self.robinhood_conf.get('backfill_period'))
-        interval_str = self.robinhood_conf.get('backfill_interval')
+        interval_str = RBH_INTERVAL_MAPPING_TO_STR[self.candle_interval]
         
         if not enabled:
             log.debug ("Historical data retrieval not enabled")
             return None
-                
-        interval = robinhood.helpers.interval_to_milliseconds(interval_str)
-        if (interval == None):
-            log.error ("Invalid Interval - %s" % interval_str)
-            raise Exception("Invalid Interval - %s" % interval_str)
-        
+        interval = self.candle_interval
         product = None
         for p in self.get_products():
             if p['id'] == product_id:
                 product = p
-        
         if product is None:
             log.error ("Invalid Product Id: %s" % product_id)
             return None
-
-    
         if not end:
             # if no end, use current time
             end = datetime.now()
             end = end.replace(tzinfo=tzlocal())
-             
         if not start:
             # if no start given, use the config
-            real_start = start = end - timedelta(days=period) - timedelta(seconds=interval // 1000)
+            real_start = start = end - timedelta(days=period) - timedelta(seconds=interval)
         else:
             real_start = start
-            
         real_start = start = start.replace(tzinfo=tzlocal())
         
         log.debug ("Retrieving Historic candles for period: %s to %s" % (
                     real_start.isoformat(), end.isoformat()))
         
-        td = max_candles * interval // 1000
+        td = max_candles * interval
         tmp_end = start + timedelta(seconds=td)
         tmp_end = min(tmp_end, end)
         
@@ -331,46 +323,56 @@ class Robinhood (Exchange):
                 count = 0
                 sleep (2)
             
-            start_ts = int((start - epoch).total_seconds() * 1000.0)
-            end_ts = int((tmp_end - epoch).total_seconds() * 1000.0)
+            start_ts = int((start - epoch).total_seconds())
+            end_ts = int((tmp_end - epoch).total_seconds())
             
             log.debug ("Start: %s end: %s" % (start_ts, end_ts))
-            candles = yahoofin.get_historic_candles (
-                symbol=product['symbol'],
+            candles, err = self.yahoofin_client.get_historic_candles (
+                symbol=product['id'],
                 interval=interval_str,
-                limit=max_candles,
-                startTime=start_ts,
-                endTime=end_ts
+                start_time=start_ts,
+                end_time=end_ts
             )
-            if candles:
-                if isinstance(candles, dict):
-                    # # Error Case
-                    err_msg = candles.get('message')
-                    if (err_msg):
-                        log.error ("Error while retrieving Historic rates: msg: %s\n will retry.." % (err_msg))
-                else:
-                    # candles are of struct [[time, o, h, l,c, V]]
-                    candles_list += [OHLC(time=int(candle[6] + 1) // 1000,
-                                            low=candle[3], high=candle[2], open=candle[1],
-                                            close=candle[4], volume=candle[5]) for candle in candles]
+            if candles :
+                # candles are of struct [[time, o, h, l,c, V]]
+                ind = candles['indicators']['quote'][0]
+                t = candles.get('timestamp')
+                if t and ind:
+                    o = ind['open']
+                    h = ind['high']
+                    l = ind['low']
+                    c = ind['close']
+                    v = ind['volume']
+                    candles_list += [OHLC(time=int(t[i]),
+                                            low=l[i], high=h[i], open=o[i],
+                                            close=c[i], volume=v[i]) for i in range(len(t))]
     #                 log.debug ("%s"%(candles))
                     log.debug ("Historic candles for period: %s to %s num_candles: %d " % (
-                        start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))
-                    
-                    # new period, start from the (last +1)th position
-                    start = tmp_end  # + timedelta(seconds = (interval//1000))
-                    tmp_end = start + timedelta(seconds=td)
-                    tmp_end = min(tmp_end, end)
+                        start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(t))))
+                else:
+                    #may be market holiday period
+                    log.error ("no historic candles available on period: %s to %s " % (
+                        start.isoformat(), tmp_end.isoformat()))
+                # new period, start from the (last +1)th position
+                start = tmp_end  # + timedelta(seconds = (interval//1000))
+                tmp_end = start + timedelta(seconds=td)
+                tmp_end = min(tmp_end, end)
 
-#                     log.debug ("c: %s"%(candles))
+#                 log.debug ("c: %s"%(candles_list))
             else:
-                log.error ("Error While Retrieving Historic candles for period: %s to %s num: %d" % (
-                    start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles))))
+                log.error ("Error While Retrieving Historic candles for period: %s to %s num: %d err: %s" % (
+                    start.isoformat(), tmp_end.isoformat(), (0 if not candles else len(candles)), err))
                 return None
         
         log.debug ("Retrieved Historic candles for period: %s to %s num: %d" % (
                     real_start.isoformat(), end.isoformat(), (0 if not candles_list else len(candles_list))))
     #     log.debug ("%s"%(candles_list))
+        #attempt a de-duplication, not sure if this is really required here. 
+        dedu_dict = {}
+        for cdl in candles_list:
+            dedu_dict[cdl.time] = cdl
+        candles_list = [cdl for _, cdl in dedu_dict.items()]
+        log.info ("de-duplicated candle list len %d"%(len(candles_list)))
         return candles_list
         
     def _normalized_order (self, order):
@@ -853,6 +855,13 @@ def exec_market_order(sym, action):
     else:
         order = rbh.sell(tr)
     print ("order: %s"%(order))
+def print_historic_candles(symbol, from_date=None, to_date=None):
+    print ("printing order history")    
+    candles = rbh.get_historic_rates(symbol, from_date, to_date)
+    if candles != None:
+        print ("candle history: \n len - %d"%(len(candles)))
+    else:
+        print("unable to find order history")    
 def arg_parse():    
     global args, parser, ROBINHOOD_CONF
     parser = argparse.ArgumentParser(description='Robinhood Exch implementation')
@@ -861,6 +870,7 @@ def arg_parse():
     parser.add_argument("--s", help='symbol', required=False)
     parser.add_argument("--oh", help='dump order history', required=False, action='store_true')
     parser.add_argument("--ooh", help='dump options order history', required=False, action='store_true')
+    parser.add_argument("--ch", help='dump historic candles', required=False, action='store_true')    
     parser.add_argument("--cp", help='dump current positions', required=False, action='store_true')    
     parser.add_argument("--cop", help='dump current options positions', required=False, action='store_true')    
     parser.add_argument("--profit", help='total profit loss', required=False, action='store_true')
@@ -884,9 +894,10 @@ if __name__ == '__main__':
     arg_parse()
     config = {"config": ROBINHOOD_CONF,
               "products" : [{"NIO":{}}, {"AAPL":{}}],
+              "candle_interval" : 300,
               'backfill': {
                   'enabled'  : True,
-                  'period'   : 1,  # in Days
+                  'period'   : 5,  # in Days
                   'interval' : 300,  # 300s == 5m  
                 }
               }
@@ -913,7 +924,10 @@ if __name__ == '__main__':
 #     order = bnc.get_order("XLMUSDT", order.id)
 #     print ("get sell order: %s" % (order))    
     
-    if args.oh:
+    if args.ch:
+        rbh = Robinhood (config)
+        print_historic_candles(args.s, args.start, args.end)    
+    elif args.oh:
         rbh = Robinhood (config)
         print_order_history(args.s, args.start, args.end)
     elif args.ooh:
