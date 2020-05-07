@@ -32,10 +32,7 @@ import requests
 # from . import yahoofin
 # from .yahoofin.websockets import YahoofinSocketManager
 
-from utils import getLogger, readConf
-from market import  OHLC, feed_enQ, get_market_by_product, Order, TradeRequest
-from exchanges import Exchange
-import logging
+from utils import getLogger
 
 parser = args = None
 log = getLogger ('Yahoofin')

@@ -20,90 +20,167 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-from __future__ import print_function
 import json
 import base64
 import hmac
 import hashlib
 import time
 from threading import Thread
+import threading
 from websocket import create_connection, WebSocketConnectionClosedException
-from pymongo import MongoClient
-from cbpro.cbpro_auth import get_auth_headers
+from utils import getLogger
+
+parser = args = None
+log = getLogger ('YahoofinWS')
+log.setLevel(log.DEBUG)
 
 WS_BASE = "wss://streamer.finance.yahoo.com/"
 class WebsocketClient(object):
-    def __init__(self, url="wss://ws-feed.pro.coinbase.com", products=None, message_type="subscribe", mongo_collection=None,
-                 should_print=True, auth=False, api_key="", api_secret="", api_passphrase="", channels=None):
+    def __init__(self, url=WS_BASE, products=None, feed_recv_hook=None):
         self.url = url
-        self.products = products
-        self.channels = channels
-        self.type = message_type
+        if products:
+            self.products = products
+#         self.channels = channels
+#         self.type = message_type
         self.stop = True
         self.error = None
         self.ws = None
         self.thread = None
-        self.auth = auth
-        self.api_key = api_key
-        self.api_secret = api_secret
-        self.api_passphrase = api_passphrase
-        self.should_print = should_print
-        self.mongo_collection = mongo_collection
+        if feed_recv_hook :
+            self.feed_recv_hook = feed_recv_hook
+        else:
+            self.feed_recv_hook = self.dummy_on_recv
+#         self.auth = auth
+#         self.api_key = api_key
+#         self.api_secret = api_secret
+#         self.api_passphrase = api_passphrase
+#         self.should_print = should_print
+#         self.mongo_collection = mongo_collection
 
+    def dummy_on_recv(self, msg):
+        log.info ("msg_recv: %s"%(msg))
+
+    def subscribe(self, feed_list=None):
+        if feed_list:
+            if not isinstance(feed_list, list):
+                feed_list = [feed_list]
+            if not self.products:
+                self.products = feed_list
+            else:
+                self.products+= feed_list
+        if self.ws and self.products:
+            cmd = {"subscribe": self.products}
+            log.info ("subscribe feed_list: %s"%(json.dumps(cmd)))                  
+            self.ws.send(json.dumps(cmd))
+        
     def start(self):
+        log.info ("starting WebsocketClient")
+        
         def _go():
             self._connect()
             self._listen()
             self._disconnect()
 
         self.stop = False
+        self.ws_error = False            
+        self.on_open()
+        self.thread = Thread(target=_go)
+        self.thread.start()        
+        
+        self.hearbeat_time = time.time()
+        self.keepalive_thread = Thread(target=self._keepalive)
+        self.keepalive_thread.start()
+    
+    def restart (self):
+        self.thread.join()
+        log.info ("restarting cbproWebsocketClient")
+        def _go():
+            self._connect()
+            self._listen()
+            self._disconnect()
+
+        self.stop = False          
+        self.ws_error = False            
         self.on_open()
         self.thread = Thread(target=_go)
         self.thread.start()
+    def close(self):
+        log.info ("closing ws and keep alive threads")
+        self.stop = True
+        self.thread.join()
+        log.debug ("waiting to close alive threads")            
+        self.keepalive_thread.join()
+        log.debug ("closed ws and keep alive threads")     
+                
+    def _keepalive(self, interval=10):
+        while not self.stop :
+            #TODO: FIXME: potential race
+            if self.hearbeat_time + 30 < (time.time()):
+                #heartbeat failed
+                log.error ("Heartbeat failed!! last_hb_time: %d cur_time: %d \
+                potential websocket death, restarting"%(self.hearbeat_time, time.time()))
+                if (self.stop):
+                    log.info ("websocket attempt close intentionally")
+                    break
+                log.debug ("before ws restart. active thread count: %d"% threading.active_count())                     
+                self.restart()
+                log.debug ("after ws restart. active thread count: %d"% threading.active_count())                                         
+                
+            time.sleep(interval)            
+        
+    def on_open(self):
+        self.message_count = 0
+        log.info("Let's count the messages!")
 
-    def _connect(self):
-        if self.products is None:
-            self.products = ["BTC-USD"]
-        elif not isinstance(self.products, list):
-            self.products = [self.products]
+    def on_message(self, msg):
+        self.feed_recv_hook(msg)
+        #print(json.dumps(msg, indent=4, sort_keys=True))
+        self.message_count += 1
 
-        if self.url[-1] == "/":
-            self.url = self.url[:-1]
-
-        if self.channels is None:
-            sub_params = {'type': 'subscribe', 'product_ids': self.products}
-        else:
-            sub_params = {'type': 'subscribe', 'product_ids': self.products, 'channels': self.channels}
-
-        if self.auth:
-            timestamp = str(time.time())
-            message = timestamp + 'GET' + '/users/self/verify'
-            auth_headers = get_auth_headers(timestamp, message, self.api_key, self.api_secret, self.api_passphrase)
-            sub_params['signature'] = auth_headers['CB-ACCESS-SIGN']
-            sub_params['key'] = auth_headers['CB-ACCESS-KEY']
-            sub_params['passphrase'] = auth_headers['CB-ACCESS-PASSPHRASE']
-            sub_params['timestamp'] = auth_headers['CB-ACCESS-TIMESTAMP']
-
-        self.ws = create_connection(self.url)
-
-        self.ws.send(json.dumps(sub_params))
-
+    def on_close(self):
+        print("\n-- Goodbye! --")
+        
+    def on_error(self, e, data=None):
+        self.error = e
+        self.ws_error = True
+        log.critical('error: %s - data: %s'%(e, data))
+           
+    #to fix the connection drop bug
     def _listen(self):
-        while not self.stop:
+        self.time = time.time()
+        while not self.stop and not self.ws_error:
             try:
                 start_t = 0
                 if time.time() - start_t >= 30:
                     # Set a 30 second ping to keep connection alive
                     self.ws.ping("keepalive")
                     start_t = time.time()
-                data = self.ws.recv()
-                msg = json.loads(data)
+                msg = self.ws.recv()
             except ValueError as e:
                 self.on_error(e)
             except Exception as e:
                 self.on_error(e)
             else:
                 self.on_message(msg)
+#             if (self.stop): 
+#                 log.info ("ws listen finished. waiting to finish keepalive thread")
+#                 self.keepalive_thread.join()
+
+    def _connect(self):
+        if self.url[-1] == "/":
+            self.url = self.url[:-1]
+
+#         if self.auth:
+#             timestamp = str(time.time())
+#             message = timestamp + 'GET' + '/users/self/verify'
+#             auth_headers = get_auth_headers(timestamp, message, self.api_key, self.api_secret, self.api_passphrase)
+#             sub_params['signature'] = auth_headers['CB-ACCESS-SIGN']
+#             sub_params['key'] = auth_headers['CB-ACCESS-KEY']
+#             sub_params['passphrase'] = auth_headers['CB-ACCESS-PASSPHRASE']
+#             sub_params['timestamp'] = auth_headers['CB-ACCESS-TIMESTAMP']
+
+        self.ws = create_connection(self.url)
+        self.subscribe()
 
     def _disconnect(self):
         try:
@@ -111,53 +188,17 @@ class WebsocketClient(object):
                 self.ws.close()
         except WebSocketConnectionClosedException as e:
             pass
-
         self.on_close()
-
-    def close(self):
-        self.stop = True
-        self.thread.join()
-
-    def on_open(self):
-        if self.should_print:
-            print("-- Subscribed! --\n")
-
-    def on_close(self):
-        if self.should_print:
-            print("\n-- Socket Closed --")
-
-    def on_message(self, msg):
-        if self.should_print:
-            print(msg)
-        if self.mongo_collection:  # dump JSON to given mongo collection
-            self.mongo_collection.insert_one(msg)
-
-    def on_error(self, e, data=None):
-        self.error = e
-        self.stop = True
-        print('{} - data: {}'.format(e, data))
 
 
 if __name__ == "__main__":
     import sys
-    import cbpro
-    import time
 
-
-    class MyWebsocketClient(cbpro.WebsocketClient):
+    class MyWebsocketClient(WebsocketClient):
         def on_open(self):
-            self.url = "wss://ws-feed.pro.coinbase.com/"
-            self.products = ["BTC-USD", "ETH-USD"]
+            self.products = ["LYFT", "ES=F", "YM=F", "NQ=F", "RTY=F", "CL=F", "GC=F", "SI=F", "EURUSD=X", "^TNX", "^VIX"]
             self.message_count = 0
             print("Let's count the messages!")
-
-        def on_message(self, msg):
-            print(json.dumps(msg, indent=4, sort_keys=True))
-            self.message_count += 1
-
-        def on_close(self):
-            print("-- Goodbye! --")
-
 
     wsClient = MyWebsocketClient()
     wsClient.start()
