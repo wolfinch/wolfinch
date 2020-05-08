@@ -116,7 +116,7 @@ class WebsocketClient(object):
     def _keepalive(self, interval=10):
         while not self.stop :
             #TODO: FIXME: potential race
-            if self.hearbeat_time + 300000 < (time.time()):
+            if self.hearbeat_time + 600 < (time.time()):
                 #heartbeat failed
                 log.error ("Heartbeat failed!! last_hb_time: %d cur_time: %d \
                 potential websocket death, restarting"%(self.hearbeat_time, time.time()))
@@ -125,9 +125,8 @@ class WebsocketClient(object):
                     break
                 log.debug ("before ws restart. active thread count: %d"% threading.active_count())                     
                 self.restart()
-                log.debug ("after ws restart. active thread count: %d"% threading.active_count())                                         
-                
-            time.sleep(interval)            
+                log.debug ("after ws restart. active thread count: %d"% threading.active_count())
+            time.sleep(interval)
         
     def on_open(self):
         self.message_count = 0
@@ -164,6 +163,7 @@ class WebsocketClient(object):
             except Exception as e:
                 self.on_error(e)
             else:
+                self.hearbeat_time = time.time()
                 self.on_message(msg)
 #             if (self.stop): 
 #                 log.info ("ws listen finished. waiting to finish keepalive thread")
@@ -190,9 +190,9 @@ class WebsocketClient(object):
             if self.ws:
                 self.ws.close()
         except WebSocketConnectionClosedException as e:
+            log.error("exception while websocket close e: %s"%(e))
             pass
         self.on_close()
-
 
 if __name__ == "__main__":
     import sys

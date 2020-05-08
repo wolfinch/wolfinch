@@ -19,7 +19,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
-import json
 import pprint
 from datetime import datetime, timedelta
 from time import sleep
@@ -31,7 +30,7 @@ from market import  OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 import logging
 import pyrh
-from . import yahoofin
+import .yahoofin
 
 log = getLogger ('Robinhood')
 log.setLevel(log.DEBUG)
@@ -40,7 +39,6 @@ log.setLevel(log.DEBUG)
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
 RBH_INTERVAL_MAPPING_TO_STR = {300 :'5m', 15*60: '15m'}
-RBH_INTERVAL_MAPPING_TO_SEC = {'5m':300, '15m': 15*60}
 API_BASE="https://api.robinhood.com/"
 
 class Robinhood (Exchange):
@@ -48,12 +46,9 @@ class Robinhood (Exchange):
     robinhood_conf = {}
     robinhood_products = []
     robinhood_accounts = {}
-#     public_client = None
     auth_client = None
     yahoofin_client = None    
-#     ws_client = None
-#     ws_auth_client = None
-#     symbol_to_id = {}
+
     primary = False
     def __init__(self, config, primary=False):
         log.info ("Init Robinhood exchange")
@@ -86,12 +81,6 @@ class Robinhood (Exchange):
             self.robinhood_conf['backfill_period'] = int(backfill['period'])
 
         self.yahoofin_client = yahoofin.Yahoofin()
-        
-        # for public client, no need of api key
-#         self.public_client =  Robinhood()
-#         if (self.public_client) == None :
-#             log.critical("robinhood public client init failed")
-#             return None
         
         #get data from exch conf
         self.user = self.robinhood_conf.get('user')
@@ -283,10 +272,7 @@ class Robinhood (Exchange):
     def get_accounts (self):
     #     log.debug (pprint.pformat(self.robinhood_accounts))
         log.debug ("get accounts")
-        return self.robinhood_accounts    
-    def _interval_to_seconds(self, int_str):
-        log.debug("int_str: %s"%(int_str))
-        return RBH_INTERVAL_MAPPING_TO_SEC[int_str]
+        return self.robinhood_accounts
     def get_historic_rates (self, product_id, start=None, end=None):
         '''
             Args:
@@ -735,30 +721,6 @@ class Robinhood (Exchange):
             options_orders.extend(past_options_orders['results'])
         log.info("%d order fetched"%(len(options_orders)))
         return options_orders
-#         options_orders_cleaned = []
-#         for each in options_orders:
-#             if float(each['processed_premium']) < 1:
-#                 continue
-#             else:
-#     #             print(each['chain_symbol'])
-#     #             print(each['processed_premium'])
-#     #             print(each['created_at'])
-#     #             print(each['legs'][0]['position_effect'])
-#     #             print("~~~")
-#                 if each['legs'][0]['position_effect'] == 'open':
-#                     value = round(float(each['processed_premium']), 2)*-1
-#                 else:
-#                     value = round(float(each['processed_premium']), 2)
-#                     
-#                 one_order = [pd.to_datetime(each['created_at']), each['chain_symbol'], value, each['legs'][0]['position_effect']]
-#                 options_orders_cleaned.append(one_order)
-#         
-#         df_options_orders_cleaned = pd.DataFrame(options_orders_cleaned)
-#         df_options_orders_cleaned.columns = ['date', 'ticker', 'value', 'position_effect']
-#         df_options_orders_cleaned = df_options_orders_cleaned.sort_values('date')
-#         df_options_orders_cleaned = df_options_orders_cleaned.set_index('date')
-#     
-#         return df_options_orders_cleaned
 
 ######## Functions for Main exec flow ########
 def print_order_history(symbol, from_date, to_date):
