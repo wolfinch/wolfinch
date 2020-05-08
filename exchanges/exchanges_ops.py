@@ -56,16 +56,16 @@ def init_exchanges (WolfinchConfig):
                             else:
                                 log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
                                 raise Exception()
-                    exch_obj = exch_cls(config=exch_cfg, primary=(role == 'primary'))
+                    exch_obj = exch_cls(config=exch_cfg, primary=(role == 'primary'))              
                     if (exch_obj != None):
                         exchange_list.append(exch_obj)
-                    if sims.simulator_on:
-                        #add initialized products for sim. We can do this only here after real exch initialized products
-                        log.info("sim exch products init for exch:%s"%(name))
-                        sims.exch_obj.add_products(exch_obj.get_products())
                     else:
                         log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
                         raise Exception()
+                    if sims.simulator_on:
+                        #add initialized products for sim. We can do this only here after real exch initialized products
+                        log.info("sim exch products init for exch:%s"%(name))
+                        sims.exch_obj.add_products(exch_obj.get_products())                    
 def close_exchanges():
     global exchange_list
     #init exchanges 
