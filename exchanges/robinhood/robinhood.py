@@ -138,7 +138,7 @@ class Robinhood (Exchange):
             prod = {"id": p_id}
             prod['asset_type'] = p_id
             prod['fund_type'] = "USD"
-            prod['name'] = instr['simple_name']
+            prod['display_name'] = instr['simple_name']
             prod["instrument"] = instr
             self.robinhood_products.append(prod)
         
@@ -219,6 +219,14 @@ class Robinhood (Exchange):
 # dayVolume: 18366337
 # change: 6.929998397827148
 # priceHint: 2
+# price: 3.609999895095825
+# time: 1588881702000
+# exchange: "NYQ"
+# quoteType: EQUITY
+# marketHours: POST_MARKET
+# changePercent: -0.550970196723938
+# change: -0.020000219345092773
+# priceHint: 4
 #         '''
 #         log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
         

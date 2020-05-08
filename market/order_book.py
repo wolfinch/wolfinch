@@ -412,7 +412,6 @@ class OrderBook():
                 return
         else:
             raise Exception("Unknown  take profit kind - "+market.tradeConfig['take_profit_kind'])
-                                            
         
         position.set_take_profit(new_tp)
         pos_list = self.tp_dict.get(new_tp, None)

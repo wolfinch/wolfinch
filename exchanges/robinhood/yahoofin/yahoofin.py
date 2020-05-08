@@ -74,7 +74,7 @@ class Yahoofin:
         return resp['chart']['result'][0], None
 
     def start_feed(self, products, cb_fn):
-        products += ["LYFT", "ES=F", "YM=F", "NQ=F", "RTY=F", "CL=F", "GC=F", "SI=F", "EURUSD=X", "^TNX", "^VIX"]
+#         products += ["LYFT", "ES=F", "YM=F", "NQ=F", "RTY=F", "CL=F", "GC=F", "SI=F", "EURUSD=X", "^TNX", "^VIX"]
         self.ws_client = WebsocketClient(products=products, feed_recv_hook=cb_fn)
         self.ws_client.start()
     def stop_feed(self):

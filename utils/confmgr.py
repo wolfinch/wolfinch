@@ -92,17 +92,24 @@ def parse_product_config (cfg):
                     parsed_dcfg ['model_type'] = ex_v
                 elif ex_k == 'config':
                     parsed_dcfg ['model_config'] = ex_v
-
                                     
     if ( not parsed_tcfg.get('fund_max_liquidity') or not parsed_tcfg.get('fund_max_per_buy_value') or 
          not parsed_tcfg.get('asset_min_per_trade_size')) :
         print ("trading config not set")
         raise Exception ("trading config not set")
     
-    if parsed_tcfg.get('stop_loss_enabled') == False:
+    if not parsed_tcfg.get('stop_loss_enabled'):
         parsed_tcfg ['stop_loss_enabled'] = False        
-        parsed_tcfg ['stop_loss_smart_rate'] = False
         parsed_tcfg ['stop_loss_kind'] = 'simple'
+        parsed_tcfg ['stop_loss_smart_rate'] = False
+    elif not parsed_tcfg.get('stop_loss_kind'):
+        parsed_tcfg ['stop_loss_kind'] = 'simple'  
+        
+    if not parsed_tcfg.get('take_profit_enabled'):
+        parsed_tcfg ['take_profit_enabled'] = False        
+        parsed_tcfg ['take_profit_kind'] = 'simple'
+    elif not parsed_tcfg.get('take_profit_kind'):
+        parsed_tcfg ['take_profit_kind'] = 'simple'        
 
     if (parsed_tcfg.get('stop_loss_kind') != None and
          (parsed_tcfg.get('stop_loss_kind').rstrip(str(list(range(9)))) not in ["simple", "strategy", "ATR"])):

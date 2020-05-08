@@ -133,7 +133,7 @@ class SIM_EXCH (exchanges.Exchange):
     products = []
     primary = False
     candle_interval = 0
-    def __init__(self, name, primary=True):
+    def __init__(self, name, primary=True, ):
         log.info('init SIM exchange')        
         
         self.name = name
@@ -141,8 +141,21 @@ class SIM_EXCH (exchanges.Exchange):
         self.timeOffset = 0
 
 #         global products
-        self.products = g_prod_list
-        
+        self.products = [] #g_prod_list
+    def setup_products(self, products_list):
+        # do a best effort setup for products for sim/backtesting based on config.
+        log.info("setting up products for exch-sim")
+        for prod_cfg in products_list:
+            for p_id, p_cfg in prod_cfg.items():
+                log.info("setting up prod: %s"%(p_id))
+                f_type = prod_cfg.get("fund_type") or "USD"
+                a_type = prod_cfg.get("asset_type") or p_id
+                prod = {"id": p_id, "fund_type": f_type, "asset_type": a_type, "display_name": p_id}
+                self.add_products(prod)
+    def add_products(self, products):
+        if not isinstance(products, list):
+            products = [products]
+        self.products += products
     def market_init (self, market):
         #Setup the initial params
                 

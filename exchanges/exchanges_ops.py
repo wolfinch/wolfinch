@@ -45,7 +45,9 @@ def init_exchanges (WolfinchConfig):
                         sims.exch_obj = sims.SIM_EXCH(exch_cls.name)
                         log.info ("SIM-EXCH initialized for EXCH(%s)"%(exch_cls.name))
                         if sims.backtesting_on:
-                            # If backtesting is on, init only sim exchange   
+                            # If backtesting is on, init only sim exchange
+                            # do a best effort setup for products for sim/backtesting based on config.
+                            sims.exch_obj.setup_products(exch_cfg["products"])
                             if (sims.exch_obj != None):
                                 exchange_list.append(sims.exch_obj)
                                 #Market init
@@ -53,12 +55,14 @@ def init_exchanges (WolfinchConfig):
                                 return
                             else:
                                 log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
-                                raise Exception()                            
-                                                            
+                                raise Exception()
                     exch_obj = exch_cls(config=exch_cfg, primary=(role == 'primary'))
                     if (exch_obj != None):
                         exchange_list.append(exch_obj)
-                        #Market init
+                    if sims.simulator_on:
+                        #add initialized products for sim. We can do this only here after real exch initialized products
+                        log.info("sim exch products init for exch:%s"%(name))
+                        sims.exch_obj.add_products(exch_obj.get_products())
                     else:
                         log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
                         raise Exception()
