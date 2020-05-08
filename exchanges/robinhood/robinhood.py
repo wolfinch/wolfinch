@@ -217,7 +217,7 @@ class Robinhood (Exchange):
 # change: -0.020000219345092773
 # priceHint: 4
 #         '''
-#         log.debug ("Ticker Feed:%s"%(json.dumps(msg, indent=4, sort_keys=True)))
+        log.debug ("Ticker Feed:%s"%(msg))
         
         #log.debug ("consuming ticker feed")
         price = float(msg.price)

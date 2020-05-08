@@ -89,7 +89,7 @@ def do_trade (market):
         #first update order state
         order.status = 'open'
 #         print ("order: %s"%(str(order)))
-        market.order_status_update (order)
+#         market.order_status_update (order)
         #now trade
         this_order = copy.deepcopy(order_struct) # Note: this at the top
         this_order['created_at'] = datetime.fromtimestamp(market.cur_candle_time).isoformat()
@@ -104,13 +104,13 @@ def do_trade (market):
             this_order['size'] = order.request_size
             if order.side == 'buy':
                 if order.price >= price:
-                    feed_enQ(market, this_order)
+#                     feed_enQ(market, this_order)
                     traded_orders_pvt.append (order)
                     open_orders_pvt.remove (order)
                     log.info ("Traded Buy order: %s"%(str(order)))
             elif order.side == 'sell':
                 if order.price <= price:
-                    feed_enQ(market, this_order)
+#                     feed_enQ(market, this_order)
                     traded_orders_pvt.append (order)
                     open_orders_pvt.remove (order)
                     log.info ("Traded sell order: %s"%(str(order)))
@@ -118,7 +118,7 @@ def do_trade (market):
             this_order['price'] = price            
             this_order['filled_size'] = order.request_size
             this_order['executed_value'] = order.funds
-            feed_enQ(market, this_order)
+#             feed_enQ(market, this_order)
             traded_orders_pvt.append (order)
             open_orders_pvt.remove (order)
             log.info ("\n\nTraded market order: %s filled_order: %s price: %s"%(str(order), str(this_order), str(price)))
@@ -349,7 +349,13 @@ class SIM_EXCH (exchanges.Exchange):
     #             this_order['type'] = "done"
     #             this_order['reason'] = 'filled'    
     #             this_order['settled'] = True
-    #             this_order['side'] = order.side            
+    #             this_order['side'] = order.side
+        for order in traded_orders[prod_id]:
+            if order.id == order_id:
+                return order
+        for order in open_orders[prod_id]:
+            if order.id == order_id:
+                return order            
         return None
 
     def cancel_order (self):
