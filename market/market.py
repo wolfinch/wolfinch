@@ -441,8 +441,8 @@ class Market:
             self.consume_feed(self, msg)
             
     def tick(self, price, l_size):
-        if (price == 0 or not l_size):
-            log.error ("Invalid price or 'last_size' in ticker feed")
+        if (price == 0):
+            log.error ("Invalid price in ticker feed")
             return
         size = float(l_size)
         
@@ -463,7 +463,6 @@ class Market:
             # close the current candle period and start a new candle period
             c = price
             candle = OHLC(int(now), self.O, self.H, self.L, c, self.V)
-            log.debug ("New candle identified %s" % (candle))
             self.add_new_candle (candle)
             
         # TODO: FIXME: jork: might need to rate-limit the logic here after
@@ -1116,7 +1115,6 @@ class Market:
         now = time.time()
         if now >= self.cur_candle_time + self.candle_interval:
             candle = OHLC(int(now), self.O, self.H, self.L, self.get_market_rate(), self.V)
-            log.info ("New candle identified %s" % (candle))
             self.add_new_candle (candle)
             
         # 2.update market states
@@ -1128,15 +1126,24 @@ class Market:
         self._handle_pending_trade_reqs ()
         
     def add_new_candle (self, candle):
-        """
-            Desc: Identify a new candle and add to the market data
-                    This will result in calculating and indicators and
-                    strategies and may result in generating trade signals
-        """
+#         """
+#             Desc: Identify a new candle and add to the market data
+#                     This will result in calculating and indicators and
+#                     strategies and may result in generating trade signals
+#         """
         # Do not add new candles if backtesting is running
         if sims.backtesting_on == True:
             return
-                    
+                
+        #don't add a candle if we think this is a wrong one. 
+        #this will handle the cases of market off days and hours.
+        if candle.open == candle.high == candle.low == candle.close and candle.volume == 0:
+            #skip past current candle
+            self.cur_candle_time = candle.time
+            return
+        
+        log.info ("New candle identified %s" % (candle))
+        
         self.market_indicators_data.append({'ohlc': candle})
         self.market_strategies_data.append({})
 

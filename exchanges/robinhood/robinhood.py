@@ -30,7 +30,7 @@ from market import  OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 import logging
 import pyrh
-import .yahoofin
+import exchanges.robinhood.yahoofin as yahoofin
 
 log = getLogger ('Robinhood')
 log.setLevel(log.DEBUG)
@@ -381,6 +381,9 @@ class Robinhood (Exchange):
         #attempt a de-duplication, not sure if this is really required here. 
         dedu_dict = {}
         for cdl in candles_list:
+            if cdl.open == 0 or cdl.high == 0 or cdl.low == 0 or cdl.close == 0 :
+                log.error("invalid candle in history :%s"%(cdl))
+                continue
             dedu_dict[cdl.time] = cdl
         candles_list = [cdl for _, cdl in dedu_dict.items()]
         log.info ("de-duplicated candle list len %d"%(len(candles_list)))
