@@ -42,9 +42,8 @@ exchanges:
             decision:
                model    : simple
                config   :
-                  strategy: EMA_DEV
-                  params : {'ema_sell_s': 85, 'timeout_sell': 10, 'rsi': 76, 'treshold_pct_buy_l': 1.31, 'ema_buy_s': 90, 'timeout_buy': 10, 'period': 195, 'treshold_pct_sell_s': 0.61, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.0, 'treshold_pct_buy_s': 1.69, 'ema_sell_l': 70}
-      # products - end
+                  strategy: TRABOS
+                  params : {'period': 115, 'ema': 30, 'atr': 165, 'mfi': 200, 'vwap': 200, 'mfi_dir_len': 2, 'obv_dir_len': 2, 'stop_x': 10, 'profit_x': 8, 'vosc_short': 80, 'vosc_long': 150, 'timeout_buy': 0, 'timeout_sell': 0}
       order_type    : market
       fee     : 
          maker : 0 #make fee %
@@ -60,8 +59,8 @@ backfill:
    period   : 30  #in Days
 
 simulator:
-   enabled : false
-   backtesting : false 
+   enabled : true
+   backtesting : true 
    
 genetic_optimizer: 
    enabled : false
@@ -70,7 +69,7 @@ genetic_optimizer:
    N_MP : 1
    strategy : EMA_DEV
 ui:
-   enabled : false
+   enabled : true
    port : 8080
    
 #EOF
