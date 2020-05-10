@@ -64,7 +64,7 @@ class Yahoofin:
         return self.session.get(url, timeout=15).json()
     ######## public function #########
     def get_historic_candles (self, symbol=None, interval=None, start_time=None, end_time=None):
-        url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?symbol=%s&period1=%d&period2=%d&interval=%s&includePrePost=true"%(
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?symbol=%s&period1=%d&period2=%d&interval=%s"%(#&includePrePost=true
             symbol, symbol, start_time, end_time, interval)
         log.debug("importing historic candles url - %s"%(url))        
         resp = self.get_url(url)

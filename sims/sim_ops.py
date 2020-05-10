@@ -81,16 +81,14 @@ def do_backtesting (simulator_on=False):
                 signal, sl, tp = market.generate_trade_signal (market.backtesting_idx)
                 market.consume_trade_signal (signal, sl, tp)
                 
-                if (simulator_on):
-                    sim_exchange.market_simulator_run (market)
+                sim_exchange.market_simulator_run (market, True)
                 #if atleast one market is not done, we will continue
                 done = False
                 market.backtesting_idx += 1
             elif done == True:
                 finish_backtesting(market)
                 market.backtesting_idx = market.num_candles - 1
-                if (simulator_on):
-                    sim_exchange.market_simulator_run (market)                
+                sim_exchange.market_simulator_run (market, True)
                 #let's do few iterations and make sure everything is really done!
                 all_done += 1 
                        

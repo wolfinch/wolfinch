@@ -388,7 +388,7 @@ class Market:
                 self.num_take_profit_hit, self.num_stop_loss_hit,
                 self.num_success_trade, self.num_failed_trade,
                 (self.get_market_rate() - self.start_market_rate) * (
-                    self.fund.initial_value * float(0.01) * self.fund.fund_liquidity_percent / self.start_market_rate),
+                    (self.fund.initial_value * float(0.01) * self.fund.fund_liquidity_percent / self.start_market_rate) if self.start_market_rate > 0 else 0),
                 self.trading_paused_buy, self.trading_paused_sell,
                 str(self.fund), str(self.asset), str(self.order_book))
         
@@ -579,7 +579,7 @@ class Market:
         self.num_buy_order += 1
         log.info("BUY: %d sig: %s" % (self.num_buy_order, trade_req))
         if (sims.simulator_on):
-            order = sims.exch_obj.buy (trade_req)
+            order = sims.sim_obj["exch"].buy (trade_req)
         else:
             order = self.exchange.buy (trade_req)
         order.stop = trade_req.stop
@@ -627,7 +627,7 @@ class Market:
         self.num_sell_order += 1
         log.info("SELL: %d sig: %s" % (self.num_sell_order, trade_req))
         if (sims.simulator_on):
-            order = sims.exch_obj.sell (trade_req)
+            order = sims.sim_obj["exch"].sell (trade_req)
         else:
             order = self.exchange.sell (trade_req)
         
@@ -1138,6 +1138,7 @@ class Market:
         #don't add a candle if we think this is a wrong one. 
         #this will handle the cases of market off days and hours.
         if candle.open == candle.high == candle.low == candle.close and candle.volume == 0:
+        #HACK: for Robinhood, YahooFin. We handle only markethrs now, Pre, After hr market now has Vol=0. So let's filter here.
             #skip past current candle
             self.cur_candle_time = candle.time
             return
@@ -1271,6 +1272,8 @@ def feed_Q_process_msg (msg):
     market = msg["market"]
     if (market != None):
         market.market_consume_feed(msg['msg'])
+    else:
+        log.error("unable to find market for feed msg; %s"%(msg))
 
 
 def get_market_list ():
@@ -1289,7 +1292,6 @@ def market_init (exchange_list, get_product_config_hook):
     This is where we want to keep all the run stats
     '''
     global Wolfinch_market_list
-    
     for exchange in exchange_list:
         exchange.get_product_config = get_product_config_hook
         products = exchange.get_products()
@@ -1316,8 +1318,13 @@ def market_init (exchange_list, get_product_config_hook):
                         Wolfinch_market_list.append(market)
         else:
             log.error ("No products found in exchange:%s" % (exchange.name))
-
-                 
+    if (sims.simulator_on and not sims.backtesting_on):
+        #init a sim market 
+        log.info("market init for sim and not backtest")
+        sims.sim_obj["exch"].get_product_config = get_product_config_hook        
+        sims.sim_obj["market"]  = Market(product=product, exchange=sims.sim_obj["exch"])
+        sims.sim_obj["market"]  = sims.sim_obj["exch"].market_init (sims.sim_obj["market"])
+        
 def market_setup (restart=False):
     '''
     Setup market states.

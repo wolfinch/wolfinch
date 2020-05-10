@@ -136,7 +136,7 @@ def process_market(market):
             signal, sl, tp = market.generate_trade_signal()
             market.consume_trade_signal(signal, sl, tp)
             if sims.simulator_on:
-                sims.market_simulator_run(market)
+                sims.market_simulator_run(market, sims.backtesting_on)
         stats.stats_update_order_bulk(market)
 
     # check pending trades periodically and takes actions(this logic is rate-limited)

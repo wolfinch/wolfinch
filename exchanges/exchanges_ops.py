@@ -42,14 +42,14 @@ def init_exchanges (WolfinchConfig):
 #                     cfg = exch_cfg['config']
                     log.debug ("initializing exchange(%s)"%name)
                     if (sims.simulator_on):
-                        sims.exch_obj = sims.SIM_EXCH(exch_cls.name)
+                        sims.sim_obj["exch"] = sims.SIM_EXCH(exch_cls.name)
+                        # do a best effort setup for products for sim/backtesting based on config.
+                        sims.sim_obj["exch"].setup_products(exch_cfg["products"])                        
                         log.info ("SIM-EXCH initialized for EXCH(%s)"%(exch_cls.name))
                         if sims.backtesting_on:
                             # If backtesting is on, init only sim exchange
-                            # do a best effort setup for products for sim/backtesting based on config.
-                            sims.exch_obj.setup_products(exch_cfg["products"])
-                            if (sims.exch_obj != None):
-                                exchange_list.append(sims.exch_obj)
+                            if (sims.sim_obj["exch"] != None):
+                                exchange_list.append(sims.sim_obj["exch"])
                                 #Market init
                                 log.info ("Backtesting_on! skip real exch init!")                                
                                 return
@@ -65,7 +65,7 @@ def init_exchanges (WolfinchConfig):
                     if sims.simulator_on:
                         #add initialized products for sim. We can do this only here after real exch initialized products
                         log.info("sim exch products init for exch:%s"%(name))
-                        sims.exch_obj.add_products(exch_obj.get_products())                    
+                        sims.sim_obj["exch"].add_products(exch_obj.get_products())       
 def close_exchanges():
     global exchange_list
     #init exchanges 

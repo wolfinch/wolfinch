@@ -223,6 +223,9 @@ class Robinhood (Exchange):
         price = float(msg.price)
         last_size = msg.dayVolume - market.dayVolume
         market.dayVolume = msg.dayVolume
+        if last_size <=0:
+            #cases of Pre,After hours. where yahoofin don't give us vol. So we ignore these. We don't handle PH,AH trades.
+            return
         
         market.tick (price, last_size)
 
