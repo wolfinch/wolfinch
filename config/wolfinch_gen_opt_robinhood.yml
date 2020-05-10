@@ -45,7 +45,7 @@ candle_interval : 300  #300s == 5m
 
 backfill:
    enabled  : true  
-   period   : 5  #in Days
+   period   : 30  #in Days
 
 simulator:
    enabled : true
@@ -56,7 +56,7 @@ genetic_optimizer:
    N_POP : 1000
    N_GEN : 100
    N_MP : 10
-   strategy : EMA_DEV
+   strategy : VWAP
 ui:
    enabled : false
    port : 8080

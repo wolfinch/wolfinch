@@ -57,7 +57,7 @@ candle_interval : 300  #300s == 5m
 
 backfill:
    enabled  : true  
-   period   : 5  #in Days
+   period   : 30  #in Days
 
 simulator:
    enabled : false
