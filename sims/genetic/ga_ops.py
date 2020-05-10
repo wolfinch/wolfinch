@@ -154,11 +154,13 @@ def police_tradingcfg_gen (t_cfg):
             t_cfg["stop_loss_smart_rate"] = True
         elif 'strategy' == t_cfg["stop_loss_kind"]:
             t_cfg["stop_loss_enabled"] = True
-            t_cfg["stop_loss_smart_rate"] = False
+            t_cfg["stop_loss_smart_rate"] = False       
         else:
             t_cfg["stop_loss_enabled"] = False
             t_cfg["stop_loss_smart_rate"] = False            
             t_cfg["stop_loss_kind"] = "simple"
+         
+            
     if 'ATR' == t_cfg["stop_loss_kind"]:
         #just mutated, need to find ATR rate too. 
         if not t_cfg.get("stop_loss_atr_period"):
@@ -167,7 +169,9 @@ def police_tradingcfg_gen (t_cfg):
         t_cfg["stop_loss_rate"] = 0
     if 'strategy' == t_cfg["stop_loss_kind"]:
         t_cfg["stop_loss_rate"] = 0
-                
+    elif t_cfg["stop_loss_kind"] == "simple" and t_cfg["stop_loss_rate"] > 0:
+        t_cfg["stop_loss_smart_rate"] = False
+                        
     if (t_cfg["take_profit_enabled"] == False):
         t_cfg["take_profit_rate"] = 0
         t_cfg["take_profit_kind"] = "simple"

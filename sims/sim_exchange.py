@@ -36,7 +36,7 @@ log = getLogger (__name__)
 log.setLevel (log.CRITICAL)
 
 ###### SIMULATOR Global switch ######
-exch_obj = None
+sim_obj = {"exch": None, "market": None}
 
 '''
 Description: Exchange Simulation for papertrade/backtesting. 
@@ -75,9 +75,13 @@ order_struct = {'created_at': '2018-01-10T09:49:02.639681Z',
              'type': 'limit'}
 
 ####### Private #########
-def do_trade (market):
+def do_trade (market, backtesting_on):
     open_orders_pvt = open_orders.get(market.product_id) or []
-    traded_orders_pvt = traded_orders.get(market.product_id) 
+    traded_orders_pvt = traded_orders.get(market.product_id)
+    if not backtesting_on:
+        market_obj_pvt = sim_obj["market"]
+    else:
+        market_obj_pvt = market
     if traded_orders_pvt == None:
         traded_orders_pvt = []
         traded_orders[market.product_id] = traded_orders_pvt
@@ -89,7 +93,7 @@ def do_trade (market):
         #first update order state
         order.status = 'open'
 #         print ("order: %s"%(str(order)))
-        market.order_status_update (order)
+#         market.order_status_update (order)
         #now trade
         this_order = copy.deepcopy(order_struct) # Note: this at the top
         this_order['created_at'] = datetime.fromtimestamp(market.cur_candle_time).isoformat()
@@ -99,18 +103,21 @@ def do_trade (market):
         this_order['reason'] = 'filled'    
         this_order['settled'] = True
         this_order['side'] = order.side
+        if market != market_obj_pvt:
+            #we are in sim, add back pointer to the real market
+            this_order["market"] = market
         if order.order_type == 'limit':
             this_order['price'] = order.price
             this_order['size'] = order.request_size
             if order.side == 'buy':
                 if order.price >= price:
-                    feed_enQ(market, this_order)
+                    feed_enQ(market_obj_pvt, this_order)
                     traded_orders_pvt.append (order)
                     open_orders_pvt.remove (order)
                     log.info ("Traded Buy order: %s"%(str(order)))
             elif order.side == 'sell':
                 if order.price <= price:
-                    feed_enQ(market, this_order)
+                    feed_enQ(market_obj_pvt, this_order)
                     traded_orders_pvt.append (order)
                     open_orders_pvt.remove (order)
                     log.info ("Traded sell order: %s"%(str(order)))
@@ -118,16 +125,16 @@ def do_trade (market):
             this_order['price'] = price            
             this_order['filled_size'] = order.request_size
             this_order['executed_value'] = order.funds
-            feed_enQ(market, this_order)
+            feed_enQ(market_obj_pvt, this_order)
             traded_orders_pvt.append (order)
             open_orders_pvt.remove (order)
             log.info ("\n\nTraded market order: %s filled_order: %s price: %s"%(str(order), str(this_order), str(price)))
     #end While(true)
 
 ############# Public APIs ######################
-def market_simulator_run (market):
+def market_simulator_run (market, backtesting_on):
     log.debug ("Running SIM exchange for market: %s"%(market.product_id))
-    do_trade (market)
+    do_trade (market, backtesting_on)
         
 class SIM_EXCH (exchanges.Exchange):
     products = []
@@ -141,8 +148,21 @@ class SIM_EXCH (exchanges.Exchange):
         self.timeOffset = 0
 
 #         global products
-        self.products = g_prod_list
-        
+        self.products = [] #g_prod_list
+    def setup_products(self, products_list):
+        # do a best effort setup for products for sim/backtesting based on config.
+        log.info("setting up products for exch-sim")
+        for prod_cfg in products_list:
+            for p_id, p_cfg in prod_cfg.items():
+                log.info("setting up prod: %s"%(p_id))
+                f_type = prod_cfg.get("fund_type") or "USD"
+                a_type = prod_cfg.get("asset_type") or p_id
+                prod = {"id": p_id, "fund_type": f_type, "asset_type": a_type, "display_name": p_id}
+                self.add_products(prod)
+    def add_products(self, products):
+        if not isinstance(products, list):
+            products = [products]
+        self.products += products
     def market_init (self, market):
         #Setup the initial params
                 
@@ -166,7 +186,11 @@ class SIM_EXCH (exchanges.Exchange):
         This is where we do all the useful stuff with Feed
         '''
         msg_type = msg['type']
-        #log.debug ("Feed received: msg:\n %s"%(json.dumps(msg, indent=4, sort_keys=True)))
+        log.debug ("Feed received: msg:\n %s"%(msg))
+        
+        if msg.get("market"):
+            log.debug("find real market from feed")
+            market = msg["market"]
      
         if (msg_type in ['pending', 'received' , 'open' , 'done' , 'change'] ):
             self._consume_order_update_feed (market, msg)
@@ -336,7 +360,13 @@ class SIM_EXCH (exchanges.Exchange):
     #             this_order['type'] = "done"
     #             this_order['reason'] = 'filled'    
     #             this_order['settled'] = True
-    #             this_order['side'] = order.side            
+    #             this_order['side'] = order.side
+        for order in traded_orders[prod_id]:
+            if order.id == order_id:
+                return order
+        for order in open_orders[prod_id]:
+            if order.id == order_id:
+                return order            
         return None
 
     def cancel_order (self):

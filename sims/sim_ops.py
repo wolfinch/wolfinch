@@ -31,14 +31,14 @@ from market import feed_deQ, feed_Q_process_msg, get_market_list, flush_all_stat
 # import db
 import exchanges
 from . import sim_exchange
-from .genetic import ga_main
+from .genetic import ga_main, police_tradingcfg_gen
 
 #from market.order import Order, TradeRequest
 #from market import feed_enQ
 
 __name__ = "SIM-OPS"
 log = getLogger (__name__)
-log.setLevel (log.CRITICAL)
+log.setLevel (log.INFO)
 
 ###### SIMULATOR Global switch ######
 backtesting_on = False
@@ -81,16 +81,14 @@ def do_backtesting (simulator_on=False):
                 signal, sl, tp = market.generate_trade_signal (market.backtesting_idx)
                 market.consume_trade_signal (signal, sl, tp)
                 
-                if (simulator_on):
-                    sim_exchange.market_simulator_run (market)
+                sim_exchange.market_simulator_run (market, True)
                 #if atleast one market is not done, we will continue
                 done = False
                 market.backtesting_idx += 1
             elif done == True:
                 finish_backtesting(market)
                 market.backtesting_idx = market.num_candles - 1
-                if (simulator_on):
-                    sim_exchange.market_simulator_run (market)                
+                sim_exchange.market_simulator_run (market, True)
                 #let's do few iterations and make sure everything is really done!
                 all_done += 1 
                        
@@ -108,6 +106,7 @@ def sim_ga_init (decisionConfig, tradingConfig):
     #init 
     #1. Retrieve states back from Db
 #     db.init_order_db(Order)
+    log.info("config decisionConfig: %s, tradingConfig: %s"%(decisionConfig, tradingConfig))
     def get_prod_cfg (exch_name, prod_name):
         if exch_name == None or prod_name == None:
             return None, None
@@ -115,8 +114,8 @@ def sim_ga_init (decisionConfig, tradingConfig):
         if tcfg == None:
             return None, None        
         tradingConfig.update(tcfg)
-        
-        return tradingConfig, decisionConfig
+        log.info("updated config decisionConfig: %s, tradingConfig: %s"%(decisionConfig, tradingConfig))
+        return police_tradingcfg_gen(tradingConfig), decisionConfig
     
     #2. Init Exchanges
     exchanges.init_exchanges(gConfig)
@@ -158,7 +157,7 @@ def market_backtesting_ga_hook (decisionConfig, tradingConfig=None):
     simulator_on = True
     backtesting_on = True
     
-    log.debug("starting backtesting ")    
+    log.info("starting backtesting decisionConfig:%s tradingConfig:%s"%(decisionConfig, tradingConfig))
     
     sim_ga_init (decisionConfig, tradingConfig)
     

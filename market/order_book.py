@@ -310,7 +310,7 @@ class OrderBook():
             atr = cur_indicators[tcfg['stop_loss_kind']]
             new_sl = float(round(market_rate - 2*atr, 4))
         else:
-            raise Exception("Unaknown  smart stop_loss kind %s"%(tcfg['stop_loss_kind']))
+            raise Exception("Unknown  smart stop_loss kind %s"%(tcfg['stop_loss_kind']))
         
         key_list = list(self.sl_dict.irange(maximum=new_sl, inclusive=(False, False)))
         
@@ -412,7 +412,6 @@ class OrderBook():
                 return
         else:
             raise Exception("Unknown  take profit kind - "+market.tradeConfig['take_profit_kind'])
-                                            
         
         position.set_take_profit(new_tp)
         pos_list = self.tp_dict.get(new_tp, None)

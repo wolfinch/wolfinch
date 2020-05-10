@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+message PricingData {
+
+enum QuoteType {
+    NONE = 0;
+    ALTSYMBOL = 5;
+    HEARTBEAT = 7;
+    EQUITY = 8;
+    INDEX = 9;
+    MUTUALFUND = 11;
+    MONEYMARKET = 12;
+    OPTION = 13;
+    CURRENCY = 14;
+    WARRANT = 15;
+    BOND = 17;
+    FUTURE = 18;
+    ETF = 20;
+    COMMODITY = 23;
+    ECNQUOTE = 28;
+    CRYPTOCURRENCY = 41;
+    INDICATOR = 42;
+    INDUSTRY = 1000;
+};
+
+enum OptionType {
+    CALL = 0;
+    PUT = 1;
+};
+
+enum MarketHoursType {
+    PRE_MARKET = 0;
+    REGULAR_MARKET = 1;
+    POST_MARKET = 2;
+    EXTENDED_HOURS_MARKET = 3;
+};
+
+    string id = 1;
+    float price = 2;
+    sint64 time = 3;
+    string currency = 4;
+    string exchange = 5;
+
+    QuoteType quoteType = 6;
+    MarketHoursType marketHours = 7;
+    float changePercent = 8;
+    sint64 dayVolume = 9;
+    float dayHigh = 10;
+    float dayLow = 11;
+    float change = 12;
+    string shortName = 13;
+    sint64 expireDate = 14;
+    float openPrice = 15;
+    float previousClose = 16;
+    float strikePrice = 17;
+    string underlyingSymbol = 18;
+    sint64 openInterest = 19;
+    OptionType optionsType = 20;
+    sint64 miniOption = 21;
+    sint64 lastSize = 22;
+    float bid = 23;
+    sint64 bidSize = 24;
+    float ask = 25;
+    sint64 askSize = 26;
+    sint64 priceHint = 27;
+    sint64 vol_24hr = 28;
+    sint64 volAllCurrencies = 29;
+    string fromcurrency = 30;
+    string lastMarket = 31;
+    double circulatingSupply = 32;
+    double marketcap = 33;
+};

@@ -1,0 +1,64 @@
+#  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
+#  This file is part of Wolfinch.
+# 
+#  Wolfinch is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+# 
+#  Wolfinch is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+# 
+#  You should have received a copy of the GNU General Public License
+#  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
+##################################################
+# Wolfinch Global config file
+##################################################
+
+
+# Define the interested exchanges here. 
+# One primary exchange for trading and as many others in spectator mode
+# data from exchanges in spectator mode will be considered for trading decision
+exchanges:
+   - 'robinhood' : 
+      role: 'primary'
+      config: 'config/robinhood.yml'
+      products:
+         - 'AYTU':
+            fund_type: USD
+            fund_max_liquidity : 900 #$$               
+            fund_max_per_buy_value : 20 #$100 max per buy
+            asset_max_per_trade_size: 1000 #per sell asset size max
+            asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)
+      # products - end
+      order_type    : market
+      fee     : 
+         maker : 0 #make fee %
+         taker : 0 #taker fee %
+   #cbpro - end
+# exchanges - end
+
+# TODO: exchanges specific config should follow a common timing, should be driven by global config
+candle_interval : 300  #300s == 5m 
+
+backfill:
+   enabled  : true  
+   period   : 30  #in Days
+
+simulator:
+   enabled : true
+   backtesting : true 
+   
+genetic_optimizer: 
+   enabled : true
+   N_POP : 1000
+   N_GEN : 100
+   N_MP : 10
+   strategy : VWAP
+ui:
+   enabled : false
+   port : 8080
+   
+#EOF

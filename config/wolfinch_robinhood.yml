@@ -1,0 +1,76 @@
+#  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
+#  This file is part of Wolfinch.
+# 
+#  Wolfinch is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+# 
+#  Wolfinch is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+# 
+#  You should have received a copy of the GNU General Public License
+#  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
+##################################################
+# Wolfinch Global config file
+##################################################
+
+
+# Define the interested exchanges here. 
+# One primary exchange for trading and as many others in spectator mode
+# data from exchanges in spectator mode will be considered for trading decision
+exchanges:
+   - 'robinhood' : 
+      role: 'primary'
+      config: 'config/robinhood.yml'
+      products:
+         - 'AYTU':
+            fund_type: USD
+            fund_max_liquidity : 900 #$$               
+            fund_max_per_buy_value : 20 #$100 max per buy
+            asset_max_per_trade_size: 1000 #per sell asset size max
+            asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)
+            stop_loss:
+               enabled: true
+               kind : simple      #simple(default) | trailing | ATRXX | 
+               rate : 4 #-3%
+            take_profit:
+               enabled: true
+               rate: 19 # 10percent
+            decision:
+               model    : simple
+               config   :
+                  strategy: EMA_DEV
+                  params : {'ema_sell_s': 85, 'timeout_sell': 10, 'rsi': 76, 'treshold_pct_buy_l': 1.31, 'ema_buy_s': 90, 'timeout_buy': 10, 'period': 195, 'treshold_pct_sell_s': 0.61, 'ema_buy_l': 70, 'treshold_pct_sell_l': 1.0, 'treshold_pct_buy_s': 1.69, 'ema_sell_l': 70}
+      # products - end
+      order_type    : market
+      fee     : 
+         maker : 0 #make fee %
+         taker : 0 #taker fee %
+   #cbpro - end
+# exchanges - end
+
+# TODO: exchanges specific config should follow a common timing, should be driven by global config
+candle_interval : 300  #300s == 5m 
+
+backfill:
+   enabled  : true  
+   period   : 30  #in Days
+
+simulator:
+   enabled : false
+   backtesting : false 
+   
+genetic_optimizer: 
+   enabled : false
+   N_POP : 10
+   N_GEN : 1
+   N_MP : 1
+   strategy : EMA_DEV
+ui:
+   enabled : false
+   port : 8080
+   
+#EOF
