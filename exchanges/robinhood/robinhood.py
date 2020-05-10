@@ -30,7 +30,8 @@ from market import  OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 import logging
 import pyrh
-import exchanges.robinhood.yahoofin as yahoofin
+# import exchanges.robinhood.yahoofin as yahoofin
+from exchanges.robinhood.yahoofin import Yahoofin
 
 log = getLogger ('Robinhood')
 log.setLevel(log.DEBUG)
@@ -80,7 +81,7 @@ class Robinhood (Exchange):
         if backfill.get('period'):
             self.robinhood_conf['backfill_period'] = int(backfill['period'])
 
-        self.yahoofin_client = yahoofin.Yahoofin()
+        self.yahoofin_client = Yahoofin()
         
         #get data from exch conf
         self.user = self.robinhood_conf.get('user')
