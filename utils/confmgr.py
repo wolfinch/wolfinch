@@ -112,7 +112,7 @@ def parse_product_config (cfg):
         parsed_tcfg ['take_profit_kind'] = 'simple'        
 
     if (parsed_tcfg.get('stop_loss_kind') != None and
-         (parsed_tcfg.get('stop_loss_kind').rstrip(str(list(range(9)))) not in ["simple", "strategy", "ATR"])):
+         (parsed_tcfg.get('stop_loss_kind').rstrip(str(list(range(9)))) not in ["simple", "trailing", "strategy", "ATR"])):
         s = "Unknown Stop Loss kind %s"%parsed_tcfg
         raise Exception(s)
     

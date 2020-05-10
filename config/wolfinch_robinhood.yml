@@ -44,6 +44,7 @@ exchanges:
                config   :
                   strategy: TRABOS
                   params : {'period': 115, 'ema': 30, 'atr': 165, 'mfi': 200, 'vwap': 200, 'mfi_dir_len': 2, 'obv_dir_len': 2, 'stop_x': 10, 'profit_x': 8, 'vosc_short': 80, 'vosc_long': 150, 'timeout_buy': 0, 'timeout_sell': 0}
+      # products - end
       order_type    : market
       fee     : 
          maker : 0 #make fee %
