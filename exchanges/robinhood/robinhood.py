@@ -175,7 +175,7 @@ class Robinhood (Exchange):
 
 ######## WS Feed Helper routines ##############
     def _feed_enQ_msg(self, msg):
-        log.debug ("feed msg: %s"%msg)
+#         log.debug ("feed msg: %s"%msg)
         product_id = msg.id
         if (product_id == None):
             log.error ("Feed Thread: Invalid Product-id:  msg - \n %s"%(msg))
@@ -222,6 +222,13 @@ class Robinhood (Exchange):
         
         #log.debug ("consuming ticker feed")
         price = float(msg.price)
+        if price == 0 or msg.dayVolume == 0:
+            log.error("invalid feed msg: %s"%(msg))
+            return
+        if market.dayVolume == 0:
+            #first tick after we came up, initialize
+            market.dayVolume = msg.dayVolume
+            return
         last_size = msg.dayVolume - market.dayVolume
         market.dayVolume = msg.dayVolume
         if last_size <=0:
