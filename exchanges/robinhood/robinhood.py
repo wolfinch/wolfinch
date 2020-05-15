@@ -273,7 +273,7 @@ class Robinhood (Exchange):
             log.debug("Closing yahoofin_client")
             if self.stream == True:
                 self.yahoofin_client.stop_feed ()        
-        log.critical ("exch being closed")
+        log.info ("exch being closed")
         
         #log out now. 
         self.auth_client.logout()
@@ -587,6 +587,9 @@ class Robinhood (Exchange):
         log.debug ("market hrs for %s is %s"%(date_str, m_hrs))
         return m_hrs["is_open"], m_hrs
     
+    def get_quote (self, sym):
+        return self.auth_client.get_quote(sym.upper())
+        
     def _fetch_json_by_url(self, url):
         return self.auth_client.get_url(url)
     

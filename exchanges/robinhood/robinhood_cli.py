@@ -28,10 +28,10 @@ from dateutil.tz import tzlocal, tzutc
 from utils import getLogger, readConf
 from market import  OHLC, feed_enQ, get_market_by_product, Order
 from exchanges.robinhood import Robinhood
+import logging
 
-log = getLogger ('Robinhood')
-log.setLevel(log.DEBUG)
-# logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("Robinhood").setLevel(logging.WARNING)
 
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
@@ -60,8 +60,22 @@ def print_order_history(symbol, from_date, to_date):
                     amt_buy += quant*avg_price                            
             print ("{:<6}{:^6}{:^6.0f}{:^10.3f}{:^10}{:^15}{:^15}".format(o["symbol"], side,
                          quant, avg_price, typ, status, o["created_at"]))
-        print("Summary:\n num_buy: %d \n amt_buy: %.2f \n num_sell: %d \n amt_sell: %.2f\n profit: %.2f"%(
-            num_buy, amt_buy, num_sell, amt_sell, (amt_sell-amt_buy)))
+        #get curr quote
+        quote = rbh.get_quote(symbol)        
+        curr_price = float(quote["last_trade_price"])
+        num_open = (num_buy-num_sell)
+        cur_val = num_open*curr_price
+        cur_bal = (amt_sell-amt_buy)
+        total_profit = cur_bal + cur_val
+        print("""Summary:
+         num_buy: %d
+         amt_buy: %.2f
+         num_sell: %d
+         amt_sell: %.2f
+         num_open: %.2f(@%.2f)    curr_val: %.2f
+         cur_bal: %.2f
+         total_profit: %.2f"""%(
+            num_buy, amt_buy, num_sell, amt_sell, num_open, curr_price, cur_val, cur_bal, total_profit))
     else:
         print("unable to find order history")
 def print_options_order_history(symbol, from_date, to_date):
@@ -145,7 +159,9 @@ def print_market_quote (sym):
     if sym==None or sym == "":
         print ("invalid symbol")
         return
-    rbh.auth_client.print_quote(sym)
+    sym = sym.upper()    
+    quote = rbh.get_quote(sym)
+    print ("quote: %s"%(quote))
 def exec_market_order(sym, action):
     if sym==None or sym == "":
         print ("invalid symbol")
@@ -194,7 +210,7 @@ if __name__ == '__main__':
     
     parser = args = None
 
-    print ("Testing Robinhood exch:")
+    print ("Robinhood exch CLI:")
     arg_parse()
     config = {"config": ROBINHOOD_CONF,
               "products" : [{"NIO":{}}, {"AAPL":{}}],
@@ -263,5 +279,5 @@ if __name__ == '__main__':
         exit(1)                            
 #     sleep(10)
     rbh.close()
-    print ("Done")
+#     print ("Done")
 # EOF    

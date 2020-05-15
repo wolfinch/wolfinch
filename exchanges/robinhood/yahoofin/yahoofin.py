@@ -32,7 +32,7 @@ from utils import getLogger
 
 parser = args = None
 log = getLogger ('Yahoofin')
-log.setLevel(log.DEBUG)
+log.setLevel(log.WARNING)
 # logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 # YAHOOFIN CONFIG FILE
