@@ -84,8 +84,8 @@ def print_options_order_history(symbol, from_date, to_date):
     if len(orders):
         num_sell = num_buy = amt_sell = amt_buy = 0
         print ("retrieved %d orders"%(len(orders)))
-        print ("{:<6}{:^6}{:^8}{:^8}{:^10}{:^10}{:^10}{:^10}{:^25}{:^10}{:^10}{:^15}{:^15}".format(
-            "Ticker", "Side", "Action", "Size", "Price", "Type", "Status","dir", "strat", "type", "strike", "expiry", "Date"))
+        print ("{:<6}{:^10}{:^15}{:^10}{:^6}{:^8}{:^8}{:^10}{:^10}{:^10}{:^10}{:^25}{:^15}".format(
+            "Ticker", "strike", "expiry", "type", "Side", "Action", "Size", "Price", "Type", "Status","dir", "strat",  "Date"))
         for o in orders:
             sym         = o["chain_symbol"]
             side        = "NONE"# o["side"]
@@ -128,8 +128,9 @@ def print_options_order_history(symbol, from_date, to_date):
                     else:
                         num_buy += quant
                         amt_buy += price                
-                print ("{:<6}{:^6}{:^8}{:^8.0f}{:^10.3f}{:^10}{:^10}{:^10}{:^25}{:^10}{:^10}{:^15}{:^15}".format(sym, side, pos_effect,
-                         quant, price, typ, status, dir, strat, opt_type, strike, expiry_date, o["created_at"]))
+                print ("{:<6}{:^10}{:^15}{:^10}{:^6}{:^8}{:^8.0f}{:^10.3f}{:^10}{:^10}{:^10}{:^25}{:^15}".format(sym, 
+                        strike, expiry_date, opt_type, side, pos_effect,
+                         quant, price, typ, status, dir, strat,  o["created_at"]))
         print("Summary:\n num_buy: %d \n amt_buy: %.2f \n num_sell: %d \n amt_sell: %.2f\n profit: %.2f"%(
             num_buy, amt_buy, num_sell, amt_sell, (amt_sell-amt_buy)))
     else:
