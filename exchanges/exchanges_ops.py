@@ -19,6 +19,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
+import importlib
 from utils import getLogger
 from .exchanges_config import all_exchanges
 import sims
@@ -33,14 +34,18 @@ def init_exchanges (WolfinchConfig):
     global exchange_list
     
     #init exchanges 
-    for exch_cls in all_exchanges:
-        log.debug ("Initializing exchange (%s)"%(exch_cls.name))
+    for exch_name, exch_cls_name in all_exchanges.items():
+        log.debug ("Initializing exchange (%s:%s)"%(exch_name, exch_cls_name))
         for exch in WolfinchConfig['exchanges']:
             for name, exch_cfg in exch.items():
-                if name.lower() == exch_cls.name.lower():
+                if name.lower() == exch_name.lower():
                     role = exch_cfg['role']
 #                     cfg = exch_cfg['config']
                     log.debug ("initializing exchange(%s)"%name)
+                    exch_cls = import_exchange(exch_name, exch_cls_name)
+                    if exch_cls == None:
+                        log.critical("unable to initialize configured exchange (%s:%s)"%(exch_name, exch_cls_name))
+                        return
                     if (sims.simulator_on):
                         sims.sim_obj["exch"] = sims.SIM_EXCH(exch_cls.name)
                         # do a best effort setup for products for sim/backtesting based on config.
@@ -70,10 +75,11 @@ def close_exchanges():
     global exchange_list
     #init exchanges 
     for exchange in exchange_list:
-            log.info ("Closing exchange (%s)"%(exchange.name))
-            exchange.close()    
+        log.info ("Closing exchange (%s)"%(exchange.name))
+        exchange.close()
 
-
-
-                    
+def import_exchange(exch_mod_name, exch_cls_name):
+    log.info ("importing exch module: %s class: %s"%(exch_mod_name, exch_cls_name))
+    exch_path = "exchanges."+exch_mod_name
+    return getattr(importlib.import_module(exch_path), exch_cls_name, None)
 #EOF    

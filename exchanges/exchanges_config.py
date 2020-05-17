@@ -18,14 +18,13 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from exchanges.cbpro import CBPRO
-from exchanges.binanceus import BinanceUS
-from exchanges.robinhood import Robinhood
 
-all_exchanges = [
-        BinanceUS,
-        CBPRO,
-        Robinhood
-    ]
-                    
+#Configure the available exchanges here, exchanges will be import/init as required by the config
+all_exchanges = {
+    #eg. exchange_name : "ClassName"
+    "cbpro"     : "CBPRO",
+    "binanceus" : "BinanceUS",
+    "binance"   : "Binance",    
+    "robinhood" : "Robinhood"
+    }
 #EOF    
