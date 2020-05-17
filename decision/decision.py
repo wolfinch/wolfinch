@@ -68,8 +68,8 @@ def decision_config (exchange_name, product_id, decision_type, config):
             g_strategy_list[exchange_name] = {product_id:{}}
         elif not g_strategy_list[exchange_name].get (product_id):
             g_strategy_list[exchange_name][product_id] = {}
-            
-        g_strategy_list[exchange_name][product_id][strategy] =   config['params']
+        params = config.get('params') or {} 
+        g_strategy_list[exchange_name][product_id][strategy] = params
     elif str(decision_type).lower() == "ml":
         log.info ("decision ML")
 #         g_decision_type = "ml"

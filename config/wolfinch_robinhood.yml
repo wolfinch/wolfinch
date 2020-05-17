@@ -32,26 +32,39 @@ exchanges:
             fund_max_per_buy_value : 500 #$100 max per buy
             asset_max_per_trade_size: 1000 #per sell asset size max
             asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)
-            stop_loss:
-               enabled: true
-               kind : simple      #simple(default) | trailing | ATRXX | 
-               rate : 4 #-3%
-            take_profit:
-               enabled: true
-               rate: 19 # 10percent
-            decision:
-               model    : simple
-               config   :
-                  strategy: TRABOS
-                  params : {'period': 115, 'ema': 30, 'atr': 165, 'mfi': 200, 'vwap': 200, 'mfi_dir_len': 2, 'obv_dir_len': 2, 'stop_x': 10, 'profit_x': 8, 'vosc_short': 80, 'vosc_long': 150, 'timeout_buy': 0, 'timeout_sell': 0}
-      # products - end
+#            stop_loss:
+#               enabled: true
+#               kind : simple      #simple(default) | trailing | ATRXX | 
+#               rate : 4 #-3%
+#            take_profit:
+#               enabled: true
+#               rate: 19 # 10percent
+#            decision:
+#               model    : simple
+#               config   :
+#                  strategy: TRABOS
+#                  params : {'period': 115, 'ema': 30, 'atr': 165, 'mfi': 200, 'vwap': 200, 'mfi_dir_len': 2, 'obv_dir_len': 2, 'stop_x': 10, 'profit_x': 8, 'vosc_short': 80, 'vosc_long': 150, 'timeout_buy': 0, 'timeout_sell': 0}
+      # products - end            
       order_type    : market
       fee     : 
          maker : 0 #make fee %
          taker : 0 #taker fee %
    #cbpro - end
 # exchanges - end
-
+# Global Cfg
+stop_loss:
+   enabled: true
+   kind : simple      #simple(default) | trailing | ATRXX | 
+   rate : 4 #-3%
+take_profit:
+   enabled: true
+   rate: 19 # 10percent
+decision:
+   model    : simple
+   config   :
+      strategy: TRABOS
+      #params : {'period': 115, 'ema': 30, 'atr': 165, 'mfi': 200, 'vwap': 200, 'mfi_dir_len': 2, 'obv_dir_len': 2, 'stop_x': 10, 'profit_x': 8, 'vosc_short': 80, 'vosc_long': 150, 'timeout_buy': 0, 'timeout_sell': 0}
+# Global Cfg - end
 # TODO: exchanges specific config should follow a common timing, should be driven by global config
 candle_interval : 300  #300s == 5m 
 
@@ -61,7 +74,7 @@ backfill:
 
 simulator:
    enabled : true
-   backtesting : false 
+   backtesting : true 
    
 genetic_optimizer: 
    enabled : false
@@ -70,7 +83,7 @@ genetic_optimizer:
    N_MP : 1
    strategy : EMA_DEV
 ui:
-   enabled : true
+   enabled : false
    port : 8080
    
 #EOF

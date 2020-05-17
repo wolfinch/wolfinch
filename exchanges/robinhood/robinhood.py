@@ -297,7 +297,7 @@ class Robinhood (Exchange):
          '''
         # Max Candles in one call
         epoch = datetime.utcfromtimestamp(0).replace(tzinfo=tzutc())
-        max_candles = 200
+        max_candles = 500
         candles_list = []
         
         # get config
