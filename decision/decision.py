@@ -18,9 +18,10 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 from utils import getLogger
-from . import decision_simple
-# import decision_ML
-
+import importlib
+import os.path
+import sys
+    
 log = getLogger ('DECISION')
 log.setLevel(log.CRITICAL)
 
@@ -36,10 +37,12 @@ class Decision ():
             params = config.get("params")
             if strategy == None:
                 log.critical ("Strategy not configured")
-                raise ("Strategy not configured")            
-            self.decision = decision_simple.Decision(market, market_list, config={strategy: params})
+                raise ("Strategy not configured")
+            dec_mod = import_decision("decision_simple")                   
+            self.decision = dec_mod.Decision(market, market_list, config={strategy: params})
         elif  decision_type == "ml":
-            self.decision = decision_ML.Decision(market, market_list, config_path=config)
+            dec_mod = import_decision("decision_ML")
+            self.decision = dec_mod.Decision(market, market_list, config_path=config)
         else:
             log.error ("Unknown decision type %s"%(decision_type))
             return None    
@@ -82,4 +85,10 @@ def get_strategy_list(exchange_name, product_id):
     global g_strategy_list
     return g_strategy_list[exchange_name][product_id]
 
+def import_decision(dec_mod_name):
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, this_dir)        
+    log.info ("importing decision module: %s "%(dec_mod_name))
+    dec_path = dec_mod_name
+    return importlib.import_module(dec_path)
 #EOF
