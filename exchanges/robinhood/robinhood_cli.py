@@ -32,12 +32,72 @@ import logging
 
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("Robinhood").setLevel(logging.WARNING)
+# logging.getLogger("Robinhood").setLevel(logging.DEBUG)
 
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
 
 
 ######## Functions for Main exec flow ########
+def get_option_chains(symbol, from_date, to_date, opt_type):
+    def key_func(k):
+        #sort based on what?
+        return k["quote"]["open_interest"]
+    #get chain_id
+    instr = rbh.get_instrument_from_symbol(symbol)
+    chain_id = instr["tradable_chain_id"]
+    #get chain_summary, exp_dates
+    opt_chains = rbh.get_option_chains_summary(chain_id)
+    exp_list = opt_chains["expiration_dates"]
+    opt_c_d = {}
+    #get chain @expiry
+    for exp in exp_list:
+        chain_l = rbh.get_option_chain(chain_id, exp, opt_type)
+        #get option/instrument quote/details
+        instr_list = []
+        chain_d = {}
+        for ch_e in chain_l:
+            instr_list.append(ch_e["url"])
+            chain_d[ch_e["url"]] = ch_e
+        opt_data_l = rbh.get_option_marketdata(instr_list)
+        #associate quote with instr
+#         print("opt_data_l: %s"%(pprint.pformat(opt_data_l, 4)))        
+        for opt_q in opt_data_l:
+            if opt_q == None:
+                continue
+            chain_d[opt_q['instrument']]["quote"] = opt_q
+        opt_c_l = []
+        for opt_c in chain_d.values():
+            #some of the entries may not have quote. remove those            
+            if opt_c.get("quote"):
+                opt_c_l.append(opt_c)
+        opt_c_l.sort(reverse=True, key=key_func)
+        opt_c_d [exp] = opt_c_l
+    return opt_c_d
+def print_option_chains(symbol, from_date, to_date, opt_type, best=True):
+    #get option chains
+    quote = rbh.get_quote(symbol)
+    opt_c_d = get_option_chains(symbol, from_date, to_date, opt_type)
+#     print ("quote: %s"%(pprint.pformat(opt_c_d, 4)))
+    print ("{:<50} \n {:<50} ".format(" (%s) option chains for %s@%s"%(opt_type, symbol.upper(), quote["last_trade_price"]), 50*"-"))
+    print ("{:<10}{:^10}{:^6}{:^6}{:^10}{:^10}{:^10}{:^10}".format("Strike", "Price", "OI", "Vol", "IV", "Delta", "Theta", "Vega"))
+    for exp, opt_l in opt_c_d.items():
+        print("{:>75}: {:<15} ".format("Exp", exp))
+        for opt in opt_l:
+            q = opt["quote"]
+#             print ("quote: %s"%(pprint.pformat(opt, 4)))
+            mp = float(q["mark_price"] or 0)
+            oi = q["open_interest"]
+            vol = q["volume"]
+            iv  = float(q["implied_volatility"] or 0)
+            delta = float(q["delta"] or 0)
+            theta = float(q["theta"] or 0)
+            vega = float(q["vega"] or 0)
+            if oi > 0:
+                print ("{:<10.2f}{:^10.2f}{:^6d}{:^6d}{:^10.4f}{:^10.4f}{:^10.4f}{:^10.4f}".format(float(opt["strike_price"]),
+                         mp, oi, vol,  iv, delta,  theta, vega))
+    
+    
 def print_order_history(symbol, from_date, to_date):
     print ("printing order history")    
     orders = rbh.get_order_history(symbol, from_date, to_date)
@@ -189,6 +249,8 @@ def arg_parse():
     parser.add_argument("--s", help='symbol', required=False)
     parser.add_argument("--oh", help='dump order history', required=False, action='store_true')
     parser.add_argument("--ooh", help='dump options order history', required=False, action='store_true')
+    parser.add_argument("--oc", help='option chain details', required=False, action='store_true')
+    parser.add_argument("--type", help='option type (put/call)', required=False)        
     parser.add_argument("--ch", help='dump historic candles', required=False, action='store_true')    
     parser.add_argument("--cp", help='dump current positions', required=False, action='store_true')    
     parser.add_argument("--cop", help='dump current options positions', required=False, action='store_true')    
@@ -257,6 +319,12 @@ if __name__ == '__main__':
     elif args.cp:
         rbh = Robinhood (config, stream=False)
         print_current_positions(args.s)
+    elif args.oc:
+        if args.type != "put" and args.type != "call":
+            print ("invalid option type: %s"%(args.type))
+            exit(1)
+        rbh = Robinhood (config, stream=False, auth=True)
+        print_option_chains(args.s,  args.start, args.end, args.type)        
     elif args.cop:
         rbh = Robinhood (config, stream=False)
         print_current_options_positions(args.s)
