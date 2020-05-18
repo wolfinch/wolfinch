@@ -80,13 +80,17 @@ def print_option_chains(symbol, from_date, to_date, opt_type, best=True):
     opt_c_d = get_option_chains(symbol, from_date, to_date, opt_type)
 #     print ("quote: %s"%(pprint.pformat(opt_c_d, 4)))
     print ("{:<50} \n {:<50} ".format(" (%s) option chains for %s@%s"%(opt_type, symbol.upper(), quote["last_trade_price"]), 50*"-"))
-    print ("{:<10}{:^10}{:^6}{:^6}{:^10}{:^10}{:^10}{:^10}".format("Strike", "Price", "OI", "Vol", "IV", "Delta", "Theta", "Vega"))
+    print ("{:<10}{:^10}{:<12}{:<12}{:^6}{:^6}{:^10}{:^10}{:^10}{:^10}".format("Strike", "Price", "Bid(#)", "Ask(#)", "OI", "Vol", "IV", "Delta", "Theta", "Vega"))
     for exp, opt_l in opt_c_d.items():
-        print("{:>75}: {:<15} ".format("Exp", exp))
+        print("{:>100}: {:<15} ".format("Exp", exp))
         for opt in opt_l:
             q = opt["quote"]
 #             print ("quote: %s"%(pprint.pformat(opt, 4)))
             mp = float(q["mark_price"] or 0)
+            bid_p = float(q["bid_price"] or 0) 
+            bid_s = q["bid_size"]
+            ask_p = float(q["ask_price"] or 0) 
+            ask_s = q["ask_size"]            
             oi = q["open_interest"]
             vol = q["volume"]
             iv  = float(q["implied_volatility"] or 0)
@@ -94,8 +98,8 @@ def print_option_chains(symbol, from_date, to_date, opt_type, best=True):
             theta = float(q["theta"] or 0)
             vega = float(q["vega"] or 0)
             if oi > 0:
-                print ("{:<10.2f}{:^10.2f}{:^6d}{:^6d}{:^10.4f}{:^10.4f}{:^10.4f}{:^10.4f}".format(float(opt["strike_price"]),
-                         mp, oi, vol,  iv, delta,  theta, vega))
+                print ("{:<10.2f}{:^10.2f}{:<12}{:<12}{:^6d}{:^6d}{:^10.4f}{:^10.4f}{:^10.4f}{:^10.4f}".format(float(opt["strike_price"]),
+                         mp, "%.2f(%d)"%(bid_p,bid_s), "%.2f(%d)"%(ask_p,ask_s), oi, vol,  iv, delta,  theta, vega))
     
     
 def print_order_history(symbol, from_date, to_date):
