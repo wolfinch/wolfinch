@@ -760,7 +760,7 @@ class Robinhood (Exchange):
         log.debug ("order: %s"%(pprint.pformat(orders, 4)))
         return orders
     def options_order_history(self, symbol=None):
-        options_api_url = API_BASE+"options/orders/"
+        options_api_url = API_BASE+"/options/orders/"
         if symbol == None:
             return self._fetch_json_by_url(options_api_url)
         else:
