@@ -48,7 +48,16 @@ def get_option_chains(symbol, from_date, to_date, opt_type):
     chain_id = instr["tradable_chain_id"]
     #get chain_summary, exp_dates
     opt_chains = rbh.get_option_chains_summary(chain_id)
-    exp_list = opt_chains["expiration_dates"]
+    exp_list_l = opt_chains["expiration_dates"]
+    #filter exp_list based on given time interval
+    exp_list = []
+    for exp in exp_list_l:
+        exp_d = datetime.strptime(exp, "%Y-%m-%d")
+        if from_date and from_date > exp_d:
+            continue
+        if to_date and to_date < exp_d:
+            continue
+        exp_list.append(exp)
     opt_c_d = {}
     #get chain @expiry
     for exp in exp_list:
@@ -74,7 +83,7 @@ def get_option_chains(symbol, from_date, to_date, opt_type):
         opt_c_l.sort(reverse=True, key=key_func)
         opt_c_d [exp] = opt_c_l
     return opt_c_d
-def print_option_chains(symbol, from_date, to_date, opt_type, best=True):
+def print_option_chains(symbol, from_date, to_date, opt_type, best_num=0):
     #get option chains
     quote = rbh.get_quote(symbol)
     opt_c_d = get_option_chains(symbol, from_date, to_date, opt_type)
@@ -83,7 +92,12 @@ def print_option_chains(symbol, from_date, to_date, opt_type, best=True):
     print ("{:<10}{:^10}{:<12}{:<12}{:^6}{:^6}{:^10}{:^10}{:^10}{:^10}".format("Strike", "Price", "Bid(#)", "Ask(#)", "OI", "Vol", "IV", "Delta", "Theta", "Vega"))
     for exp, opt_l in opt_c_d.items():
         print("{:>100}: {:<15} ".format("Exp", exp))
+        num = 0
         for opt in opt_l:
+            #print only the given num
+            if best_num > 0 and best_num < num:
+                break
+            num += 1
             q = opt["quote"]
 #             print ("quote: %s"%(pprint.pformat(opt, 4)))
             mp = float(q["mark_price"] or 0)
@@ -251,6 +265,7 @@ def arg_parse():
     parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
     parser.add_argument("--config", help='config file', required=False)
     parser.add_argument("--s", help='symbol', required=False)
+    parser.add_argument("--n", help='number of..', required=False)    
     parser.add_argument("--oh", help='dump order history', required=False, action='store_true')
     parser.add_argument("--ooh", help='dump options order history', required=False, action='store_true')
     parser.add_argument("--oc", help='option chain details', required=False, action='store_true')
@@ -259,8 +274,8 @@ def arg_parse():
     parser.add_argument("--cp", help='dump current positions', required=False, action='store_true')    
     parser.add_argument("--cop", help='dump current options positions', required=False, action='store_true')    
     parser.add_argument("--profit", help='total profit loss', required=False, action='store_true')
-    parser.add_argument("--start", help='from date', required=False, action='store_true')          
-    parser.add_argument("--end", help='to date', required=False, action='store_true')
+    parser.add_argument("--start", help='from date (mm-dd-yyyy)', required=False)          
+    parser.add_argument("--end", help='to date (mm-dd-yyyy)', required=False)
     parser.add_argument("--hrs", help='market hourse', required=False, action='store_true')
     parser.add_argument("--quote", help='print quote', required=False, action='store_true')
     parser.add_argument("--buy", help='buy asset', required=False, action='store_true')
@@ -310,16 +325,24 @@ if __name__ == '__main__':
 #      
 #     order = bnc.get_order("XLMUSDT", order.id)
 #     print ("get sell order: %s" % (order))    
-    
+
+    start_t = end_t = None
+    if args.start:
+        start_t = datetime.strptime(args.start, "%m-%d-%Y")
+    if args.end:
+        end_t = datetime.strptime(args.end, "%m-%d-%Y")
+    num = 0
+    if args.n:
+        num = int(args.n)
     if args.ch:
         rbh = Robinhood (config, stream=False)
-        print_historic_candles(args.s, args.start, args.end)    
+        print_historic_candles(args.s, start_t, end_t)    
     elif args.oh:
         rbh = Robinhood (config, stream=False)
-        print_order_history(args.s, args.start, args.end)
+        print_order_history(args.s, start_t, end_t)
     elif args.ooh:
         rbh = Robinhood (config, stream=False)
-        print_options_order_history(args.s, args.start, args.end)
+        print_options_order_history(args.s, start_t, end_t)
     elif args.cp:
         rbh = Robinhood (config, stream=False)
         print_current_positions(args.s)
@@ -328,7 +351,7 @@ if __name__ == '__main__':
             print ("invalid option type: %s"%(args.type))
             exit(1)
         rbh = Robinhood (config, stream=False, auth=True)
-        print_option_chains(args.s,  args.start, args.end, args.type)        
+        print_option_chains(args.s,  start_t, end_t, args.type, num)        
     elif args.cop:
         rbh = Robinhood (config, stream=False)
         print_current_options_positions(args.s)
