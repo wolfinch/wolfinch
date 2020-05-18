@@ -703,7 +703,7 @@ class Robinhood (Exchange):
     def get_option_marketdata(self, instr_list):     
         if type(instr_list) != list:
             instr_list = [instr_list]
-        B_SIZE = 100
+        B_SIZE = 50
         i = 0
         res_list = []
         while i < len(instr_list):
