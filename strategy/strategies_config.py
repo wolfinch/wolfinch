@@ -22,25 +22,17 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-from .strategies.trend_rsi import TREND_RSI
-from .strategies.ema_rsi import EMA_RSI
-from .strategies.ema_rsi_slow import EMA_RSI_SLOW
-from .strategies.ema_dev import EMA_DEV
-from .strategies.trend_bollinger import TREND_BOLLINGER
-from .strategies.trix_rsi import TRIX_RSI
-from .strategies.minmax import MINMAX
-from .strategies.trabos import TRABOS
-
 #### List all available strategies below ###
 strategies_list = {
-    "TREND_RSI": TREND_RSI,
-    "EMA_RSI": EMA_RSI,
-    "EMA_RSI_SLOW": EMA_RSI_SLOW,    
-    "EMA_DEV": EMA_DEV,
-    "TREND_BOLLINGER": TREND_BOLLINGER,
-    "TRIX_RSI": TRIX_RSI,
-    "MINMAX": MINMAX,
-    "TRABOS" : TRABOS
+    "TREND_RSI"         : "trend_rsi",
+    "EMA_RSI"           : "ema_rsi",
+    "EMA_RSI_SLOW"      : "ema_rsi_slow",    
+    "EMA_DEV"           : "ema_dev",
+    "TREND_BOLLINGER"   : "trend_bollinger",
+    "TRIX_RSI"          : "trix_rsi",
+    "MINMAX"            : "minmax",
+    "TRABOS"            : "trabos",
+    "TATS"              : "tats"
     }
 #### List all available strategies above ###
 

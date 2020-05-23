@@ -21,6 +21,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
+import importlib
 
 import indicators
 from .strategies_config import strategies_list
@@ -41,7 +42,7 @@ def Configure (exchange_name, product_id, strategy_list={}):
             return market_strategies[exchange_name].get(product_id)
     
     for strategy_name, strategy_params in strategy_list.items():
-        strategy = strategies_list.get(strategy_name)
+        strategy = get_strategy_by_name(strategy_name)
         if not strategy:
             raise Exception("Unknown strategy(%s)" % (strategy_name))
         
@@ -92,8 +93,14 @@ def gen_product_indicators_list (exchange_name, product_id):
     return ind_list
 
 def get_strategy_by_name (name):
-    return  strategies_list.get(name, None)
+    return  import_strategy(name)
 
+def import_strategy(strat_cls_name):
+    strat_mod_name = strategies_list.get(strat_cls_name, None)
+    if not strat_mod_name:
+        return None
+    strat_path = "strategy.strategies."+strat_mod_name
+    return getattr(importlib.import_module(strat_path), strat_cls_name, None)
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
