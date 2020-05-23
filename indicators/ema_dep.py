@@ -1,7 +1,5 @@
 # '''
-#  Desc: Market Exponential Moving Average (EMA) implementation using tulip
-#  https://tulipindicators.org/ema
-#
+#  Desc: Market Exponential Moving Average (EMA) implementation 
 #  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -19,30 +17,34 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
 
-# from decimal import Decimal
 from .indicator import Indicator
-import numpy as np
-import tulipy as ti
 
-class EMA (Indicator):
+class DEPRECATED_EMA (Indicator):
     '''
-    Exponential moving Average (EMA) market indicator implementation using TA library
+    Exponential moving Average (EMA) market indicator implementation
     '''
     
     def __init__(self, name, period=12):
         self.name = name
         self.period = period
+        self._multiplier = float(2)/ (period +1)
                 
-    def calculate(self, candles):        
+    def calculate(self, candles):
+        # The formula below is for a 10-day EMA:
+        # 
+        # SMA: 10 period sum / 10 
+        # Multiplier: (2 / (Time periods + 1) ) = (2 / (10 + 1) ) = 0.1818 (18.18%)
+        # EMA: {Close - EMA(previous day)} x multiplier + EMA(previous day). 
+        
         candles_len = len(candles)
         if candles_len < self.period:
             return float(0)
         
-        val_array = np.array([float(x['ohlc'].close) for x in candles[-self.period:]])
+        prev_ema = candles[candles_len - 2][self.name]
+        if prev_ema == 0:
+            #SMA 
+            prev_ema =  float(sum( map (lambda x: x['ohlc'].close, candles)))/self.period
         
         #calculate ema
-        cur_ema = ti.ema (val_array, self.period)
-        
-#         log.info ("TA_EMA: %g"%cur_ema)
-        return float(cur_ema[-1])
+        return float(((candles[candles_len - 1]['ohlc'].close - prev_ema )*self._multiplier + prev_ema))
         

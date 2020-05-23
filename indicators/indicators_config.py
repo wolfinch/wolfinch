@@ -21,53 +21,11 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-
-from indicators.noop import NOOP
-from indicators.sma import SMA
-# from indicators.ema import EMA
-from indicators.ta_ema import EMA
-from indicators.ta_trix import TRIX
-from indicators.bollinger import BBANDS
-from indicators.adx import ADX
-from indicators.cci import CCI
-from indicators.rsi import RSI
-from indicators.sar import SAR
-from indicators.macd import MACD
-from indicators.mfi import MFI
-from indicators.vosc import VOSC
-from indicators.vemaosc import VEMAOSC
-from indicators.atr import ATR
-from indicators.obv import OBV
-from indicators.vwap import VWAP
-from indicators.mvwap import MVWAP
-
-
+import importlib
 from indicators import indicator
 
 market_indicators = {}
 # init_done = False
-
-#Configure all the available indicators here:
-# only the indicators required for enabled strategy will be enforced.
-indicators_list = {
-    "close": NOOP,
-    "SMA": SMA,
-    "EMA": EMA,
-    "TRIX": TRIX,
-    "BBANDS": BBANDS,
-    "ADX": ADX,
-    "CCI": CCI,
-    "RSI": RSI,
-    "SAR": SAR,
-    "MACD": MACD,
-    "MFI": MFI,
-    "VOSC": VOSC,
-    "VEMAOSC": VEMAOSC,
-    "ATR": ATR,
-    "OBV":OBV,
-    "VWAP":VWAP,
-    "MVWAP":MVWAP    
-    }
 
 # Manually configure all required indicators. Should be used with auto-generation strategy 
 manual_indicator_config = {
@@ -85,7 +43,7 @@ manual_indicator_config = {
     }
 
 def Configure (exchange_name, product_id, config_list):
-    global init_done, market_indicators, indicators_list
+    global init_done, market_indicators
     #### Configure the Strategies below ######
     
 #     if init_done:
@@ -97,10 +55,11 @@ def Configure (exchange_name, product_id, config_list):
     
     
     for ind_name, period_list in config_list.items():
-        indicator = indicators_list.get (ind_name)
+        indicator = get_indicator_by_name (ind_name)
         if not indicator:
-            print ("Invalid Indicator(%s)! Either indicator not available, or unable to configure"%(ind_name))
-            raise "Invalid Indicator(%s)! Either indicator not available, or unable to configure"
+            errstr = "Invalid Indicator(%s)! Either indicator not available, or unable to configure"%(ind_name)
+            print (errstr)
+            raise Exception(errstr)
         if not market_indicators.get (exchange_name):
             market_indicators[exchange_name] = {product_id: []}
         elif not market_indicators[exchange_name].get(product_id):
@@ -123,6 +82,17 @@ def Configure (exchange_name, product_id, config_list):
     #### Configure the Strategies - end ######
 #     init_done = True
     return market_indicators[exchange_name][product_id]
+
+def get_indicator_by_name (name):
+    return  import_indicator(name)
+
+def import_indicator(ind_cls_name):
+    strat_path = "indicators."+ind_cls_name.lower()
+    try:
+        mod = importlib.import_module(strat_path)
+        return getattr(mod, ind_cls_name.upper(), None)
+    except ModuleNotFoundError:
+        return None
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
