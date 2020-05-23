@@ -22,7 +22,6 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 import importlib
-from indicators import indicator
 
 market_indicators = {}
 # init_done = False
@@ -87,7 +86,7 @@ def get_indicator_by_name (name):
     return  import_indicator(name)
 
 def import_indicator(ind_cls_name):
-    strat_path = "indicators."+ind_cls_name.lower()
+    strat_path = "indicators.indicators."+ind_cls_name.lower()
     try:
         mod = importlib.import_module(strat_path)
         return getattr(mod, ind_cls_name.upper(), None)
