@@ -24,7 +24,6 @@
 import importlib
 
 import indicators
-from .strategies_config import strategies_list
 
 init_done = False
 
@@ -96,11 +95,12 @@ def get_strategy_by_name (name):
     return  import_strategy(name)
 
 def import_strategy(strat_cls_name):
-    strat_mod_name = strategies_list.get(strat_cls_name, None)
-    if not strat_mod_name:
+    strat_path = "strategy.strategies."+strat_cls_name.lower()
+    try:
+        mod = importlib.import_module(strat_path)
+        return getattr(mod, strat_cls_name.upper(), None)
+    except ModuleNotFoundError:
         return None
-    strat_path = "strategy.strategies."+strat_mod_name
-    return getattr(importlib.import_module(strat_path), strat_cls_name, None)
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
