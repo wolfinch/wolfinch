@@ -39,7 +39,7 @@ log.setLevel(log.DEBUG)
 
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
-RBH_INTERVAL_MAPPING_TO_STR = {300 :'5m', 15*60: '15m'}
+RBH_INTERVAL_MAPPING_TO_STR = {1*60: '1m', 5*60 :'5m', 15*60: '15m'}
 API_BASE="https://api.robinhood.com"
 
 class Robinhood (Exchange):

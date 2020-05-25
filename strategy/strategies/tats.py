@@ -33,7 +33,8 @@
 # 2. RSI - should follow market as above. (rule of thumb on RSI >70 overbought, <30, oversold)
 # 3. Volume Oscilator (https://www.investopedia.com/articles/technical/02/082702.asp)
 # def gen_sig():
-    
+
+from datetime import datetime
 
 from .strategy import Strategy
 
@@ -55,7 +56,7 @@ class TATS(Strategy):
         'timeout_sell' : {'default': 5, 'var': {'type': int, 'min': 0, 'max': 50, 'step': 2 }},            
         }
     
-    def __init__ (self, name, period=120, ema=6, vwap=20, atr=60, mfi=50, mfi_dir_len=20, obv_dir_len=20,
+    def __init__ (self, name, period=480, ema=6, vwap=20, atr=60, mfi=50, mfi_dir_len=20, obv_dir_len=20,
                   vosc_short=20, vosc_long=40, stop_x=2, profit_x=2,
                   timeout_buy=5, timeout_sell=5
                  ):
@@ -91,17 +92,49 @@ class TATS(Strategy):
         self.set_indicator("VWAP", vwap)
         self.set_indicator("MVWAP", (250, vwap))
         
+        # states
+        self.day_open = 0      
+        self.day_high = 0      
+        self.day_low = 0     
+        self.day_close = 0
+        self.day = 0
+        self.pp = 0
+        self.r1 = self.r2 = self.r3 = 0
+        self.s1 = self.s2 = self.s3 = 0
 
     def generate_signal (self, candles):
 #         '''
 #         Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
 #         '''
         len_candles = len (candles)
-
         signal = 0
         if len_candles < self.period:
             return 0
-                
+        cdl = candles[-1]['ohlc']
+        dt = datetime.fromtimestamp(cdl.time)
+        day = dt.date().day
+        if  day != self.day:
+            if self.day != 0:
+                #skip the first day cdls, and setup support, resitstance levels.
+                self.pp = (self.day_high + self.day_low + self.day_close)/3
+                self.r1 = 2*self.pp - self.day_low
+                self.s1 = 2*self.pp - self.day_high
+                self.r2 = self.pp + (self.day_high - self.day_low)
+                self.s2 = self.pp - (self.day_high - self.day_low)
+                self.r3 = self.day_high + 2*(self.pp - self.day_low)
+                self.s3 = self.day_low - 2*(self.day_high - self.pp)
+                print ("setting up levels for day: %d s1: %f r1: %f s2: %f r2: %f s3: %f r3: %f"%(day, self.s1, self.r1, self.s2, self.r2, self.s3, self.r3))                
+            self.day = day
+            self.day_open = cdl.open
+            self.day_high = cdl.high
+            self.day_low = cdl.low
+            self.day_close = cdl.close 
+        else:
+            self.day_close = cdl.close 
+            if self.day_high < cdl.high:
+                self.day_high = cdl.high
+            if self.day_low > cdl.low:
+                self.day_low = cdl.low            
         mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
         vosc = self.indicator(candles, 'VEMAOSC', (self.vosc_short, self.vosc_long))
         cur_close = self.indicator(candles, 'close')
