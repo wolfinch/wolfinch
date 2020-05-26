@@ -45,7 +45,6 @@ class TATS(Strategy):
         'ema' : {'default': 5, 'var': {'type': int, 'min': 2, 'max': 30, 'step': 1 }},                
         'atr' : {'default': 50, 'var': {'type': int, 'min': 10, 'max': 200, 'step': 5 }},        
         'mfi' : {'default': 50, 'var': {'type': int, 'min': 10, 'max': 200, 'step': 5 }},
-        'vwap' : {'default': 50, 'var': {'type': int, 'min': 10, 'max': 200, 'step': 5 }},        
         'mfi_dir_len' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},  
         'obv_dir_len' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},          
         'stop_x' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},        
@@ -56,7 +55,7 @@ class TATS(Strategy):
         'timeout_sell' : {'default': 5, 'var': {'type': int, 'min': 0, 'max': 50, 'step': 2 }},            
         }
     
-    def __init__ (self, name, period=480, ema=6, vwap=20, atr=60, mfi=50, mfi_dir_len=20, obv_dir_len=20,
+    def __init__ (self, name, period=480, ema=6, atr=60, mfi=50, mfi_dir_len=20, obv_dir_len=20,
                   vosc_short=20, vosc_long=40, stop_x=2, profit_x=2,
                   timeout_buy=5, timeout_sell=5
                  ):
@@ -66,15 +65,15 @@ class TATS(Strategy):
         self.atr = atr
         self.ema = ema
         self.mfi = mfi
-        self.vwap = vwap
         self.mfi_dir_len = mfi_dir_len
         self.obv_dir_len = obv_dir_len
         self.stop_x = stop_x
         self.profit_x = profit_x
-        self.vosc_short = vosc_short
-        self.vosc_long = vosc_long
+        self.vosc_short = 50 #vosc_short
+        self.vosc_long = 100 #vosc_long
         self.timeout_buy = timeout_buy
         self.timeout_sell = timeout_sell
+        self.rsi = 10
         
         # internal states
         self.signal = 0
@@ -82,15 +81,16 @@ class TATS(Strategy):
         self.cur_timeout_sell = timeout_sell    
         
         # configure required indicators
-        self.set_indicator("ATR", atr)        
+#         self.set_indicator("ATR", atr)
         self.set_indicator("EMA", ema)                
         self.set_indicator("MFI", mfi)
         #self.set_indicator("VOSC", {(vosc_short, vosc_long)}) 
-        self.set_indicator("OBV")
-        self.set_indicator("VEMAOSC", (vosc_short, vosc_long))
+#         self.set_indicator("OBV")
+        self.set_indicator("RSI", self.rsi)
+        self.set_indicator("VEMAOSC", (self.vosc_short, self.vosc_long))
         self.set_indicator("close")
-        self.set_indicator("VWAP", vwap)
-        self.set_indicator("MVWAP", (250, vwap))
+        self.set_indicator("VWAP")
+#         self.set_indicator("MVWAP", (250, vwap))
         
         # states
         self.day_open = 0      
@@ -134,30 +134,37 @@ class TATS(Strategy):
             if self.day_high < cdl.high:
                 self.day_high = cdl.high
             if self.day_low > cdl.low:
-                self.day_low = cdl.low            
+                self.day_low = cdl.low
         mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
         vosc = self.indicator(candles, 'VEMAOSC', (self.vosc_short, self.vosc_long))
         cur_close = self.indicator(candles, 'close')
-        obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
         
-        atr = self.indicator(candles, 'ATR', self.atr)        
+#         obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
+        
+#         atr = self.indicator(candles, 'ATR', self.atr)        
         ema = self.indicator(candles, 'EMA', self.ema)
-        vwap = self.indicator(candles, 'VWAP', self.vwap)
-        
-        if ((cur_close > ema + atr) and (vosc > 0) and (vwap > ema)
-            and all( mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1)) 
-            and all( obv_l[i] <= obv_l[i+1] for i in range(len(obv_l)-1))
-            and (self.cur_timeout_buy <= 0)):      
-            self.cur_timeout_buy = self.timeout_buy           
-            return 1, cur_close-self.stop_x*atr, cur_close+self.profit_x*atr
-        elif ((cur_close < ema - atr and vosc > 0) and (vwap < ema)
-              and (self.cur_timeout_sell <= 0)):
-#             if (all( mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1))):    
-            self.cur_timeout_sell = self.timeout_sell        
+        vwap = self.indicator(candles, 'VWAP')
+        rsi = self.indicator(candles, 'RSI', self.rsi)
+ 
+        if rsi > 60:
             return -1
-        else:
-            self.cur_timeout_buy -= 1
-            self.cur_timeout_sell -= 1            
-            return signal
+        elif rsi <25:
+            return 1
+#         if ((cur_close > ema + atr) and (vosc > 0) and (vwap > ema)
+#             and all( mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1)) 
+# #             and all( obv_l[i] <= obv_l[i+1] for i in range(len(obv_l)-1))
+#             and (self.cur_timeout_buy <= 0)):      
+#             self.cur_timeout_buy = self.timeout_buy           
+#             return 1, cur_close-self.stop_x*atr, cur_close+self.profit_x*atr
+#         elif ((cur_close < ema - atr and vosc > 0) and (vwap < ema)
+#               and (self.cur_timeout_sell <= 0)):
+# #             if (all( mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1))):    
+#             self.cur_timeout_sell = self.timeout_sell        
+#             return -1
+#         else:
+#             self.cur_timeout_buy -= 1
+#             self.cur_timeout_sell -= 1            
+#             return signal
+        return 0
     
 # EOF
