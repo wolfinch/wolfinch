@@ -65,15 +65,17 @@ class TATS(Strategy):
         self.atr = atr
         self.ema = ema
         self.mfi = mfi
-        self.mfi_dir_len = mfi_dir_len
+        self.mfi_dir_len = 2 #mfi_dir_len
+        self.rsi_dir_len = 2
         self.obv_dir_len = obv_dir_len
         self.stop_x = stop_x
         self.profit_x = profit_x
-        self.vosc_short = 50 #vosc_short
+        self.vosc_short = 10 #vosc_short
         self.vosc_long = 100 #vosc_long
         self.timeout_buy = timeout_buy
         self.timeout_sell = timeout_sell
         self.rsi = 10
+        self.atr_mx = 2
         
         # internal states
         self.signal = 0
@@ -81,7 +83,7 @@ class TATS(Strategy):
         self.cur_timeout_sell = timeout_sell    
         
         # configure required indicators
-#         self.set_indicator("ATR", atr)
+        self.set_indicator("ATR", atr)
         self.set_indicator("EMA", ema)                
         self.set_indicator("MFI", mfi)
         #self.set_indicator("VOSC", {(vosc_short, vosc_long)}) 
@@ -101,11 +103,18 @@ class TATS(Strategy):
         self.pp = 0
         self.r1 = self.r2 = self.r3 = 0
         self.s1 = self.s2 = self.s3 = 0
-
+        self.r_l = {}
+        self.s_l = {}
+        self.rsi_trend = ""
+        self.res_try_break = False
     def generate_signal (self, candles):
 #         '''
 #         Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
 #         '''
+        #   rsi oversold/bought
+        # mfi and rsi are in same direction
+        # relate with support/resistance on movement
+        # trend reversal (signal)
         len_candles = len (candles)
         signal = 0
         if len_candles < self.period:
@@ -123,6 +132,8 @@ class TATS(Strategy):
                 self.s2 = self.pp - (self.day_high - self.day_low)
                 self.r3 = self.day_high + 2*(self.pp - self.day_low)
                 self.s3 = self.day_low - 2*(self.day_high - self.pp)
+                self.s_l = {self.s1:0, self.s2:0, self.s3:0}
+                self.r_l = {self.r1:0, self.r2:0, self.r3:0}
                 print ("setting up levels for day: %d s1: %f r1: %f s2: %f r2: %f s3: %f r3: %f"%(day, self.s1, self.r1, self.s2, self.r2, self.s3, self.r3))                
             self.day = day
             self.day_open = cdl.open
@@ -136,20 +147,69 @@ class TATS(Strategy):
             if self.day_low > cdl.low:
                 self.day_low = cdl.low
         mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
+        rsi_l = self.indicator(candles, 'RSI', self.rsi, history=self.rsi_dir_len)
+        
         vosc = self.indicator(candles, 'VEMAOSC', (self.vosc_short, self.vosc_long))
         cur_close = self.indicator(candles, 'close')
         
 #         obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
         
-#         atr = self.indicator(candles, 'ATR', self.atr)        
-        ema = self.indicator(candles, 'EMA', self.ema)
+        atr = self.indicator(candles, 'ATR', self.atr)
+        ema_l = self.indicator(candles, 'EMA', self.ema, history=2)
         vwap = self.indicator(candles, 'VWAP')
-        rsi = self.indicator(candles, 'RSI', self.rsi)
- 
+        rsi = rsi_l[-1]
+        
+        #short trend, simple direction
+        if ema_l[0] > ema_l[-1]:
+            trend = "down"
+        else:
+            trend = "up"
+        signal = 0
+        #support/resistance zone handling
+        if trend == "up":
+            #see if we are near any resistance zones or crossed
+            for r in list(self.r_l.keys()):
+                #czse 1. moving up from resistance
+                if cur_close >= r + self.atr_mx*atr:
+                    #resistance crossed, flip roles - resistance becomes support now
+                    self.s_l[r] = self.r_l[r]+1
+                    del(self.r_l[r])
+#                     break #could we break multiple resistance in one candle? yes!
+                elif cur_close >= r - self.atr_mx*atr:
+                    #case 2: trying to break resistance. within the reange now.
+                    self.res_try_break = True
+            #case 2. moving up from support, nothing to do.(should we buy from here??)
+        elif trend == "down":
+            #see if we are near any support zones or crossed
+            for s in list(self.s_l.keys()):
+                #case 1: support broke. we might go down further. sell. 
+                if cur_close <= s - self.atr_mx*atr:
+                    #support broke, flip roles
+                    self.r_l[s] = self.s_l[s]+1
+                    del(self.s_l[s])
+                    signal -= 1
+            #case 2: tried break resistance and failed. we could go further down. sell
+            if self.res_try_break:
+                signal -= 1
+                self.res_try_break = False
         if rsi > 60:
-            return -1
+            self.rsi_trend = "OB"
         elif rsi <25:
-            return 1
+            self.rsi_trend = "OS"
+        elif rsi >= 30 and rsi <= 60:
+            self.rsi_trend = ""
+        
+        if (self.rsi_trend == "OS" and 
+            all(mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1)) and 
+            all(rsi_l[i] <= rsi_l[i+1] for i in range(len(rsi_l)-1))):
+            #recovering
+            signal += 1
+        elif (self.rsi_trend == "OB" and 
+              all(mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1)) and 
+              all(rsi_l[i] >= rsi_l[i+1] for i in range(len(rsi_l)-1))):
+            signal -= 1
+# #             and all( obv_l[i] <= obv_l[i+1] for i in range(len(obv_l)-1))
+# #             and all( obv_l[i] <= obv_l[i+1] for i in range(len(obv_l)-1))
 #         if ((cur_close > ema + atr) and (vosc > 0) and (vwap > ema)
 #             and all( mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1)) 
 # #             and all( obv_l[i] <= obv_l[i+1] for i in range(len(obv_l)-1))
@@ -165,6 +225,6 @@ class TATS(Strategy):
 #             self.cur_timeout_buy -= 1
 #             self.cur_timeout_sell -= 1            
 #             return signal
-        return 0
+        return signal
     
 # EOF
