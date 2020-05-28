@@ -35,7 +35,6 @@
 # def gen_sig():
 
 from datetime import datetime
-
 from .strategy import Strategy
 
 
@@ -107,6 +106,8 @@ class TATS(Strategy):
         self.s_l = {}
         self.rsi_trend = ""
         self.res_try_break = False
+        self.open_time = 0
+        self.close_time = 0
     def generate_signal (self, candles):
 #         '''
 #         Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
@@ -136,6 +137,8 @@ class TATS(Strategy):
                 self.r_l = {self.r1:0, self.r2:0, self.r3:0}
                 print ("setting up levels for day: %d s1: %f r1: %f s2: %f r2: %f s3: %f r3: %f"%(day, self.s1, self.r1, self.s2, self.r2, self.s3, self.r3))                
             self.day = day
+            self.open_time = cdl.time
+            self.close_time = int(self.open_time + 6.5*3600)
             self.day_open = cdl.open
             self.day_high = cdl.high
             self.day_low = cdl.low
@@ -225,6 +228,12 @@ class TATS(Strategy):
 #             self.cur_timeout_buy -= 1
 #             self.cur_timeout_sell -= 1            
 #             return signal
+        #let's not buy anything within half n hr of market open and sell everything 15min in to market close
+#         print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
+        if cdl.time < self.open_time + 15*60:
+            signal = 0
+        elif cdl.time > self.close_time - 15*60:
+            signal = -1  
         return signal
     
 # EOF

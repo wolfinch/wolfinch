@@ -28,7 +28,7 @@ exchanges:
       products:
          - 'INO':
             fund_type: USD
-            fund_max_liquidity : 9000 #$$               
+            fund_max_liquidity : 900 #$$               
             fund_max_per_buy_value : 500 #$100 max per buy
             asset_max_per_trade_size: 1000 #per sell asset size max
             asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)
