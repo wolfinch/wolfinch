@@ -228,9 +228,10 @@ class TATS(Strategy):
 #             self.cur_timeout_buy -= 1
 #             self.cur_timeout_sell -= 1            
 #             return signal
-        #let's not buy anything within half n hr of market open and sell everything 15min in to market close
 #         print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
         if cdl.time < self.open_time + 15*60:
+            # we are a day trading strategy and let's not carry over to next day
+            #let's not buy anything within half n hr of market open and sell everything 15min in to market close            
             signal = 0
         elif cdl.time > self.close_time - 15*60:
             signal = -1  

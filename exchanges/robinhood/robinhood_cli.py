@@ -111,8 +111,8 @@ def print_option_chains(symbol, from_date, to_date, opt_type, best_num=0):
             delta = float(q["delta"] or 0)
             theta = float(q["theta"] or 0)
             vega = float(q["vega"] or 0)
-            if oi > 0:
-                print ("{:<10.2f}{:^10.2f}{:<12}{:<12}{:^6d}{:^6d}{:^10.4f}{:^10.4f}{:^10.4f}{:^10.4f}".format(float(opt["strike_price"]),
+#             if oi > 0:
+            print ("{:<10.2f}{:^10.2f}{:<12}{:<12}{:^6d}{:^6d}{:^10.4f}{:^10.4f}{:^10.4f}{:^10.4f}".format(float(opt["strike_price"]),
                          mp, "%.2f(%d)"%(bid_p,bid_s), "%.2f(%d)"%(ask_p,ask_s), oi, vol,  iv, delta,  theta, vega))
     
     
