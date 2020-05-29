@@ -29,7 +29,7 @@ exchanges:
          - 'INO':
             fund_type: USD
             fund_max_liquidity : 900 #$$               
-            fund_max_per_buy_value : 500 #$100 max per buy
+            fund_max_per_buy_value : 100 #$100 max per buy
             asset_max_per_trade_size: 1000 #per sell asset size max
             asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)
 #            stop_loss:
@@ -70,21 +70,21 @@ candle_interval : 60  # 1 min
 
 backfill:
    enabled  : true  
-   period   : 15  #in Days
+   period   : 20  #in Days
 
 simulator:
    enabled : true
    backtesting : true 
    
 genetic_optimizer: 
-   enabled : true
+   enabled : false
    N_POP : 10
    N_GEN : 1
    N_MP : 1
    strategy : TATS
 ui:
    #enabled : false
-   enabled : true   
+   enabled : false   
    port : 8080
    
 #EOF
