@@ -63,7 +63,7 @@ decision:
    model    : simple
    config   :
       strategy: TATS
-      #params : {'period': 115, 'ema': 30, 'atr': 165, 'mfi': 200, 'vwap': 200, 'mfi_dir_len': 2, 'obv_dir_len': 2, 'stop_x': 10, 'profit_x': 8, 'vosc_short': 80, 'vosc_long': 150, 'timeout_buy': 0, 'timeout_sell': 0}
+      params: {'ema': 26, 'atr': 20, 'rsi': 16, 'mfi': 16, 'mfi_dir_len': 2, 'rsi_dir_len': 2, 'rsi_overbought': 90, 'rsi_oversold': 39, 'open_delay': 15, 'close_delay': 12, 'atr_mx': 4}
 # Global Cfg - end
 # TODO: exchanges specific config should follow a common timing, should be driven by global config
 candle_interval : 60  # 1 min 
@@ -84,7 +84,7 @@ genetic_optimizer:
    strategy : TATS
 ui:
    #enabled : false
-   enabled : false   
+   enabled : true   
    port : 8080
    
 #EOF

@@ -40,8 +40,8 @@ class TATS(Strategy):
         'rsi_overbought' : {'default': 70, 'var': {'type': int, 'min': 50, 'max': 90, 'step': 2 }},
         'rsi_oversold' : {'default': 20, 'var': {'type': int, 'min': 15, 'max': 40, 'step': 2 }},
 #         'obv_dir_len' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 10, 'step': 1 }},
-        'open_delay' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 30, 'step': 1 }},
-        'close_delay' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 30, 'step': 1 }},
+        'open_delay' : {'default': 2, 'var': {'type': int, 'min': 2, 'max': 30, 'step': 2 }},
+        'close_delay' : {'default': 2, 'var': {'type': int, 'min': 10, 'max': 30, 'step': 2 }},
         'atr_mx' : {'default': 2, 'var': {'type': int, 'min': 1, 'max': 5, 'step': 1 }},
 #         'vosc_short' : {'default': 20, 'var': {'type': int, 'min': 10, 'max': 80, 'step': 5 }},
 #         'vosc_long' : {'default': 40, 'var': {'type': int, 'min': 40, 'max': 200, 'step': 5 }},    
@@ -50,7 +50,7 @@ class TATS(Strategy):
         }
     
     def __init__ (self, name, period=60, ema=6, atr=50, mfi=50, rsi=14, rsi_overbought=70, rsi_oversold=20,
-                  open_delay=20, close_delay=40, atr_mx=2, mfi_dir_len=2, rsi_dir_len=2
+                  open_delay=20, close_delay=15, atr_mx=2, mfi_dir_len=2, rsi_dir_len=2
                  ):
         self.name = name
         self.period = period
