@@ -111,10 +111,12 @@ def log_stats (stats_stream):
     with open (STATS_FILE, "a") as fp:
         fp.write (stats_stream+"\n")
 
-def eval_exec_async (eval_fn, ind_iter):
+def eval_exec_async (eval_fn, ind_iter_o):
     # this is an ugly logic to make multiprocessing memory efficient
     # compared against mp.map,imap,imap_unordered, apply_async
     m = Manager()
+    
+    ind_iter = eliminate_duplicates(ind_iter_o)
     
     res_list = []
     p_num = 0
@@ -159,7 +161,12 @@ def eval_exec_async (eval_fn, ind_iter):
 #                         del(res_list[i][2])                        
                     p_num -= 1                        
     print ("all jobs evaluated res_num(%d)"%(len(res_list)))
-    fit_l = [x[4] for x in res_list]
+    fit_l = []
+    for ind in ind_iter_o:
+        for x in res_list:
+            if x[3] == ind:
+                fit_l.append(x[4])
+#     fit_l = [x[4] for x in res_list]
     del(m)
     del(res_list)
     return fit_l
@@ -188,7 +195,7 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, sgen=1, ngen=1, stats=None,
     logbook = tools.Logbook()
     logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
 
-    population = eliminate_duplicates(population)
+#     population = eliminate_duplicates(population)
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
@@ -213,7 +220,7 @@ def eaSimpleCustom(population, toolbox, cxpb, mutpb, sgen=1, ngen=1, stats=None,
 
         # Vary the pool of individuals
         offspring = algorithms.varAnd(offspring, toolbox, cxpb, mutpb)
-        offspring = eliminate_duplicates(offspring)        
+#         offspring = eliminate_duplicates(offspring)        
         
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
