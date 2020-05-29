@@ -58,7 +58,7 @@ stop_loss:
    rate : 4 #-3%
 take_profit:
    enabled: true
-   rate: 19 # 10percent
+   rate: 10 # 10percent
 decision:
    model    : simple
    config   :
@@ -77,11 +77,11 @@ simulator:
    backtesting : true 
    
 genetic_optimizer: 
-   enabled : false
+   enabled : true
    N_POP : 10
    N_GEN : 1
    N_MP : 1
-   strategy : EMA_DEV
+   strategy : TATS
 ui:
    #enabled : false
    enabled : true   
