@@ -168,7 +168,25 @@ class Robinhood (Exchange):
                     self.robinhood_accounts[prod['id']] = balance
                     log.debug ("Interested Account Found for asset: %s size: %s"%( prod['id'], balance['quantity']))
                     break
-        
+        #for the instuments we never traded before, there may be no account in RBH. so create a dummy here
+        for prod in self.robinhood_products:
+            if not self.robinhood_accounts.get(prod["id"]):
+                log.error ("unable to find prod(%s) account in robinhood. creating one local"%(prod["id"]))
+                self.robinhood_accounts[prod["id"]] = {
+                    'average_buy_price': '0.0000',
+                    'instrument': prod["instrument"],
+                    'intraday_average_buy_price': '0.0000',
+                    'intraday_quantity': '0.00000000',
+                    'pending_average_buy_price': '0.0000',
+                    'quantity': '0.00000000',
+                    'shares_held_for_buys': '0.00000000',
+                    'shares_held_for_options_collateral': '0.00000000',
+                    'shares_held_for_options_events': '0.00000000',
+                    'shares_held_for_sells': '0.00000000',
+                    'shares_held_for_stock_grants': '0.00000000',
+                    'shares_pending_from_options_events': '0.00000000'
+                }
+
         ### Start WebSocket Streams ###
         if self.stream == True:
             self.yahoofin_client.start_feed(self.robinhood_conf['products'], self._feed_enQ_msg)
