@@ -14,27 +14,10 @@ server {
 #              access_log off;
 #            }
 
-    listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/www.wolfinch.com/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/www.wolfinch.com/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-      
+
         location ~* ((/([0-9]+/wolfinch).*$)|/api/.*) {
-        
+
            proxy_pass http://localhost:8080;
         }
-
-}
-server {
-    if ($host = www.wolfinch.com) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
-        listen 80;
-        server_name www.wolfinch.com;
-    return 404; # managed by Certbot
-
 
 }
