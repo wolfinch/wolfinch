@@ -49,7 +49,7 @@ class VWAP (Indicator):
         self.cur_pv += cdl.volume*(((cdl.close + cdl.high + cdl.low)/3.0))
         self.cur_v += cdl.volume
         #calculate vwap
-        return float(self.cur_pv / self.cur_v)
+        return 0 if self.cur_v == 0 else float(self.cur_pv / self.cur_v)
                 
 #         if self.init == False:
 #             self.cur_pv = sum(map(lambda c: c['ohlc'].volume*((c['ohlc'].close + c['ohlc'].high + c['ohlc'].low)/3), candles[-self.period:-1]))
