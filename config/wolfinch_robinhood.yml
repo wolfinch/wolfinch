@@ -26,7 +26,7 @@ exchanges:
       role: 'primary'
       config: 'config/robinhood.yml'
       products:
-         - 'LK':
+         - 'INO':
             fund_type: USD
             fund_max_liquidity : 900 #$$               
             fund_max_per_buy_value : 500 #$100 max per buy
@@ -84,8 +84,8 @@ genetic_optimizer:
    N_MP : 1
    strategy : TATS
 ui:
-   enabled : false
-   #enabled : true   
+   #enabled : false
+   enabled : true   
    port : 8080
    
 #EOF

@@ -985,11 +985,11 @@
 			break;
 		case "btn_prev":
 			console.log("load prev candles");
-			g_chart_start_time -= g_chart_period*ONE_DAY_IN_SEC;
+			g_chart_start_time -= (g_chart_period*ONE_DAY_IN_SEC*0.85);
 			break;
 		case "btn_next":
 			console.log("load prev candles");
-			g_chart_start_time += g_chart_period*ONE_DAY_IN_SEC;
+			g_chart_start_time += (g_chart_period*ONE_DAY_IN_SEC*0.85);
 			if (g_chart_start_time > Math.floor(Date.now()/1000)) {
 				g_chart_start_time = Math.floor(Date.now()/1000)
 			}
