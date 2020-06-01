@@ -26,7 +26,7 @@ exchanges:
       role: 'primary'
       config: 'config/robinhood.yml'
       products:
-         - 'INO':
+         - 'VXRT':
             fund_type: USD
             fund_max_liquidity : 900 #$$               
             fund_max_per_buy_value : 500 #$100 max per buy
@@ -63,7 +63,7 @@ decision:
    model    : simple
    config   :
       strategy: TATS
-      params: {'ema': 3, 'atr': 75, 'rsi': 14, 'mfi': 14, 'mfi_dir_len': 2, 'rsi_dir_len': 2, 'rsi_overbought': 90, 'rsi_oversold': 39, 'open_delay': 2, 'close_delay': 10, 'atr_mx': 5}
+      params: {'ema': 14, 'atr': 50, 'rsi': 16, 'mfi': 54, 'mfi_dir_len': 2, 'rsi_dir_len': 2, 'rsi_overbought': 56, 'rsi_oversold': 35, 'open_delay': 2, 'close_delay': 24, 'atr_mx': 5}
       
 # Global Cfg - end
 # TODO: exchanges specific config should follow a common timing, should be driven by global config
