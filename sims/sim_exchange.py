@@ -140,11 +140,14 @@ class SIM_EXCH (exchanges.Exchange):
     products = []
     primary = False
     candle_interval = 0
-    def __init__(self, name, primary=True):
+    def __init__(self, name, config, primary=True):
         log.info('init SIM exchange')        
         
         self.name = name
         self.primary = True if primary else False
+        if config.get('candle_interval'):
+            # map interval in to robinhood format
+            self.candle_interval = int(config['candle_interval'])        
         self.timeOffset = 0
 
 #         global products
@@ -171,7 +174,7 @@ class SIM_EXCH (exchanges.Exchange):
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
-        market.candle_interval = self.candle_interval = 300
+        market.candle_interval = self.candle_interval
         self.backtesting_idx = 0
         
         #set whether primary or secondary

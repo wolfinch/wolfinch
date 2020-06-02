@@ -47,7 +47,7 @@ def init_exchanges (WolfinchConfig):
                         log.critical("unable to initialize configured exchange (%s:%s)"%(exch_name, exch_cls_name))
                         return
                     if (sims.simulator_on):
-                        sims.sim_obj["exch"] = sims.SIM_EXCH(exch_cls.name)
+                        sims.sim_obj["exch"] = sims.SIM_EXCH(exch_cls.name, exch_cfg)
                         # do a best effort setup for products for sim/backtesting based on config.
                         sims.sim_obj["exch"].setup_products(exch_cfg["products"])                        
                         log.info ("SIM-EXCH initialized for EXCH(%s)"%(exch_cls.name))

@@ -172,7 +172,8 @@ class TATS(Strategy):
                     del(self.r_l[r])
 #                     break #could we break multiple resistance in one candle? yes!
                 elif cur_close >= r - self.atr_mx*atr:
-                    #case 2: trying to break resistance. within the reange now.
+                    #case 2: trying to break resistance. within the range now.
+                    print ("TATS - trying to break resistance %f: %d"%(r, self.r_l[r]))
                     self.res_try_break = True
             #case 2. moving up from support, nothing to do.(should we buy from here??)
         elif trend == "down":
@@ -183,10 +184,12 @@ class TATS(Strategy):
                     #support broke, flip roles
                     self.r_l[s] = self.s_l[s]+1
                     del(self.s_l[s])
+                    print ("TATS - support broke,  SELL %f: %d"%(s, self.r_l[s]))
                     signal -= 1
             #case 2: tried break resistance and failed. we could go further down. sell
             if self.res_try_break:
                 signal -= 1
+                print ("TATS - unable to break resistance, SELL ")
                 self.res_try_break = False
         if rsi > self.rsi_overbought:
             self.rsi_trend = "OB"
@@ -199,10 +202,12 @@ class TATS(Strategy):
             all(mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1)) and 
             all(rsi_l[i] <= rsi_l[i+1] for i in range(len(rsi_l)-1))):
             #recovering
+            print("TATS - recovering from oversold(%f). BUY"%(rsi))
             signal += 1
         elif (self.rsi_trend == "OB" and 
               all(mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1)) and 
               all(rsi_l[i] >= rsi_l[i+1] for i in range(len(rsi_l)-1))):
+            print("TATS - overbought(%f) SELL"%(rsi))            
             signal -= 1
 #         print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
         if cdl.time < self.open_time + self.open_delay*60:
@@ -210,6 +215,7 @@ class TATS(Strategy):
             #let's not buy anything within half n hr of market open and sell everything 15min in to market close            
             signal = 0
         elif cdl.time > self.close_time - self.close_delay*60:
+            print ("TATS - closing day window. SELL everything")
             signal = -1  
         return signal
     

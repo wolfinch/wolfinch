@@ -265,7 +265,7 @@ class Robinhood (Exchange):
     def market_init (self, market):
         #init the day volume
         market.dayVolume = 0
-                
+        market.trading_hrs = 6.5
         usd_acc = self.robinhood_accounts[market.get_fund_type()]
         asset_acc = self.robinhood_accounts.get(market.get_asset_type())
         if (usd_acc == None or asset_acc == None): 

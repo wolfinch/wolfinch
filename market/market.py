@@ -289,6 +289,7 @@ class Market:
         self.asset_type = product['asset_type']
         self.exchange_name = None if exchange == None else exchange.name
         self.exchange = exchange  # exchange module
+        self.trading_hrs = 24  #market trading hrs 24 (for equity exchanges, should config this from exchanges)
         
         self.trading_paused_buy = False
         self.trading_paused_sell = False
@@ -407,14 +408,43 @@ class Market:
     def get_indicator_list (self, num_period=0, start_time=0):
         #normalize period in days to num_candles
         num_candles  = (num_period * 24*60*60) // self.candle_interval
-        log.info ("num_period: %d start_time: %d"%(num_period, start_time))
+        log.info ("num_period: %d start_time: %d num_candles: %d candle_interval:%d"%(
+            num_period, start_time, num_candles, self.candle_interval))
         if num_candles == 0:
             return self.market_indicators_data
         elif start_time == 0:
-            return self.market_indicators_data[-num_candles:]
+            cdl_list = self.market_indicators_data[-num_candles:]
         else:
             start_candle_idx = int((time.time() - start_time)//self.candle_interval)
-            return self.market_indicators_data[-start_candle_idx:-(start_candle_idx)+num_candles or len(self.market_indicators_data)] 
+            cdl_list = self.market_indicators_data[-start_candle_idx:-(start_candle_idx)+num_candles or len(self.market_indicators_data)]
+        #for non-24 hr exchange, our math is wrong. let's do quick hack to trim the list based on request
+        new_cdl_list = []
+        for i in range(len(cdl_list)):
+            if cdl_list[i]['ohlc'].time >= start_time:
+                new_cdl_list = cdl_list[i:]
+                break
+        log.info("found %d candles in the period from %d cdls"%(len(new_cdl_list), len(cdl_list)))
+#         new_cdl_list = [cdl for cdl in cdl_list if cdl['ohlc'].time >= start_time]
+        return new_cdl_list
+#         else:
+#             start_candle_idx = int((time.time() - start_time)*6.5//(self.candle_interval*24))
+#             log.critical("*********** start cdl: %d len: %d"%(start_candle_idx, len(self.market_indicators_data)))
+#             for i in range(start_candle_idx):
+#                 if self.market_indicators_data[-start_candle_idx]['ohlc'].time >= start_time:
+#                     cdl_list = self.market_indicators_data[-start_candle_idx:-(start_candle_idx)+num_candles or len(self.market_indicators_data)]
+#                     break                
+#                 start_candle_idx += i
+#             
+# #             cdl_list = self.market_indicators_data[-start_candle_idx:-(start_candle_idx)+num_candles or len(self.market_indicators_data)]
+#         #for non-24 hr exchange, our math is wrong. let's do quick hack to trim the list based on request
+# #         new_cdl_list = []
+# #         for i in range(len(cdl_list)):
+# #             if cdl_list[i]['ohlc'].time >= start_time:
+# #                 new_cdl_list = cdl_list[i:]
+# #                 break
+#         log.info("found %d candles in the period "%(len(cdl_list)))
+# #         new_cdl_list = [cdl for cdl in cdl_list if cdl['ohlc'].time >= start_time]
+#         return cdl_list    
     def get_cur_indicators (self):
         if sims.backtesting_on == True:
             return self.market_indicators_data[self.backtesting_idx]
