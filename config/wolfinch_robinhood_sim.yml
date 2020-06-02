@@ -52,18 +52,19 @@ exchanges:
    #cbpro - end
 # exchanges - end
 # Global Cfg
-stop_loss:
-   enabled: true
-   kind : simple      #simple(default) | trailing | ATRXX | 
-   rate : 4 #-3%
-take_profit:
-   enabled: true
-   rate: 10 # 10percent
-decision:
-   model    : simple
-   config   :
-      strategy: TATS
-      params: {'ema': 14, 'atr': 50, 'rsi': 16, 'mfi': 54, 'mfi_dir_len': 2, 'rsi_dir_len': 2, 'rsi_overbought': 56, 'rsi_oversold': 35, 'open_delay': 2, 'close_delay': 24, 'atr_mx': 5}
+
+#stop_loss:
+#   enabled: true
+#   kind : simple      #simple(default) | trailing | ATRXX | 
+#   rate : 4 #-3%
+#take_profit:
+#   enabled: true
+#   rate: 10 # 10percent
+#decision:
+#   model    : simple
+#   config   :
+#      strategy: TATS
+#      params: {'ema': 14, 'atr': 50, 'rsi': 16, 'mfi': 54, 'mfi_dir_len': 2, 'rsi_dir_len': 2, 'rsi_overbought': 56, 'rsi_oversold': 35, 'open_delay': 2, 'close_delay': 24, 'atr_mx': 5}
       
 # Global Cfg - end
 # TODO: exchanges specific config should follow a common timing, should be driven by global config
@@ -74,11 +75,11 @@ backfill:
    period   : 20  #in Days
 
 simulator:
-   enabled : false
-   backtesting : false 
+   enabled : true
+   backtesting : true 
    
 genetic_optimizer: 
-   enabled : false
+   enabled : true
    N_POP : 10
    N_GEN : 1
    N_MP : 1
