@@ -418,7 +418,11 @@ class Market:
             start_day = start_time//(24*60*60)
             start_idx = 0
             end_idx = 0
-            for cdl_i in range(len(self.market_indicators_data)):
+            ind_len = len(self.market_indicators_data)
+#             start_candle_idx = ind_len - int(((time.time() - (start_time - 24*3600))*self.trading_hrs/24)//self.candle_interval)
+#             start_candle_idx = 0 if  start_candle_idx< 0 else start_candle_idx
+#             for cdl_i in range(start_candle_idx, ind_len):
+            for cdl_i in range(ind_len):
                 cdl_d = self.market_indicators_data[cdl_i]['ohlc'].time//(24*60*60)
                 if cdl_d < start_day:
                     start_idx += 1
@@ -427,8 +431,7 @@ class Market:
                 else:
                     break
             cdl_list = self.market_indicators_data[start_idx: end_idx]
-#             log.critical("*********** start cdl: %d len: %d start:%d cur: %d start: %d end: %d"%(
-#                 start_candle_idx, len(self.market_indicators_data), start_day, time.time()//(24*60*60), start_idx, end_idx))
+#             log.info("cdl: %d len: %d start:%d start: %d end: %d"%(start_candle_idx, ind_len, start_day, start_idx, end_idx))
         log.info("found %d candles in the period "%(len(cdl_list)))
         return cdl_list    
     def get_cur_indicators (self):
