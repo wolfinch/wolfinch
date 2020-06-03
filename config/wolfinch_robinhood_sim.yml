@@ -53,18 +53,18 @@ exchanges:
 # exchanges - end
 # Global Cfg
 
-#stop_loss:
-#   enabled: true
-#   kind : simple      #simple(default) | trailing | ATRXX | 
-#   rate : 4 #-3%
-#take_profit:
-#   enabled: true
-#   rate: 10 # 10percent
-#decision:
-#   model    : simple
-#   config   :
-#      strategy: TATS
-#      params: {'ema': 14, 'atr': 50, 'rsi': 16, 'mfi': 54, 'mfi_dir_len': 2, 'rsi_dir_len': 2, 'rsi_overbought': 56, 'rsi_oversold': 35, 'open_delay': 2, 'close_delay': 24, 'atr_mx': 5}
+stop_loss:
+   enabled: true
+   kind : simple      #simple(default) | trailing | ATRXX | 
+   rate : 4 #-3%
+take_profit:
+   enabled: true
+   rate: 10 # 10percent
+decision:
+   model    : simple
+   config   :
+      strategy: TATS
+      params: {'ema': 12, 'atr': 75, 'rsi': 26, 'mfi': 22, 'mfi_dir_len': 2, 'rsi_dir_len': 2, 'rsi_overbought': 60, 'rsi_oversold': 39, 'open_delay': 4, 'close_delay': 22, 'atr_mx': 1}
       
 # Global Cfg - end
 # TODO: exchanges specific config should follow a common timing, should be driven by global config
@@ -79,14 +79,14 @@ simulator:
    backtesting : true 
    
 genetic_optimizer: 
-   enabled : true
+   enabled : false
    N_POP : 10
    N_GEN : 1
    N_MP : 1
    strategy : TATS
 ui:
-   #enabled : false
-   enabled : true   
+   enabled : true
+   #enabled : false   
    port : 8080
    
 #EOF
