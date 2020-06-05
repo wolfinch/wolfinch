@@ -406,34 +406,37 @@ class Market:
         return map(lambda x: x["ohlc"], self.market_indicators_data)
     
     def get_indicator_list (self, num_period=0, start_time=0):
+        # num_period (1,7,30 days)
+        # start_time (0: curr_day, -1: curr-1day, -2: curr-2 day...)
         #normalize period in days to num_candles
         num_candles  = (num_period * self.trading_hrs*60*60) // self.candle_interval
-        log.info ("num_period: %d start_time: %d num_candles: %d candle_interval:%d"%(
-            num_period, start_time, num_candles, self.candle_interval))
-        if num_candles == 0:
+
+        if num_period == 0:
             return self.market_indicators_data
-        elif start_time == 0:
-            cdl_list = self.market_indicators_data[-num_candles:]    
-        else:
-            start_day = start_time//(24*60*60)
-            start_idx = 0
-            end_idx = 0
-            ind_len = len(self.market_indicators_data)
-#             start_candle_idx = ind_len - int(((time.time() - (start_time - 24*3600))*self.trading_hrs/24)//self.candle_interval)
-#             start_candle_idx = 0 if  start_candle_idx< 0 else start_candle_idx
-#             for cdl_i in range(start_candle_idx, ind_len):
-            for cdl_i in range(ind_len):
-                cdl_d = self.market_indicators_data[cdl_i]['ohlc'].time//(24*60*60)
-                if cdl_d < start_day:
-                    start_idx += 1
-                if cdl_d <= start_day+num_period:
-                    end_idx += 1
-                else:
-                    break
-            cdl_list = self.market_indicators_data[start_idx: end_idx]
-#             log.info("cdl: %d len: %d start:%d start: %d end: %d"%(start_candle_idx, ind_len, start_day, start_idx, end_idx))
+        
+        cur_cdl = self.market_indicators_data[-1]
+        cur_day = cur_cdl['ohlc'].time//(24*60*60)
+        start_day = cur_day + (start_time-1)*num_period
+        end_day = start_day + num_period
+        start_idx = 0
+        end_idx = 0        
+        ind_len = len(self.market_indicators_data)
+        cdl_offset = abs((start_time-1)*num_candles)   #tentative start idx, this may not be correct as not accounting off days
+        cdl_offset = 0 if ind_len - cdl_offset < 0 else ind_len - cdl_offset 
+        log.info ("num_period: %d start_time: %d num_candles: %d candle_interval:%d cur_day: %d start_day: %d end_day: %d"%(
+            num_period, start_time, num_candles, self.candle_interval, cur_day, start_day, end_day))        
+        for cdl_i in range(0, ind_len):
+            cdl_d = self.market_indicators_data[cdl_i]['ohlc'].time//(24*60*60)
+            if cdl_d <= start_day:
+                start_idx += 1
+            if cdl_d <= end_day:
+                end_idx += 1
+            else:
+                break
+        cdl_list = self.market_indicators_data[start_idx: end_idx]
         log.info("found %d candles in the period "%(len(cdl_list)))
         return cdl_list    
+        
     def get_cur_indicators (self):
         if sims.backtesting_on == True:
             return self.market_indicators_data[self.backtesting_idx]

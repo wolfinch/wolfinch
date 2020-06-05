@@ -959,7 +959,7 @@
 
 	var ONE_DAY_IN_SEC = 24*60*60;
 	var g_chart_period = 1;
-	var g_chart_start_time = Math.floor(Date.now()/1000);
+	var g_chart_start_time = 0; //Math.floor(Date.now()/1000);
 
 	function btn_onclick(id) {
 
@@ -969,29 +969,32 @@
 		switch (id) {
 		case "btn1":
 			g_chart_period = 1;
-			g_chart_start_time -= g_chart_period*ONE_DAY_IN_SEC;
+			g_chart_start_time = 0;// -= g_chart_period*ONE_DAY_IN_SEC;
 			break;
 		case "btn3":
 			g_chart_period = 3;
-			g_chart_start_time -= g_chart_period*ONE_DAY_IN_SEC;			
+			g_chart_start_time  = 0; //-= g_chart_period*ONE_DAY_IN_SEC;			
 			break;
 		case "btn7":
 			g_chart_period = 7;
-			g_chart_start_time -= g_chart_period*ONE_DAY_IN_SEC;			
+			g_chart_start_time  = 0; //-= g_chart_period*ONE_DAY_IN_SEC;			
 			break;
 		case "btn30":
 			g_chart_period = 30;
-			g_chart_start_time -= g_chart_period*ONE_DAY_IN_SEC;			
+			g_chart_start_time  = 0; //-= g_chart_period*ONE_DAY_IN_SEC;			
 			break;
 		case "btn_prev":
-			g_chart_start_time -= (g_chart_period*ONE_DAY_IN_SEC*0.85);
+			g_chart_start_time -= 1 ; //(g_chart_period*ONE_DAY_IN_SEC*0.85);
 			console.log("load prev candles starting "+g_chart_start_time);			
 			break;
 		case "btn_next":
-			g_chart_start_time += (g_chart_period*ONE_DAY_IN_SEC*0.85);
-			if (g_chart_start_time > Math.floor(Date.now()/1000)) {
-				g_chart_start_time = Math.floor(Date.now()/1000)
+			g_chart_start_time += 1; //(g_chart_period*ONE_DAY_IN_SEC*0.85);
+			if (g_chart_start_time > 0) {
+				g_chart_start_time = 0;
 			}
+/* 			if (g_chart_start_time > Math.floor(Date.now()/1000)) {
+				g_chart_start_time = Math.floor(Date.now()/1000)
+			} */
 			console.log("load next candles starting "+g_chart_start_time);						
 			break;			
 		default:

@@ -100,6 +100,7 @@ class TATS(Strategy):
         self.s_l = {}
         self.rsi_trend = ""
         self.res_try_break = False
+        self.sup_try_break = False
         self.open_time = 0
         self.close_time = 0
     def generate_signal (self, candles):
@@ -153,7 +154,7 @@ class TATS(Strategy):
         
         atr = self.indicator(candles, 'ATR', self.atr)
         ema_l = self.indicator(candles, 'EMA', self.ema, history=2)
-#         vwap = self.indicator(candles, 'VWAP')
+        vwap = self.indicator(candles, 'VWAP')
         rsi = rsi_l[-1]
         
         #short trend, simple direction
@@ -175,6 +176,13 @@ class TATS(Strategy):
                     #case 2: trying to break resistance. within the range now.
                     print ("TATS - trying to break resistance %f: %d"%(r, self.r_l[r]))
                     self.res_try_break = True
+            #check if we are in vwap resistance range
+            if cur_close >= vwap - self.atr_mx*atr:
+                print ("TATS - trying to break VWAP resistance %f"%(vwap))                
+                self.res_try_break = True
+            if cur_close >= vwap + self.atr_mx*atr:
+                #broke VWAP resistance
+                self.res_try_break = False                
             #case 2. moving up from support, nothing to do.(should we buy from here??)
         elif trend == "down":
             #see if we are near any support zones or crossed
@@ -186,6 +194,13 @@ class TATS(Strategy):
                     del(self.s_l[s])
                     print ("TATS - support broke,  SELL %f: %d"%(s, self.r_l[s]))
                     signal -= 1
+            #check if we are in vwap resistance range
+            if cur_close >= vwap and cur_close <= vwap + self.atr_mx*atr:
+                self.sup_try_break = True
+            if cur_close <= vwap - self.atr_mx*atr and self.sup_try_break == True:
+                #broke VWAP support
+                self.sup_try_break = False
+                signal -= 1                    
             #case 2: tried break resistance and failed. we could go further down. sell
             if self.res_try_break:
                 signal -= 1
@@ -209,6 +224,10 @@ class TATS(Strategy):
               all(rsi_l[i] >= rsi_l[i+1] for i in range(len(rsi_l)-1))):
             print("TATS - overbought(%f) SELL"%(rsi))            
             signal -= 1
+            
+        if self.res_try_break == True:
+            signal = 0
+            
 #         print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
         if cdl.time < self.open_time + self.open_delay*60:
             # we are a day trading strategy and let's not carry over to next day
