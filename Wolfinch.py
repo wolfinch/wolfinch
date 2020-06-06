@@ -358,6 +358,9 @@ if __name__ == '__main__':
             else:
                 raise SystemExit
         else:
+            #slow down a little bit. wait to get to a whole minute boundary, we might get some initial trades wrong here. that's ok
+            # this initial delay will help us to get cleaner candles when we are operational
+            time.sleep(60 - time.time()%60)
             log.debug("Starting Main forever loop")
             wolfinch_main()
     except(KeyboardInterrupt, SystemExit):
