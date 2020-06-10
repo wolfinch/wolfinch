@@ -164,9 +164,12 @@ class TATS(Strategy):
         #short trend, simple direction
         if ema_l[0] > ema_l[-1]:
             trend = "down"
-        else:
+        elif ema_l[0] < ema_l[-1]:
             trend = "up"
+        else:
+            trend = ""
         ######support/resistance zone handling###########
+        za = ""        
         if trend == "up":
             #see if we are near any resistance zones or crossed
             for r in list(self.r_l.keys()):
@@ -175,8 +178,10 @@ class TATS(Strategy):
                     #resistance crossed, flip roles - resistance becomes support now
                     self.s_l[r] = 0
                     del(self.r_l[r])                   
-                    self.res_try_break = False
-                    self.zone_action = "buy"
+                    if za == "":
+                        #cases where we broke one res and in the zone of other, don't buy (conservative buy)
+                        za = "buy"
+                        self.res_try_break = False
 #                     break #could we break multiple resistance in one candle? yes!
                 elif cur_close >= r - self.atr_mx*atr:
                     #case 2: trying to break resistance. within the range now.
@@ -184,17 +189,19 @@ class TATS(Strategy):
                     if self.res_try_break == False:
                         #count the res zone entry
                         self.r_l[r] += 1
-                    self.res_try_break = True
-                    self.zone_action = ""
+                        self.res_try_break = True 
+                    #cases where we broke one res and in the zone of other, don't buy (conservative buy)                        
+                    za = "hold"
             #case3: check if we are in vwap resistance zone
             if cur_close >= vwap + self.atr_mx*atr and self.vwap_try_break == True:
                 #broke VWAP resistance
-                self.vwap_try_break = False
-                self.zone_action = "buy"            
+                if za == "":
+                    self.vwap_try_break = False
+                    za = "buy"
             elif cur_close >= vwap - self.atr_mx*atr:
                 print ("TATS - trying to break VWAP resistance %f"%(vwap))                
                 self.vwap_try_break = True
-                self.zone_action = ""
+                za = "hold"             
             #case 4. moving up from support, see if we are out of zone
             if self.sup_try_break == True:
                 for s in list(self.s_l.keys()):
@@ -203,8 +210,9 @@ class TATS(Strategy):
                         break
                 else:
                     #out of support range, we might go up now
-                    self.sup_try_break = False
-                    self.zone_action = "buy"
+                    if za == "":
+                        self.sup_try_break = False                        
+                        za = "buy"                    
         elif trend == "down":
             #see if we are near any support zones or crossed
             for s in list(self.s_l.keys()):
@@ -214,7 +222,8 @@ class TATS(Strategy):
                     self.r_l[s] = 0
                     del(self.s_l[s])
                     print ("TATS - support broke,  SELL %f: %d"%(s, self.r_l[s]))
-                    self.zone_action = "sell"
+                    #sell aggressively, if one signal is sell, sell
+                    za = "sell"
                     self.sup_try_break = False                    
                 elif cur_close <= s + self.atr_mx*atr:
                     #case 2: trying to break supports. within the range now.
@@ -222,15 +231,18 @@ class TATS(Strategy):
                     if self.sup_try_break == False:
                         #count the sup zone entry
                         self.s_l[s] += 1
-                    self.sup_try_break = True
-                    self.zone_action = ""
+                        self.sup_try_break = True                        
+                    if za == "":
+                        za = "hold"
             #check if we are in vwap support range
             if cur_close <= vwap - self.atr_mx*atr and self.vwap_try_break == True:
                 #broke VWAP support
                 self.vwap_try_break = False
-                self.zone_action = "sell"
+                za = "sell"
             elif cur_close <= vwap + self.atr_mx*atr:
                 self.vwap_try_break = True
+                if za == "":                
+                    za = "hold"
             #case 2: tried break resistance and failed. we could go further down. sell
             if self.res_try_break:
                 for r in list(self.r_l.keys()):
@@ -241,7 +253,10 @@ class TATS(Strategy):
                     #out of support range, we might go up now
                     print ("TATS - unable to break resistance, SELL ")                    
                     self.sup_try_break = False
-                    self.zone_action = "sell"        
+                    za = "sell"
+        if za != "":
+            #there is a new state else maintain previous state
+            self.zone_action = za                       
         ######support/resistance zone handling###########
         
         ####### RSI/MFI signaling ########
