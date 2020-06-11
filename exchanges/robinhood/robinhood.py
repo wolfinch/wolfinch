@@ -344,7 +344,9 @@ class Robinhood (Exchange):
             end = end.replace(tzinfo=tzlocal())
         if not start:
             # if no start given, use the config
-            real_start = start = end - timedelta(days=period) - timedelta(seconds=interval)
+            start = end - timedelta(days=period) - timedelta(seconds=interval)
+            #get a whole day
+            real_start = start = start.replace(hour=0, minute=0, second=0, microsecond=0) 
         else:
             real_start = start
         real_start = start = start.replace(tzinfo=tzlocal())

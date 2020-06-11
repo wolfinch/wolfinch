@@ -134,14 +134,15 @@ class TATS(Strategy):
                 self.s3 = self.day_low - 2*(self.day_high - self.pp)
                 self.s_l = {self.s1:0, self.s2:0, self.s3:0, self.pp:0}
                 self.r_l = {self.r1:0, self.r2:0, self.r3:0}
-#                 print ("setting up levels for day: %d s1: %f r1: %f s2: %f r2: %f s3: %f r3: %f"%(day, self.s1, self.r1, self.s2, self.r2, self.s3, self.r3))                
+                print ("setting up levels for day: %d high: %f low: %f close: %f open: %f"%(day, self.day_high, self.day_low, self.day_close, self.day_open))                
             self.day = day
             self.open_time = cdl.time
             self.close_time = int(self.open_time + 6.5*3600) #market hrs are 6.5hrs
             self.day_open = cdl.open
             self.day_high = cdl.high
             self.day_low = cdl.low
-            self.day_close = cdl.close 
+            self.day_close = cdl.close
+            print("******###########################\n\n new day(%d) \n################################*******"%(day))            
         else:
             self.day_close = cdl.close 
             if self.day_high < cdl.high:
@@ -169,7 +170,8 @@ class TATS(Strategy):
         else:
             trend = ""
         ######support/resistance zone handling###########
-#         print ("******* zone_s: %s zone_r: %s vwap: %f cur_close: %f"%(self.s_l, self.r_l, vwap, cur_close))
+        print ("*******%d:(%s) zone_s: %s zone_r: %s vwap: %f rsi: %f atr: %f cur_close: %f"%(cdl.time,
+            dt.time(), self.s_l, self.r_l, vwap, rsi, atr, cur_close))
         za = ""        
         if trend == "up":
             #see if we are near any resistance zones or crossed
@@ -177,6 +179,7 @@ class TATS(Strategy):
                 #czse 1. moving up from resistance
                 if cur_close >= r + (self.r_l[r] + self.atr_mx)*atr:
                     #resistance crossed, flip roles - resistance becomes support now
+                    print ("TATS - broke resistance %f: %d cur_close: %f"%(r, self.r_l[r], cur_close))                    
                     self.s_l[r] = self.r_l[r] +1
                     del(self.r_l[r])                   
                     if za == "":
@@ -186,18 +189,19 @@ class TATS(Strategy):
 #                     break #could we break multiple resistance in one candle? yes!
                 elif cur_close >= r - (self.r_l[r] + self.atr_mx)*atr:
                     #case 2: trying to break resistance. within the range now.
-                    print ("TATS - trying to break resistance %f: %d"%(r, self.r_l[r]))
+                    print ("TATS - trying to break resistance %f: %d cur_close: %f"%(r, self.r_l[r], cur_close))
                     if self.res_try_break == False:
                         #count the res zone entry
                         self.res_try_break = True 
                     #cases where we broke one res and in the zone of other, don't buy (conservative buy)                        
                     za = "hold"
             #case3: check if we are in vwap resistance zone
-            if cur_close >= vwap + self.atr_mx*atr and self.vwap_try_break == True:
-                #broke VWAP resistance
-                if za == "":
-                    self.vwap_try_break = False
-                    za = "buy"
+            if cur_close >= vwap + self.atr_mx*atr:
+                if self.vwap_try_break == True:
+                    #broke VWAP resistance, new break
+                    if za == "":
+                        self.vwap_try_break = False
+                        za = "buy"
             elif cur_close >= vwap - self.atr_mx*atr:
                 print ("TATS - trying to break VWAP resistance %f"%(vwap))                
                 self.vwap_try_break = True
@@ -211,37 +215,40 @@ class TATS(Strategy):
                 else:
                     #out of support range, we might go up now
                     if za == "":
-                        self.sup_try_break = False                        
-                        za = "buy"                    
+                        self.sup_try_break = False             
+                        za = "buy"    
         elif trend == "down":
             #see if we are near any support zones or crossed
             for s in list(self.s_l.keys()):
                 #case 1: support broke. we might go down further. sell. 
                 if cur_close <= s - (self.s_l[s] + self.atr_mx)*atr:
                     #support broke, flip roles
+                    print ("TATS - broke support %f: %d cur_close: %f"%(s, self.s_l[s], cur_close))                    
                     self.r_l[s] = self.s_l[s] + 1
                     del(self.s_l[s])
-                    print ("TATS - support broke,  SELL %f: %d"%(s, self.r_l[s]))
                     #sell aggressively, if one signal is sell, sell
                     za = "sell"
                     self.sup_try_break = False                    
                 elif cur_close <= s + (self.s_l[s] + self.atr_mx)*atr:
                     #case 2: trying to break supports. within the range now.
-                    print ("TATS - trying to break support %f: %d"%(s, self.s_l[s]))
+                    print ("TATS - trying to break support %f: %d cur_close: %f"%(s, self.s_l[s], cur_close))
                     if self.sup_try_break == False:
                         #count the sup zone entry
-                        self.sup_try_break = True                        
+                        self.sup_try_break = True
                     if za == "":
                         za = "hold"
             #check if we are in vwap support range
-            if cur_close <= vwap - self.atr_mx*atr and self.vwap_try_break == True:
-                #broke VWAP support
-                self.vwap_try_break = False
-                za = "sell"
+            if cur_close <= vwap - self.atr_mx*atr:
+                if self.vwap_try_break == True:
+                #broke VWAP support, new break from range
+                    self.vwap_try_break = False
+                    za = "sell"
+                    print ("TATS - SELL vwap(%f) support broke cur_close: %f "%(vwap, cur_close))                
             elif cur_close <= vwap + self.atr_mx*atr:
                 self.vwap_try_break = True
                 if za == "":                
                     za = "hold"
+                    print ("TATS - HOLD vwap(%f) support range cur_close: %f "%(vwap, cur_close))                    
             #case 2: tried break resistance and failed. we could go further down. sell
             if self.res_try_break:
                 for r in list(self.r_l.keys()):
@@ -255,6 +262,7 @@ class TATS(Strategy):
                     za = "sell"
         if za != "":
             #there is a new state else maintain previous state
+            print (" -- >new zone action :%s < --"%(za))
             self.zone_action = za                       
         ######support/resistance zone handling###########
         
@@ -281,20 +289,23 @@ class TATS(Strategy):
 
         if self.rsi_action == "buy" and (self.zone_action == "buy" or self.zone_action == ""):
             #conservative buy
+            print (" TATS: BUY z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
             signal = 1
             self.rsi_action = self.zone_action = ""
         elif  self.rsi_action == "sell" or self.zone_action == "sell":
             #proactive sell
+            print (" TATS: SELL z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
             signal = -1
             self.rsi_action = self.zone_action = ""
 #         print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
-        if cdl.time < self.open_time + self.open_delay*60:
-            # we are a day trading strategy and let's not carry over to next day
-            #let's not buy anything within half n hr of market open and sell everything 15min in to market close            
-            signal = 0
-        elif cdl.time > self.close_time - self.close_delay*60:
-            print ("TATS - closing day window. SELL everything")
-            signal = -1
+#         if cdl.time < self.open_time + self.open_delay*60:
+#             # we are a day trading strategy and let's not carry over to next day
+#             #let's not buy anything within half n hr of market open and sell everything 15min in to market close
+#             print ("TATS - open delay skip trade signal: %d"%(signal))      
+#             signal = 0
+#         elif cdl.time > self.close_time - self.close_delay*60:
+#             print ("TATS - closing day window. SELL everything signal: %d"%(signal))
+#             signal = -1
         return signal
     
 # EOF
