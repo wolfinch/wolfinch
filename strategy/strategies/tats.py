@@ -24,6 +24,7 @@
 # 3. Volume Oscilator (https://www.investopedia.com/articles/technical/02/082702.asp)
 # def gen_sig():
 
+from sortedcontainers import sorteddict
 from datetime import datetime
 from .strategy import Strategy
 
@@ -96,8 +97,8 @@ class TATS(Strategy):
         self.pp = 0
         self.r1 = self.r2 = self.r3 = 0
         self.s1 = self.s2 = self.s3 = 0
-        self.r_l = {}
-        self.s_l = {}
+        self.r_l = sorteddict.SortedDict()
+        self.s_l = sorteddict.SortedDict()
         self.zone_action = ""
         self.rsi_action = ""        
         self.rsi_trend = ""
@@ -131,8 +132,8 @@ class TATS(Strategy):
                 self.s2 = self.pp - (self.day_high - self.day_low)
                 self.r3 = self.day_high + 2*(self.pp - self.day_low)
                 self.s3 = self.day_low - 2*(self.day_high - self.pp)
-                self.s_l = {self.s1:0, self.s2:0, self.s3:0, self.pp:0}
-                self.r_l = {self.r1:0, self.r2:0, self.r3:0}
+                self.s_l = sorteddict.SortedDict({self.s1:0, self.s2:0, self.s3:0, self.pp:0})
+                self.r_l = sorteddict.SortedDict({self.r1:0, self.r2:0, self.r3:0})
                 print ("setting up levels for day: %d high: %f low: %f close: %f open: %f"%(day, self.day_high, self.day_low, self.day_close, self.day_open))                
             self.day = day
             self.open_time = cdl.time
@@ -159,7 +160,7 @@ class TATS(Strategy):
 #         obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
         
         atr = self.indicator(candles, 'ATR', self.atr)
-        ema_l = self.indicator(candles, 'EMA', self.ema, history=2)
+        ema_l = self.indicator(candles, 'EMA', self.ema, history=3)
         vwap = self.indicator(candles, 'VWAP')
         rsi = rsi_l[-1]
         
@@ -176,26 +177,37 @@ class TATS(Strategy):
         za = ""        
         if trend == "up":
             #see if we are near any resistance zones or crossed
-            for r in list(self.r_l.keys()):
-                #czse 1. moving up from resistance
-                if cur_close >= r + (self.r_l[r] + self.atr_mx)*atr:
-                    #resistance crossed, flip roles - resistance becomes support now
-                    print ("TATS - broke resistance %f: %d cur_close: %f"%(r, self.r_l[r], cur_close))                    
-                    self.s_l[r] = self.r_l[r] +1
-                    del(self.r_l[r])                   
-                    if za == "":
-                        #cases where we broke one res and in the zone of other, don't buy (conservative buy)
-                        za = "buy"
-                        self.res_try_break = False
-#                     break #could we break multiple resistance in one candle? yes!
-                elif cur_close >= r - (self.r_l[r] + self.atr_mx)*atr:
-                    #case 2: trying to break resistance. within the range now.
-                    print ("TATS - trying to break resistance %f: %d cur_close: %f"%(r, self.r_l[r], cur_close))
-                    if self.res_try_break == False:
-                        #count the res zone entry
-                        self.res_try_break = True 
-                    #cases where we broke one res and in the zone of other, don't buy (conservative buy)                        
-                    za = "hold"
+            try:
+                i = 0
+                while True:
+                    r, w = self.r_l.peekitem(i)
+                    #czse 1. moving up from resistance
+                    if cur_close >= r + (w + self.atr_mx)*atr:
+                        #resistance crossed, flip roles - resistance becomes support now
+                        print ("TATS - broke resistance %f: %d cur_close: %f"%(r, w, cur_close))                    
+                        self.s_l[r] = 0
+                        del(self.r_l[r])                   
+                        if za == "":
+                            #cases where we broke one res and in the zone of other, don't buy (conservative buy)
+                            za = "buy"
+                            self.res_try_break = False
+    #                     break #could we break multiple resistance in one candle? yes!
+                    elif cur_close >= r - ( self.atr_mx)*atr:
+                        #case 2: trying to break resistance. within the range now.
+                        print ("TATS - trying to break resistance %f: %d cur_close: %f"%(r, w, cur_close))
+                        if self.res_try_break == False:
+                            #count the res zone entry
+                            self.res_try_break = True 
+                        #cases where we broke one res and in the zone of other, don't buy (conservative buy)                        
+                        za = "hold"
+                        i+=1
+                    else:
+                        #not in zones
+                        break
+            except:
+                #r_list empty, or traversed all list
+                pass
+
             #case3: check if we are in vwap resistance zone
             if cur_close >= vwap + self.atr_mx*atr:
                 if self.vwap_try_break == True:
@@ -209,35 +221,44 @@ class TATS(Strategy):
                 za = "hold"             
             #case 4. moving up from support, see if we are out of zone
             if self.sup_try_break == True:
-                for s in list(self.s_l.keys()):
-                    if cur_close <= s + (self.s_l[s] + self.atr_mx)*atr:
-                        #still in the zone
-                        break
-                else:
+                s, w = self.s_l.peekitem()
+                if cur_close >= s + (w + self.atr_mx)*atr:
                     #out of support range, we might go up now
                     if za == "":
+                        #couldn't break support zone, makes support stronger
+                        print ("TATS - unable to break support, BUY ")                                            
+                        self.s_l[s] = w+1                        
                         self.sup_try_break = False             
                         za = "buy"    
         elif trend == "down":
             #see if we are near any support zones or crossed
-            for s in list(self.s_l.keys()):
-                #case 1: support broke. we might go down further. sell. 
-                if cur_close <= s - (self.s_l[s] + self.atr_mx)*atr:
-                    #support broke, flip roles
-                    print ("TATS - broke support %f: %d cur_close: %f"%(s, self.s_l[s], cur_close))                    
-                    self.r_l[s] = self.s_l[s] + 1
-                    del(self.s_l[s])
-                    #sell aggressively, if one signal is sell, sell
-                    za = "sell"
-                    self.sup_try_break = False                    
-                elif cur_close <= s + (self.s_l[s] + self.atr_mx)*atr:
-                    #case 2: trying to break supports. within the range now.
-                    print ("TATS - trying to break support %f: %d cur_close: %f"%(s, self.s_l[s], cur_close))
-                    if self.sup_try_break == False:
-                        #count the sup zone entry
-                        self.sup_try_break = True
-                    if za == "":
-                        za = "hold"
+            try:
+                i = -1
+                while True:
+                    s, w = self.s_l.peekitem(i)
+                    #case 1: support broke. we might go down further. sell. 
+                    if cur_close <= s - (w + self.atr_mx)*atr:
+                        #support broke, flip roles
+                        print ("TATS - broke support %f: %d cur_close: %f"%(s, w, cur_close))                    
+                        self.r_l[s] = 0
+                        del(self.s_l[s])                   
+                        za = "sell"
+                        self.sup_try_break = False
+                    elif cur_close <= s + (self.atr_mx)*atr:
+                        #case 2: trying to break support. within the range now.
+                        print ("TATS - trying to break support %f: %d cur_close: %f"%(s, w, cur_close))
+                        if self.sup_try_break == False:
+                            #count the sup zone entry
+                            self.sup_try_break = True 
+                        if za == "":
+                            za = "hold"
+                        i-=1
+                    else:
+                        #not in zones
+                        break
+            except:
+                #s_list empty, or traversed all list
+                pass
             #check if we are in vwap support range
             if cur_close <= vwap - self.atr_mx*atr:
                 if self.vwap_try_break == True:
@@ -251,16 +272,16 @@ class TATS(Strategy):
                     za = "hold"
                     print ("TATS - HOLD vwap(%f) support range cur_close: %f "%(vwap, cur_close))                    
             #case 2: tried break resistance and failed. we could go further down. sell
-            if self.res_try_break:
-                for r in list(self.r_l.keys()):
-                    if cur_close >= r - (self.r_l[r] + self.atr_mx)*atr:
-                        #still in the zone
-                        break
-                else:
-                    #out of support range, we might go up now
-                    print ("TATS - unable to break resistance, SELL ")                    
-                    self.res_try_break = False
-                    za = "sell"
+            if self.res_try_break == True:
+                r, w = self.r_l.peekitem(0)
+                if cur_close <= r - (w + self.atr_mx)*atr:
+                    #out of resistance range, we might go down further
+                    if za == "":
+                        #couldn't break resistance zone, makes reistance stronger
+                        print ("TATS - unable to break resistance, SELL ")                        
+                        self.r_l[r] = w+1                        
+                        self.res_try_break = False             
+                        za = "sell"
         if za != "":
             #there is a new state else maintain previous state
             print (" -- >new zone action :%s < --"%(za))
