@@ -49,7 +49,7 @@ class TATS(Strategy):
 #         'timeout_sell' : {'default': 5, 'var': {'type': int, 'min': 0, 'max': 50, 'step': 2 }},
         }
     
-    def __init__ (self, name, period=60, ema=6, atr=50, mfi=50, rsi=14, rsi_overbought=70, rsi_oversold=20,
+    def __init__ (self, name, period=30, ema=6, atr=50, mfi=50, rsi=14, rsi_overbought=70, rsi_oversold=20,
                   open_delay=20, close_delay=15, atr_mx=2, mfi_dir_len=2, rsi_dir_len=2
                  ):
         self.name = name
@@ -106,7 +106,8 @@ class TATS(Strategy):
         self.vwap_try_break = False
         self.open_time = 0
         self.close_time = 0
-        
+        self.bought = True
+
     def generate_signal (self, candles):
 #         '''
 #         Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
@@ -117,8 +118,6 @@ class TATS(Strategy):
         # trend reversal (signal)
         len_candles = len (candles)
         signal = 0
-        if len_candles < self.period:
-            return 0
         cdl = candles[-1]['ohlc']
         dt = datetime.fromtimestamp(cdl.time)
         day = dt.date().day
@@ -149,6 +148,8 @@ class TATS(Strategy):
                 self.day_high = cdl.high
             if self.day_low > cdl.low:
                 self.day_low = cdl.low
+        if len_candles < self.period:
+            return 0
         mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
         rsi_l = self.indicator(candles, 'RSI', self.rsi, history=self.rsi_dir_len)
         
@@ -258,7 +259,7 @@ class TATS(Strategy):
                 else:
                     #out of support range, we might go up now
                     print ("TATS - unable to break resistance, SELL ")                    
-                    self.sup_try_break = False
+                    self.res_try_break = False
                     za = "sell"
         if za != "":
             #there is a new state else maintain previous state
@@ -289,12 +290,12 @@ class TATS(Strategy):
 
         if self.rsi_action == "buy" and (self.zone_action == "buy" or self.zone_action == ""):
             #conservative buy
-            print (" TATS: BUY z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
+            print (" >>>>>>>>>>>>>>>>>TATS: BUY z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
             signal = 1
             self.rsi_action = self.zone_action = ""
         elif  self.rsi_action == "sell" or self.zone_action == "sell":
             #proactive sell
-            print (" TATS: SELL z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
+            print (" >>>>>>>>>>>>>>>>TATS: SELL z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
             signal = -1
             self.rsi_action = self.zone_action = ""
 #         print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
