@@ -160,7 +160,7 @@ class TATS(Strategy):
 #         obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
         
         atr = self.indicator(candles, 'ATR', self.atr)
-        ema_l = self.indicator(candles, 'EMA', self.ema, history=3)
+        ema_l = self.indicator(candles, 'EMA', self.ema, history=2)
         vwap = self.indicator(candles, 'VWAP')
         rsi = rsi_l[-1]
         
@@ -319,15 +319,15 @@ class TATS(Strategy):
             print (" >>>>>>>>>>>>>>>>TATS: SELL z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
             signal = -1
             self.rsi_action = self.zone_action = ""
-#         print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
-#         if cdl.time < self.open_time + self.open_delay*60:
-#             # we are a day trading strategy and let's not carry over to next day
-#             #let's not buy anything within half n hr of market open and sell everything 15min in to market close
-#             print ("TATS - open delay skip trade signal: %d"%(signal))      
-#             signal = 0
-#         elif cdl.time > self.close_time - self.close_delay*60:
-#             print ("TATS - closing day window. SELL everything signal: %d"%(signal))
-#             signal = -1
+        print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
+        if cdl.time < self.open_time + self.open_delay*60:
+            # we are a day trading strategy and let's not carry over to next day
+            #let's not buy anything within half n hr of market open and sell everything 15min in to market close
+            print ("TATS - open delay skip trade signal: %d"%(signal))      
+            signal = 0
+        elif cdl.time > self.close_time - self.close_delay*60:
+            print ("TATS - closing day window. SELL everything signal: %d"%(signal))
+            signal = -1
         return signal
     
 # EOF
