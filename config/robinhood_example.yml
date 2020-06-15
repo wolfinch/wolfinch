@@ -1,0 +1,15 @@
+##################################################
+# Robinhood config
+##################################################
+
+exchange:
+  name        : robinhood
+    
+  ##### api secrets ######
+  user       : 'foo@bar.com'
+  password   : 'feedcoffee'
+  MFAcode    : 'sample_MFA_code'
+
+  orderType    : limit
+  orderFee     : 0
+

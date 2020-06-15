@@ -92,6 +92,8 @@ def parse_product_config (cfg):
                     parsed_dcfg ['model_type'] = ex_v
                 elif ex_k == 'config':
                     parsed_dcfg ['model_config'] = ex_v
+            if not parsed_dcfg.get('model_type'):
+                parsed_dcfg ['model_type'] = "simple"
                                     
     if ( not parsed_tcfg.get('fund_max_liquidity') or not parsed_tcfg.get('fund_max_per_buy_value') or 
          not parsed_tcfg.get('asset_min_per_trade_size')) :

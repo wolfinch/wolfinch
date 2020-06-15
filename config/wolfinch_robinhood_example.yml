@@ -24,7 +24,7 @@
 exchanges:
    - 'robinhood' : 
       role: 'primary'
-      config: 'config/robinhood.yml'
+      config: 'config/robinhood_example.yml'
       products:
          - 'SNAP':
             fund_type: USD
@@ -32,19 +32,7 @@ exchanges:
             fund_max_per_buy_value : 500 #$100 max per buy
             asset_max_per_trade_size: 1000 #per sell asset size max
             asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)
-#            stop_loss:
-#               enabled: true
-#               kind : simple      #simple(default) | trailing | ATRXX | 
-#               rate : 4 #-3%
-#            take_profit:
-#               enabled: true
-#               rate: 19 # 10percent
-#            decision:
-#               model    : simple
-#               config   :
-#                  strategy: TRABOS
-#                  params : {'period': 115, 'ema': 30, 'atr': 165, 'mfi': 200, 'vwap': 200, 'mfi_dir_len': 2, 'obv_dir_len': 2, 'stop_x': 10, 'profit_x': 8, 'vosc_short': 80, 'vosc_long': 150, 'timeout_buy': 0, 'timeout_sell': 0}
-      # products - end            
+     # products - end            
       order_type    : market
       fee     : 
          maker : 0 #make fee %
@@ -59,20 +47,17 @@ stop_loss:
    rate : 1 #-3%
 take_profit:
    enabled: true
-   rate: 5 # 10percent
+   rate: 5 # 5percent
 decision:
-   model    : simple
    config   :
-      strategy: TATS
-      params: {'ema': 4, 'atr': 30, 'rsi': 14, 'mfi': 44, 'mfi_dir_len': 2, 'rsi_dir_len': 2, 'rsi_overbought': 80, 'rsi_oversold': 39, 'open_delay': 28, 'close_delay': 10, 'atr_mx': 1}
+      strategy: NOOBS_DT
       
 # Global Cfg - end
-# TODO: exchanges specific config should follow a common timing, should be driven by global config
 candle_interval : 60  # 1 min 
 
 backfill:
    enabled  : true  
-   period   : 2  #in Days
+   period   : 20  #in Days
 
 simulator:
    enabled : true
@@ -83,10 +68,9 @@ genetic_optimizer:
    N_POP : 10
    N_GEN : 1
    N_MP : 1
-   strategy : TATS
+   strategy : NOOBS_DT
 ui:
    enabled : true
-   #enabled : false   
    port : 8080
    
 #EOF
