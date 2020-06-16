@@ -24,7 +24,7 @@ from decimal import getcontext
 import argparse
 import os
 import json
-from multiprocessing import Lock
+from threading import Lock
 from flask import Flask, request, send_from_directory
 
 from utils import getLogger
