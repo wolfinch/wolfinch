@@ -267,6 +267,7 @@ def server_main (port=8080, mp_pipe=None):
                    "exchange": exch_name,
                    "product": prod_id
                    }
+            candle_list = []
             if mp_pipe:
                 msg = mp_send_recv_msg (mp_pipe, msg, True)
                 if msg:
@@ -317,6 +318,7 @@ def server_main (port=8080, mp_pipe=None):
                    "exchange": exch_name,
                    "product": prod_id
                    }
+            pos_list = []
             if mp_pipe:
                 msg = mp_send_recv_msg (mp_pipe, msg, True)
                 if msg:
