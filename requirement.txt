@@ -5,7 +5,6 @@ autobahn==19.11.1
 Automat==0.8.0
 bintrees==2.0.7
 cachetools==3.1.1
-cbpro==1.1.4
 certifi==2019.11.28
 cffi==1.13.2
 chardet==3.0.4
@@ -23,6 +22,7 @@ google-pasta==0.1.8
 grpcio==1.25.0
 h5py==2.10.0
 hyperlink==19.0.0
+python-dateutil==2.8.1
 idna==2.8
 incremental==17.5.0
 itsdangerous==1.1.0
@@ -47,8 +47,6 @@ PyHamcrest==1.9.0
 pymongo==3.5.1
 pyOpenSSL==19.1.0
 pyparsing==2.4.5
-python-binance==0.7.4
-python-dateutil==2.8.1
 pytz==2019.3
 PyYAML==5.2
 regex==2019.11.1
