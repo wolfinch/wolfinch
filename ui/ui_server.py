@@ -295,7 +295,7 @@ def server_main (port=8080, mp_pipe=None):
                     return obj.serialize()
             return json.dumps(candle_list, default=serialize)
         except Exception as e:
-            log.error ("Unable to get market list. Exception: %s", e)
+            log.error ("Unable to get candle list. Exception: %s", e)
             return "[]"        
         
     @app.route('/api/positions')
@@ -340,7 +340,7 @@ def server_main (port=8080, mp_pipe=None):
                 raise Exception (err)
             return str(pos_list)
         except Exception as e:
-            log.error ("Unable to get market list. Exception: %s", e)
+            log.error ("Unable to get position list. Exception: %s", e)
             return "[]" 
             
 #     @app.route('/api/positions')
@@ -416,6 +416,11 @@ def mp_send_recv_msg(mp_pipe, msg, wait_resp=False):
     global g_mp_lock
     try:
         g_mp_lock.acquire()
+        #there seems to be a weird timing issue causing msg flips
+        #drain everything in the pipe before we start
+        while mp_pipe.poll(0):
+            msg = mp_pipe.recv()
+            log.error("recv unknown msg(%s) recvd (draining)"%(msg.get("type")))
         mp_pipe.send(msg)
         if False == wait_resp:
             g_mp_lock.release()
