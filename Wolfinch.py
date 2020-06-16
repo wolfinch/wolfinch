@@ -27,7 +27,7 @@ import traceback
 import argparse
 from decimal import getcontext
 import random
-import logging, matplotlib
+# import logging
 from utils import getLogger, get_product_config, load_config, get_config
 import sims
 import exchanges
@@ -38,8 +38,8 @@ import stats
 import ui
 from ui import ui_conn_pipe
 
-mpl_logger = logging.getLogger('matplotlib')
-mpl_logger.setLevel(logging.WARNING)
+# mpl_logger = logging.getLogger('matplotlib')
+# mpl_logger.setLevel(logging.WARNING)
 log = getLogger('Wolfinch')
 log.setLevel(log.INFO)
 
