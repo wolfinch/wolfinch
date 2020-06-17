@@ -90,5 +90,10 @@ def import_decision(dec_mod_name):
     sys.path.insert(0, this_dir)        
     log.info ("importing decision module: %s "%(dec_mod_name))
     dec_path = dec_mod_name
-    return importlib.import_module(dec_path)
+    try:
+        return importlib.import_module(dec_path)
+    except ModuleNotFoundError as e:
+        log.critical("error loading module - %s"%(str(e)))
+        print("error loading module - %s"%(str(e)))
+        raise e
 #EOF

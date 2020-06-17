@@ -99,8 +99,9 @@ def import_strategy(strat_cls_name):
     try:
         mod = importlib.import_module(strat_path)
         return getattr(mod, strat_cls_name.upper(), None)
-    except ModuleNotFoundError:
-        return None
+    except ModuleNotFoundError as e:
+        print("error loading module - %s"%(str(e)))
+        raise e
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':

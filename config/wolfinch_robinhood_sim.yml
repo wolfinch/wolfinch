@@ -22,7 +22,7 @@
 # One primary exchange for trading and as many others in spectator mode
 # data from exchanges in spectator mode will be considered for trading decision
 exchanges:
-   - 'noop' : 
+   - 'robinhood' : 
       role: 'primary'
       config: 'config/robinhood.yml'
       products:

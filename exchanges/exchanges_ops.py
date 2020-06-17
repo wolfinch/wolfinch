@@ -81,5 +81,10 @@ def close_exchanges():
 def import_exchange(exch_mod_name, exch_cls_name):
     log.info ("importing exch module: %s class: %s"%(exch_mod_name, exch_cls_name))
     exch_path = "exchanges."+exch_mod_name
-    return getattr(importlib.import_module(exch_path), exch_cls_name, None)
+    try:
+        return getattr(importlib.import_module(exch_path), exch_cls_name, None)
+    except ModuleNotFoundError as e:
+        log.critical("error loading module - %s"%(str(e)))
+        print("error loading module - %s"%(str(e)))
+        raise e
 #EOF    

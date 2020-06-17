@@ -90,13 +90,13 @@ def import_indicator(ind_cls_name):
     try:
         mod = importlib.import_module(strat_path)
         return getattr(mod, ind_cls_name.upper(), None)
-    except ModuleNotFoundError:
-        return None
+    except ModuleNotFoundError as e:
+        print("error loading module - %s"%(str(e)))
+        raise e
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     print ("Market Indicators Test")
     Configure ("SIM_EXCH", "BTC-USD", manual_indicator_config)
-    
     
 #EOF
