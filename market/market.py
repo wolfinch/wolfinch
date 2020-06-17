@@ -1048,6 +1048,7 @@ class Market:
         mf = self.fund
         sf = mstats['fund']
         mf.initial_value = float(sf['initial_value'])
+        mf.current_value = float(sf['current_value'])        
         mf.current_hold_value = float(sf['current_hold_value'])
         mf.total_traded_value = float(sf['total_traded_value'])
         mf.fee_accrued = float(sf['fee_accrued'])
