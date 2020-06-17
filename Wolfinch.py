@@ -361,10 +361,10 @@ if __name__ == '__main__':
             #slow down a little bit. wait to get to a whole minute boundary, we might get some initial trades wrong here. that's ok
             # this initial delay will help us to get cleaner candles when we are operational
             log.debug("waiting to start wolfinch main")
-            wait = 60 - time.time()%60
+            wait = int(60 - time.time()%60)
             while (wait):
-                print ("starting main in %d sec"%(wait))
-                log.info ("starting main in %d sec"%(wait))                
+                print ("starting main in %s seconds.."%(str(wait)))
+#                 log.info ("starting main in %d seconds.."%(wait))                
                 wait -= 1
                 time.sleep(1)
             log.info("Starting Main forever loop")
