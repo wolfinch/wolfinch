@@ -48,7 +48,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.INFO)
+log.setLevel(log.CRITICAL)
 
 Wolfinch_market_list = []
 

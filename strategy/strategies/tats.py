@@ -307,6 +307,8 @@ class TATS(Strategy):
               all(rsi_l[i] >= rsi_l[i+1] for i in range(len(rsi_l)-1))):
             print("TATS - overbought(%f) SELL"%(rsi))            
             self.rsi_action = "sell"
+        else:
+            self.rsi_action = ""
         ####### RSI/MFI signaling ########
 
         if self.rsi_action == "buy" and (self.zone_action == "buy" or self.zone_action == ""):
