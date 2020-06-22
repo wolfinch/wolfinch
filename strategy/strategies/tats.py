@@ -212,6 +212,7 @@ class TATS(Strategy):
             if cur_close >= vwap + self.atr_mx*atr:
                 if self.vwap_try_break == True:
                     #broke VWAP resistance, new break
+                    print ("TATS - broke vwap(%f) resistance BUY "%(vwap))                    
                     if za == "":
                         self.vwap_try_break = False
                         za = "buy"

@@ -1135,9 +1135,11 @@ class Market:
         if self.trading_paused_sell == False:
             self._handle_tp_and_sl ()
                 
-        now = time.time()
+        now = int(time.time())
         if now >= self.cur_candle_time + self.candle_interval:
-            candle = OHLC(int(now), self.O, self.H, self.L, self.get_market_rate(), self.V)
+            #use the previous candle time. this may make first candle slightly skewed while start up, but it's okay            
+            c_time = (now - now%self.candle_interval) 
+            candle = OHLC(c_time, self.O, self.H, self.L, self.get_market_rate(), self.V)
             self.add_new_candle (candle)
             
         # 2.update market states

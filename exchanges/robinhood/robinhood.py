@@ -556,16 +556,15 @@ class Robinhood (Exchange):
 
     def buy (self, trade_req) :
         log.debug ("BUY - Placing Order on exchange --")
-        
-        instr = self.get_instrument_from_symbol(trade_req.product)
-        params = {'symbol':trade_req.product, 'side' : "buy", 'quantity':trade_req.size, "instrument_URL": instr["url"],
-                  "time_in_force": "GTC", 'trigger':"immediate" }  # asset
-        if trade_req.type == "market":
-            params['order_type'] = "market"
-        else:
-            params['order_type'] = "limit"
-            params['price'] = trade_req.price,  # USD
         try:
+            instr = self.get_instrument_from_symbol(trade_req.product)
+            params = {'symbol':trade_req.product, 'side' : "buy", 'quantity':trade_req.size, "instrument_URL": instr["url"],
+                      "time_in_force": "GTC", 'trigger':"immediate" }  # asset
+            if trade_req.type == "market":
+                params['order_type'] = "market"
+            else:
+                params['order_type'] = "limit"
+                params['price'] = trade_req.price,  # USD
             order = self.rbh_client.submit_buy_order(**params).json()
         except Exception as e:
             log.error ("exception while placing order - %s"%(e))
@@ -574,15 +573,15 @@ class Robinhood (Exchange):
     
     def sell (self, trade_req) :
         log.debug ("SELL - Placing Order on exchange --")
-        instr = self.get_instrument_from_symbol(trade_req.product)
-        params = {'symbol':trade_req.product, 'side' : "sell", 'quantity':trade_req.size, "instrument_URL": instr["url"],
-                  "time_in_force": "GTC", 'trigger':"immediate" }  # asset
-        if trade_req.type == "market":
-            params['order_type'] = "market"
-        else:
-            params['order_type'] = "limit"
-            params['price'] = trade_req.price,  # USD
         try:
+            instr = self.get_instrument_from_symbol(trade_req.product)
+            params = {'symbol':trade_req.product, 'side' : "sell", 'quantity':trade_req.size, "instrument_URL": instr["url"],
+                  "time_in_force": "GTC", 'trigger':"immediate" }  # asset
+            if trade_req.type == "market":
+                params['order_type'] = "market"
+            else:
+                params['order_type'] = "limit"
+                params['price'] = trade_req.price,  # USD
             order = self.rbh_client.submit_sell_order(**params).json()
         except Exception as e:
             log.error ("exception while placing order - %s"%(e))
@@ -600,7 +599,11 @@ class Robinhood (Exchange):
     
     def cancel_order (self, prod_id, order_id):
         log.debug ("CANCEL - prod(%s) order (%s) " % (prod_id, order_id))
-        return self.rbh_client.client.cancel_order(order_id)
+        try:
+            return self.rbh_client.client.cancel_order(order_id)
+        except Exception as e:
+            log.error ("exception while canceling order - %s"%(e))
+            return None
     
     def get_market_hrs(self, date=None):
         if date==None:
@@ -612,10 +615,17 @@ class Robinhood (Exchange):
         return m_hrs["is_open"], m_hrs
     
     def get_quote (self, sym):
-        return self.rbh_client.get_quote(sym.upper())
-        
+        try:
+            return self.rbh_client.get_quote(sym.upper())
+        except Exception as e:        
+            log.error ("exception calling rh api - %s"%(e))
+            return None         
     def _fetch_json_by_url(self, url):
-        return self.rbh_client.get_url(url)
+        try:
+            return self.rbh_client.get_url(url)
+        except Exception as e:        
+            log.error ("exception calling rh api - %s"%(e))
+            return None        
     
     def get_instrument_from_symbol(self, symbol):
         instr = self.symbol_to_instr_map.get(symbol)
@@ -623,13 +633,17 @@ class Robinhood (Exchange):
             log.debug ("found cached instr for id: %s symbol: %s"%(symbol, instr['id']))
             return instr
         else:
-            instr = self.rbh_client.instrument(symbol)
-            if instr :
-                log.debug("got symbol for id %s symbol: %s"%(symbol, instr['id']))   
-                self.instr_to_symbol_map[symbol] = instr
-                return instr
-            else:
-                log.error("unable to get symbol for id %s"%(symbol))        
+            try:
+                instr = self.rbh_client.instrument(symbol)
+                if instr :
+                    log.debug("got symbol for id %s symbol: %s"%(symbol, instr['id']))   
+                    self.instr_to_symbol_map[symbol] = instr
+                    return instr
+                else:
+                    log.error("unable to get symbol for id %s"%(symbol))
+            except Exception as e:        
+                log.error ("exception calling rh api - %s"%(e))
+                return None                
         return None
         
     def _get_symbol_from_instrument(self, instr):
