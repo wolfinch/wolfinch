@@ -42,8 +42,8 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 MARKET_STATS = "stats_market_%s_%s.json"
 
 UI_CODES_FILE = "data/ui_codes.json"
-UI_TRADE_SECRET = "1234"
-UI_PAGE_SECRET = "1234"
+UI_TRADE_SECRET = None
+UI_PAGE_SECRET = None
 
 g_mp_lock = None
 
@@ -54,6 +54,10 @@ def load_ui_codes ():
         with open (UI_CODES_FILE, 'r') as fp:
             codes = json.load(fp)            
             UI_TRADE_SECRET, UI_PAGE_SECRET = codes['TRADE_SECRET'], codes['UI_SECRET']
+    except FileNotFoundError:
+        err_str = "ui codes file not present. ui security not enabled!!!"
+        log.critical(err_str)
+        print(err_str)
     except Exception as e:
         log.critical ("exception %s on ui while reading UI codes" % (e))        
         raise e    
@@ -74,37 +78,42 @@ def server_main (port=8080, mp_pipe=None):
     app = Flask(__name__, static_folder='web/', static_url_path='/web/')
 
     def get_ui_secret():
-        return str(UI_PAGE_SECRET)
+        return str(UI_PAGE_SECRET) if UI_PAGE_SECRET != None else None
     
+    @app.route('/wolfinch/js/<path>')    
     @app.route('/<secret>/wolfinch/js/<path>')
-    def send_js_api(secret, path):
+    def send_js_api(path, secret=None):
         return app.send_static_file('js/'+path)
 
+    @app.route('/wolfinch/stylesheet.css')
     @app.route('/<secret>/wolfinch/stylesheet.css')
-    def stylesheet_page_api(secret):
+    def stylesheet_page_api(secret=None):
         if secret != get_ui_secret():
-            log.error ("wrong code: " + secret)
+            log.error ("wrong code: " + str(secret))
             return ""
         return app.send_static_file('stylesheet.css')
-
+    
+    @app.route('/wolfinch/chart.html')
     @app.route('/<secret>/wolfinch/chart.html')
-    def chart_page_api(secret):
+    def chart_page_api(secret=None):
         if secret != get_ui_secret():
-            log.error ("wrong code: " + secret)
+            log.error ("wrong code: " + str(secret))
             return ""
         return app.send_static_file('chart.html')
 
+    @app.route('/wolfinch/trading.html')
     @app.route('/<secret>/wolfinch/trading.html')
-    def trading_page_api(secret):
+    def trading_page_api(secret=None):
         if secret != get_ui_secret():
-            log.error ("wrong code: " + secret)
+            log.error ("wrong code: " + str(secret))
             return ""
-        return app.send_static_file('trading.html')    
+        return app.send_static_file('trading.html')
 
+    @app.route('/wolfinch')
     @app.route('/<secret>/wolfinch')
-    def root_page_api(secret):
+    def root_page_api(secret=None):
         if secret != get_ui_secret():
-            log.error ("wrong code: " + secret)
+            log.error ("wrong code: " + str(secret))
             return ""
         return app.send_static_file('index.html')        
 
