@@ -498,8 +498,8 @@ class Robinhood (Exchange):
         elif order_type == "limit":
             order_type = 'limit'
                 
-        if status in ['open', 'unconfirmed', 'queued', 'cancelled', 'filled', 'rejected', 'expired' ]:
-            if status in ["open", 'unconfirmed', 'queued']:
+        if status in ['open', 'confirmed', 'unconfirmed', 'queued', 'cancelled', 'filled', 'rejected', 'expired' ]:
+            if status in ["open", 'unconfirmed', 'queued', 'confirmed']:
                 status_type = "open"
             elif status == 'filled':
                 status_type = "filled"
