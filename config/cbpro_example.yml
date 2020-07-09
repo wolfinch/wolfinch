@@ -1,0 +1,22 @@
+# ################################################
+# CoinbasePro Exchange Config file 
+##################################################
+
+exchange:
+   name        : cbpro      
+    
+  ##### sandbox api base ######
+   apiBase      : 'https://api-public.sandbox.pro.coinbase.com'
+   wsFeed       : 'wss://ws-feed-public.sandbox.pro.coinbase.com'
+   apiPassphrase: 'sample passphrase'
+   apiKey       : 'sample key'
+   apiSecret    : 'sample/secret=='
+  
+  #### LIVE API **** Be careful with these **** ###
+#   apiBase     : 'https://api.pro.coinbase.com'
+#   wsFeed      : 'wss://ws-feed.pro.coinbase.com'
+#   apiPassphrase : 'sample passphrase'
+#   apiKey        : 'sample key'
+#   apiSecret     : 'sample/secret=='
+    
+  #EOF

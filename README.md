@@ -3,7 +3,7 @@
 ********
 # Wolfinch
 
-Wolfinch is a trading bot implemented in Python. It is primarily focused on crypto currency trading, however the implementation is generic enough that it can be used for trading any asset. The modularized implementation is easily extensible to support more exchanges, trading strategies and indicators. A simple UI is available out of the box to view trades and allow basic controls in operation. 
+Wolfinch is a trading bot implemented in Python. It supports algorithmic trading for equity market and cryptocurrency exchanges. The modularized implementation is easily extensible to support more exchanges, trading strategies and indicators. A simple UI is available out of the box to view trades and allow basic controls in operation. 
 
 #### Features include : 
 * Auto / Manual Trading Modes
@@ -44,11 +44,20 @@ A few examples below covers most startup modes:
 
 A lot of sample config files are available in config/ directory. Those should serve as a very good starting point.
 
+**Read More here**:
+
+[Introduction-to-the-friendly-trading-bot](https://medium.com/@joe.cet/wolfinch-introduction-to-the-friendly-trading-bot-fe9281825e59)
+
+[algorithmic-trading-with-robinhood-using-wolfinch](https://medium.com/@joe.cet/algorithmic-trading-with-robinhood-using-wolfinch-b268b7aca43f)
+
+[algorithmic-trading-with-binance-using-wolfinch](https://medium.com/@joe.cet/algorithmic-trading-with-binance-using-wolfinch-fe5353885451)
+
 
 ### Supported Exchanges
 * Coinbase Pro
 * Binance
 * Binance US
+* Robinhood
 * gdax [deprecated]
 
 ### Disclaimer:
@@ -64,8 +73,7 @@ Not based on priority.
 3. improve Decision/Model
 5. more exchanges
 7. integrate news source, sentiment analysis input for decision 
-10. high frequency trading
-11. **Any additional feature requests**
+10. **Any feature requests**
 
 #### NOTE:
 Read third-party [Readme](third_party/README.md) for dependencies
@@ -76,6 +84,10 @@ You can donate to appreciate the countless hours spent on the development.
 * **BTC** : `35bYjx9Geo6gLM41nqRnZA5KpciJEfJokD`
 * **ETH** : `0x2598eA883719a679deEf821736fa39DF0DD9F86C`
 * **LTC** : `MRfdbKHUrSxv2zKztdVyodKwSzpQNgofr8`
+
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JCTW62GFL4QGW&currency_code=USD&source=url)
+
+
 
 ### License
 

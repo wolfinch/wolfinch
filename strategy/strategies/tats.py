@@ -321,14 +321,24 @@ class TATS(Strategy):
             signal = -1
             self.rsi_action = self.zone_action = ""
         print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
-        if cdl.time < self.open_time + self.open_delay*60:
-            # we are a day trading strategy and let's not carry over to next day
+        if (cdl.time < self.open_time + self.open_delay*60) or (cdl.time > self.close_time - (self.close_delay+10)*60):
             #let's not buy anything within half n hr of market open and sell everything 15min in to market close
+            # don't buy if we are with in 10mins of close delay window below
             print ("TATS - open delay skip trade signal: %d"%(signal))      
             signal = 0
         elif cdl.time > self.close_time - self.close_delay*60:
+            # we are a day trading strategy and let's not carry over to next day            
             print ("TATS - closing day window. SELL everything signal: %d"%(signal))
             signal = -1
+        
+        #let's keep only one open position at a time
+        if signal > 0 and self.signal > 0:
+            signal = 0
+        elif signal < 0 and self.signal < 0:
+            signal = 0
+        elif signal != 0:
+            self.signal = signal
+            
         return signal
     
 # EOF

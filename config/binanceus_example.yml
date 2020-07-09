@@ -1,0 +1,19 @@
+##################################################
+# Binance config
+##################################################
+
+exchange:
+  name        : binanceus
+  products: 
+    - 'XLMUSD':
+       id : 'XLMUSD'
+    - 'BTCUSD':
+       id : 'BTCUSD'
+           
+  ##### api secrets ######  ********* Be ** Careful *** BNC secrets are ---HOT---***
+  apiKey       : 'this is a sample key'
+  apiSecret    : 'this is a sample secret'
+
+  test_mode : false
+  
+  #EOF
