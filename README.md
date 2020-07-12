@@ -62,7 +62,7 @@ A lot of sample config files are available in config/ directory. Those should se
 
 ### Disclaimer:
 
-Strategies are experimental. Use them at your own risk. 
+This project is for educational purpose only. Strategies are experimental. Use them at your own risk. 
 
 #### Further Enhancements: 
 
