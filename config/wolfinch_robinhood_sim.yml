@@ -64,7 +64,7 @@ decision:
    model    : simple
    config   :
       strategy: TATS
-      params: {'ema': 4, 'atr': 30, 'rsi': 14, 'mfi': 44, 'mfi_dir_len': 2, 'rsi_dir_len': 2, 'rsi_overbought': 80, 'rsi_oversold': 39, 'open_delay': 28, 'close_delay': 10, 'atr_mx': 1}
+      params: {'ema': 4, 'atr': 30, 'rsi': 14, 'mfi': 44, 'mfi_dir_len': 3, 'rsi_dir_len': 3, 'rsi_overbought': 70, 'rsi_oversold': 39, 'open_delay': 28, 'close_delay': 10, 'atr_mx': 1}
       
 # Global Cfg - end
 # TODO: exchanges specific config should follow a common timing, should be driven by global config
