@@ -330,14 +330,6 @@ class TATS(Strategy):
             # we are a day trading strategy and let's not carry over to next day            
             print ("TATS - closing day window. SELL everything signal: %d"%(signal))
             signal = -1
-        
-        #let's keep only one open position at a time
-        if signal > 0 and self.signal > 0:
-            signal = 0
-        elif signal < 0 and self.signal < 0:
-            signal = 0
-        elif signal != 0:
-            self.signal = signal
             
         return signal
     
