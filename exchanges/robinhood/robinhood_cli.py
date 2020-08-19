@@ -241,7 +241,7 @@ def print_options_order_history(symbol, from_date, to_date):
                         amt_buy += price                
                 print ("{:<6}{:^10}{:^15}{:^10}{:^6}{:^8}{:^8.0f}{:^10.3f}{:^10}{:^10}{:^10}{:^25}{:^15}".format(sym, 
                         strike, expiry_date, opt_type, side, pos_effect,
-                         quant, price, typ, status, dir, strat,  o["created_at"]))
+                         quant, price/quant, typ, status, dir, strat,  o["created_at"]))
         print("Summary:\n num_buy: %d \n amt_buy: %.2f \n num_sell: %d \n amt_sell: %.2f\n profit: %.2f"%(
             num_buy, amt_buy, num_sell, amt_sell, (amt_sell-amt_buy)))
     else:
