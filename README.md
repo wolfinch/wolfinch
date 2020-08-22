@@ -52,6 +52,7 @@ A lot of sample config files are available in config/ directory. Those should se
 
 [algorithmic-trading-with-binance-using-wolfinch](https://medium.com/@joe.cet/algorithmic-trading-with-binance-using-wolfinch-fe5353885451)
 
+Join the subreddit - [wolfinch](https://www.reddit.com/r/wolfinch)
 
 ### Supported Exchanges
 * Coinbase Pro
