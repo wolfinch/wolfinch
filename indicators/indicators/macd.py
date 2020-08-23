@@ -31,11 +31,12 @@ class MACD (Indicator):
         period = slowperiod + signal - 1
     '''
     
-    def __init__(self, name, short_period=34, long_period=34, signal_period=34):
+    def __init__(self, name, short_period=24, long_period=52, signal_period=9):
         self.name = name
         self.short_period = short_period
         self.long_period = long_period
         self.signal_period = signal_period
+        self.period = max(long_period, short_period)
                 
     def calculate(self, candles):        
         candles_len = len(candles)

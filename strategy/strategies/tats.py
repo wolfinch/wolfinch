@@ -87,6 +87,8 @@ class TATS(Strategy):
         self.set_indicator("close")
         self.set_indicator("VWAP")
 #         self.set_indicator("MVWAP", (250, vwap))
+#         self.set_indicator("MACD", (24, 52, 9))
+
         
         # states
         self.day_open = 0      
