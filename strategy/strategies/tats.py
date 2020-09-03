@@ -50,7 +50,7 @@ class TATS(Strategy):
 #         'timeout_sell' : {'default': 5, 'var': {'type': int, 'min': 0, 'max': 50, 'step': 2 }},
         }
     
-    def __init__ (self, name, period=30, ema=6, atr=50, mfi=50, rsi=14, rsi_overbought=70, rsi_oversold=20,
+    def __init__ (self, name, period=30, ema=6, ema_l=24, atr=50, mfi=50, rsi=14, rsi_overbought=70, rsi_oversold=20,
                   open_delay=20, close_delay=15, atr_mx=2, mfi_dir_len=2, rsi_dir_len=2
                  ):
         self.name = name
@@ -58,6 +58,7 @@ class TATS(Strategy):
     
         self.atr = atr
         self.ema = ema
+        self.ema_l = ema_l
         self.mfi = mfi
         self.mfi_dir_len = mfi_dir_len #mfi_dir_len
         self.rsi_dir_len = rsi_dir_len
@@ -79,6 +80,7 @@ class TATS(Strategy):
         # configure required indicators
         self.set_indicator("ATR", atr)
         self.set_indicator("EMA", ema)
+        self.set_indicator("EMA", ema_l)        
         self.set_indicator("MFI", mfi)
         #self.set_indicator("VOSC", {(vosc_short, vosc_long)}) 
 #         self.set_indicator("OBV")
@@ -110,6 +112,7 @@ class TATS(Strategy):
         self.open_time = 0
         self.close_time = 0
         self.bought = True
+        self.trend = ""
 
     def generate_signal (self, candles):
 #         '''
@@ -162,22 +165,48 @@ class TATS(Strategy):
 #         obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
         
         atr = self.indicator(candles, 'ATR', self.atr)
-        ema_l = self.indicator(candles, 'EMA', self.ema, history=2)
+        ema_sh = self.indicator(candles, 'EMA', self.ema, history=2)
+        ema_s = ema_sh[-1]
+        ema_l = self.indicator(candles, 'EMA', self.ema_l)        
         vwap = self.indicator(candles, 'VWAP')
         rsi = rsi_l[-1]
         
-        #short trend, simple direction
-        if ema_l[0] > ema_l[-1]:
-            trend = "down"
-        elif ema_l[0] < ema_l[-1]:
-            trend = "up"
+        #simple direction
+        if ema_sh[0] > ema_sh[-1]:
+            dir = "down"
+        elif ema_sh[0] < ema_sh[-1]:
+            dir = "up"
         else:
-            trend = ""
+            dir = ""
+        #simple direction
+        #trend, reversal
+        trend = ""
+        if ema_s >= ema_l + atr:
+            trend = "bullish"
+        elif ema_s <= ema_l - atr:
+            trend = "bearish"
+#         else:
+#             trend = ""
+        t_rev = False
+        if self.trend != trend:
+            t_rev = True
+            self.trend = trend
+        #trend, reversal
+        #trend crossover signaling
+        trend_signal = ""
+        if t_rev:
+            #acts only on bearish crossover rn.
+            if trend == "bearish":
+                trend_signal = "sell"
+            elif trend == "bullish":
+                trend_signal = "buy"
+        #trend crossover signaling
+        
         ######support/resistance zone handling###########
         print ("*******%d:(%s) zone_s: %s zone_r: %s vwap: %f rsi: %f atr: %f cur_close: %f"%(cdl.time,
             dt.time(), self.s_l, self.r_l, vwap, rsi, atr, cur_close))
         za = ""        
-        if trend == "up":
+        if dir == "up":
             #see if we are near any resistance zones or crossed
             try:
                 i = 0
@@ -233,7 +262,7 @@ class TATS(Strategy):
                         self.s_l[s] = w+1                        
                         self.sup_try_break = False             
                         za = "buy"    
-        elif trend == "down":
+        elif dir == "down":
             #see if we are near any support zones or crossed
             try:
                 i = -1
@@ -317,9 +346,9 @@ class TATS(Strategy):
             print (" >>>>>>>>>>>>>>>>>TATS: BUY z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
             signal = 1
             self.rsi_action = self.zone_action = ""
-        elif  self.rsi_action == "sell" or self.zone_action == "sell":
+        elif  self.rsi_action == "sell" or self.zone_action == "sell" or trend_signal == "sell":
             #proactive sell
-            print (" >>>>>>>>>>>>>>>>TATS: SELL z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
+            print (" >>>>>>>>>>>>>>>>TATS: SELL z_a: %s rsi_a: %s trend_signal: %s"%(self.zone_action, self.rsi_action, trend_signal))            
             signal = -1
             self.rsi_action = self.zone_action = ""
         print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))

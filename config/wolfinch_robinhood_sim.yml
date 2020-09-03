@@ -54,7 +54,7 @@ exchanges:
 # Global Cfg
 
 stop_loss:
-   enabled: true
+   enabled: false
    kind : simple      #simple(default) | trailing | ATRXX | 
    rate : 1 #-3%
 take_profit:

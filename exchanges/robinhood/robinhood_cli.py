@@ -202,21 +202,25 @@ def print_options_order_history(symbol, from_date, to_date):
             side        = "NONE"# o["side"]
             status      = o["state"]            
             proc_quant       = float(0 if o["processed_quantity"]==None else o["processed_quantity"])
-            quant       = float(0 if o["quantity"]==None else o["quantity"])
-            if status == "cancelled" or status == "rejected":
+            req_quant       = float(0 if o["quantity"]==None else o["quantity"])
+            if status == "rejected":
                 continue
             if o["closing_strategy"]:
                 strat = o["closing_strategy"]
             else:
-                strat = o["opening_strategy"]            
-            if proc_quant != quant :# or strat == "long_call_spread":
-                log.critical("ERROR!!! proc_quant != quant:: FIXME:: %s"%(pprint.pformat(o, 4)))
-                raise
+                strat = o["opening_strategy"]
+            #Partial execution..
+#             if proc_quant != req_quant :# or strat == "long_call_spread":
+#                 print("ERROR!!! proc_quant != quant:: FIXME:: %s"%(pprint.pformat(o, 4)))
+#                 raise
             avg_price   = float(0 if o["premium"]==None else o["premium"])
             typ         = o["type"]
             dir         = o["direction"]
             for leg in o["legs"]:
                 exec_l = leg["executions"]
+                if len(exec_l) == 0:
+                    #cancelled orders will have 0 eexecc, partially exec orders can be cancelled but non-zero exec
+                    break
 #                 if len(exec_l) > 1:
 #                     log.critical ("FIXME: TODO: multi leg multi option o: %s"%(pprint.pformat(o, 4)))
 #                     raise
@@ -232,7 +236,7 @@ def print_options_order_history(symbol, from_date, to_date):
                 expiry_date = leg["option_det"]["expiration_date"]
                 strike = leg["option_det"]["strike_price"]
                 opt_type = leg["option_det"]["type"]                
-                if status == "filled":
+                if status != "rejected": #accommodate partial exec (filled, cancelled)
                     if side == "sell":
                         num_sell += quant
                         amt_sell += price
