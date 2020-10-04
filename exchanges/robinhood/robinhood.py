@@ -663,7 +663,7 @@ class Robinhood (Exchange):
     
     def get_order_history(self, symbol=None, from_date=None, to_date=None):
         #TODO: FIXME: this is the shittiest way of doing this. There must be another way
-        all_orders = self.get_all_history_orders(symbol)
+        all_orders = self.get_all_history_orders(symbol, from_date=from_date, to_date=to_date)
         orders = []
         if symbol == None or symbol == "":
             orders = all_orders
@@ -673,7 +673,7 @@ class Robinhood (Exchange):
                     orders.append(order)
         #TODO: FIXME: filter time
         return orders
-    def get_all_history_orders(self, symbol=None):
+    def get_all_history_orders(self, symbol=None, from_date=None, to_date=None):
         orders = []
         if symbol == None:
             past_orders = self.rbh_client.order_history()
@@ -691,15 +691,23 @@ class Robinhood (Exchange):
             past_orders = self._fetch_json_by_url(next_url)
             orders.extend(past_orders['results'])
         log.info("%d  order fetched"%(len(orders)))
+        filtered_orders = []
         for order in orders:
+            #filter time
+            exec_d = datetime.strptime(order["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            if from_date and from_date > exec_d:
+                continue
+            if to_date and to_date < exec_d:
+                continue              
             instrument = order['instrument']
             symbol = self._get_symbol_from_instrument(instrument)
             if symbol:
                 order['symbol'] = symbol['symbol']
                 order['bloomberg_unique'] = symbol['bloomberg_unique']
             else:
-                log.error ('unable to get symbol for instrument')  
-        return orders
+                log.error ('unable to get symbol for instrument')
+            filtered_orders.append(order)                 
+        return filtered_orders
     ##################### OPTIONS######################
     def get_option_from_instrument(self, instr):
         i_id = instr.rstrip('/').split('/')[-1]
@@ -784,9 +792,14 @@ class Robinhood (Exchange):
             orders = all_orders
         else:
             for order in all_orders:
+                #filter time
+                exec_d = datetime.strptime(order["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                if from_date and from_date > exec_d:
+                    continue
+                if to_date and to_date < exec_d:
+                    continue              
                 if order['chain_symbol'] == symbol.upper():
                     orders.append(order)
-        #TODO: FIXME: filter time
         #get option details
         for order in orders:
             for leg in order["legs"]:
