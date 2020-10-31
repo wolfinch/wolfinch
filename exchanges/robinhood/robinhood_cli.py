@@ -209,6 +209,9 @@ def print_options_order_history(symbol, from_date, to_date):
                 strat = o["closing_strategy"]
             else:
                 strat = o["opening_strategy"]
+            #filter with strategy
+            if args.filter != None and args.filter not in strat:
+                continue
             #Partial execution..
 #             if proc_quant != req_quant :# or strat == "long_call_spread":
 #                 print("ERROR!!! proc_quant != quant:: FIXME:: %s"%(pprint.pformat(o, 4)))
@@ -318,6 +321,7 @@ def arg_parse():
     parser.add_argument("--buy", help='buy asset', required=False, action='store_true')
     parser.add_argument("--sell", help='sell asset', required=False, action='store_true')
     parser.add_argument("--sort", help='sort', required=False)
+    parser.add_argument("--filter", help='filter kind', required=False)
     
     args = parser.parse_args()
     if args.config:
