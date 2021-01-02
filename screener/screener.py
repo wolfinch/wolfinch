@@ -116,33 +116,11 @@ def update_data():
     log.debug("updating data")
     
 def process_screeners ():
-    log.debug("processing screeners")    
-
-def process_ui_trade_notif(msg):
-    exch = msg.get("exchange")
-    product = msg.get("product")
-    side = msg.get("side")
-    signal = msg.get("signal")
-    m = get_market_by_product(exch, product)
-    if not m:
-        log.error("Unknown exchange/product exch: %s prod: %s" %(exch, product))
-    else:
-        log.info("Manual Trade Req: exch: %s prod: %s side: %s signal: %s" %(
-            exch, product, side, str(signal)))
-        m.consume_trade_signal(signal)
-
-def process_ui_pause_trading_notif(msg):
-    exch = msg.get("exchange")
-    product = msg.get("product")
-    buy_pause = msg.get("buy_pause")
-    sell_pause = msg.get("sell_pause")
-
-    m = get_market_by_product(exch, product)
-    if not m:
-        log.error("Unknown exchange/product exch: %s prod: %s" %(exch, product))
-    else:
-        log.info("pause trading on exch: %s prod: %s" %(exch, product))
-        m.pause_trading(buy_pause, sell_pause) 
+    log.debug("processing screeners")
+    
+def get_all_tickers ():
+    log.debug ("get all tickers")
+    
     
 def process_ui_msgs(ui_conn_pipe):
     try:
