@@ -21,12 +21,14 @@
 
 import time
 import sys
-# import os
+import os
 import traceback
 import argparse
 from decimal import getcontext
 import random
 # import logging
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "packages"))
+
 from utils import getLogger, get_product_config, load_config, get_config
 import sims
 import exchanges

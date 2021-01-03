@@ -30,8 +30,8 @@ from market import  OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 import logging
 import pyrh
-# import exchanges.robinhood.yahoofin as yahoofin
-from exchanges.robinhood.yahoofin import Yahoofin
+# import yahoofin as yahoofin
+from yahoofin import Yahoofin
 
 log = getLogger ('Robinhood')
 log.setLevel(log.DEBUG)
