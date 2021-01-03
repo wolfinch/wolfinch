@@ -40,7 +40,7 @@ log = getLogger('Screener')
 log.setLevel(log.DEBUG)
 # logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-GET_TICKER_API = "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25000&offset=0"
+GET_ALL_TICKERS_API = "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25000&offset=0"
 
 Session = None
 def get_url(url):
@@ -55,11 +55,12 @@ def get_url(url):
         }
         Session.headers = headers
         log.info("initialized nasdaq Session")
+    log.debug ("get url: %s"%(url))
     return Session.get(url, timeout=15).json()    
 
 def get_all_tickers ():
     log.debug ("get all tickers")
-    data = get_url (GET_TICKER_API)
+    data = get_url (GET_ALL_TICKERS_API)
     if data:
         all_tickers = data.get("data").get("table").get("rows")
         log.debug ("all tickers %s, total-number (%d)"%(pprint.pformat(all_tickers), len(all_tickers)))
@@ -68,7 +69,7 @@ def get_all_tickers ():
 def get_all_tickers_gt50m ():
     log.debug ("get all tickers")
     mcap = "&marketcap=mega|large|mid|small|micro"
-    api = GET_TICKER_API+mcap
+    api = GET_ALL_TICKERS_API+mcap
     data = get_url (api)
     if data:
         all_tickers = data.get("data").get("table").get("rows")
@@ -78,13 +79,36 @@ def get_all_tickers_gt50m ():
 def get_all_tickers_lt50m ():
     log.debug ("get all tickers")
     mcap = "&marketcap=nano"
-    api = GET_TICKER_API+mcap
+    api = GET_ALL_TICKERS_API+mcap
     data = get_url (api)
     if data:
         all_tickers = data.get("data").get("table").get("rows")
         log.debug ("tickers < 50m mcap %s, total-number (%d)"%(pprint.pformat(all_tickers), len(all_tickers)))
         return all_tickers
     
+def get_ticker_stats(ticker):
+    GET_STATS_API = "https://api.nasdaq.com/api/quote/%s/info?assetclass=stocks"%(ticker)
+    log.debug ("get ticker stats")
+    data = get_url (GET_STATS_API)
+    if data:
+        log.debug ("ticker %s, total-number (%d)"%(pprint.pformat(data), len(data)))
+        return data["data"]
+
+def get_tickers_stats(tickers):
+    GET_STATS_API = "https://api.nasdaq.com/api/quote/watchlist?"
+    log.debug ("get ticker stats")
+    if not len(tickers):
+        log.error ("invalid symbol list")
+        return None
+    sym_list = ""
+    for ticker in tickers:
+        sym_list += "&symbol="+ticker+"|stocks"
+    api = GET_STATS_API+sym_list
+    data = get_url (api)
+    if data:
+        log.debug ("ticker %s, total-number (%d)"%(pprint.pformat(data), len(data)))
+        return data["data"]
+            
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     '''
@@ -95,7 +119,7 @@ if __name__ == '__main__':
     try:
         log.info("Starting Main")
         print("Starting Main")
-        get_all_tickers_lt50m()
+        get_tickers_stats(["AAPL", "csco"])
     except(KeyboardInterrupt, SystemExit):
         sys.exit()
     except Exception as e:
