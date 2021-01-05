@@ -56,8 +56,13 @@ def get_url(url):
         Session.headers = headers
         log.info("initialized nasdaq Session")
     log.debug ("get url: %s"%(url))
-    return Session.get(url, timeout=15).json()    
-
+    r = Session.get(url, timeout=15)    
+    if r.status_code == requests.codes.ok:
+        return r.json()
+    else:
+        log.error ("bad response code: %s resp: %s"%(str(r.status_code), r))
+        return None
+        
 def get_all_tickers ():
     log.debug ("get all tickers")
     data = get_url (GET_ALL_TICKERS_API)
@@ -65,6 +70,8 @@ def get_all_tickers ():
         all_tickers = data.get("data").get("table").get("rows")
         log.debug ("all tickers %s, total-number (%d)"%(pprint.pformat(all_tickers), len(all_tickers)))
         return all_tickers
+    else:
+        return None
     
 def get_all_tickers_gt50m ():
     log.debug ("get all tickers")
@@ -75,6 +82,8 @@ def get_all_tickers_gt50m ():
         all_tickers = data.get("data").get("table").get("rows")
         log.debug ("tickers > 50m mcap %s, total-number (%d)"%(pprint.pformat(all_tickers), len(all_tickers)))
         return all_tickers
+    else:
+        return None
         
 def get_all_tickers_lt50m ():
     log.debug ("get all tickers")
@@ -85,6 +94,8 @@ def get_all_tickers_lt50m ():
         all_tickers = data.get("data").get("table").get("rows")
         log.debug ("tickers < 50m mcap %s, total-number (%d)"%(pprint.pformat(all_tickers), len(all_tickers)))
         return all_tickers
+    else:
+        return None
     
 def get_ticker_stats(ticker):
     GET_STATS_API = "https://api.nasdaq.com/api/quote/%s/info?assetclass=stocks"%(ticker)
@@ -93,6 +104,8 @@ def get_ticker_stats(ticker):
     if data:
         log.debug ("ticker %s, total-number (%d)"%(pprint.pformat(data), len(data)))
         return data["data"]
+    else:
+        return None
 
 def get_tickers_stats(tickers):
     GET_STATS_API = "https://api.nasdaq.com/api/quote/watchlist?"
@@ -108,7 +121,25 @@ def get_tickers_stats(tickers):
     if data:
         log.debug ("ticker %s, total-number (%d)"%(pprint.pformat(data), len(data)))
         return data["data"]
-            
+    else:
+        return None
+def get_all_tickers_gt50m_info():
+    BATCH_SIZE = 50
+    tickers = get_all_tickers_gt50m()
+    sym_list = []
+    for ticker in tickers:
+        sym_list.append(ticker["symbol"].strip())
+    ticker_stats = []
+    i = 0
+    while i < len(sym_list):
+        ts = get_tickers_stats(sym_list[i: i+BATCH_SIZE])
+        if ts and len(ts):
+            ticker_stats += ts
+            i += BATCH_SIZE
+        else:
+            time.sleep(2)
+    return ticker_stats
+    
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     '''
@@ -119,7 +150,9 @@ if __name__ == '__main__':
     try:
         log.info("Starting Main")
         print("Starting Main")
-        get_tickers_stats(["AAPL", "csco"])
+        get_all_tickers_gt50m_info()
+#         get_tickers_stats(["OCGN"])
+        
     except(KeyboardInterrupt, SystemExit):
         sys.exit()
     except Exception as e:

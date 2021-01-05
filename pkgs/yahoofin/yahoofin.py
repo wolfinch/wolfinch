@@ -26,7 +26,7 @@ from time import sleep
 import time
 from dateutil.tz import tzlocal, tzutc
 import requests
-from .yahoofin_websocket import WebsocketClient
+from yahoofin_websocket import WebsocketClient
 
 from utils import getLogger
 
@@ -72,6 +72,18 @@ class Yahoofin:
             log.critical ("error while importing candles - %s"%(resp['chart']["error"]))
             return None, resp['chart']["error"]
         return resp['chart']['result'][0], None
+    def get_quotes(self, sym_list):
+        log.debug ("sym_list %s"%(sym_list))
+        if (len(sym_list) == 0):
+            return None
+        fields = "&fields=longName,shortName,regularMarketPrice,regularMarketChange,regularMarketChangePercent,marketCap,underlyingSymbol,underlyingExchangeSymbol,headSymbolAsString,regularMarketVolume,uuid,regularMarketOpen,fiftyTwoWeekLow,fiftyTwoWeekHigh"
+        sym_str= ",".join(sym_list)
+        url = "https://query1.finance.yahoo.com/v7/finance/quote?&symbols="+sym_str+fields
+        resp = self.get_url(url)
+        if resp['quoteResponse']["error"] != None:
+            log.critical ("error while get quotes - %s"%(resp['quoteResponse']["error"]))
+            return None, resp['quoteResponse']["error"]
+        return resp['quoteResponse']['result'], None        
 
     def start_feed(self, products, cb_fn):
 #         products += ["LYFT", "ES=F", "YM=F", "NQ=F", "RTY=F", "CL=F", "GC=F", "SI=F", "EURUSD=X", "^TNX", "^VIX"]
@@ -85,9 +97,16 @@ def print_historic_candles(symbol, interval, from_date, to_date):
     print ("printing order history")    
     resp, err = yf.get_historic_candles(symbol, interval, from_date, to_date)
     if err == None:
-        print ("candle history: \n %s"%(resp))
+        print ("candle history: \n %s"%(pprint.pformat(resp)))
     else:
         print("unable to find order history, err %s"%err)
+def print_quotes(symbol_list):
+    print ("printing current quotes")    
+    resp, err = yf.get_quotes(symbol_list)
+    if err == None:
+        print ("quotes: \n %s"%(pprint.pformat(resp)))
+    else:
+        print("unable to find quotes, err %s"%err)
 
 def arg_parse():    
     global args, parser, YAHOOFIN_CONF
@@ -96,7 +115,7 @@ def arg_parse():
     parser.add_argument("--config", help='config file', required=False)
     parser.add_argument("--s", help='symbol', required=False)
     parser.add_argument("--ch", help='dump historic candles', required=False, action='store_true')
-
+    parser.add_argument("--q", help='dump quotes', required=False, action='store_true')
     args = parser.parse_args()
     if args.config:
         log.info ("using config file - %s"%(args.config))
@@ -110,6 +129,9 @@ if __name__ == '__main__':
     if args.ch:
         yf = Yahoofin ()
         print_historic_candles(args.s, "60m", 1586873400, 1588660532)
+    if args.q:
+        yf = Yahoofin ()
+        print_quotes(["TSLA", "codx"])        
     else:
         parser.print_help()
         exit(1)                            

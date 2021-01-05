@@ -29,7 +29,7 @@ from threading import Thread
 import threading
 from websocket import create_connection, WebSocketConnectionClosedException
 from utils import getLogger
-from .yahoofin_pricingdata_pb2 import PricingData
+from yahoofin_pricingdata_pb2 import PricingData
 
 parser = args = None
 log = getLogger ('YahoofinWS')

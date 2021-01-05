@@ -37,6 +37,8 @@ import stats
 import ui
 from ui import ui_conn_pipe
 
+import yahoofin as yf
+
 # mpl_logger = logging.getLogger('matplotlib')
 # mpl_logger.setLevel(logging.WARNING)
 log = getLogger('Screener')
@@ -47,15 +49,18 @@ gRestart = False
 # global Variables
 MAIN_TICK_DELAY = 0.500  # 500 milli
 
+YF = None
 
 def screener_init():
-
+    global YF
     # seed random
     random.seed()
 
     # 1. Retrieve states back from Db
 #     db.init_order_db(Order)
     register_screeners()
+    
+    YF = yf.Yahoofin ()
 
     # setup ui if required
     if ui.integrated_ui:
@@ -64,19 +69,6 @@ def screener_init():
             log.critical("unable to setup ui!! ")
             print("unable to setup UI!!")
             sys.exit(1)
-
-    # 2. Init Exchanges
-    exchanges.init_exchanges(get_config())
-
-    # 3. Init markets
-    market_init(exchanges.exchange_list, get_product_config)
-
-    # 4. Setup markets
-    market_setup(restart=gRestart)
-
-    # 5. start stats thread
-    stats.start()
-
 
 def screener_end():
     log.info("Finalizing Screener")
