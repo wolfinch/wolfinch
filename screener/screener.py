@@ -27,29 +27,31 @@ import argparse
 from decimal import getcontext
 import random
 # import logging
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "packages"))
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "../pkgs"))
 
 from utils import getLogger, get_product_config, load_config, get_config
-import sims
-import exchanges
+# import sims
+# import exchanges
 import db
-import stats
+# import stats
 import ui
 from ui import ui_conn_pipe
 
+import nasdaq
 import yahoofin as yf
 
 # mpl_logger = logging.getLogger('matplotlib')
 # mpl_logger.setLevel(logging.WARNING)
 log = getLogger('Screener')
-log.setLevel(log.INFO)
+log.setLevel(log.DEBUG)
 
-gRestart = False
+ticker_import_time = 0
+all_tickers = []
+YF = None
 
 # global Variables
-MAIN_TICK_DELAY = 0.500  # 500 milli
+MAIN_TICK_DELAY = 300  # 500 milli
 
-YF = None
 
 def screener_init():
     global YF
@@ -72,11 +74,9 @@ def screener_init():
 
 def screener_end():
     log.info("Finalizing Screener")
-    exchanges.close_exchanges()
 
     # stop stats thread
     log.info("waiting to stop stats thread")
-    stats.stop()
 
     ui.ui_mp_end()
     log.info("all cleanup done.")
@@ -108,13 +108,37 @@ def register_screeners():
     
 def update_data():
     log.debug("updating data")
+    get_all_tickers_info()
     
 def process_screeners ():
     log.debug("processing screeners")
     
 def get_all_tickers ():
+    global ticker_import_time, all_tickers
     log.debug ("get all tickers")
-    
+    if ticker_import_time + 24*3600 < int(time.time()) :
+        log.info ("renew tickers list")
+        t_l = nasdaq.get_all_tickers_gt50m()
+        if t_l:
+            all_tickers = []
+            for ticker in t_l:
+                all_tickers.append(ticker["symbol"].strip())            
+            ticker_import_time = int(time.time())        
+    return all_tickers    
+def get_all_tickers_info():
+    BATCH_SIZE = 200
+    sym_list = get_all_tickers()
+    log.debug("num tickers(%d)"%(len(sym_list)))
+    ticker_stats = []
+    i = 0
+    while i < len(sym_list):
+        ts =  YF.get_quotes(sym_list[i: i+BATCH_SIZE])
+        if ts and len(ts):
+            ticker_stats += ts
+            i += BATCH_SIZE
+        else:
+            time.sleep(2)    
+    log.debug("%s (%d)ticker stats retrieved"%(ticker_stats, len(ticker_stats)))
     
 def process_ui_msgs(ui_conn_pipe):
     try:
@@ -150,13 +174,11 @@ def clean_states():
     '''
     log.info("Clearing Db")
     db.clear_db()
-    stats.clear_stats()
 
 def arg_parse():
     '''
     arg parse
     '''
-    global gRestart
     parser = argparse.ArgumentParser(description='Wolfinch Screener')
 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0.1')
@@ -182,16 +204,15 @@ def arg_parse():
             log.debug("config loaded successfully!")
 #             exit(0)
     else:
-        parser.print_help()
-        exit(1)
+        pass
+#         parser.print_help()
+#         exit(1)
 
     if args.restart:
         log.debug("restart enabled")
         print("Restarting from previous state")
-        gRestart = True
     else:
         log.debug("restart disabled")
-        gRestart = False
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
