@@ -92,6 +92,8 @@ def screener_main():
 
     sleep_time = MAIN_TICK_DELAY
     while True:
+        if integrated_ui == True:
+            process_ui_msgs(ui_conn_pipe)        
         cur_time = time.time()
         update_data()
         process_screeners()
@@ -126,19 +128,19 @@ def get_all_tickers ():
             ticker_import_time = int(time.time())        
     return all_tickers    
 def get_all_tickers_info():
-    BATCH_SIZE = 200
+    BATCH_SIZE = 400
     sym_list = get_all_tickers()
     log.debug("num tickers(%d)"%(len(sym_list)))
     ticker_stats = []
     i = 0
     while i < len(sym_list):
-        ts =  YF.get_quotes(sym_list[i: i+BATCH_SIZE])
-        if ts and len(ts):
+        ts, err =  YF.get_quotes(sym_list[i: i+BATCH_SIZE])
+        if err == None:
             ticker_stats += ts
             i += BATCH_SIZE
         else:
             time.sleep(2)    
-    log.debug("%s (%d)ticker stats retrieved"%(ticker_stats, len(ticker_stats)))
+    log.debug("(%d)ticker stats retrieved"%( len(ticker_stats)))
     
 def process_ui_msgs(ui_conn_pipe):
     try:
@@ -151,22 +153,20 @@ def process_ui_msgs(ui_conn_pipe):
             else:
                 log.info ("ui_msg: %s"%(msg))
                 msg_type = msg.get("type")
-                if msg_type == "TRADE":
-                    process_ui_trade_notif(msg)
-                elif msg_type == "GET_MARKETS":
-                    process_ui_get_markets_rr(msg, ui_conn_pipe)
-                elif msg_type == "GET_MARKET_INDICATORS":
-                    process_ui_get_market_indicators_rr(msg, ui_conn_pipe)                    
-                elif msg_type == "GET_MARKET_POSITIONS":
-                    process_ui_get_positions_rr(msg, ui_conn_pipe)                        
-                elif msg_type == "PAUSE_TRADING":
-                    process_ui_pause_trading_notif(msg)
+                if msg_type == "GET_SCREENER_DATA":
+                    process_get_screener_data(msg)
                 else:
                     log.error("Unknown ui msg type: %s", msg_type)
     except Exception as e:
         log.critical("exception %s on ui" %(str(e)))
         raise e
 
+def process_get_screener_data(msg):
+    log.info("msg %s"%(msg))
+    
+    msg["type"] = "GET_SCREENER_DATA_RESP"
+    msg["data"] = {}
+    ui_conn_pipe.send(msg)    
 
 def clean_states():
     ''' 

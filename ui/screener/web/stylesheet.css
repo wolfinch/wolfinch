@@ -1,0 +1,415 @@
+/* General Site */
+html, body {
+	height: 100%;
+}
+
+body {
+	background-color: #f2f2f2;
+}
+
+.navbar {
+	margin-bottom: 0px;
+}
+
+.brand a, .brand a:focus, .brand a:hover {
+	color: #fff;
+}
+
+a, a:focus, a:hover {
+	color: #555;
+}
+
+.jumbotron {
+	/* Looks cool but commented out as it results in very slow performance on Chrome MAC */
+	/*-webkit-box-shadow: inset 0 0 100px rgba(0,0,0,.5);*/
+	/*box-shadow: inset 0 0 100px rgba(0,0,0,.5);*/
+	background-color: #333;
+	height: 60%;
+	min-height: 300px;
+	padding: 5px 0px;
+}
+
+.jumbotron .container {
+	height: 100%;
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+.chartcontainer {
+	height: 95%;
+	width:95%;
+	padding-left: 2em;
+	padding-right: 2em;
+	align: center;
+}
+
+.navbarselector {	
+/* 	height: 95%;
+	width:95%;
+	padding-left: 2em;
+	padding-right: 2em;
+	align: center; */
+	position: initial;
+}
+
+footer {
+	position: static;
+	bottom: 0;
+	width: 100%;
+	height: 60px;
+	line-height: 60px;
+	background-color: #f5f5f5;
+}
+
+
+header {
+	text-align: center;
+	padding-top: 15px;
+	margin-bottom: 15px;
+}
+
+header h3 {
+	margin-top: 10px;
+}
+
+/*
+    Header inspired by Layout inspired by @mdo's (https://twitter.com/mdo) Cover Template (http://getbootstrap.com/examples/cover/)
+ */
+.masthead-nav>li {
+	display: inline-block;
+	margin: 0 15px;
+}
+
+.masthead-nav>li+li {
+	margin-left: 0;
+}
+
+.masthead-nav>li>a {
+	padding-right: 0;
+	padding-left: 0;
+	font-size: 16px;
+	font-weight: bold;
+	color: #fff; /* IE8 proofing */
+	color: rgba(255, 255, 255, .75);
+	border-bottom: 2px solid transparent;
+}
+
+.masthead-nav>li>a:hover, .masthead-nav>li>a:focus {
+	background-color: transparent;
+	border-bottom-color: rgba(255, 255, 255, .25);
+}
+
+.masthead-nav>.active>a, .masthead-nav>.active>a:hover, .masthead-nav>.active>a:focus
+	{
+	color: #fff;
+	border-bottom-color: #fff;
+}
+
+
+@media ( min-width : 768px) {
+	header .brand {
+		float: left;
+	}
+	header .masthead-nav {
+		float: right;
+	}
+	.jumbotron {
+		height: 80%;
+		min-height: 500px;
+	}
+	.masthead-nav>li {
+		margin: 0;
+	}
+	.masthead-nav>li+li {
+		margin-left: 20px;
+	}
+}
+
+/* Chart specific styling */
+svg {
+	font: 10px sans-serif;
+}
+
+text.version {
+	fill: #555555;
+	font: 10px sans-serif;
+}
+
+.axis path, .axis line {
+	fill: none;
+	stroke: #BBBBBB;
+	shape-rendering: crispEdges;
+}
+
+text {
+	fill: #DDDDDD;
+}
+
+path {
+	fill: none;
+	stroke-width: 1;
+}
+
+path.candle {
+    stroke: #000000;
+}
+
+path.candle.body {
+    stroke-width: 0;
+}
+
+path.candle {
+    fill: #777777;
+    stroke: #777777;
+}
+
+path.candle.up {
+    fill: #00AA00;
+    stroke: #00AA00;
+}
+
+path.candle.down {
+    fill: #FF0000;
+    stroke: #FF0000;
+}
+
+.closeValue.annotation.up path {
+    fill: #00AA00;
+}
+
+path.volume {
+	fill: #BBBB;
+}
+
+.indicator-plot path.line {
+	fill: none;
+	stroke-width: 1;
+}
+
+button {
+	position: absolute;
+	right: 110px;
+	top: 25px;
+}
+
+path.macd {
+	stroke: #0000AA;
+}
+
+path.signal {
+	stroke: #FF9999;
+}
+
+path.zero {
+	stroke: #BBBBBB;
+	stroke-dasharray: 0;
+	stroke-opacity: 0.5;
+}
+
+path.difference {
+	fill: #BBBBBB;
+	opacity: 0.5;
+}
+
+path.rsi {
+	stroke: cyan;
+}
+
+path.overbought, path.oversold {
+	stroke: #FF9999;
+	stroke-dasharray: 5, 5;
+}
+
+path.middle, path.zero {
+	stroke: #BBBBBB;
+	stroke-dasharray: 5, 5;
+}
+
+.analysis path, .analysis circle {
+	stroke: blue;
+	stroke-width: 0.8;
+}
+
+.trendline circle {
+	stroke-width: 0;
+	display: none;
+}
+
+.mouseover .trendline path {
+	stroke-width: 1.2;
+}
+
+.mouseover .trendline circle {
+	stroke-width: 1;
+	display: inline;
+}
+
+.dragging .trendline path, .dragging .trendline circle {
+	stroke: darkblue;
+}
+
+.interaction path, .interaction circle {
+	pointer-events: all;
+}
+
+.interaction .body {
+	cursor: move;
+}
+
+.trendlines .interaction .start, .trendlines .interaction .end {
+	cursor: nwse-resize;
+}
+
+.supstance path {
+	stroke-dasharray: 2, 2;
+}
+
+.supstances .interaction path {
+	pointer-events: all;
+	cursor: ns-resize;
+}
+
+
+.supstances .axisannotation {
+    display: none;
+}
+
+.supstances .mouseover .axisannotation {
+    display: inline;
+}
+
+.supstances .axisannotation path {
+    fill: #806517;
+    stroke: none;
+}
+
+.crosshair {
+    cursor: crosshair;
+}
+
+.crosshair path.wire {
+    stroke: #555555;
+    stroke-dasharray: 1, 1;
+}
+
+.crosshair .axisannotation path {
+    fill: #777777;
+}
+
+.y.annotation.right path {
+    fill: #FF0000;
+}
+
+.ma-0  {
+	fill: #1f77b4;
+}
+
+.ma-1  {
+	fill: #aec7e8;
+}
+
+.ma-2  {
+	fill: #ff7f0e;
+}
+
+.ma-3  {
+	fill: #ff7fae;
+}
+
+.ma-4  {
+	fill: #1f78b4;
+}
+
+.ma-5  {
+	fill: #aec9e8;
+}
+
+.ma-6  {
+	fill: #ff740e;
+}
+
+.ma-7  {
+	fill: #ff70ae;
+}
+
+.ma-0 path.line {
+	stroke: #1f77b4;
+}
+
+.ma-1 path.line {
+	stroke: #aec7e8;
+}
+
+.ma-2 path.line {
+	stroke: #ff7f0e;
+}
+
+.ma-3 path.line {
+	stroke: #ff7fae;
+}
+
+.ma-4 path.line {
+	stroke: #1f78b4;
+}
+
+.ma-5 path.line {
+	stroke: #aec9e8;
+}
+
+.ma-6 path.line {
+	stroke: #ff740e;
+}
+
+.ma-7 path.line {
+	stroke: #ff70ae;
+}
+
+.indicator.annotation.ma-0 path {
+    fill: #1f77b4;
+}
+
+.indicator.annotation.ma-1 path {
+    fill: #aec7e8;
+}
+
+.indicator.annotation.ma-2 path {
+    fill: #ff7f0e;
+}
+
+.indicator.annotation.ma-3 path {
+    fill: #ff7fae;
+}
+
+.indicator.annotation.ma-4 path {
+    fill: #1f78b4;
+}
+
+.indicator.annotation.ma-5 path {
+    fill: #aec9e8;
+}
+
+.tradearrow path.tradearrow {
+	stroke: none;
+}
+
+.tradearrow path.buy {
+	fill: #0000FF;
+}
+
+.tradearrow path.sell {
+	fill: #c2f23d;
+}
+
+.tradearrow path.highlight {
+	fill: none;
+	stroke-width: 2;
+}
+
+.tradearrow path.highlight.buy {
+	stroke: #0000FF;
+}
+
+.tradearrow path.highlight.sell {
+	stroke: #c2f23d;
+}
+
