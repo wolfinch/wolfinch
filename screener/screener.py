@@ -35,7 +35,7 @@ from utils import getLogger, get_product_config, load_config, get_config
 import db
 # import stats
 import ui
-from ui import ui_conn_pipe
+# from ui import ui_conn_pipe
 
 import nasdaq
 import yahoofin as yf
@@ -50,7 +50,7 @@ all_tickers = []
 YF = None
 
 # global Variables
-MAIN_TICK_DELAY = 300  # 500 milli
+MAIN_TICK_DELAY = 0.500  # 500 milli
 
 
 def screener_init():
@@ -65,8 +65,11 @@ def screener_init():
     YF = yf.Yahoofin ()
 
     # setup ui if required
+    ui.integrated_ui = True
+    ui.port = 8080
     if ui.integrated_ui:
-        ui.ui_conn_pipe = ui.ui_mp_init(ui.port)
+        log.info("ui init")
+        ui.ui_conn_pipe = ui.ui_mp_init(ui.port, ui.screener.ui_main)
         if ui.ui_conn_pipe is None:
             log.critical("unable to setup ui!! ")
             print("unable to setup UI!!")
@@ -95,7 +98,7 @@ def screener_main():
         if integrated_ui == True:
             process_ui_msgs(ui_conn_pipe)        
         cur_time = time.time()
-        update_data()
+#         update_data()
         process_screeners()
         # '''Make sure each iteration take exactly LOOP_DELAY time'''
         sleep_time = (MAIN_TICK_DELAY -(time.time()- cur_time))
@@ -163,10 +166,15 @@ def process_ui_msgs(ui_conn_pipe):
 
 def process_get_screener_data(msg):
     log.info("msg %s"%(msg))
+
+    dataSet = [
+         {"symbol": "aapl", "last_price": "10.2", "change": "10", "pct_change": "2"},
+         {"symbol": "codx", "last_price": "13.2", "change": "20", "pct_change": "20"}            
+             ] 
     
     msg["type"] = "GET_SCREENER_DATA_RESP"
-    msg["data"] = {}
-    ui_conn_pipe.send(msg)    
+    msg["data"] = dataSet #{}
+    ui.ui_conn_pipe.send(msg)    
 
 def clean_states():
     ''' 

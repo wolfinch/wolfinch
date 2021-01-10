@@ -54,268 +54,28 @@
 <script src="https://momentjs.com/downloads/moment.min.js"></script>
 <script type="text/javascript">
 	var table;
-	var exchanges;
-	var active_exch = "";
-	var active_market = "";
 	$(document).ready(function() {
 
 		console.log("load stats");
-
-		load_exch_data(load_tables);
+		load_tables();
 	});
 
-	// exch/market selector - start
-	function exch_onclick(obj) {
-		console.log("onclick " + this.id);
-
-		active_exch = this.text;
-		var btn = document.getElementById("exch_btn_id");
-		btn.innerHTML = active_exch + ' <span class="caret"></span>';
-
-		load_markets_dd();
-	}
-
-	function market_onclick(obj) {
-		console.log("onclick " + this.id);
-
-		active_market = this.text;
-		var btn = document.getElementById("markets_btn_id");
-		btn.innerHTML = active_market + ' <span class="caret"></span>';
-
-		// call api to buy/sell
-		var data = {};
-		data[active_exch] = active_market;
-		console.log("post data:" + active_exch, active_market);
-		$.ajax({
-			type : 'POST',
-			url : '/api/set_active_market',
-			data : data,
-			dataType : 'json',
-			success : function(data) {
-				console.log("set_active_market success!" + data);
-				load_tables();
-			},
-			error : function(xhr, error) {
-				console.log("set_active_market failed!");
-			}
-		});
-	}
-
-	function load_exchanges_dd() {
-		var list = document.getElementById("exchangesDdId");
-
-		Object.keys(exchanges).forEach(function(exch_name) {
-			console.log("loading " + exch_name);
-			var li = document.createElement("li");
-			var link = document.createElement("a");
-			var text = document.createTextNode(exch_name);
-			link.appendChild(text);
-			link.href = "#";
-			link.id = "li_exch_id_" + exch_name;
-			link.onclick = exch_onclick;
-			li.appendChild(link);
-			list.appendChild(li);
-		});
-
-		var btn = document.getElementById("exch_btn_id");
-		if (active_exch != undefined && active_exch != "") {
-			console.log("setting active exch " + active_exch);
-			btn.innerHTML = active_exch + ' <span class="caret"></span>';
-		} else {
-			btn.innerHTML = 'Exchange <span class="caret"></span>';
-		}
-	}
-
-	function load_markets_dd() {
-		console.log("load_markets_dd active_exch:" + active_exch);
-
-		markets_l = exchanges[active_exch]
-		var list = document.getElementById("marketsDdId");
-
-		if (markets_l == undefined) {
-			console.log("no active exchange set");
-			return;
-		}
-
-		while (list.hasChildNodes()) {
-			console.log("purge old node - " + list.firstChild.innerText);
-			list.removeChild(list.firstChild);
-		}
-
-		markets_l.forEach(function(market) {
-			console.log("loading " + market["product_id"]);
-			var li = document.createElement("li");
-			var link = document.createElement("a");
-			var text = document.createTextNode(market["product_id"]);
-			link.appendChild(text);
-			link.href = "#";
-			link.id = "li_exch_id_" + market["product_id"];
-			link.onclick = market_onclick;
-			li.appendChild(link);
-			list.appendChild(li);
-		});
-
-		if (active_market != undefined && active_market != "") {
-			var btn = document.getElementById("markets_btn_id");
-
-			console.log ("active_market: "+active_market+markets_l);
-			
-			btn.innerHTML = 'Market <span class="caret"></span>';			
-			markets_l.forEach(function(market) {
-				if (market["product_id"] == active_market) {
-					btn.innerHTML = active_market + ' <span class="caret"></span>';					
-				}
-			});
-		}
-	}
-
-	function load_exch_data(exch_cb) {
-		console.log("loading exchanges and markets");
-		// call api to buy/sell
-		$.ajax({
-			type : 'GET',
-			url : '/api/screener/data',
-			dataType : 'json',
-			success : function(data) {
-				console.log("get_markets success!" + data);
-				exchanges = data["all"];
-				if (data["active"]) {
-					active_exch = data["active"]["EXCH_NAME"];
-					active_market = data["active"]["PRODUCT_ID"];
-					paused = data["active"]["PAUSED"];
-					
-					console.log("active exhc:" + active_exch + " markt: "
-							+ active_market+" paused: "+paused);
-				}
-				load_exchanges_dd();
-				load_markets_dd();
-
-				if (exch_cb) {
-					exch_cb();
-				}
-			},
-			error : function(xhr, error) {
-				console.log("get_markets failed!");
-				alert(error);
-			}
-		});
-
-	}
-	// exch/market selector - done
-
-	function loadTradingStats() {
-		console.log("load market stats")
-		
-		$.ajax({
-			type : 'GET',
-			url : '/api/market_stats',
-			data : {
-				get_param : 'value'
-			},
-			dataType : 'json',
-			success : function(data) {
-				if (data.exchange_name == undefined) {
-					console.log("invalid data");
-					return;
-				}
-				console.log("exch:" + data.exchange_name)
-				$("#exch").text(data.exchange_name)
-				$("#mkt").text(data.product_id)
-				$("#nbuy").text(data.num_buy_req)
-				$("#nbuy_rej").text(data.num_buy_req_reject)
-				$("#nsell").text(data.num_sell_req)
-				$("#nsell_rej").text(data.num_sell_req_reject)
-				$("#nbuy_odr").text(data.num_buy_order)
-				$("#nbuy_odr_s").text(data.num_buy_order_success)
-				$("#nbuy_odr_f").text(data.num_buy_order_failed)
-				$("#nsell_odr").text(data.num_sell_order)
-				$("#nsell_odr_s").text(data.num_sell_order_success)
-				$("#nsell_odr_f").text(data.num_sell_order_failed)
-				$("#sl_hits").text(data.num_stop_loss_hit)
-				$("#tp_hits").text(data.num_take_profit_hit)
-				$("#success_trades").text(data.num_success_trade)
-				$("#failed_trades").text(data.num_failed_trade)
-				$("#buyn_hold_profit").text(data.cur_buy_and_hold_profit)
-				$("#cur_candle_time").text(
-						moment(data.cur_candle_time * 1000).fromNow())
-				$("#cur_candle_vol").text(data.cur_candle_vol)
-				$("#num_candles").text(data.num_candles)
-				$("#cur_market_rate").text(data.current_market_rate)
-
-				//#Fund
-				$("#fund_init").text(data.fund.initial_value)
-				$("#fund_curr").text(data.fund.current_value)
-				$("#curr_hold").text(data.fund.current_hold_value)
-				$("#fund_profit").text(data.fund.current_realized_profit)
-				$("#fund_trade_fee").text(data.fund.fee_accrued)
-				$("#fund_traded").text(data.fund.total_traded_value)
-				$("#fund_avg_price").text(data.fund.current_avg_buy_price)
-				$("#fund_last_price").text(data.fund.latest_buy_price)
-				$("#fund_liq_cent").text(data.fund.fund_liquidity_percent)
-				$("#fund_max_per_buy").text(data.fund.max_per_buy_fund_value)
-
-				//#Assets
-				$("#asset_init").text(data.asset.initial_size)
-				$("#asset_curr").text(data.asset.current_size)
-				$("#asset_traded").text(data.asset.total_traded_size)
-				$("#asset_last_traded").text(data.asset.latest_traded_size)
-				$("#asset_max_per_trade").text(data.asset.max_per_trade_size)
-				$("#asset_hold_sz").text(data.asset.hold_size)
-				$("#asset_cur_hold_sz").text(data.asset.current_hold_size)
-
-				//#position
-				/* 	            $.each(data, function(index, element) {
-				 $('body').append($('<div>', {
-				 text: element.name
-				 }));
-				 }); */
-			}
-		});
-	}
 
 	function load_tables() {
 
 		console.log("load stats")
 		
-		if (active_exch == "" || active_market == "") {
-			console.log("markets not set");
-			return;
-		}
-		
-		loadTradingStats();
-
 		if (table) {
 			// previously init, just reload once and don't mess with timers
 			table.ajax.reload(null, false); // user paging is not reset on reload
 			return;
 		}
-		setInterval(loadTradingStats, 120000);
 
-		/* 			var dataSet = [
-		 {
-		"status": "closed", "open_time":"2019-05-27T16:31:20.743832", "closed_time":"2019-05-27T16:31:20.757285", "profit": 5.555600, "stop_loss": 0.000000, "take_profit":0.000000,
-		"buy":{"id":"88786902-80d7-11e9-9954-8c8590ab863e", "product_id":"BTC-USD", "side":"buy", "order_type":"market",
-		"status_type":"done", "status_reason":"filled", "request_size":92.592594,
-		"filled_size":92.592594, "remaining_size":0.000000, "price":0.180000, "funds":16.666667,
-		"fees":0.000000, "create_time":"2019-05-27T16:31:20.743832", "update_time":"None"}
-		,"sell":{"id":"8879810c-80d7-11e9-be63-8c8590ab863e", "product_id":"BTC-USD", "side":"sell", "order_type":"None",
-		"status_type":"done", "status_reason":"filled", "request_size":92.592594,
-		"filled_size":92.592594, "remaining_size":0.000000, "price":0.240000, "funds":0.000000,
-		"fees":0.000000, "create_time":"2019-05-27T16:31:20.757285", "update_time":"None"}
-		}, {
-		"status": "closed", "open_time":"2019-05-27T16:31:20.744187", "closed_time":"2019-05-27T16:31:20.760100",
-		"profit": 0.000100, "stop_loss": 0.000000, "take_profit":0.000000,
-		"buy":{"id":"88787359-80d7-11e9-ac40-8c8590ab863e", "product_id":"BTC-USD", "side":"buy", "order_type":"market",
-		"status_type":"done", "status_reason":"filled", "request_size":92.592594,
-		"filled_size":92.592594, "remaining_size":0.000000, "price":0.180000, "funds":16.666667,
-		"fees":0.000000, "create_time":"2019-05-27T16:31:20.744187", "update_time":"None"}
-		,"sell":{"id":"8879d682-80d7-11e9-a1c7-8c8590ab863e", "product_id":"BTC-USD", "side":"sell", "order_type":"None",
-		"status_type":"done", "status_reason":"filled", "request_size":0.002451,
-		"filled_size":0.002451, "remaining_size":0.000000, "price":0.240000, "funds":0.000000,
-		"fees":0.000000, "create_time":"2019-05-27T16:31:20.760100", "update_time":"None"}
-		}]
-		 */
-
+/* 		 			var dataSet = [
+		 {"symbol": "aapl", "last_price": "10.2", "change": "10", "pct_change": "2"},
+		 {"symbol": "codx", "last_price": "13.2", "change": "10", "pct_change": "2"}			
+			 ] */
+		 
 		table = $('#statsTable').DataTable(
 				{
 					//data : dataSet,
@@ -323,167 +83,35 @@
 					"processing" : true,
 					pageLength : 25,
 					ajax : {
-						url : "/api/positions",
-			 			data : {
+						url : "/api/screener/data",
+/* 			 			data : {
 							from_time : 0,
 							to_time: 0,
 							exch_name : active_exch,
 							product : active_market
-						},
+						}, */
 						dataSrc : ''
 					},
 
 					columns : [
 							{
-								title : "status",
-								data : "status"
+								title : "Symbol",
+								data : "symbol"
 							},
 							{
-								title : "buy price",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.price;
-									} else {
-										return "-";
-									}
-								}
+								title : "Last price",
+								data : "last_price"
 							},
 							{
-								title : "sell price",
-								data : null,
-								render : function(data, type, row) {
-									//console.log("data:"+data)
-									if (data.sell != undefined) {
-										return data.sell.price;
-									} else {
-										return "-";
-									}
-								}
+								title : "Change",
+								data : "change"
 							},
 							{
-								title : "stop loss",
-								data : "stop_loss"
-							},
-							{
-								title : "take profit",
-								data : "take_profit"
-							},
-							{
-								title : "profit",
-								data : "profit"
-							},
-							{
-								title : "type",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.order_type;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "request size",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.request_size;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "buy filled size",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.filled_size;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "sell filled size",
-								data : null,
-								render : function(data, type, row) {
-									if (data.sell != undefined) {
-										return data.sell.filled_size;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "remaining size",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.remaining_size;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "funds ",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.funds;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "open time",
-								//data : "open_time",
-								data : null,
-								render : function(data, type, row) {
-									if (data.open_time != undefined
-											&& data.open_time != 'None'
-											&& data.open_time != null) {
-										date = moment(data.open_time);
-										//console.log(date.fromNow());
+								title : "% change",
+								data : "pct_change"
+							}],
 
-										if (type == "sort") {
-											//console.log(date.unix());																	
-											return date.unix();
-										} else {
-											return date.fromNow();
-											//return data.closed_time;
-										}
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "closed time",
-								data : null,
-								render : function(data, type, row) {
-									if (data.closed_time != undefined
-											&& data.closed_time != 'None'
-											&& data.closed_time != null) {
-										date = moment(data.closed_time);
-										//console.log(date.fromNow());
-										if (type == "sort") {
-											return date.unix();
-										} else {
-											return date.fromNow();
-											//return data.closed_time;
-										}
-									} else {
-										return "-";
-									}
-								}
-							} ],
-
-					"order" : [ [ 0, "desc" ], [ 12, "desc" ] ],
+					"order" : [ [ 3, "desc" ] ],
 					responsive : true
 				});
 
@@ -502,31 +130,6 @@
 					<header class="clearfix">
 						<h3 class="brand">
 							<a href="/">Wolfinch</a>
-							<div class="btn-group dropdown"
-								style="float: right; margin-left: 2rem;">
-								<div class="btn-group btn-group-xs " role="group">
-									<button type="button" style="position: initial;"
-										class="btn btn-default dropdown-toggle btn-primary"
-										data-toggle="dropdown" aria-haspopup="true"
-										aria-expanded="false" id="exch_btn_id">
-										Exchange <span class="caret"></span>
-									</button>
-									<ul class="dropdown-menu .dropdown-menu-right"
-										id="exchangesDdId">
-									</ul>
-								</div>
-								<div class="btn-group btn-group-xs" role="group">
-									<button type="button" style="position: initial;"
-										class="btn btn-default dropdown-toggle btn-primary"
-										data-toggle="dropdown" aria-haspopup="true"
-										aria-expanded="false" id="markets_btn_id"
-										onclick="load_markets_dd">
-										Market <span class="caret"></span>
-									</button>
-									<ul class="dropdown-menu .dropdown-menu-right" id="marketsDdId">
-									</ul>
-								</div>
-							</div>
 						</h3>
 						<ul class="nav masthead-nav">
 							<li class="active"><a href="#"> Home</a></li>
@@ -544,18 +147,20 @@
 		<p></p>
 	</div>
 
-	<div class="container-fluid" style="padding-right: 1em;">
+	<div class="container" style="padding-right: 1em;">
 		<div class="row">
 			<div class="table-responsive">
-				<table>
+				<table style="margin: false; height: auto;" border="1">
 					<tbody style="vertical-align: top">
-
+						<tr style="background-color: rgba(0, 0, 0, 0.1);">
+							<td align="center" style="font-size: 1vw; border: 0;"
+													colspan="16"><b>Vol</b></td>
+						</tr>
 						<tr style="font-size: 1vw; width: auto; height: auto;"
 							align="center">
 							<td
 								style="font-size: 1vw; width: 85%; height: auto; border-collapse: collapse;"
 								colspan="1">
-
 								<div class="table-responsive">
 									<table id="statsTable" class="display compact"
 										style="font-size: 1vw; vertical-align: top; height: 100%; width: auto">
@@ -565,22 +170,11 @@
 												<th style="width: auto;">1</th>
 												<th style="width: auto;">2</th>
 												<th style="width: auto;">3</th>
-												<th style="width: auto;">4</th>
-												<th style="width: auto;">5</th>
-												<th style="width: auto;">6</th>
-												<th style="width: auto;">7</th>
-												<th style="width: auto;">8</th>
-												<th style="width: auto;">3</th>
-												<th style="width: auto;">9</th>
-												<th style="width: auto;">10</th>
-												<th style="width: auto;">11</th>
-												<th style="width: auto;">12</th>
 											</tr>
 										</thead>
 										<tbody></tbody>
 									</table>
 								</div>
-
 							</td>
 						</tr>
 					</tbody>
@@ -594,7 +188,7 @@
 			<p>
 				<small>
 					<div class="row">
-						<em>&copy; 2017-2020 Wolfinch Bot</em>
+						<em>&copy; 2017-2021 Wolfinch Screener</em>
 					</div>
 				</small>
 			</p>

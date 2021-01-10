@@ -59,7 +59,7 @@ def Wolfinch_init():
 
     # setup ui if required
     if ui.integrated_ui:
-        ui.ui_conn_pipe = ui.ui_mp_init(ui.port)
+        ui.ui_conn_pipe = ui.ui_mp_init(ui.port, ui.ui_main)
         if ui.ui_conn_pipe is None:
             log.critical("unable to setup ui!! ")
             print("unable to setup UI!!")

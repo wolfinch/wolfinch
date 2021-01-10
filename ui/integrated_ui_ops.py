@@ -23,21 +23,21 @@ from multiprocessing import Process, Pipe
 
 from utils import getLogger
 
-from . import ui_server
+# from . import ui_server
 
 log = getLogger ('UI-OPS')
 log.setLevel(log.DEBUG)
 
 g_p = None
 
-def ui_mp_init (port):
+def ui_mp_init (port, ui_cb):
     global g_p
     
     log.info ("init multi-process ui")
     
     parent_conn, child_conn = Pipe()
     
-    g_p = Process(target=ui_server.ui_main, args=(port, child_conn,))
+    g_p = Process(target=ui_cb, args=(port, child_conn,))
     g_p.start()
     
     return parent_conn

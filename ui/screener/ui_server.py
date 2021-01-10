@@ -35,7 +35,7 @@ from utils import getLogger
 
 
 log = getLogger ('UI')
-log.setLevel(log.INFO)
+log.setLevel(log.DEBUG)
 
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
@@ -134,13 +134,18 @@ def server_main (port=8080, mp_pipe=None):
 #                    "exchange": exch_name,
 #                    "product": prod_id
                    }
+#             dataSet = [
+#          {"symbol": "aapl", "last_price": "10.2", "change": "10", "pct_change": "2"},
+#          {"symbol": "codx", "last_price": "13.2", "change": "20", "pct_change": "20"}            
+#              ]            
+            log.debug("get data")
             screener_data = []
             if mp_pipe:
                 msg = mp_send_recv_msg (mp_pipe, msg, True)
                 if msg:
                     msg_type = msg.get("type")
-                    if msg_type == "GET_SCREENER_DATA":
-                        log.debug ("GET_SCREENER_DATA recv")
+                    if msg_type == "GET_SCREENER_DATA_RESP":
+                        log.debug ("GET_SCREENER_DATA_RESP recv")
                         screener_data = msg.get("data")
                         if not screener_data:
                             err = "invalid screener_data payload"
@@ -156,10 +161,10 @@ def server_main (port=8080, mp_pipe=None):
                 err = "server connection can't be found!"
                 log.error (err)
                 raise Exception (err)
-            return str(screener_data)
+            return json.dumps(screener_data)
         except Exception as e:
-            log.error ("Unable to get position list. Exception: %s", e)
-            return "[]" 
+            log.error ("Unable to get screener data. Exception: %s", e)
+            return "[]" #json.dumps(dataSet) #"[]" 
             
 #     @app.route('/api/positions')
 #     def position_list_api():
@@ -245,6 +250,7 @@ def mp_send_recv_msg(mp_pipe, msg, wait_resp=False):
             return
         # wait for 10 secs for resp
         while mp_pipe.poll(10):
+            log.debug("recv success")            
             msg = mp_pipe.recv()
             err = msg.get("error", None)
             if  err != None:
@@ -253,7 +259,8 @@ def mp_send_recv_msg(mp_pipe, msg, wait_resp=False):
             else:
                 g_mp_lock.release()
                 return msg
-        g_mp_lock.release()        
+        g_mp_lock.release()
+        log.error("recv failed")                    
         return None
     except Exception as e:
         log.critical ("exception %s on ui" % (e))
