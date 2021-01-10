@@ -1,6 +1,6 @@
 <!-- 
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
-#  This file is part of Wolfinch.
+#  Copyright: (c) 2017-2021 Joshith Rayaroth Koderi
+#  This file is part of Wolfinch screener.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 	integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
 	crossorigin="anonymous"></script> -->
 
-<link href="wolfinch/stylesheet.css" rel="stylesheet">
+<link href="screener/stylesheet.css" rel="stylesheet">
 <script
 	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
@@ -174,7 +174,7 @@
 		// call api to buy/sell
 		$.ajax({
 			type : 'GET',
-			url : '/api/get_markets',
+			url : '/api/screener/data',
 			dataType : 'json',
 			success : function(data) {
 				console.log("get_markets success!" + data);
@@ -549,115 +549,6 @@
 			<div class="table-responsive">
 				<table>
 					<tbody style="vertical-align: top">
-						<tr style="width: auto; height: auto;">
-							<td style="width: auto; height: auto">
-								<div class="table-responsive">
-
-									<table style="margin: false; height: auto;" border="1">
-										<tbody>
-											<tr style="background-color: rgba(0, 0, 0, 0.1);">
-												<td align="center" style="font-size: 2vw; border: 0;"
-													colspan="16"><b>Trades</b></td>
-											</tr>
-											<tr style="margin: 0; background-color: rgba(0, 0, 0, 0.1);">
-												<td align="center" colspan="3"
-													style="font-size: 1vw; border: 0;">Number of.</td>
-
-												<td align="center" style="font-size: 1vw; border: 0;">Requests</td>
-												<td align="center" style="font-size: 1vw; border: 0;">Rejects</td>
-												<td align="center" style="font-size: 1vw; border: 0;">Orders</td>
-												<td align="center" style="font-size: 1vw; border: 0;">Success</td>
-												<td align="center" style="font-size: 1vw; border: 0;">Failed</td>
-												<td align="center" style="font-size: 1vw; border: 0;"
-													colspan="2">#Hits</td>
-												<td align="center" style="font-size: 1vw; border: 0;"
-													colspan="2">#Trade Result</td>
-												<td align="center" style="font-size: 1vw; border: 0;"
-													colspan="4">Candle Stats</td>
-											</tr>
-
-											<tr style="border-top: 0em solid #555;">
-												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Exchange</td>
-												<td id="exch"
-													style="font-size: 1vw; border: 0; width: 9.2em; height: auto;">0</td>
-
-												<td style="font-size: 1vw; border: 0; width: 5.0em;">&nbsp;Buy</td>
-												<td align="center" id="nbuy"
-													style="font-size: 1vw; border: 0; width: 9.2em;">&nbsp;0</td>
-												<td align="center" id="nbuy_rej"
-													style="font-size: 1vw; border: 0; width: 9.2em;">&nbsp;0</td>
-												<td align="center" id="nbuy_odr"
-													style="font-size: 1vw; border: 0; width: 8.7em;">&nbsp;0</td>
-												<td align="center" id="nbuy_odr_s"
-													style="font-size: 1vw; border: 0; width: 7.0em;">&nbsp;0</td>
-												<td align="center" id="nbuy_odr_f"
-													style="font-size: 1vw; border: 0; width: 15.8em;">0</td>
-												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Stop
-													Loss</td>
-												<td align="center" id="sl_hits"
-													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
-												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Win</td>
-												<td align="center" id="success_trades"
-													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
-												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">
-													Time</td>
-												<td align="center" id="cur_candle_time"
-													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
-												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">market
-													Rate</td>
-												<td align="center" id="cur_market_rate"
-													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
-											</tr>
-											<tr style="background-color: rgba(0, 0, 0, 0.1);">
-												<td
-													style="font-size: 1vw; border: 0; width: 7.4em; height: auto;">Market</td>
-												<td id="mkt"
-													style="font-size: 1vw; border: 0; width: 9.2em; height: auto;">0</td>
-
-												<td style="font-size: 1vw; border: 0; width: 5.0em;">&nbsp;Sell</td>
-												<td align="center" id="nsell"
-													style="font-size: 1vw; border: 0; width: 9.2em;">&nbsp;0</td>
-												<td align="center" id="nsell_rej"
-													style="font-size: 1vw; border: 0; width: 9.2em;">&nbsp;0</td>
-												<td align="center" id="nsell_odr"
-													style="font-size: 1vw; border: 0; width: 8.7em;">&nbsp;0</td>
-												<td align="center" id="nsell_odr_s"
-													style="font-size: 1vw; border: 0; width: 7.0em;">&nbsp;0</td>
-												<td align="center" id="nsell_odr_f"
-													style="font-size: 1vw; border: 0; width: 15.8em;">0</td>
-												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Take
-													Profit</td>
-												<td align="center" id="tp_hits"
-													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
-												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Loss</td>
-												<td align="center" id="failed_trades"
-													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
-												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Cur
-													Vol</td>
-												<td align="center" id="cur_candle_vol"
-													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
-												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">#
-													candles</td>
-												<td align="center" id="num_candles"
-													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
-											</tr>
-
-										</tbody>
-									</table>
-
-								</div>
-							</td>
-							<td style="width: 33%;"></td>
-						</tr>
 
 						<tr style="font-size: 1vw; width: auto; height: auto;"
 							align="center">
@@ -690,130 +581,6 @@
 									</table>
 								</div>
 
-							</td>
-							<td style="font-size: 1vw; width: 15%; padding-right: 0em;">
-								<div class="table-responsive">
-
-									<table border="0" class="w-auto"
-										style="font-size: 1vw; border-collapse: collapse; width: 100%;"
-										class="display">
-										<tbody>
-											<tr style="background-color: rgba(0, 0, 0, 0.1);">
-												<td align="center" colspan="9"><b>Funds</b></td>
-											</tr>
-											<tr>
-												<td style="width: 60%;">Inital</td>
-												<td style="width: 10%;" id="fund_init">0</td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;">Current</td>
-												<td style="width: 10%;" id="fund_curr">0</td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;">Curr. hold</td>
-												<td style="width: 10%;" id="curr_hold">0</td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;">Total Traded</td>
-												<td style="width: 10%;" id="fund_traded">0</td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;">Real. Profit</td>
-												<td style="width: 10%;" id="fund_profit">0</td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;">Buy n Hold Profit</td>
-												<td style="width: 10%;" id="buyn_hold_profit">0</td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;">Avg. Price</td>
-												<td style="width: 10%;" id="fund_avg_price"></td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;">Last Price</td>
-												<td style="width: 10%;" id="fund_last_price">0</td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;">Fee Accrued</td>
-												<td style="width: 10%;" id="fund_trade_fee">0</td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;">Config. Fund Liq.(%)</td>
-												<td style="width: 10%;" id="fund_liq_cent"></td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;">Config. Max Per buy($)</td>
-												<td style="width: 10%;" id="fund_max_per_buy">0</td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;"></td>
-												<td style="width: 10%;"></td>
-
-											</tr>
-											<tr>
-												<td style="width: 60%;"></td>
-												<td style="width: 10%;"></td>
-											</tr>
-										</tbody>
-									</table>
-								</div>
-
-								<div class="table-responsive">
-									<table border="0"
-										style="font-size: 1vw; vertical-align: top; border-collapse: collapse; width: 100%;"
-										class="display">
-										<tbody>
-											<tr style="width: 20%; background-color: rgba(0, 0, 0, 0.1);">
-												<td style="width: 100;" colspan="5" align="center"><b>Assets</b></td>
-											</tr>
-											<tr>
-												<td style="width: 60%;">Inital</td>
-												<td style="width: 10%;" id="asset_init">0</td>
-											</tr>
-
-											<tr>
-												<td style="width: 60%;">Current</td>
-												<td style="width: 10%;" id="asset_curr">0</td>
-											</tr>
-
-											<tr>
-												<td style="width: 60%;">Total Traded</td>
-												<td style="width: 10%;" id="asset_traded">0</td>
-											</tr>
-
-											<tr>
-												<td style="width: 60%;">Last Traded</td>
-												<td style="width: 10%;" id="asset_last_traded">0</td>
-											</tr>
-
-											<tr>
-												<td style="width: 60%;">Curr. Hold Size</td>
-												<td style="width: 10%;" id="asset_cur_hold_sz">0</td>
-											</tr>
-
-											<tr>
-												<td style="width: 60%;">Config. Hold Size</td>
-												<td style="width: 10%;" id="asset_hold_sz">0</td>
-											</tr>
-
-											<tr>
-												<td style="width: 60%;">Config. Max per trade</td>
-												<td style="width: 10%;" id="asset_max_per_trade">0</td>
-											</tr>
-										</tbody>
-									</table>
-								</div>
 							</td>
 						</tr>
 					</tbody>
