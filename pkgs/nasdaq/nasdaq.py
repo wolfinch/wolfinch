@@ -26,7 +26,7 @@ import traceback
 # import argparse
 import pprint
 from decimal import getcontext
-import random
+# import random
 import logging
 from utils import getLogger #, get_product_config, load_config, get_config
 # import sims
@@ -85,6 +85,17 @@ def get_all_tickers_gt50m ():
     else:
         return None
         
+def get_all_tickers_megacap ():
+    log.debug ("get all tickers")
+    mcap = "&marketcap=mega"
+    api = GET_ALL_TICKERS_API+mcap
+    data = get_url (api)
+    if data:
+        all_tickers = data.get("data").get("table").get("rows")
+        log.debug ("tickers > mega cap %s, total-number (%d)"%(pprint.pformat(all_tickers), len(all_tickers)))
+        return all_tickers
+    else:
+        return None        
 def get_all_tickers_lt50m ():
     log.debug ("get all tickers")
     mcap = "&marketcap=nano"

@@ -85,6 +85,21 @@ class Yahoofin:
             return None, resp['quoteResponse']["error"]
         return resp['quoteResponse']['result'], None        
 
+    def get_trending(self, num=5):
+        api_url = "https://query1.finance.yahoo.com/v1/finance/trending/US?count="+num
+        resp = self.get_url(api_url)
+        if resp['finance']["error"] != None:
+            log.critical ("error while get trending - %s"%(resp['finance']["error"]))
+            return None, resp['finance']["error"]
+        return resp['finance']['result'], None
+    def get_market_time(self):
+        api_url = "https://finance.yahoo.com/_finance_doubledown/api/resource/finance.market-time"
+        resp = self.get_url(api_url)
+        if resp.get('status') == None:
+            log.critical ("error while get market time - %s"%(resp))
+            return None, "unable to get market time"
+        return resp, None        
+            
     def start_feed(self, products, cb_fn):
 #         products += ["LYFT", "ES=F", "YM=F", "NQ=F", "RTY=F", "CL=F", "GC=F", "SI=F", "EURUSD=X", "^TNX", "^VIX"]
         self.ws_client = WebsocketClient(products=products, feed_recv_hook=cb_fn)

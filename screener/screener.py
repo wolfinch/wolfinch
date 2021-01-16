@@ -66,7 +66,6 @@ def screener_init():
 
     # setup ui if required
     ui.integrated_ui = True
-    ui.port = 8080
     if ui.integrated_ui:
         log.info("ui init")
         ui.ui_conn_pipe = ui.ui_mp_init(ui.port, ui.screener.ui_main)
@@ -98,7 +97,7 @@ def screener_main():
         if integrated_ui == True:
             process_ui_msgs(ui_conn_pipe)        
         cur_time = time.time()
-#         update_data()
+        update_data()
         process_screeners()
         # '''Make sure each iteration take exactly LOOP_DELAY time'''
         sleep_time = (MAIN_TICK_DELAY -(time.time()- cur_time))
@@ -108,42 +107,87 @@ def screener_main():
         time.sleep(sleep_time)
     # end While(true)
 
+
+g_screeners = []
 def register_screeners():
     log.debug("registering screeners")
+
+    scrn_obj = Screen("ALL", 300, get_all_tickers_info)
+    g_screeners.append(scrn_obj)
     
+class Screen ():
+    def __init__(self, name, interval=300, update_fn=None, screen_fn=None):
+        self.name = name
+        self.interval = interval
+        self.update_fn = update_fn
+        self.screen_fn = screen_fn
+        self.updated = False
+        self.update_time = 0
+        self.ticker_stats = {}
+        self.ticker_filtered = []
+    def update(self):
+        if self.update_fn:
+            if self.interval + self.update_time < int(time.time()):
+                log.info ("updating screener - %s"%(self.name))
+                self.ticker_stats = self.update_fn(self.ticker_stats)
+                self.update_time = int(time.time())
+                self.updated = True
+    def screen(self):
+        if self.screen_fn and self.updated:
+            log.info ("running screener - %s"%(self.name))
+            self.ticker_filtered = self.screen_fn(self.ticker_stats, self.ticker_filtered)
+            self.updated = False
+    def get_filtered(self):
+        return []
 def update_data():
-    log.debug("updating data")
-    get_all_tickers_info()
-    
+    log.debug("updating data")    
+    for scrn_obj in g_screeners:
+        scrn_obj.update()
+
 def process_screeners ():
     log.debug("processing screeners")
-    
+    for scrn_obj in g_screeners:
+        scrn_obj.screen()
+            
 def get_all_tickers ():
     global ticker_import_time, all_tickers
     log.debug ("get all tickers")
     if ticker_import_time + 24*3600 < int(time.time()) :
         log.info ("renew tickers list")
-        t_l = nasdaq.get_all_tickers_gt50m()
+#         t_l = nasdaq.get_all_tickers_gt50m()
+        t_l = nasdaq.get_all_tickers_megacap()
         if t_l:
             all_tickers = []
             for ticker in t_l:
                 all_tickers.append(ticker["symbol"].strip())            
-            ticker_import_time = int(time.time())        
-    return all_tickers    
-def get_all_tickers_info():
+            ticker_import_time = int(time.time())
+    return all_tickers
+
+def get_all_tickers_info(ticker_stats):
     BATCH_SIZE = 400
     sym_list = get_all_tickers()
     log.debug("num tickers(%d)"%(len(sym_list)))
-    ticker_stats = []
+#     ticker_stats = []
     i = 0
+#     t = int(time.time())
     while i < len(sym_list):
         ts, err =  YF.get_quotes(sym_list[i: i+BATCH_SIZE])
         if err == None:
-            ticker_stats += ts
+            for ti in ts:
+                s = ti.get("symbol")
+                ss = ticker_stats.get(s)
+                if ss == None:
+                    ticker_stats[s] = {"info": ti, "time":[ti["regularMarketTime"]], "volume": [ti["regularMarketVolume"]], "price": [ti["regularMarketPrice"]]}
+                else:
+                    ss ["info"] = ti 
+                    ss ["time"].append(ti["regularMarketTime"])
+                    ss ["volume"].append(ti["regularMarketVolume"])
+                    ss ["price"].append(ti["regularMarketPrice"])
             i += BATCH_SIZE
         else:
-            time.sleep(2)    
+            time.sleep(2)
     log.debug("(%d)ticker stats retrieved"%( len(ticker_stats)))
+    return ticker_stats
     
 def process_ui_msgs(ui_conn_pipe):
     try:
@@ -193,7 +237,7 @@ def arg_parse():
     parser.add_argument("--clean",
                         help='Clean states,dbs and exit. Clear all the existing states',
                         action='store_true')
-    parser.add_argument("--config", help='Screener Global config file')
+    parser.add_argument("--port", help='API Port')
     parser.add_argument("--restart", help='restart from the previous state', action='store_true')
 
     args = parser.parse_args()
@@ -202,15 +246,9 @@ def arg_parse():
         clean_states()
         exit(0)
 
-    if args.config:
-        log.debug("config file: %s" % (str(args.config)))
-        if False == load_config(args.config):
-            log.critical("Config parse error!!")
-            parser.print_help()
-            exit(1)
-        else:
-            log.debug("config loaded successfully!")
-#             exit(0)
+    if args.port:
+        log.debug("port: %s" % (str(args.port)))
+        ui.port = args.port
     else:
         pass
 #         parser.print_help()
