@@ -24,6 +24,9 @@ from datetime import datetime, timedelta
 from time import sleep
 import time
 from dateutil.tz import tzlocal, tzutc
+import sys
+import os
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "../../pkgs"))
 
 from utils import getLogger, readConf
 from market import  OHLC, feed_enQ, get_market_by_product, Order
