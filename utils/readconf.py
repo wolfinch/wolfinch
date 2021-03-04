@@ -24,4 +24,4 @@ def readConf (fileName):
 #             print (confDict)
             return confDict
     except : # parent of IOError, OSError *and* WindowsError where available
-        print('Oops!! Conf Read Error for '+fileName)
+        print('Oops!! Conf Read Error for %s'%(fileName))

@@ -138,6 +138,7 @@ def get_product_config (exch_name, prod_name):
                 raise Exception("exchanges not configured")
             for exch in v:
                 for ex_k, ex_v in exch.items():
+                    log.debug ("exch config name: %s cur exch name: %s"%(ex_k.lower(), exch_name.lower()))
                     if ex_k.lower() != exch_name.lower():
                         continue
                     log.debug ("processing exch: %s val:%s" % (ex_k, ex_v))

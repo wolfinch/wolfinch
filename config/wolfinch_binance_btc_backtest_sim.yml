@@ -1,4 +1,4 @@
-#  Copyright: (c) 2017-2019 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2021 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -22,15 +22,15 @@
 # One primary exchange for trading and as many others in spectator mode
 # data from exchanges in spectator mode will be considered for trading decision
 exchanges:
-   - 'binanceus' : 
+   - 'binanceClient' : 
       role: 'primary'
-      config: 'config/binanceus.yml'
+      config: 'config/binance.yml'
       products:
-         - 'XLMUSD':
-            fund_max_liquidity : 900 #$$               
-            fund_max_per_buy_value : 20 #$100 max per buy
-            asset_max_per_trade_size: 1000 #per sell asset size max
-            asset_min_per_trade_size: 1 #Min asset size to trade with (may come from exch limits or asset limits)
+         - 'BTCEUR':
+            fund_max_liquidity : 1000 #$$               
+            fund_max_per_buy_value : 200 #$100 max per buy
+            asset_max_per_trade_size: 1 #per sell asset size max
+            asset_min_per_trade_size: .001 #Min asset size to trade with (may come from exch limits or asset limits)
             stop_loss:
                enabled: true
                kind : simple      #simple(default) | trailing | ATRXX | 

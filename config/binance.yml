@@ -1,0 +1,18 @@
+##################################################
+# Binance config
+##################################################
+
+exchange:
+  name        : binanceClient
+  products: 
+    - 'BTCEUR':
+       id : 'BTCEUR'
+#    - 'ETH-USD':
+#      id : 'ETHEUR'
+
+    
+  ##### api secrets ######
+  apiKey       : 'sample key'
+  apiSecret    : 'sample secret'
+
+#EOF

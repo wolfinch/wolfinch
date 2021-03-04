@@ -36,14 +36,14 @@ from market import Market, OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 
 log = getLogger ('Binance')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 #BINANCE CONFIG FILE
 BINANCE_CONF = 'config/binance.yml'
 BNC_INTERVAL_MAPPING = {300 :'5m', 600: '10m'}
 
 class Binance (Exchange):
-    name = "binance"
+    name = "binanceClient"
     binance_conf = {}
     binance_products = []
     binance_accounts = {}
@@ -52,33 +52,36 @@ class Binance (Exchange):
     ws_client = None
     symbol_to_id = {}
     primary = False
-    def __init__ (self, config=BINANCE_CONF, primary=False):
+    def __init__ (self, config, primary=False):
         log.info ("Init Binance exchange")
         
-        conf = readConf (config)
+        exch_cfg_file = config.get('config')
+        if exch_cfg_file == None:
+            exch_cfg_file = BINANCE_CONF
+        conf = readConf (exch_cfg_file)
         if (conf != None and len(conf)):
             self.binance_conf = conf['exchange']
         else:
             return None
         
-        self.primary = primary
-        #get config
+        self.primary = True if primary else False
+        # get config
         if config.get('candle_interval'):
             # map interval in to binance format
             interval = BNC_INTERVAL_MAPPING[int(config['candle_interval']) ]
             self.binance_conf['backfill_interval'] =  interval
             self.candle_interval = int(config['candle_interval'])        
-                        
-        backfill = self.binance_conf.get('backfill')
+                
+        # get config
+        backfill = config.get('backfill')
         if not backfill:
-            log.fatal("Invalid Config file")
+            log.fatal("Invalid backfill config")            
             return None
     
-        for entry in backfill:
-            if entry.get('enabled'):
-                self.binance_conf['backfill_enabled'] = entry['enabled']
-            if entry.get('period'):
-                self.binance_conf['backfill_period'] = int(entry['period'])
+        if backfill.get('enabled'):
+            self.binance_conf['backfill_enabled'] = backfill['enabled']
+        if backfill.get('period'):
+            self.binance_conf['backfill_period'] = int(backfill['period'])
 
         # for public client, no need of api key
         self.public_client = Client("", "")
@@ -88,7 +91,8 @@ class Binance (Exchange):
         
         key = self.binance_conf.get('apiKey')
         b64secret = self.binance_conf.get('apiSecret')
-        
+        self.test_mode = self.binance_conf.get('test_mode') or False
+                
         if ((key and b64secret ) == False):
             log.critical ("Invalid API Credentials in binance Config!! ")
             return None
@@ -111,18 +115,23 @@ class Binance (Exchange):
         log.info ("servertime: %d localtime: %d offset: %d"%(serverTime, localTime, self.timeOffset))
         
         products = exch_info.get("symbols")
+        log.info ("products: %s" % (pprint.pformat(products, 4)))
+                
         if (len(products) and len (self.binance_conf['products'])):
             for prod in products:
                 for p in self.binance_conf['products']:
-                    for k,v in p.items():
+                    for k, v in p.items():
 #                         log.debug ("pk: %s s: %s"%(k, prod['symbol']))
                         if prod['symbol'] == k:
-                            log.debug ("product found: %s p: %s"%(prod, v))
-                            prod['id'] = v[0]['id']
+                            log.debug ("product found: %s v: %s" % (prod, v))
+                            prod['id'] = v['id']
                             prod['display_name'] = k
                             self.symbol_to_id[k] = prod['id']
+                            prod ['asset_type'] = prod['baseAsset']
+                            prod ['fund_type'] = prod['quoteAsset']
+                                                  
                             self.binance_products.append(prod)
-        
+                                    
         # EXH supported in spectator mode. 
 #         # Popoulate the account details for each interested currencies
 #         accounts =  self.auth_client.get_account()
@@ -146,7 +155,7 @@ class Binance (Exchange):
             bm.start_kline_socket(prod['symbol'], self._feed_enQ_msg, interval=backfill_interval)
         bm.start()
                 
-        log.info( "**CBPRO init success**\n Products: %s\n Accounts: %s"%(
+        log.info( "**Binance init success**\n Products: %s\n Accounts: %s"%(
                         pprint.pformat(self.binance_products, 4), pprint.pformat(self.binance_accounts, 4)))
         
     def __str__ (self):
@@ -203,7 +212,7 @@ class Binance (Exchange):
     #### Feed consume done #####    
     
     #TODO: FIXME: Spectator mode, make full operational    
-    def market_init (self, product):
+    def market_init (self, market):
 #         usd_acc = self.binance_accounts['USD']
 #         crypto_acc = self.binance_accounts.get(product['base_currency'])
 #         if (usd_acc == None or crypto_acc == None): 
@@ -211,21 +220,21 @@ class Binance (Exchange):
 #             return None
         #Setup the initial params
 #         log.debug ("product: %s"%product)
-        market = Market(product=product, exchange=self)    
+#         market = Market(product=product, exchange=self)    
         market.fund.set_initial_value(Decimal(0))#usd_acc['available']))
         market.fund.set_hold_value(Decimal(0))#usd_acc['hold']))
-        market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%
-        market.fund.set_max_per_buy_fund_value(100)
+#         market.fund.set_fund_liquidity_percent(10)       #### Limit the fund to 10%
+#         market.fund.set_max_per_buy_fund_value(100)
         market.asset.set_initial_size(Decimal(0)) #crypto_acc['available']))
         market.asset.set_hold_size(0) #Decimal(crypto_acc['hold']))
     
         ## Feed Cb
-        market.consume_feed = self._binance_consume_feed
+        market.register_feed_processor(self._binance_consume_feed)
         
         ## Init Exchange specific private state variables
         market.O = market.H = market.L = market.C = market.V = 0
-        market.candle_interval = self.candle_interval
-        log.info ("Market init complete: %s"%(product['id']))
+        market.set_candle_interval (self.candle_interval)
+        log.info ("Market init complete: %s" % (market.product_id))
         
         #set whether primary or secondary
         market.primary = self.primary
@@ -242,7 +251,7 @@ class Binance (Exchange):
                 reactor.stop()
             log.debug("Closed websockets")
     def get_products (self):
-        log.debug ("products num %d"%(len(self.binance_products)))
+        log.debug ("products num %s"%((self.binance_products)))
         return self.binance_products    
     def get_accounts (self):
     #     log.debug (pprint.pformat(self.binance_accounts))
