@@ -33,7 +33,7 @@ from utils import getLogger, get_product_config, load_config, get_config
 # import sims
 # import exchanges
 import db
-# import stats
+from  strategies import Configure
 import ui
 # from ui import ui_conn_pipe
 
@@ -110,44 +110,25 @@ def screener_main():
 
 g_screeners = []
 def register_screeners():
+    global g_screeners
     log.debug("registering screeners")
-
-    scrn_obj = Screen("ALL", 300, get_all_tickers_info)
-    g_screeners.append(scrn_obj)
+    g_screeners = Configure()
     
-class Screen ():
-    def __init__(self, name, interval=300, update_fn=None, screen_fn=None):
-        self.name = name
-        self.interval = interval
-        self.update_fn = update_fn
-        self.screen_fn = screen_fn
-        self.updated = False
-        self.update_time = 0
-        self.ticker_stats = {}
-        self.ticker_filtered = []
-    def update(self):
-        if self.update_fn:
-            if self.interval + self.update_time < int(time.time()):
-                log.info ("updating screener - %s"%(self.name))
-                self.ticker_stats = self.update_fn(self.ticker_stats)
-                self.update_time = int(time.time())
-                self.updated = True
-    def screen(self):
-        if self.screen_fn and self.updated:
-            log.info ("running screener - %s"%(self.name))
-            self.ticker_filtered = self.screen_fn(self.ticker_stats, self.ticker_filtered)
-            self.updated = False
-    def get_filtered(self):
-        return []
 def update_data():
     log.debug("updating data")    
     for scrn_obj in g_screeners:
-        scrn_obj.update()
+        if scrn_obj.interval + scrn_obj.update_time < int(time.time()):
+            log.info ("updating screener data - %s"%(scrn_obj.name))
+            scrn_obj.ticker_stats, scrn_obj.updated = scrn_obj.update(scrn_obj.ticker_stats)
+            scrn_obj.update_time = int(time.time())
 
 def process_screeners ():
     log.debug("processing screeners")
     for scrn_obj in g_screeners:
-        scrn_obj.screen()
+        if scrn_obj.updated :
+            log.info ("running screener - %s"%(scrn_obj.name))
+            scrn_obj.ticker_filtered = scrn_obj.screen(scrn_obj.ticker_stats, scrn_obj.ticker_filtered)
+            scrn_obj.updated = False
             
 def get_all_tickers ():
     global ticker_import_time, all_tickers

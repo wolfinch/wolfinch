@@ -1,6 +1,6 @@
 #
-# Wolfinch Auto trading Bot screener
-#
+# Wolfinch Auto trading Bot
+# Desc:  Market Screener Abstract Class Implementation
 #  Copyright: (c) 2017-2021 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -17,19 +17,31 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-# from decimal import Decimal
-from .screener_base import Screener
-
-class VOL_SPIKE(Screener):
-    def __init__(self, interval=300):
-        super().__init__("VOL_SPIKE", interval)
-#         self.name = "VOL_SPIKE"
-#         self.interval = interval
+from abc import ABCMeta, abstractmethod
+        
+class Screener (metaclass=ABCMeta):
+    @abstractmethod
+    def __init__ (self, name="", interval=300):
+        ''' 
+        Init for the screener class
+        '''
+        self.name = name
+        self.interval = interval
+        self.updated = False
+        self.update_time = 0
+        self.ticker_stats = {}
+        self.ticker_filtered = []
+    def __str__ (self):
+        return "{Message: TODO: FIXME: implement}"
+    def configure (self):
+        pass
+    @abstractmethod
     def update(self):
         pass
+    @abstractmethod    
     def screen(self):
         pass
     def get_screened(self):
-        pass
+        return []    
 
 #EOF
