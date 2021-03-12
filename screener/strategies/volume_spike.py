@@ -32,4 +32,29 @@ class VOL_SPIKE(Screener):
     def get_screened(self):
         pass
 
+def get_all_tickers_info(ticker_stats):
+    BATCH_SIZE = 400
+    sym_list = get_all_tickers()
+    log.debug("num tickers(%d)"%(len(sym_list)))
+#     ticker_stats = []
+    i = 0
+#     t = int(time.time())
+    while i < len(sym_list):
+        ts, err =  YF.get_quotes(sym_list[i: i+BATCH_SIZE])
+        if err == None:
+            for ti in ts:
+                s = ti.get("symbol")
+                ss = ticker_stats.get(s)
+                if ss == None:
+                    ticker_stats[s] = {"info": ti, "time":[ti["regularMarketTime"]], "volume": [ti["regularMarketVolume"]], "price": [ti["regularMarketPrice"]]}
+                else:
+                    ss ["info"] = ti 
+                    ss ["time"].append(ti["regularMarketTime"])
+                    ss ["volume"].append(ti["regularMarketVolume"])
+                    ss ["price"].append(ti["regularMarketPrice"])
+            i += BATCH_SIZE
+        else:
+            time.sleep(2)
+    log.debug("(%d)ticker stats retrieved"%( len(ticker_stats)))
+    return ticker_stats
 #EOF
