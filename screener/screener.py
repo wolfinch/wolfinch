@@ -38,7 +38,6 @@ import ui
 # from ui import ui_conn_pipe
 
 import nasdaq
-import yahoofin as yf
 
 # mpl_logger = logging.getLogger('matplotlib')
 # mpl_logger.setLevel(logging.WARNING)
@@ -62,8 +61,6 @@ def screener_init():
 #     db.init_order_db(Order)
     register_screeners()
     
-    YF = yf.Yahoofin ()
-
     # setup ui if required
     ui.integrated_ui = True
     if ui.integrated_ui:
@@ -109,6 +106,7 @@ def screener_main():
 
 
 g_screeners = []
+g_ticker_stats = {}
 def register_screeners():
     global g_screeners
     log.debug("registering screeners")
@@ -116,21 +114,34 @@ def register_screeners():
     
 def update_data():
     log.debug("updating data")
-    get_all_tickers()
+    sym_list = get_all_tickers()
     for scrn_obj in g_screeners:
         if scrn_obj.interval + scrn_obj.update_time < int(time.time()):
-            log.info ("updating screener data - %s"%(scrn_obj.name))
-            scrn_obj.ticker_stats, scrn_obj.updated = scrn_obj.update(scrn_obj.ticker_stats)
-            scrn_obj.update_time = int(time.time())
+            s_list = sym_list.get(scrn_obj.ticker_kind)
+            if not s_list :
+                log.critical("unable to find ticker list kind %s"%(scrn_obj.ticker_kind))
+                continue
+            log.info ("updating screener data - %s"%(scrn_obj.name))                
+            if scrn_obj.update(s_list, g_ticker_stats):
+                scrn_obj.update_time = int(time.time())
+                scrn_obj.updated = True
 
 def process_screeners ():
     log.debug("processing screeners")
     for scrn_obj in g_screeners:
         if scrn_obj.updated :
             log.info ("running screener - %s"%(scrn_obj.name))
-            scrn_obj.ticker_filtered = scrn_obj.screen(scrn_obj.ticker_stats, scrn_obj.ticker_filtered)
+            scrn_obj.screen(g_ticker_stats)
             scrn_obj.updated = False
             
+def get_all_screener_data():
+    #run thru all screeners and collect filtered data
+    filtered_list = {}
+    for scrn_obj in g_screeners:
+        log.debug("get screener data from %s"%(scrn_obj.name))
+        filtered_list[scrn_obj.name] = scrn_obj.get_screened()
+    return filtered_list
+                
 def get_all_tickers ():
     global ticker_import_time, all_tickers
     log.debug ("get all tickers")
@@ -143,7 +154,7 @@ def get_all_tickers ():
             mcap = []
             for ticker in t_l:
                 mcap.append(ticker["symbol"].strip())
-                all_tickers["megacap"] = mcap        
+                all_tickers["MEGACAP"] = mcap        
             ticker_import_time = int(time.time())
     return all_tickers
     
@@ -165,14 +176,11 @@ def process_ui_msgs(ui_conn_pipe):
     except Exception as e:
         log.critical("exception %s on ui" %(str(e)))
         raise e
-
+    
 def process_get_screener_data(msg):
     log.info("msg %s"%(msg))
 
-    dataSet = [
-         {"symbol": "aapl", "last_price": "10.2", "change": "10", "pct_change": "2"},
-         {"symbol": "codx", "last_price": "13.2", "change": "20", "pct_change": "20"}            
-             ] 
+    dataSet = get_all_screener_data()
     
     msg["type"] = "GET_SCREENER_DATA_RESP"
     msg["data"] = dataSet #{}

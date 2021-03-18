@@ -19,28 +19,36 @@
 
 # from decimal import Decimal
 from .screener_base import Screener
+from utils import getLogger
+import yahoofin as yf
+import time
+
+log = getLogger('VOL_SPIKE')
+log.setLevel(log.DEBUG)
 
 class VOL_SPIKE(Screener):
-    def __init__(self, interval=300):
-        super().__init__("VOL_SPIKE", interval)
-#         self.name = "VOL_SPIKE"
-#         self.interval = interval
-    def update(self):
-        pass
-    def screen(self):
+    def __init__(self, name="VOL_SPIKE", ticker_kind="ALL", interval=300):
+        log.info ("init: name: %s ticker_kind: %s interval: %d"%(name, ticker_kind, interval))
+        super().__init__(name, ticker_kind, interval)
+        self.YF = yf.Yahoofin ()
+    def update(self, sym_list, ticker_stats):
+        get_all_tickers_info(self.YF, sym_list, ticker_stats)
+        return True
+    def screen(self, ticker_stats):
         pass
     def get_screened(self):
-        pass
+        li = [
+         {"symbol": "aapl", "last_price": "10.2", "change": "10", "pct_change": "2"},
+         {"symbol": "codx", "last_price": "13.2", "change": "20", "pct_change": "20"}            
+             ] 
+        return li
 
-def get_all_tickers_info(ticker_stats):
+def get_all_tickers_info(yf, sym_list, ticker_stats):
     BATCH_SIZE = 400
-    sym_list = get_all_tickers()
     log.debug("num tickers(%d)"%(len(sym_list)))
-#     ticker_stats = []
     i = 0
-#     t = int(time.time())
     while i < len(sym_list):
-        ts, err =  YF.get_quotes(sym_list[i: i+BATCH_SIZE])
+        ts, err =  yf.get_quotes(sym_list[i: i+BATCH_SIZE])
         if err == None:
             for ti in ts:
                 s = ti.get("symbol")

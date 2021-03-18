@@ -37,7 +37,7 @@ import requests
 
 # mpl_logger.setLevel(logging.WARNING)
 log = getLogger('Screener')
-log.setLevel(log.DEBUG)
+log.setLevel(log.ERROR)
 # logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 GET_ALL_TICKERS_API = "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25000&offset=0"

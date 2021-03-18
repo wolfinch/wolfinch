@@ -18,15 +18,16 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 from abc import ABCMeta, abstractmethod
-        
+
 class Screener (metaclass=ABCMeta):
     @abstractmethod
-    def __init__ (self, name="", interval=300):
+    def __init__ (self, name="", ticker_kind="ALL", interval=300):
         ''' 
         Init for the screener class
         '''
-        self.name = name
-        self.interval = interval
+        self.name = str(name)
+        self.ticker_kind = str(ticker_kind)
+        self.interval = int(interval)
         self.updated = False
         self.update_time = 0
         self.ticker_stats = {}
@@ -37,7 +38,7 @@ class Screener (metaclass=ABCMeta):
         pass
     @abstractmethod
     def update(self):
-        pass
+        return False
     @abstractmethod    
     def screen(self):
         pass
