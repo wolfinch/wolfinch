@@ -57,42 +57,61 @@
 	$(document).ready(function() {
 
 		console.log("load stats");
-		load_tables();
+		load_screener_tables();
+		setInterval(function() {
+			console.log("refresh tables")
+			load_screener_tables();
+		}, 5000); //1200);		
 	});
 
+	function load_screener_tables() {
+		console.log("loading exchanges and markets");
+		// call api to buy/sell
+		$.ajax({
+			type : 'GET',
+			url : "/api/screener/data",
+			dataType : 'json',
+			success : function(data) {
+				console.log("get screener/data success!" + data);
+				Object.keys(data).forEach(function(scrn_name) {
+					console.log("load scrn_name: "+scrn_name);		
+					load_tables (scrn_name, data[scrn_name]);
+				});
+			},
+			error : function(xhr, error) {
+				console.log("get screener/data failed!");
+				alert(error);
+			}
+		});
 
-	function load_tables() {
+	}	
 
-		console.log("load stats")
+	function load_tables(scrn_name, data) {
+
+		console.log("load scrn_name "+scrn_name+" data : "+data);
 		
-		if (table) {
+/* 		if (table) {
 			// previously init, just reload once and don't mess with timers
 			table.ajax.reload(null, false); // user paging is not reset on reload
 			return;
-		}
+		} */
 
-/* 		 			var dataSet = [
+/* 	var dataSet = [
 		 {"symbol": "aapl", "last_price": "10.2", "change": "10", "pct_change": "2"},
 		 {"symbol": "codx", "last_price": "13.2", "change": "10", "pct_change": "2"}			
-			 ] */
+			 ] ; */
 		 
 		table = $('#statsTable').DataTable(
 				{
-					//data : dataSet,
+					data : data,
 					//ajax: '/api/data',
 					"processing" : true,
 					pageLength : 25,
-					ajax : {
-						url : "/api/screener/data",
-/* 			 			data : {
-							from_time : 0,
-							to_time: 0,
-							exch_name : active_exch,
-							product : active_market
-						}, */
-						dataSrc : ''
-					},
-
+/* 					ajax : {
+						//url : "/api/screener/data",
+ 			 			data : dataSet,
+						//dataSrc : dataSet
+					}, */
 					columns : [
 							{
 								title : "Symbol",
@@ -114,10 +133,6 @@
 					"order" : [ [ 3, "desc" ] ],
 					responsive : true
 				});
-
-		setInterval(function() {
-			table.ajax.reload(null, false); // user paging is not reset on reload
-		}, 120000);
 	}
 </script>
 
