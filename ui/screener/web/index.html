@@ -70,6 +70,11 @@
 				console.log("table exsists "+scrn_name)
 				return
 			}
+			var th = "";
+			for (i=0; i<Object.keys(scrn_data[scrn_name][0]).length; i++) {
+				th += '<th style="width: auto;">0</th>'
+			}
+			
 			var scrn_table_tags = `
 				<tr style="background-color: rgba(0, 0, 0, 0.1);">
 					<td align="center" style="font-size: 1vw; border: 0;"
@@ -82,12 +87,8 @@
 							<table id="`+scrn_name+`" class="display compact"
 										style="font-size: 1vw; vertical-align: top; height: 100%; width: auto">
 								<thead>
-								<tr>
-									<th style="width: auto;">0</th>
-									<th style="width: auto;">1</th>
-									<th style="width: auto;">2</th>
-									<th style="width: auto;">3</th>
-								</tr>
+								<tr>` + th +
+								`</tr>
 								</thead>
 								<tbody></tbody>
 							</table>
@@ -122,14 +123,14 @@
 	}	
 
 	function load_tables(scrn_name, data) {
-
 		console.log("load scrn_name "+scrn_name+" data : "+data);
-		
- 		if ($.fn.dataTable.isDataTable('#'+scrn_name)) {
+				
+ 		if ($.fn.dataTable.isDataTable('#'+scrn_name)) { 			
  			var table = $.fn.dataTable.tables({ api: true }).table('#'+scrn_name); 
 			// previously init, just reload once and don't mess with timers
 			//table.ajax.reload(null, false); // user paging is not reset on reload
 			//table.data.apply();
+			data.splice(0, 1);		
 			table.clear().draw().rows.add(data).columns.adjust().draw();
 			return;
 		}
@@ -140,9 +141,17 @@
 			 ] ; */
 		 
 		var columns = [];
-		Object.keys(data[0]).forEach(function(key){
-			columns.push({title : key, data : key});
+		var sort_idx = 0;			 
+		Object.keys(data[0]).forEach(function(key, idx){
+			//console.log("idx - "+idx)
+			if (key == "time") {
+				columns.push({title : data[0][key], data : key, 'visible' : false });
+				sort_idx = idx
+			} else {
+				columns.push({title : data[0][key], data : key});
+			}
 		});
+		data.splice(0, 1);		
 		table = $('#'+scrn_name).DataTable(
 				{
 					data : data,
@@ -155,7 +164,7 @@
 						//dataSrc : dataSet
 					}, */
 					columns : columns,
-					"order" : [ [ 3, "desc" ] ],
+					"order" : [ [ sort_idx, "desc" ] ],
 					responsive : true
 				});
 	}

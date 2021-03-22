@@ -42,7 +42,7 @@ import nasdaq
 # mpl_logger = logging.getLogger('matplotlib')
 # mpl_logger.setLevel(logging.WARNING)
 log = getLogger('Screener')
-log.setLevel(log.DEBUG)
+log.setLevel(log.INFO)
 
 ticker_import_time = 0
 all_tickers = []

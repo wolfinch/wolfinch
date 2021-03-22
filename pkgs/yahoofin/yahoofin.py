@@ -76,7 +76,7 @@ class Yahoofin:
         log.debug ("sym_list %s"%(sym_list))
         if (len(sym_list) == 0):
             return None
-        fields = "&fields=longName,shortName,regularMarketPrice,regularMarketChange,regularMarketChangePercent,marketCap,underlyingSymbol,underlyingExchangeSymbol,headSymbolAsString,regularMarketVolume,uuid,regularMarketOpen,fiftyTwoWeekLow,fiftyTwoWeekHigh"
+        fields = "&fields=longName,shortName,regularMarketPrice,regularMarketChange,regularMarketChangePercent,marketCap,underlyingSymbol,underlyingExchangeSymbol,headSymbolAsString,regularMarketVolume,averageDailyVolume10Day,averageDailyVolume3Month,uuid,regularMarketOpen,fiftyTwoWeekLow,fiftyTwoWeekHigh"
         sym_str= ",".join(sym_list)
         url = "https://query1.finance.yahoo.com/v7/finance/quote?&symbols="+sym_str+fields
         resp = self.get_url(url)

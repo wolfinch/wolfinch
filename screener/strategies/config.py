@@ -23,7 +23,8 @@ from .volume_spike import VOL_SPIKE
 def Configure ():
     scrnr_list = []
     
-    scrnr_list.append(VOL_SPIKE("VOL-SPIKE-MEGACAP", ticker_kind="MEGACAP"))
+    scrnr_list.append(VOL_SPIKE("VOL-SPIKE-MEGACAP", ticker_kind="MEGACAP", vol_multiplier=2))
+#     scrnr_list.append(VOL_SPIKE("VOL-SPIKE-MEGACAP1", ticker_kind="MEGACAP"))
     
     return scrnr_list
 
