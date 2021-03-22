@@ -66,10 +66,15 @@
 
 	function add_screener_tables(scrn_data) {
 		Object.keys(scrn_data).forEach(function (scrn_name) {
+			if (scrn_data[scrn_name].length == 0) {
+				return;
+			}
+			
 			if ($("#"+scrn_name).length) {
 				console.log("table exsists "+scrn_name)
-				return
+				return;
 			}
+			
 			var th = "";
 			for (i=0; i<Object.keys(scrn_data[scrn_name][0]).length; i++) {
 				th += '<th style="width: auto;">0</th>'

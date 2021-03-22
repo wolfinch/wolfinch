@@ -43,27 +43,35 @@ class VOL_SPIKE(Screener):
     def screen(self, ticker_stats):
         #1. if cur vol >= 2x10davg vol
         #2. renew once a day 
+        now = int(time.time())
+        if len(self.filtered_list):
+            #prune filtered list
+            s_l = []
+            for sym, info in self.filtered_list.items() :
+                if info["time"] + 4*24*60*60 < now :
+                    s_l.append(sym)
+            for s_e in s_l:
+                log.info ("del "+s_e)
+                del self.filtered_list[s_e]        
         for sym, info in ticker_stats.items():
-            log.debug("sym info: %s"%(info))
+#             log.debug("sym info: %s"%(info))
             if info["info"]["regularMarketVolume"] > self.vol_multiplier*info["info"]["averageDailyVolume10Day"]:
                 fs = self.filtered_list.get(sym)
-                t = int(time.time())
-                if (fs == None or (fs["time"] + 12*60*60 < t)):
-                    se  = {"symbol": sym, "time": t, "last_price": round(info["info"]["regularMarketPrice"], 2),
+                if (fs == None or (fs["time"] + 12*60*60 < now)):
+                    se  = {"symbol": sym, "time": now, "last_price": round(info["info"]["regularMarketPrice"], 2),
                            "price_change": round(info["info"]["regularMarketChangePercent"], 2),
                            "vol_change": round((info["info"]["regularMarketVolume"] - info["info"]["averageDailyVolume10Day"])*100/
                                            info["info"]["averageDailyVolume10Day"], 1)}
                     log.info ('screener found sym: %s info:  %s'%(sym, se))
-                    self.filtered_list [sym] = se 
-        #prune filtered list
+                    self.filtered_list [sym] = se           
     def get_screened(self):
         fmt = {"symbol": "symbol", "time": "time", "last_price": "last price", 
-               "price_change": "price %change", "vol_change": "vol %change"}
+               "price_change": "% price", "vol_change": "% vol"}
         return [fmt]+list(self.filtered_list.values())
 
 def get_all_tickers_info(yf, sym_list, ticker_stats):
     BATCH_SIZE = 400
-    log.debug("num tickers(%d)"%(len(sym_list)))
+#     log.debug("num tickers(%d)"%(len(sym_list)))
     i = 0
     while i < len(sym_list):
         ts, err =  yf.get_quotes(sym_list[i: i+BATCH_SIZE])
@@ -76,10 +84,15 @@ def get_all_tickers_info(yf, sym_list, ticker_stats):
                                         "volume": [ti["regularMarketVolume"]], "price": [ti["regularMarketPrice"]]
                                         }
                 else:
-                    ss ["info"] = ti 
+                    ss ["info"] = ti                      
                     ss ["time"].append(ti["regularMarketTime"])
                     ss ["volume"].append(ti["regularMarketVolume"])
                     ss ["price"].append(ti["regularMarketPrice"])
+                    #limit history
+                    if len(ss["time"]) > 1024:
+                        del(ss["time"][0])
+                        del(ss["volume"][0])
+                        del(ss["price"][0])                       
             i += BATCH_SIZE
         else:
             time.sleep(2)
