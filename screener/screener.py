@@ -45,11 +45,10 @@ log = getLogger('Screener')
 log.setLevel(log.INFO)
 
 ticker_import_time = 0
-all_tickers = []
 YF = None
 
 # global Variables
-MAIN_TICK_DELAY = 0.500  # 500 milli
+MAIN_TICK_DELAY = 0.500  # 500*4 milli
 
 
 def screener_init():
@@ -111,7 +110,7 @@ def register_screeners():
     global g_screeners
     log.debug("registering screeners")
     g_screeners = Configure()
-    
+
 def update_data():
     log.debug("updating data")
     sym_list = get_all_tickers()
@@ -121,41 +120,72 @@ def update_data():
             if not s_list :
                 log.critical("unable to find ticker list kind %s"%(scrn_obj.ticker_kind))
                 continue
-            log.info ("updating screener data - %s"%(scrn_obj.name))                
+            log.info ("updating screener data for %s num_sym: %d"%(scrn_obj.name, len(s_list)))                
             if scrn_obj.update(s_list, g_ticker_stats):
                 scrn_obj.update_time = int(time.time())
                 scrn_obj.updated = True
 
 def process_screeners ():
     log.debug("processing screeners")
+    sym_list = get_all_tickers()    
     for scrn_obj in g_screeners:
         if scrn_obj.updated :
-            log.info ("running screener - %s"%(scrn_obj.name))
-            scrn_obj.screen(g_ticker_stats)
+            s_list = sym_list.get(scrn_obj.ticker_kind)
+            if not s_list :
+                log.critical("unable to find ticker list kind %s"%(scrn_obj.ticker_kind))
+                continue            
+            log.info ("running screener - %s sym_num: %d"%(scrn_obj.name, len(s_list)))
+            scrn_obj.screen(s_list, g_ticker_stats)
             scrn_obj.updated = False
             
 def get_all_screener_data():
     #run thru all screeners and collect filtered data
     filtered_list = {}
     for scrn_obj in g_screeners:
-        log.debug("get screener data from %s"%(scrn_obj.name))
+        log.info("get screener data from %s"%(scrn_obj.name))
         filtered_list[scrn_obj.name] = scrn_obj.get_screened()
     return filtered_list
-                
+
+all_tickers = {"ALL":[], "MEGACAP":[], "GT50M": [], "LT50M": [], "OTC": []}
 def get_all_tickers ():
     global ticker_import_time, all_tickers
     log.debug ("get all tickers")
     if ticker_import_time + 24*3600 < int(time.time()) :
         log.info ("renew tickers list")
 #         t_l = nasdaq.get_all_tickers_gt50m()
+        #import all tickers
+        t_l = nasdaq.get_all_tickers()
+        if t_l:
+            allt = []
+            for ticker in t_l:
+                allt.append(ticker["symbol"].strip())
+            log.info("ALL (%d) tickers imported"%(len(allt)))
+            all_tickers["ALL"] = allt
+        #import megacap only
         t_l = nasdaq.get_all_tickers_megacap()
         if t_l:
-            all_tickers = {}
             mcap = []
             for ticker in t_l:
                 mcap.append(ticker["symbol"].strip())
-                all_tickers["MEGACAP"] = mcap        
-            ticker_import_time = int(time.time())
+            log.info("MEGACAP (%d) tickers imported"%(len(mcap)))                
+            all_tickers["MEGACAP"] = mcap
+        #import gt50m
+        t_l = nasdaq.get_all_tickers_gt50m()
+        if t_l:
+            gt50 = []
+            for ticker in t_l:
+                gt50.append(ticker["symbol"].strip())
+            log.info("GT50M (%d) tickers imported"%(len(gt50)))                
+            all_tickers["GT50M"] = gt50
+        #import lt50m
+        t_l = nasdaq.get_all_tickers_lt50m()
+        if t_l:
+            lt50 = []
+            for ticker in t_l:
+                lt50.append(ticker["symbol"].strip())
+            all_tickers["LT50M"] = lt50
+        log.info("LT50M (%d) tickers imported"%(len(lt50)))
+        ticker_import_time = int(time.time())
     return all_tickers
     
 def process_ui_msgs(ui_conn_pipe):

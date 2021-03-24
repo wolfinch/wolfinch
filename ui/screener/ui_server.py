@@ -35,7 +35,7 @@ from utils import getLogger
 
 
 log = getLogger ('UI')
-log.setLevel(log.DEBUG)
+log.setLevel(log.ERROR)
 
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
@@ -152,7 +152,7 @@ def server_main (port=8080, mp_pipe=None):
                             log.error (err)
                             raise Exception (err)
                         else:
-                            log.info ("screener_data - %s"%(screener_data))
+                            log.debug ("screener_data - %s"%(screener_data))
                     else:
                         err = "invalid ui resp msg type: %s" % msg_type
                         log.error (err)

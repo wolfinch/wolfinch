@@ -40,7 +40,7 @@ class VOL_SPIKE(Screener):
     def update(self, sym_list, ticker_stats):
         get_all_tickers_info(self.YF, sym_list, ticker_stats)
         return True
-    def screen(self, ticker_stats):
+    def screen(self, sym_list, ticker_stats):
         #1. if cur vol >= 2x10davg vol
         #2. renew once a day 
         now = int(time.time())
@@ -53,17 +53,24 @@ class VOL_SPIKE(Screener):
             for s_e in s_l:
                 log.info ("del "+s_e)
                 del self.filtered_list[s_e]        
-        for sym, info in ticker_stats.items():
+        for sym in sym_list:
 #             log.debug("sym info: %s"%(info))
-            if info["info"]["regularMarketVolume"] > self.vol_multiplier*info["info"]["averageDailyVolume10Day"]:
+            info = ticker_stats.get(sym)
+            if info == None:
+                continue
+            rmv = info["info"].get("regularMarketVolume", -1)
+            adv10 = info["info"].get("averageDailyVolume10Day", -1)
+            rmp = info["info"].get("regularMarketPrice", -1)
+            rmcp = info["info"].get("regularMarketChangePercent", -1)
+            if (rmv != -1 and adv10 != -1 and rmv != 0 and adv10 != 0) and (
+                rmv > self.vol_multiplier*adv10):
                 fs = self.filtered_list.get(sym)
                 if (fs == None or (fs["time"] + 12*60*60 < now)):
-                    se  = {"symbol": sym, "time": now, "last_price": round(info["info"]["regularMarketPrice"], 2),
-                           "price_change": round(info["info"]["regularMarketChangePercent"], 2),
-                           "vol_change": round((info["info"]["regularMarketVolume"] - info["info"]["averageDailyVolume10Day"])*100/
-                                           info["info"]["averageDailyVolume10Day"], 1)}
+                    se  = {"symbol": sym, "time": now, "last_price": round(rmp, 2),
+                           "price_change": round(rmcp, 2),
+                           "vol_change": round(100*(rmv - adv10)/adv10, 1)}
                     log.info ('screener found sym: %s info:  %s'%(sym, se))
-                    self.filtered_list [sym] = se           
+                    self.filtered_list [sym] = se
     def get_screened(self):
         fmt = {"symbol": "symbol", "time": "time", "last_price": "last price", 
                "price_change": "% price", "vol_change": "% vol"}
@@ -72,30 +79,37 @@ class VOL_SPIKE(Screener):
 def get_all_tickers_info(yf, sym_list, ticker_stats):
     BATCH_SIZE = 400
 #     log.debug("num tickers(%d)"%(len(sym_list)))
+    s = None
+    ss = None
     i = 0
-    while i < len(sym_list):
-        ts, err =  yf.get_quotes(sym_list[i: i+BATCH_SIZE])
-        if err == None:
-            for ti in ts:
-                s = ti.get("symbol")
-                ss = ticker_stats.get(s)
-                if ss == None:
-                    ticker_stats[s] = {"info": ti, "time":[ti["regularMarketTime"]],
-                                        "volume": [ti["regularMarketVolume"]], "price": [ti["regularMarketPrice"]]
-                                        }
-                else:
-                    ss ["info"] = ti                      
-                    ss ["time"].append(ti["regularMarketTime"])
-                    ss ["volume"].append(ti["regularMarketVolume"])
-                    ss ["price"].append(ti["regularMarketPrice"])
-                    #limit history
-                    if len(ss["time"]) > 1024:
-                        del(ss["time"][0])
-                        del(ss["volume"][0])
-                        del(ss["price"][0])                       
-            i += BATCH_SIZE
-        else:
-            time.sleep(2)
+    try:
+        while i < len(sym_list):
+            ts, err =  yf.get_quotes(sym_list[i: i+BATCH_SIZE])
+            if err == None:
+                for ti in ts:
+                    s = ti.get("symbol")
+                    ss = ticker_stats.get(s)
+                    if ss == None:
+                        ticker_stats[s] = {"info": ti, "time":[ti.get("regularMarketTime", 0)],
+                                            "volume": [ti.get("regularMarketVolume", -1)], "price": [ti.get("regularMarketPrice", -1)]
+                                            }
+                    else:
+                        ss ["info"] = ti                      
+                        ss ["time"].append(ti.get("regularMarketTime", 0))
+                        ss ["volume"].append(ti.get("regularMarketVolume", -1))
+                        ss ["price"].append(ti.get("regularMarketPrice", -1))
+                        #limit history
+                        if len(ss["time"]) > 1024:
+                            del(ss["time"][0])
+                            del(ss["volume"][0])
+                            del(ss["price"][0])                       
+                i += BATCH_SIZE
+            else:
+                log.critical ("yf api failed err: %s i: %d num: %d"%(err, i, len(sym_list)))
+                time.sleep(2)
+    except Exception as e:
+        log.critical (" Exception e: %s \n s: %s ss: %s i: %d len: %d"%(e, s, ss, i, len(sym_list)))
+        raise e
     log.debug("(%d)ticker stats retrieved"%( len(ticker_stats)))
     return ticker_stats
 #EOF
