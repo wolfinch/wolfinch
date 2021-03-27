@@ -52,6 +52,11 @@
 	src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
 
 <script src="https://momentjs.com/downloads/moment.min.js"></script>
+<style>
+.mini-box {
+    margin: 2px;
+}
+</style>
 <script type="text/javascript">
 	var table;
 	$(document).ready(function() {
@@ -80,27 +85,29 @@
 				th += '<th style="width: auto;">0</th>'
 			}
 			
-			var scrn_table_tags = `
-				<tr style="background-color: rgba(0, 0, 0, 0.1);">
-					<td align="center" style="font-size: 1vw; border: 0;"
-										colspan="16"><b>`+scrn_name+`</b>
-					</td>
-				</tr>
-				<tr style="font-size: 1vw; width: auto; height: auto;" align="center">
-					<td style="font-size: 1vw; width: 85%; height: auto; border-collapse: collapse;" colspan="1">
-						<div class="table-responsive">
-							<table id="`+scrn_name+`" class="display compact"
-										style="font-size: 1vw; vertical-align: top; height: 100%; width: auto">
+			var scrn_table_tags_bt = `
+		        <div class="col-xs-4">
+		            <div class="row" >
+		                <div class="col-xs-12"><div align="center" class="mini-box"><b>`+scrn_name+`</b></div></div>
+		            </div>
+		            <div class="row" style="height:20%; display: block;">                
+		                <div class="col-xs-12" >
+		                	<div class="mini-box">
+								<table id="`+scrn_name+`" class="display compact"
+									style="font-size: 1vw; vertical-align: top; height: 20%; width: auto">
 								<thead>
 								<tr>` + th +
 								`</tr>
 								</thead>
 								<tbody></tbody>
-							</table>
-						</div>
-					</td>
-				</tr>`
-			$("#scrnTable").append(scrn_table_tags);
+								</table>	                
+		                	</div>
+		                </div>
+		            </div>
+	        	</div>					
+				`;
+				
+			$("#scrnTable").append(scrn_table_tags_bt);
 		});
 	}
 	
@@ -212,7 +219,6 @@
 	}
 </script>
 
-
 <body>
 	<div class="row align-items-start">
 		<div class="col-12">
@@ -241,13 +247,17 @@
 	<div class="container" style="padding-right: 1em;">
 		<div class="row">
 			<div class="table-responsive">
-				<table id="scrnTable" style="margin: false; height: auto;" border="1">
+				<table id="scrnTable1" style="margin: false; height: auto;" border="1">
 					<tbody style="vertical-align: top">
 					</tbody>
 				</table>
 			</div>
 		</div>
 	</div>
+	
+	<div class="container" style="padding-right: 1em;">
+		<div id="scrnTable" class="row"></div>
+	</div>	
 
 	<footer class="footer">
 		<div class="container">
