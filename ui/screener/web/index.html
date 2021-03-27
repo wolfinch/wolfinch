@@ -54,7 +54,7 @@
 <script src="https://momentjs.com/downloads/moment.min.js"></script>
 <style>
 .mini-box {
-    margin: 2px;
+    margin: 1px;
 }
 </style>
 <script type="text/javascript">
@@ -90,11 +90,10 @@
 		            <div class="row" >
 		                <div class="col-xs-12"><div align="center" class="mini-box"><b>`+scrn_name+`</b></div></div>
 		            </div>
-		            <div class="row" style="height:20%; display: block;">                
+		            <div class="row">                
 		                <div class="col-xs-12" >
 		                	<div class="mini-box">
-								<table id="`+scrn_name+`" class="display compact"
-									style="font-size: 1vw; vertical-align: top; height: 20%; width: auto">
+								<table id="`+scrn_name+`" class="display compact">
 								<thead>
 								<tr>` + th +
 								`</tr>
@@ -178,6 +177,7 @@
 					columns : columns,
 					"order" : [ [ sort_idx, "desc" ] ], // sort by time
 					responsive : true,
+					scrollY		:   '30vh',
 					"rowCallback": function(nRow, aData, iDataIndex) {
 								console.log("aRow :"+nRow+" aData: "+aData+" iDataIndex: "+iDataIndex)
 							    var new1 = "#05fcc7";
