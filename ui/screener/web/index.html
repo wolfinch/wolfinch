@@ -145,15 +145,15 @@
 		 {"symbol": "codx", "last_price": "13.2", "change": "10", "pct_change": "2"}			
 			 ] ; */
 		 
-		var columns = [];
+		var columns = [{"title":"time", data: "time", name: "time", "visible": false}];
 		var sort_idx = 0;			 
 		Object.keys(data[0]).forEach(function(key, idx){
 			//console.log("idx - "+idx)
 			if (key == "time") {
-				columns.push({title : data[0][key], data : key, 'visible' : false });
-				sort_idx = idx
+				//columns.push({title : data[0][key], data : key, name: key, 'visible' : false });
+				//sort_idx = idx
 			} else {
-				columns.push({title : data[0][key], data : key});
+				columns.push({title : data[0][key], data : key, name:key});
 			}
 		});
 		data.splice(0, 1);		
@@ -169,8 +169,45 @@
 						//dataSrc : dataSet
 					}, */
 					columns : columns,
-					"order" : [ [ sort_idx, "desc" ] ],
-					responsive : true
+					"order" : [ [ sort_idx, "desc" ] ], // sort by time
+					responsive : true,
+					"rowCallback": function(nRow, aData, iDataIndex) {
+								console.log("aRow :"+nRow+" aData: "+aData+" iDataIndex: "+iDataIndex)
+							    var new1 = "#05fcc7";
+								var new2 = "#7dffe3";
+								var new3 = "#c8faef";
+							    var red = "#f56a2f";
+							    var green = "#7efa6b";
+							    var now = new Date();
+							    var time = new Date(aData.time*1000);
+							    if (new Date().setHours(0, 0, 0, 0) == new Date(aData.time*1000).setHours(0, 0, 0, 0)) {
+									if (now.getHours() - 2 <= time.getHours()) {
+								    	console.log("within 2 hrs ");
+									    if (now.getMinutes() - 30 <= time.getMinutes()) {
+									    	console.log("within 30 mins");
+										    $('td', nRow).css('background-color', new1);
+									    } else {								    	
+							      			$('td', nRow).css('background-color', new2);
+										}
+								    } else {
+							    	//$nRow.css({"background-color":"red"})
+								    	console.log("within a day");							    	
+							      		$('td', nRow).css('background-color', new3);
+								    }
+								    
+							    }
+							    
+							    for (var i=0; i < this.dataTableSettings[0].aoColumns.length; i++) {
+							    	if (this.dataTableSettings[0].aoColumns[i].data == "cur_price_change") {
+							    		if (aData["cur_price_change"] < aData["price_change"]) {
+											$(nRow).find('td:eq('+(i-1)+')').css('background-color', red);
+							    		} else if (aData["cur_price_change"] >= aData["price_change"]) {
+											$(nRow).find('td:eq('+(i-1)+')').css('background-color', green);
+							    		}
+										break;
+									}
+							    }							
+							}					
 				});
 	}
 </script>

@@ -112,6 +112,8 @@ def register_screeners():
     g_screeners = Configure()
 
 def update_data():
+    #update stats only during ~12hrs, to cover pre,open,ah
+#     if datetime.utcfromtimestamp(int(time.time())).hour > 8
     log.debug("updating data")
     sym_list = get_all_tickers()
     for scrn_obj in g_screeners:

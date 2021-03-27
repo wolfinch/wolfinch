@@ -24,6 +24,8 @@ def Configure ():
     scrnr_list = []
     
     scrnr_list.append(VOL_SPIKE("VOL-SPIKE-MEGACAP", ticker_kind="MEGACAP", vol_multiplier=2))
+#     scrnr_list.append(VOL_SPIKE("VOL-SPIKE-MEGACAP1", ticker_kind="MEGACAP", vol_multiplier=2))
+    
 #     scrnr_list.append(VOL_SPIKE("VOL-SPIKE-ALL", ticker_kind="ALL"))
     scrnr_list.append(VOL_SPIKE("VOL-SPIKE-GT50M", ticker_kind="GT50M", vol_multiplier=3))
     scrnr_list.append(VOL_SPIKE("VOL-SPIKE-LT50M", ticker_kind="LT50M", vol_multiplier=4))

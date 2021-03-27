@@ -32,12 +32,18 @@ class VOL_SPIKE(Screener):
         super().__init__(name, ticker_kind, interval)
         self.YF = yf.Yahoofin ()
         self.vol_multiplier = vol_multiplier
-#         li = [
-#          {"symbol": "aapl", "last_price": 10.2, "change": "10", "pct_change": "2"},
-#          {"symbol": "codx", "last_price": "13.2", "change": "20", "pct_change": "20"}            
-#              ]        
+#         self.time_open = 1616585400 #4.30AMPST + 12hrs
+#         self.time_close = 1616585400 + 12*3600
         self.filtered_list = {} #li
     def update(self, sym_list, ticker_stats):
+        #update stats only during ~12hrs, to cover pre,open,ah
+#         now = time.time()
+#         if now < self.time_open:
+#             return False
+#         if now > self.time_close:
+#             self.time_open +=  24*3600
+#             self.time_close += 24*3600
+#             return False
         get_all_tickers_info(self.YF, sym_list, ticker_stats)
         return True
     def screen(self, sym_list, ticker_stats):
@@ -66,15 +72,28 @@ class VOL_SPIKE(Screener):
                 rmv > self.vol_multiplier*adv10):
                 fs = self.filtered_list.get(sym)
                 if (fs == None or (fs["time"] + 12*60*60 < now)):
-                    se  = {"symbol": sym, "time": now, "last_price": round(rmp, 2),
+                    fs  = {"symbol": sym, "time": now,
+                           "last_price": round(rmp, 2),
                            "price_change": round(rmcp, 2),
-                           "vol_change": round(100*(rmv - adv10)/adv10, 1)}
-                    log.info ('screener found sym: %s info:  %s'%(sym, se))
-                    self.filtered_list [sym] = se
+                           "cur_price_change": round(rmcp, 2),                           
+                           "vol_change": round(100*(rmv - adv10)/adv10, 1),
+                           "cur_vol_change": round(100*(rmv - adv10)/adv10, 1)                           
+                           }
+                    log.info ('new sym found by screener: %s info:  %s'%(sym, fs))
+                    self.filtered_list [sym] = fs
+                else:
+                    fs["cur_price_change"] = round(rmcp, 2)
+                    fs["cur_vol_change"] = round(100*(rmv - adv10)/adv10, 1)
+                    
     def get_screened(self):
+#         ft = [
+#          {"symbol": "aapl", "time": 1616585400, "last_price": 10.2, "price_change": "10", "vol_change": "2", "cur_price_change": "20", "cur_vol_change": "4"},
+#          {"symbol": "codx", "time": 1616595400, "last_price": "13.2", "price_change": "20", "vol_change": "20", "cur_price_change": "30", "cur_vol_change": "30"}            
+#              ]
         fmt = {"symbol": "symbol", "time": "time", "last_price": "last price", 
-               "price_change": "% price", "vol_change": "% vol"}
+               "price_change": "% price", "cur_price_change": "% cur price", "vol_change": "% vol", "cur_vol_change": "% cur vol"}
         return [fmt]+list(self.filtered_list.values())
+#         return [fmt]+ft
 
 def get_all_tickers_info(yf, sym_list, ticker_stats):
     BATCH_SIZE = 400
