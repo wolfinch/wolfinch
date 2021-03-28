@@ -115,7 +115,7 @@ def server_main (port=8080, mp_pipe=None):
 #         except Exception:
 #             return "{}"   
         
-    @app.route('/api/screener/data')
+    @app.route('/screener/api/data')
     def get_screener_data_api():     
 #         from_time = request.args.get('from_time', default=0, type=int)
 #         to_time = request.args.get('to_time', default=0, type=int)        

@@ -14,9 +14,12 @@ server {
 #              access_log off;
 #            }
 
+        location ~* ((/([0-9]+/wolfinch).*$)|/screener/.*) {
+           proxy_pass http://localhost:8081;
+        }
+
 
         location ~* ((/([0-9]+/wolfinch).*$)|/api/.*) {
-
            proxy_pass http://localhost:8080;
         }
 
