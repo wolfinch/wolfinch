@@ -22,6 +22,7 @@ from .screener_base import Screener
 from utils import getLogger
 import yahoofin as yf
 import time
+from datetime import datetime
 
 log = getLogger('VOL_SPIKE')
 log.setLevel(log.DEBUG)
@@ -32,18 +33,12 @@ class VOL_SPIKE(Screener):
         super().__init__(name, ticker_kind, interval)
         self.YF = yf.Yahoofin ()
         self.vol_multiplier = vol_multiplier
-#         self.time_open = 1616585400 #4.30AMPST + 12hrs
-#         self.time_close = 1616585400 + 12*3600
         self.filtered_list = {} #li
     def update(self, sym_list, ticker_stats):
-        #update stats only during ~12hrs, to cover pre,open,ah
-#         now = time.time()
-#         if now < self.time_open:
-#             return False
-#         if now > self.time_close:
-#             self.time_open +=  24*3600
-#             self.time_close += 24*3600
-#             return False
+        #update stats only during ~12hrs, to cover pre,open,ah (5AM-5PM PST, 12-00UTC)
+        if datetime.utcfromtimestamp(int(time.time())).hour <= 12 :
+            log.debug("market closed")
+            return False
         get_all_tickers_info(self.YF, sym_list, ticker_stats)
         return True
     def screen(self, sym_list, ticker_stats):

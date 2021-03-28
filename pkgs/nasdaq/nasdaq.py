@@ -40,6 +40,8 @@ log = getLogger('Screener')
 log.setLevel(log.ERROR)
 # logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+# get all tickers across all exchanges. updated nightly. 
+# for exchange specific data append - &exchange=NASDAQ
 GET_ALL_TICKERS_API = "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25000&offset=0"
 
 Session = None
