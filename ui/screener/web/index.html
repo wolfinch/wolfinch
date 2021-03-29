@@ -56,6 +56,11 @@
 .mini-box {
     margin: 1px;
 }
+
+tr {height: 2px; }
+th { font-size: .2em; }
+td { font-size: .2em; }
+
 </style>
 <script type="text/javascript">
 	var table;
@@ -151,17 +156,49 @@
 		 {"symbol": "codx", "last_price": "13.2", "change": "10", "pct_change": "2"}			
 			 ] ; */
 		 
-		var columns = [{"title":"time", data: "time", name: "time", "visible": false}];
+		var columns = [];//{"title":"time", data: "time", name: "time", "visible": false}];
 		var sort_idx = 0;			 
 		Object.keys(data[0]).forEach(function(key, idx){
 			//console.log("idx - "+idx)
 			if (key == "time") {
-				//columns.push({title : data[0][key], data : key, name: key, 'visible' : false });
 				//sort_idx = idx
+			} else if (key == "symbol") {
+				columns.push({title : data[0]["symbol"], data : "symbol", 
+					render : function(symbol, type, row) {
+						if (type == "sort") {
+							//console.log(date.unix());																	
+							return symbol;
+						} else {
+							symhref = `<a href="https://finance.yahoo.com/quote/`+symbol+`" target="_blank">`+symbol+`</a>`;
+							return symhref
+						}
+					},
+					name: "symbol"});		
 			} else {
 				columns.push({title : data[0][key], data : key, name:key});
 			}
 		});
+		columns.push({title : data[0]["time"], data : "time", 
+			render : function(time, type, row) {
+				if (time != undefined
+						&& time != 'None'
+						&& time != null) {
+					date = moment(time*1000);
+					//console.log(date.fromNow());
+
+					if (type == "sort") {
+						//console.log(date.unix());																	
+						return date.unix();
+					} else {
+						return date.fromNow();
+						//return data.closed_time;
+					}
+				} else {
+					return "-";
+				}
+			},
+			name: "time"});//, 'visible' : false });
+		sort_idx = columns.length-1;
 		data.splice(0, 1);		
 		table = $('#'+scrn_name).DataTable(
 				{
@@ -177,6 +214,9 @@
 					columns : columns,
 					"order" : [ [ sort_idx, "desc" ] ], // sort by time
 					responsive : true,
+			        fixedColumns:   {
+			            heightMatch: 'none'
+			        },
 					scrollY		:   '30vh',
 					"rowCallback": function(nRow, aData, iDataIndex) {
 								console.log("aRow :"+nRow+" aData: "+aData+" iDataIndex: "+iDataIndex)
@@ -201,7 +241,6 @@
 								    	console.log("within a day");							    	
 							      		$('td', nRow).css('background-color', new3);
 								    }
-								    
 							    }
 							    
 							    for (var i=0; i < this.dataTableSettings[0].aoColumns.length; i++) {

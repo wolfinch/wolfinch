@@ -235,6 +235,7 @@ def arg_parse():
     parser.add_argument("--clean",
                         help='Clean states,dbs and exit. Clear all the existing states',
                         action='store_true')
+    #parser.add_argument("--config", help='Wolfinch Screener config file')    
     parser.add_argument("--port", help='API Port')
     parser.add_argument("--restart", help='restart from the previous state', action='store_true')
 
