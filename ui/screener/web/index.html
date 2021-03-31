@@ -219,18 +219,18 @@ td { font-size: .2em; }
 			        },
 					scrollY		:   '30vh',
 					"rowCallback": function(nRow, aData, iDataIndex) {
-								console.log("aRow :"+nRow+" aData: "+aData+" iDataIndex: "+iDataIndex)
+								console.log("aRow :"+nRow+" aData.time: "+aData.time+" iDataIndex: "+iDataIndex)
 							    var new1 = "#05fcc7";
 								var new2 = "#7dffe3";
 								var new3 = "#c8faef";
 							    var red = "#f56a2f";
 							    var green = "#7efa6b";
-							    var now = new Date();
-							    var time = new Date(aData.time*1000);
-							    if (new Date().setHours(0, 0, 0, 0) == new Date(aData.time*1000).setHours(0, 0, 0, 0)) {
-									if (now.getHours() - 2 <= time.getHours()) {
+							    
+							    var now = Date.now()/1000;
+							    if (now - 24*3600 <= aData.time) {
+									if (now - 2*3600 <= aData.time) {
 								    	console.log("within 2 hrs ");
-									    if (now.getMinutes() - 30 <= time.getMinutes()) {
+									    if (now - 30*60 <= aData.time) {
 									    	console.log("within 30 mins");
 										    $('td', nRow).css('background-color', new1);
 									    } else {								    	
@@ -241,7 +241,7 @@ td { font-size: .2em; }
 								    	console.log("within a day");							    	
 							      		$('td', nRow).css('background-color', new3);
 								    }
-							    }
+							    }							    
 							    
 							    for (var i=0; i < this.dataTableSettings[0].aoColumns.length; i++) {
 							    	if (this.dataTableSettings[0].aoColumns[i].data == "cur_price_change") {
