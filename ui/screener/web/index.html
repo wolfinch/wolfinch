@@ -246,9 +246,9 @@ td { font-size: .2em; }
 							    for (var i=0; i < this.dataTableSettings[0].aoColumns.length; i++) {
 							    	if (this.dataTableSettings[0].aoColumns[i].data == "cur_price_change") {
 							    		if (aData["cur_price_change"] < aData["price_change"]) {
-											$(nRow).find('td:eq('+(i-1)+')').css('background-color', red);
+											$(nRow).find('td:eq('+(i)+')').css('background-color', red);
 							    		} else if (aData["cur_price_change"] >= aData["price_change"]) {
-											$(nRow).find('td:eq('+(i-1)+')').css('background-color', green);
+											$(nRow).find('td:eq('+(i)+')').css('background-color', green);
 							    		}
 										break;
 									}

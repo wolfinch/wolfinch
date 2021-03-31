@@ -27,7 +27,7 @@ import traceback
 import pprint
 from decimal import getcontext
 # import random
-import logging
+# import logging
 from utils import getLogger #, get_product_config, load_config, get_config
 # import sims
 # import exchanges
@@ -36,7 +36,7 @@ import requests
 
 
 # mpl_logger.setLevel(logging.WARNING)
-log = getLogger('Screener')
+log = getLogger('Nasdaq')
 log.setLevel(log.ERROR)
 # logging.getLogger("urllib3").setLevel(logging.WARNING)
 

@@ -23,6 +23,7 @@ from utils import getLogger
 import yahoofin as yf
 import time
 from datetime import datetime
+import notifiers
 
 log = getLogger('VOL_SPIKE')
 log.setLevel(log.DEBUG)
@@ -53,7 +54,7 @@ class VOL_SPIKE(Screener):
                     s_l.append(sym)
             for s_e in s_l:
                 log.info ("del "+s_e)
-                del self.filtered_list[s_e]        
+                del self.filtered_list[s_e]
         for sym in sym_list:
 #             log.debug("sym info: %s"%(info))
             info = ticker_stats.get(sym)
@@ -75,7 +76,9 @@ class VOL_SPIKE(Screener):
                            "cur_vol_change": round(100*(rmv - adv10)/adv10, 1)                           
                            }
                     log.info ('new sym found by screener: %s info:  %s'%(sym, fs))
+                    
                     self.filtered_list [sym] = fs
+                    notifiers.notify(str(fs))
                 else:
                     fs["cur_price_change"] = round(rmcp, 2)
                     fs["cur_vol_change"] = round(100*(rmv - adv10)/adv10, 1)

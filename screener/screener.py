@@ -26,14 +26,16 @@ import traceback
 import argparse
 from decimal import getcontext
 import random
-# import logging
+import logging
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "../pkgs"))
 
-from utils import getLogger, get_product_config, load_config, get_config
+from utils import getLogger, get_product_config, load_config, readConf
 # import sims
 # import exchanges
 import db
 from  strategies import Configure
+import notifiers
+
 import ui
 # from ui import ui_conn_pipe
 
@@ -41,9 +43,11 @@ import nasdaq
 
 # mpl_logger = logging.getLogger('matplotlib')
 # mpl_logger.setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 log = getLogger('Screener')
 log.setLevel(log.INFO)
 
+ScreenerConfig = None
 ticker_import_time = 0
 YF = None
 
@@ -52,12 +56,14 @@ MAIN_TICK_DELAY = 0.500  # 500*4 milli
 
 
 def screener_init():
-    global YF
+    global YF, ScreenerConfig
     # seed random
     random.seed()
 
-    # 1. Retrieve states back from Db
-#     db.init_order_db(Order)
+    notifier = ScreenerConfig.get("notifier")
+    if notifier != None:
+        notifiers.Configure(notifier)
+        
     register_screeners()
     
     # setup ui if required
@@ -225,6 +231,10 @@ def clean_states():
     log.info("Clearing Db")
     db.clear_db()
 
+def load_config (cfg_file):
+    global ScreenerConfig
+    ScreenerConfig = readConf(cfg_file)
+    
 def arg_parse():
     '''
     arg parse
@@ -235,11 +245,24 @@ def arg_parse():
     parser.add_argument("--clean",
                         help='Clean states,dbs and exit. Clear all the existing states',
                         action='store_true')
-    #parser.add_argument("--config", help='Wolfinch Screener config file')    
+    parser.add_argument("--config", help='Wolfinch Screener config file')    
     parser.add_argument("--port", help='API Port')
     parser.add_argument("--restart", help='restart from the previous state', action='store_true')
 
     args = parser.parse_args()
+    
+    if args.config:
+        log.debug("config file: %s" % (str(args.config)))
+        if False == load_config(args.config):
+            log.critical("Config parse error!!")
+            parser.print_help()
+            exit(1)
+        else:
+            log.debug("config loaded successfully!")
+#             exit(0)
+    else:
+        parser.print_help()
+        exit(1)    
 
     if args.clean:
         clean_states()
@@ -259,6 +282,7 @@ def arg_parse():
     else:
         log.debug("restart disabled")
 
+    
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     '''
@@ -270,7 +294,7 @@ if __name__ == '__main__':
     try:
         screener_init()
         log.info("Starting Main forever loop")
-        print("Starting Main forever loop")            
+        print("Starting Main forever loop")
         screener_main()
     except(KeyboardInterrupt, SystemExit):
         screener_end()

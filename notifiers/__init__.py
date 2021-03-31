@@ -1,0 +1,1 @@
+from .notifier import Configure, notify
