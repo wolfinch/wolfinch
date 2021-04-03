@@ -6,8 +6,8 @@ strategies:
 
 notifier:
    telegram:
-      token: 'qZH0'
-      chat-id: ''
+      token: '1757WIsqZH0'
+      chat-id: '33e'
 
 ui:
    enabled : true
