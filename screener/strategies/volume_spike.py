@@ -23,12 +23,11 @@ import yahoofin as yf
 import time
 from datetime import datetime
 import notifiers
-import logging
 
-FORMAT = "[%(asctime)s %(levelname)s:%(name)s - %(funcName)20s(%(lineno)d) ] %(message)s"
-logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')
-log = logging.getLogger("VOL_SPIKE")
-log.setLevel(logging.DEBUG)
+from utils import getLogger
+
+log = getLogger("VOL_SPIKE")
+log.setLevel(log.DEBUG)
 
 class VOL_SPIKE(Screener):
     def __init__(self, name="VOL_SPIKE", ticker_kind="ALL", interval=300, vol_multiplier=2):

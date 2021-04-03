@@ -29,22 +29,19 @@ import argparse
 from decimal import getcontext
 import random
 import logging
-import yaml
-from  .strategies import Configure
+from  strategies import Configure
 import notifiers
 import nasdaq
-
 import ui
 
-FORMAT = "[%(asctime)s %(levelname)s:%(name)s - %(funcName)20s(%(lineno)d) ] %(message)s"
-logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')
-log = logging.getLogger("Screener")
+from utils import getLogger, readConf
+
+log = getLogger("Screener")
 log.setLevel(logging.ERROR)
 
 # mpl_logger = logging.getLogger('matplotlib')
 # mpl_logger.setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-
+logging.getLogger("urllib3").setLevel(log.WARNING)
 
 ScreenerConfig = None
 ticker_import_time = 0
@@ -53,18 +50,6 @@ YF = None
 # global Variables
 MAIN_TICK_DELAY = 0.500  # 500*4 milli
 
-
-# Load  external config file
-def readConf (fileName):
-    try:
-        with open(fileName) as fp:
-            confDict = yaml.load(fp, Loader=yaml.FullLoader)
-#             print (confDict)
-            return confDict
-    except : # parent of IOError, OSError *and* WindowsError where available
-        print('Oops!! Conf Read Error for %s'%(fileName))
-
-
 def screener_init():
     global YF, ScreenerConfig
     # seed random
@@ -72,15 +57,14 @@ def screener_init():
 
     notifier = ScreenerConfig.get("notifier")
     if notifier != None:
-        notifiers.Configure(notifier)
+        notifiers.init(notifier)
         
-    register_screeners()
+    register_screeners(ScreenerConfig.get("screeners"))
     
     # setup ui if required
-    ui.integrated_ui = True
-    if ui.integrated_ui:
+    if ScreenerConfig["ui"]["enabled"]:
         log.info("ui init")
-        if False == ui.ui_init(ui.port) :
+        if False == ui.ui_init(port=ScreenerConfig["ui"].get("port"), get_data_cb=get_screener_data) :
             log.critical("unable to setup ui!! ")
             print("unable to setup UI!!")
             sys.exit(1)
@@ -90,10 +74,9 @@ def screener_end():
 
     # stop stats thread
     log.info("waiting to stop stats thread")
-
-    ui.ui_mp_end()
+    notifiers.end()
+    ui.ui_end()
     log.info("all cleanup done.")
-
 
 def screener_main():
     """
@@ -114,10 +97,10 @@ def screener_main():
 
 g_screeners = []
 g_ticker_stats = {}
-def register_screeners():
+def register_screeners(cfg):
     global g_screeners
     log.debug("registering screeners")
-    g_screeners = Configure()
+    g_screeners = Configure(cfg)
 
 def update_data():
     #update stats only during ~12hrs, to cover pre,open,ah
@@ -198,8 +181,8 @@ def get_all_tickers ():
         ticker_import_time = int(time.time())
     return all_tickers
     
-def get_screener_data(msg):
-    log.info("msg %s"%(msg))
+def get_screener_data():
+#     log.info("msg %s"%(msg))
     data_set = get_all_screener_data()
     return data_set
 
@@ -260,7 +243,6 @@ def arg_parse():
     else:
         log.debug("restart disabled")
 
-    
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     '''

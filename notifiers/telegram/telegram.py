@@ -19,7 +19,6 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-import time
 import sys
 
 from decimal import getcontext
@@ -35,7 +34,7 @@ import urllib
 # mpl_logger.setLevel(logging.WARNING)
 log = getLogger('Telegram')
 log.setLevel(log.INFO)
-# logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 Session = None
 def get_url(url):

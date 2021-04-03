@@ -25,13 +25,11 @@ import os
 import json
 from flask import Flask
 import threading
-import logging
-import screener
 
-FORMAT = "[%(asctime)s %(levelname)s:%(name)s - %(funcName)20s(%(lineno)d) ] %(message)s"
-logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')
-log = logging.getLogger("UI")
-log.setLevel(logging.ERROR)
+from utils import getLogger
+
+log = getLogger("UI")
+log.setLevel(log.ERROR)
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
 
@@ -71,7 +69,7 @@ def server_main (port=8080):
     def get_screener_data_api():     
         try:         
             log.debug("get data")
-            screener_data = screener.get_screener_data()
+            screener_data = g_get_data_cb()
             return json.dumps(screener_data)
         except Exception as e:
             log.error ("Unable to get screener data. Exception: %s", e)
@@ -82,18 +80,26 @@ def server_main (port=8080):
     log.debug ("starting server..")
     app.run(host='0.0.0.0', port=port, debug=False)
     log.error ("server finished!")
-
-    
 def ui_main (port=8080):
     try:
         log.info ("init UI server")
         server_main(port=port)
     except Exception as e:
         log.critical("ui excpetion e: %s" % (e))
-        
-def ui_init(port=8080):
-    threading.Thread(target=ui_main, args=(port,)).start()
-        
+
+g_get_data_cb = None
+g_ui_thread = None
+def ui_init(port=8080, get_data_cb=None):
+    global g_get_data_cb, g_ui_thread
+    g_get_data_cb = get_data_cb
+    g_ui_thread = threading.Thread(target=ui_main, args=(port,))
+    g_ui_thread.daemon = True
+    g_ui_thread.start()
+
+def ui_end():
+#     g_ui_thread.join()
+    pass
+
 def arg_parse ():
     parser = argparse.ArgumentParser(description='Wolfinch screener UI Server')
 
@@ -104,7 +110,6 @@ def arg_parse ():
     
     if (args.clean):
         exit (0)
-
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':

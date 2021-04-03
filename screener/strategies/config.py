@@ -20,7 +20,7 @@
 
 from .volume_spike import VOL_SPIKE
 
-def Configure ():
+def Configure (cfg):
     scrnr_list = []
     
     scrnr_list.append(VOL_SPIKE("VOL-SPIKE-MEGACAP", ticker_kind="MEGACAP", vol_multiplier=2))

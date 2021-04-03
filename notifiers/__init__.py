@@ -1,1 +1,1 @@
-from .notifier import Configure, notify
+from .notifier import init, end, notify, configure
