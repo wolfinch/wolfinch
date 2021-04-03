@@ -29,15 +29,13 @@ import random
 import logging
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "../pkgs"))
 
-from utils import getLogger, get_product_config, load_config, readConf
-# import sims
-# import exchanges
+from utils import getLogger, load_config, readConf
+
 import db
 from  strategies import Configure
 import notifiers
 
 import ui
-# from ui import ui_conn_pipe
 
 import nasdaq
 
@@ -70,8 +68,7 @@ def screener_init():
     ui.integrated_ui = True
     if ui.integrated_ui:
         log.info("ui init")
-        ui.ui_conn_pipe = ui.ui_mp_init(ui.port, ui.screener.ui_main)
-        if ui.ui_conn_pipe is None:
+        if False == ui.ui_init(ui.port, ui.ui_main) :
             log.critical("unable to setup ui!! ")
             print("unable to setup UI!!")
             sys.exit(1)
@@ -90,14 +87,8 @@ def screener_main():
     """
     Main Function for Screener
     """
-
-    integrated_ui = ui.integrated_ui
-    ui_conn_pipe = ui.ui_conn_pipe
-
     sleep_time = MAIN_TICK_DELAY
     while True:
-        if integrated_ui == True:
-            process_ui_msgs(ui_conn_pipe)        
         cur_time = time.time()
         update_data()
         process_screeners()
@@ -108,7 +99,6 @@ def screener_main():
         sleep_time = 0 if sleep_time < 0 else sleep_time
         time.sleep(sleep_time)
     # end While(true)
-
 
 g_screeners = []
 g_ticker_stats = {}
@@ -196,33 +186,10 @@ def get_all_tickers ():
         ticker_import_time = int(time.time())
     return all_tickers
     
-def process_ui_msgs(ui_conn_pipe):
-    try:
-        while ui_conn_pipe.poll():
-            msg = ui_conn_pipe.recv()
-            err = msg.get("error", None)
-            if  err is not None:
-                log.error("error in the pipe, ui finished: msg:%s" %(err))
-                raise Exception("UI error - %s" %(err))
-            else:
-                log.info ("ui_msg: %s"%(msg))
-                msg_type = msg.get("type")
-                if msg_type == "GET_SCREENER_DATA":
-                    process_get_screener_data(msg)
-                else:
-                    log.error("Unknown ui msg type: %s", msg_type)
-    except Exception as e:
-        log.critical("exception %s on ui" %(str(e)))
-        raise e
-    
-def process_get_screener_data(msg):
+def get_screener_data(msg):
     log.info("msg %s"%(msg))
-
-    dataSet = get_all_screener_data()
-    
-    msg["type"] = "GET_SCREENER_DATA_RESP"
-    msg["data"] = dataSet #{}
-    ui.ui_conn_pipe.send(msg)    
+    data_set = get_all_screener_data()
+    return data_set
 
 def clean_states():
     ''' 
