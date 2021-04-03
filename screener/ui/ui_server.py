@@ -18,19 +18,20 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import sys
 from decimal import getcontext
 import argparse
 import os
 import json
 from flask import Flask
+import threading
+import logging
+import screener
 
-from utils import getLogger
-from .. import screener
-
-log = getLogger ('UI')
-log.setLevel(log.ERROR)
+FORMAT = "[%(asctime)s %(levelname)s:%(name)s - %(funcName)20s(%(lineno)d) ] %(message)s"
+logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')
+log = logging.getLogger("UI")
+log.setLevel(logging.ERROR)
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/')
 
@@ -38,7 +39,7 @@ UI_CODES_FILE = "data/ui_codes.json"
 UI_TRADE_SECRET = None
 UI_PAGE_SECRET = None
 
-def server_main (port=8080, mp_pipe=None):
+def server_main (port=8080):
         
     app = Flask(__name__, static_folder='web/', static_url_path='/web/')
     
@@ -83,12 +84,15 @@ def server_main (port=8080, mp_pipe=None):
     log.error ("server finished!")
 
     
-def ui_main (port=8080, mp_conn_pipe=None):
+def ui_main (port=8080):
     try:
         log.info ("init UI server")
-        server_main(port=port, mp_pipe=mp_conn_pipe)
+        server_main(port=port)
     except Exception as e:
         log.critical("ui excpetion e: %s" % (e))
+        
+def ui_init(port=8080):
+    threading.Thread(target=ui_main, args=(port,)).start()
         
 def arg_parse ():
     parser = argparse.ArgumentParser(description='Wolfinch screener UI Server')

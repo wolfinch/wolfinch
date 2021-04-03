@@ -19,31 +19,32 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-import time
 import sys
 import os
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "../pkgs"))
+
+import time
 import traceback
 import argparse
 from decimal import getcontext
 import random
 import logging
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "../pkgs"))
-
-from utils import getLogger, load_config, readConf
-
-import db
-from  strategies import Configure
+import yaml
+from  .strategies import Configure
 import notifiers
+import nasdaq
 
 import ui
 
-import nasdaq
+FORMAT = "[%(asctime)s %(levelname)s:%(name)s - %(funcName)20s(%(lineno)d) ] %(message)s"
+logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')
+log = logging.getLogger("Screener")
+log.setLevel(logging.ERROR)
 
 # mpl_logger = logging.getLogger('matplotlib')
 # mpl_logger.setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
-log = getLogger('Screener')
-log.setLevel(log.INFO)
+
 
 ScreenerConfig = None
 ticker_import_time = 0
@@ -51,6 +52,17 @@ YF = None
 
 # global Variables
 MAIN_TICK_DELAY = 0.500  # 500*4 milli
+
+
+# Load  external config file
+def readConf (fileName):
+    try:
+        with open(fileName) as fp:
+            confDict = yaml.load(fp, Loader=yaml.FullLoader)
+#             print (confDict)
+            return confDict
+    except : # parent of IOError, OSError *and* WindowsError where available
+        print('Oops!! Conf Read Error for %s'%(fileName))
 
 
 def screener_init():
@@ -68,7 +80,7 @@ def screener_init():
     ui.integrated_ui = True
     if ui.integrated_ui:
         log.info("ui init")
-        if False == ui.ui_init(ui.port, ui.ui_main) :
+        if False == ui.ui_init(ui.port) :
             log.critical("unable to setup ui!! ")
             print("unable to setup UI!!")
             sys.exit(1)
@@ -196,7 +208,6 @@ def clean_states():
     clean states
     '''
     log.info("Clearing Db")
-    db.clear_db()
 
 def load_config (cfg_file):
     global ScreenerConfig
