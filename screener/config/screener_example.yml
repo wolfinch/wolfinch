@@ -1,0 +1,14 @@
+##################################################
+# Wolfinch Screener config
+##################################################
+
+strategies:
+
+notifier:
+   telegram:
+      token: 'qZH0'
+      chat-id: ''
+
+ui:
+   enabled : true
+   port : 8081
