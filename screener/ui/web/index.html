@@ -120,7 +120,7 @@ td { font-size: .2em; }
 		// call api to buy/sell
 		$.ajax({
 			type : 'GET',
-			url : "/screener/api/data",
+			url : "screener/api/data",
 			dataType : 'json',
 			success : function(data) {
 				console.log("get screener/data success!" + data);
@@ -268,9 +268,9 @@ td { font-size: .2em; }
 							<a href="/">Wolfinch</a>
 						</h3>
 						<ul class="nav masthead-nav">
-							<li class="active"><a href="#"> Home</a></li>
-							<li><a href="wolfinch/chart.html">Charts </a></li>
-							<li><a href="wolfinch/trading.html"> Trading</a></li>
+							<li class="active"><a href="/"> Home</a></li>
+							<li><a href="/wolfinch/chart.html">Charts </a></li>
+							<li><a href="/wolfinch/trading.html"> Trading</a></li>
 							<li><a href="/"> Documentation</a></li>
 						</ul>
 					</header>
