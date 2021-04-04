@@ -54,6 +54,7 @@ def get_url(url):
             "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5",  # noqa: E501
             "Connection": "keep-alive",
+            "User-Agent":"Java-http-client/",
         }
         Session.headers = headers
         log.info("initialized nasdaq Session")
