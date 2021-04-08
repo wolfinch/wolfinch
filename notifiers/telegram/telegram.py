@@ -20,14 +20,10 @@
 '''
 
 import sys
-
 from decimal import getcontext
-# import random
 import logging
 from utils import getLogger #, get_product_config, load_config, get_config
-# import sims
-# import exchanges
-# import db
+import time
 import requests
 import urllib
 
@@ -66,13 +62,20 @@ class Telegram():
         log.debug ("msg: %s chat_id: %s"%(msg, chat_id))
         TELEGRAM_SENDMSG_API = 'https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s' % (
                         self.bot_token, chat_id if chat_id != None else self.chat_id, urllib.parse.quote_plus(msg))
-        data = get_url (TELEGRAM_SENDMSG_API)
-        if data:
-            log.debug("send msg success %s"%(data))
-            return True
-        else:
-            log.error("failed ")
-            return False
+        i = 0
+        while i < 2:
+            try:
+                data = get_url (TELEGRAM_SENDMSG_API)
+                if data:
+                    log.debug("send msg success %s"%(data))
+                    return True
+                else:
+                    log.error("failed ")
+                    return False
+            except requests.exceptions.ConnectionError as e:
+                log.error("expection while telegram send_msg.  retrying e: %s"%(e))
+                time.sleep(2)
+                i += 1
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
