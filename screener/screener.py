@@ -31,7 +31,7 @@ import random
 import logging
 from  strategies import Configure
 import notifiers
-import nasdaq
+import tickers_data import get_all_ticker_lists
 import ui
 
 from utils import getLogger, readConf
@@ -144,41 +144,7 @@ def get_all_tickers ():
     global ticker_import_time, all_tickers
     log.debug ("get all tickers")
     if ticker_import_time + 24*3600 < int(time.time()) :
-        log.info ("renew tickers list")
-#         t_l = nasdaq.get_all_tickers_gt50m()
-        #import all tickers
-        t_l = nasdaq.get_all_tickers()
-        if t_l:
-            allt = []
-            for ticker in t_l:
-                allt.append(ticker["symbol"].strip())
-            log.info("ALL (%d) tickers imported"%(len(allt)))
-            all_tickers["ALL"] = allt
-        #import megacap only
-        t_l = nasdaq.get_all_tickers_megacap()
-        if t_l:
-            mcap = []
-            for ticker in t_l:
-                mcap.append(ticker["symbol"].strip())
-            log.info("MEGACAP (%d) tickers imported"%(len(mcap)))                
-            all_tickers["MEGACAP"] = mcap
-        #import gt50m
-        t_l = nasdaq.get_all_tickers_gt50m()
-        if t_l:
-            gt50 = []
-            for ticker in t_l:
-                gt50.append(ticker["symbol"].strip())
-            log.info("GT50M (%d) tickers imported"%(len(gt50)))                
-            all_tickers["GT50M"] = gt50
-        #import lt50m
-        t_l = nasdaq.get_all_tickers_lt50m()
-        if t_l:
-            lt50 = []
-            for ticker in t_l:
-                lt50.append(ticker["symbol"].strip())
-            all_tickers["LT50M"] = lt50
-        log.info("LT50M (%d) tickers imported"%(len(lt50)))
-        ticker_import_time = int(time.time())
+        all_tickers = get_all_ticker_lists()
     return all_tickers
     
 def get_screener_data():
