@@ -40,7 +40,7 @@ log.setLevel(logging.DEBUG)
 
 ticker_import_time = 0
 
-all_tickers = {"ALL":[], "MEGACAP":[], "GT50M": [], "LT50M": [], "OTC": []}
+all_tickers = {"ALL":[], "MEGACAP":[], "GT50M": [], "LT50M": [], "OTC": [], "SPAC": []}
 def get_all_ticker_lists ():
     global ticker_import_time, all_tickers
     log.debug ("get all tickers")
@@ -61,7 +61,7 @@ def get_all_ticker_lists ():
             mcap = []
             for ticker in t_l:
                 mcap.append(ticker["symbol"].strip())
-            log.info("MEGACAP (%d) tickers imported"%(len(mcap)))                
+            log.info("MEGACAP (%d) tickers imported"%(len(mcap)))
             all_tickers["MEGACAP"] = mcap
         #import gt50m
         t_l = nasdaq.get_all_tickers_gt50m()
@@ -69,7 +69,7 @@ def get_all_ticker_lists ():
             gt50 = []
             for ticker in t_l:
                 gt50.append(ticker["symbol"].strip())
-            log.info("GT50M (%d) tickers imported"%(len(gt50)))                
+            log.info("GT50M (%d) tickers imported"%(len(gt50)))
             all_tickers["GT50M"] = gt50
         #import lt50m
         t_l = nasdaq.get_all_tickers_lt50m()
@@ -78,7 +78,12 @@ def get_all_ticker_lists ():
             for ticker in t_l:
                 lt50.append(ticker["symbol"].strip())
             all_tickers["LT50M"] = lt50
-        log.info("LT50M (%d) tickers imported"%(len(lt50)))
+            log.info("LT50M (%d) tickers imported"%(len(lt50)))
+        #import spacs
+        t_l = get_all_spac_tickers()
+        if t_l:
+            all_tickers["SPAC"] = t_l
+            log.info("SPAC (%d) tickers imported"%(len(t_l)))
         ticker_import_time = int(time.time())
     return all_tickers
 
@@ -98,7 +103,7 @@ def get_url(url):
         Session.headers = headers
         log.info("initialized Session")
     log.debug ("get url: %s"%(url))
-    r = Session.get(url, timeout=15)    
+    r = Session.get(url, timeout=15)
     if r.status_code == requests.codes.ok:
         return r.json()
     else:
@@ -108,17 +113,27 @@ def get_url(url):
 SPAC_TICKERS_SPACTRACK_URL = "https://spreadsheets.google.com/feeds/list/1F7gLiGZP_F4tZgQXgEhsHMqlgqdSds3vO0-4hoL6ROQ/o41rryg/public/values?alt=json"
 def get_all_spac_tickers():
     log.debug ("get all tickers")
-    
+    spacs = []    
     spacs_d = get_url(SPAC_TICKERS_SPACTRACK_URL)
     if spacs_d: 
         feed = spacs_d.get("feed")
         if feed:
             spacs_l = feed.get("entry")
 #             log.debug ("entry : %s"%(spacs_l[0]))
-            return [spacs_l[0], spacs_l[1]]
-        spacs = []
+            for k,v in spacs_l[0].items():
+#                 print(k, v)
+                if isinstance(v, dict):
+                    for _, v1 in v.items():
+                        if v1 == 'SPAC Ticker-Filter':
+#                             print("commons %s"%k)
+                            ticker_key = k
+            for spac in spacs_l:
+                ticker = spac[ticker_key]["$t"]
+                if ticker == "SPAC Ticker-Filter" or ticker == "XXXX":
+                    continue
+                spacs.append(ticker)
 #         for ticker in spacs_l:
-            
+    return spacs
 
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
