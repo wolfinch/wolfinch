@@ -34,7 +34,7 @@ from utils import getLogger
 import nasdaq
 
 log = getLogger("DATA")
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 # logging.getLogger("urllib3").setLevel(log.WARNING)
 

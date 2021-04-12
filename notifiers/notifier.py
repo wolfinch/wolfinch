@@ -35,31 +35,41 @@ def configure(cfg):
         return True
     else:
         return False
-def notify(msg):
+def notify(name, msg):
     if msg_queue:
-        msg_queue.put(msg)
+        msg_queue.put((name, msg))
 def _send_msg(msg_l):
     msg_str = ""
-    for msg in msg_l:
-        msg_str = msg_str + str(msg) + "\n"
+    for k, v_l in msg_l.items():
+        v_str = ""
+        for v in v_l:
+            v_str = v_str + str(v) + "\n"
+        msg_str = msg_str+"<b>"+k+":</b>" + str(v_str)
     if telegram:
         telegram.send_message(msg_str)
 def _notifier_loop():
-    msg_l = []
+    msg_l = {}
+    msg_len = 0
     sleep_time = MAIN_TICK_DELAY
     while not stop:
         try:
             cur_time = time.time()
-            msg_l.append (msg_queue.get(timeout=sleep_time))
-            if len(msg_l) > 25:
+            msg = msg_queue.get(timeout=sleep_time)
+            if not msg_l.get(msg[0]):
+                msg_l[msg[0]] = []
+            msg_l[msg[0]].append (msg[1])
+            msg_len += 1
+            if msg_len > 25:
                 _send_msg(msg_l)
-                msg_l = []          
+                msg_l = {}
+                msg_len = 0  
             sleep_time = (MAIN_TICK_DELAY -(time.time()-cur_time))
             sleep_time = 0 if sleep_time < 0 else sleep_time
         except queue.Empty:
-            if len(msg_l):
+            if msg_len:
                 _send_msg(msg_l)
-                msg_l = []
+                msg_l = {}
+                msg_len = 0
             sleep_time = MAIN_TICK_DELAY
 def init(cfg):
     global notify_thread, msg_queue

@@ -31,7 +31,7 @@ import random
 import logging
 from  strategies import Configure
 import notifiers
-import tickers_data import get_all_ticker_lists
+from tickers_data import get_all_ticker_lists
 import ui
 
 from utils import getLogger, readConf

@@ -60,7 +60,7 @@ class Telegram():
         log.info("configured Telgram Notifier instance %s id: %s"%(bot_token, chat_id))
     def send_message (self, msg, chat_id=None):
         log.debug ("msg: %s chat_id: %s"%(msg, chat_id))
-        TELEGRAM_SENDMSG_API = 'https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s' % (
+        TELEGRAM_SENDMSG_API = 'https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s&parse_mode=html' % (
                         self.bot_token, chat_id if chat_id != None else self.chat_id, urllib.parse.quote_plus(msg))
         i = 0
         while i < 2:

@@ -79,9 +79,9 @@ class VOL_SPIKE(Screener):
                     log.info ('new sym found by screener: %s info:  %s'%(sym, fs))
                     
                     self.filtered_list [sym] = fs
-                    notify_msg = "%s: %s price - %s(%s%%) vol - %s%%"%(self.name, fs["symbol"], fs["last_price"], fs["price_change"],
+                    notify_msg = "%s price %s(%s%%) vol %s%%"%(fs["symbol"], fs["last_price"], fs["price_change"],
                                                                        fs["vol_change"])
-                    notifiers.notify(notify_msg)
+                    notifiers.notify(self.name, notify_msg)
                 else:
                     fs["cur_price_change"] = round(rmcp, 2)
                     fs["cur_vol_change"] = round(100*(rmv - adv10)/adv10, 1)
