@@ -41,8 +41,12 @@ class VOL_SPIKE(Screener):
         if datetime.utcfromtimestamp(int(time.time())).hour <= 12 :
             log.debug("market closed")
             return False
-        get_all_tickers_info(self.YF, sym_list, ticker_stats)
-        return True
+        try:
+            get_all_tickers_info(self.YF, sym_list, ticker_stats)
+            return True
+        except Exception as e:
+            log.critical("exception while get data e: %s"%(e))
+            return False
     def screen(self, sym_list, ticker_stats):
         #1. if cur vol >= 2x10davg vol
         #2. renew once a day 

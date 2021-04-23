@@ -53,6 +53,7 @@ class Yahoofin:
             "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5",  # noqa: E501
             "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+            "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",            
             "Connection": "keep-alive",
         }
         self.session.headers = self.headers
