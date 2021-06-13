@@ -192,6 +192,48 @@ def server_main (port=8080, mp_pipe=None):
         except Exception as e:
             log.error ("Unable to set active market. Exception: %s", e)
             return "{}"
+        
+    @app.route('/api/add_new_market', methods=["POST"])
+    def update_market_api():        
+        def ret_code(err):
+            return json.dumps(err)       
+                
+        data = request.form.to_dict()
+        if len(data) <= 0 :
+            err = "error: invalid request data"
+            log.error (err)
+            return ret_code(err)      
+        
+        cmd = data.get('cmd', "")
+#         req_number = int(data.get('req_number', 0))
+        req_code = str(data.get('req_code', ""))
+        exch_name = str(data.get('exch_name', ""))
+        prod_id = str(data.get('product', ""))
+
+        if cmd != "add" or cmd != "delete":
+            log.error ("unknown market update kind: %s"%(cmd))
+            return ret_code("unknown market update kind")
+        
+        log.info ("update market order: type: %s exch: %s prod: %s" % (
+            cmd, exch_name, prod_id))
+        
+        if (exch_name == "" or prod_id == "" or req_code == "" ):
+            err = "error: incorrect request data"
+            log.error (err)
+            return ret_code(err)
+        
+        if req_code != UI_TRADE_SECRET:
+            err = "incorrect secret"
+            log.error (err)
+            return ret_code(err)
+        err = "success"
+        msg = {"type": "MARKET_UPDATE", "exchange": exch_name, "product": prod_id, "cmd": cmd}
+        if mp_pipe:
+            mp_send_recv_msg(mp_pipe, msg)
+        else:
+            err = "server connection can't be found!"
+            log.error (err)
+        return ret_code(err)            
 
     @app.route('/api/pause_market', methods=["POST"])
     def pause_market_api():

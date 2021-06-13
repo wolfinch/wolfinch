@@ -147,6 +147,15 @@ def process_market(market):
     # commit market states to the db periodically(this logic is rate-limited)
     market.lazy_commit_market_states()
 
+def process_ui_market_update(msg):
+    log.info("market update msg: %s"%(msg))
+    cmd = msg.get("cmd")
+    if cmd == "add":
+        pass
+    elif cmd == "delete":
+        pass
+    else:
+        log.error("unknown market update")
 
 def process_ui_trade_notif(msg):
     exch = msg.get("exchange")
@@ -234,6 +243,8 @@ def process_ui_msgs(ui_conn_pipe):
                 msg_type = msg.get("type")
                 if msg_type == "TRADE":
                     process_ui_trade_notif(msg)
+                elif msg_type == "MARKET_UPDATE":
+                    process_ui_market_update(msg)
                 elif msg_type == "GET_MARKETS":
                     process_ui_get_markets_rr(msg, ui_conn_pipe)
                 elif msg_type == "GET_MARKET_INDICATORS":
