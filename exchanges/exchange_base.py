@@ -51,6 +51,12 @@ class Exchange(metaclass=ABCMeta):
     def cancel_order (self):
         pass
     @abstractmethod
+    def add_product (self):
+        pass
+    @abstractmethod
+    def get_product (self):
+        pass        
+    @abstractmethod
     def get_products (self):
         pass
     @abstractmethod

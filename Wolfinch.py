@@ -33,7 +33,7 @@ sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "pkg
 from utils import getLogger, get_product_config, load_config, get_config
 import sims
 import exchanges
-from market import market_init, market_setup, get_market_list, \
+from market import market_init, market_init_all, market_setup, get_market_list, \
                  feed_Q_process_msg, feed_deQ, get_market_by_product
 import db
 import stats
@@ -71,7 +71,7 @@ def Wolfinch_init():
     exchanges.init_exchanges(get_config())
 
     # 3. Init markets
-    market_init(exchanges.exchange_list, get_product_config)
+    market_init_all(exchanges.exchange_list, get_product_config)
 
     # 4. Setup markets
     market_setup(restart=gRestart)
@@ -79,6 +79,31 @@ def Wolfinch_init():
     # 5. start stats thread
     stats.start()
 
+def add_market(exch_name, product_id):
+    log.info ("setting up market for exch: %s product: %s"%(exch_name, product_id))
+    exchange = None
+    for exh in exchanges.exchange_list:
+        if exh.name == exch_name:
+            exchange = exh
+            break
+    if exchange == None:
+        log.critical ("exchange %s not found! "%(exch_name))
+        return False
+    #add new product
+    product = exchange.add_product(product_id)
+    if product == None:
+        log.error("exchange product %s config failed"%(product_id))
+        return False
+    #init market
+    market = market_init(exchange, product)
+    if market == None:
+        log.error ("market init failed")
+        return False
+    #setup market
+    if False == market_setup(restart=True, market):
+        log.critical ("market setup failed")
+        return False
+    return True
 
 def Wolfinch_end():
     log.info("Finalizing Wolfinch")

@@ -1310,8 +1310,31 @@ def get_market_by_product (exchange_name, product_id):
         if market.product_id == product_id and market.exchange_name == exchange_name:
             return market
 
+def market_init(exchange, product):
+    log.info ("init market for %s"%(product["id"]))
+    tcfg, dcfg = exchange.get_product_config (exchange.name, product.get('id', None))
+    if tcfg == None or dcfg == None:
+        log.critical ("""Unable to get product config for exch: %s prod: %s
+            skip configuring market""" % (exchange.name, product.get('id', None)))
+        return None
+    # init new Market for product
+    try:
+        log.info ("configuring market for exch: %s prod: %s" % (exchange, product))
+        market = Market(product=product, exchange=exchange)
+        market = exchange.market_init (market)
+        if (market == None):
+            log.critical ("Market Init Failed for exchange: %s product: %s" % (exchange.name, str(product)))
+            return None
+        else:
+            log.info ("market init success for exchange (%s) product: %s" % (exchange.name, str(product)))
+            Wolfinch_market_list.append(market)
+            return market
+    except:
+        log.critical ("Unable to get Market for exchange: %s product: %s e: %s" % (
+            exchange.name, str(product), traceback.format_exc()))
+        return None
         
-def market_init (exchange_list, get_product_config_hook):
+def market_init_all (exchange_list, get_product_config_hook):
     '''
     Initialize per exchange, per product data.
     This is where we want to keep all the run stats
@@ -1322,25 +1345,7 @@ def market_init (exchange_list, get_product_config_hook):
         products = exchange.get_products()
         if products:
             for product in products:
-                tcfg, dcfg = exchange.get_product_config (exchange.name, product.get('id', None))
-                if tcfg == None or dcfg == None:
-                    log.critical ("""Unable to get product config for exch: %s prod: %s
-                    skip configuring market""" % (exchange.name, product.get('id', None)))
-                    continue
-                # init new Market for product
-                try:
-                    log.info ("configuring market for exch: %s prod: %s" % (exchange, product))
-                    market = Market(product=product, exchange=exchange)
-                except:
-                    log.critical ("Unable to get Market for exchange: %s product: %s e: %s" % (
-                        exchange.name, str(product), traceback.format_exc()))
-                else:
-                    market = exchange.market_init (market)
-                    if (market == None):
-                        log.critical ("Market Init Failed for exchange: %s product: %s" % (exchange.name, str(product)))
-                    else:
-                        log.info ("market init success for exchange (%s) product: %s" % (exchange.name, str(product)))
-                        Wolfinch_market_list.append(market)
+                market_init(exchange, product)
         else:
             log.error ("No products found in exchange:%s" % (exchange.name))
     if (sims.simulator_on and not sims.backtesting_on):
@@ -1350,18 +1355,22 @@ def market_init (exchange_list, get_product_config_hook):
         sims.sim_obj["market"]  = Market(product=product, exchange=sims.sim_obj["exch"])
         sims.sim_obj["market"]  = sims.sim_obj["exch"].market_init (sims.sim_obj["market"])
         
-def market_setup (restart=False):
+def market_setup (restart=False, market=None):
     '''
     Setup market states.
     This is where we want to keep all the run stats
     '''
     global Wolfinch_market_list
     
-    if not len (Wolfinch_market_list):
+    if market :
+        market_list = [market]
+    else:
+        market_list = Wolfinch_market_list
+    if not len (market_list):
         log.critical("No Markets configured. Nothing to do!")
         exit (0)
     
-    for market in Wolfinch_market_list:
+    for market in market_list:
         status = market.market_setup (restart)
         if (status == False):
             log.critical ("Market Init Failed for market: %s" % (market.name))
@@ -1371,17 +1380,17 @@ def market_setup (restart=False):
         
     if sims.import_only:
         log.info ("import_only! skip rest of setup")
-        return
+        return True
                 
     log.info ("market setup complete for all markets, init decision engines now")
-    for market in Wolfinch_market_list:
-        status = market.decision_setup (Wolfinch_market_list)
+    for market in market_list:
+        status = market.decision_setup (market_list)
         if (status == False):
             log.critical ("decision_setup Failed for market: %s" % (market.name))
             return False
         else:
             log.info ("decision_setup completed for market: %s" % (market.name))
-
+    return True
                         
 def get_all_market_stats ():
     market_stats = {}
