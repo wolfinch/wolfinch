@@ -2,7 +2,7 @@
  Wolfinch Auto trading Bot
  Desc: Exchanges list 
          All exchange housekeeping ops here
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2021 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -49,19 +49,19 @@ def init_exchanges (WolfinchConfig):
                     if (sims.simulator_on):
                         sims.sim_obj["exch"] = sims.SIM_EXCH(exch_cls.name, exch_cfg)
                         # do a best effort setup for products for sim/backtesting based on config.
-                        sims.sim_obj["exch"].setup_products(exch_cfg["products"])                        
+                        sims.sim_obj["exch"].setup_products(exch_cfg["products"])
                         log.info ("SIM-EXCH initialized for EXCH(%s)"%(exch_cls.name))
                         if sims.backtesting_on:
                             # If backtesting is on, init only sim exchange
                             if (sims.sim_obj["exch"] != None):
                                 exchange_list.append(sims.sim_obj["exch"])
                                 #Market init
-                                log.info ("Backtesting_on! skip real exch init!")                                
+                                log.info ("Backtesting_on! skip real exch init!")
                                 return
                             else:
                                 log.critical (" Exchange \"%s\" init failed "%exch_cls.name)
                                 raise Exception()
-                    exch_obj = exch_cls(config=exch_cfg, primary=(role == 'primary'))              
+                    exch_obj = exch_cls(config=exch_cfg, primary=(role == 'primary'))
                     if (exch_obj != None):
                         exchange_list.append(exch_obj)
                     else:
@@ -70,7 +70,7 @@ def init_exchanges (WolfinchConfig):
                     if sims.simulator_on:
                         #add initialized products for sim. We can do this only here after real exch initialized products
                         log.info("sim exch products init for exch:%s"%(name))
-                        sims.sim_obj["exch"].add_products(exch_obj.get_products())       
+                        sims.sim_obj["exch"].add_products(exch_obj.get_products())
 def close_exchanges():
     global exchange_list
     #init exchanges 

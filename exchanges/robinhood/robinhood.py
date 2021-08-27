@@ -129,7 +129,7 @@ class Robinhood (Exchange):
         log.info ("products: %s" % (pprint.pformat(portforlio, 4)))
                 
         for p_id in self.robinhood_conf['products']:
-            self.add_product(p_id)
+            self.add_products(p_id)
         
         # EXH supported in spectator mode.                    
         
@@ -294,16 +294,24 @@ class Robinhood (Exchange):
             #log out now. 
             self.rbh_client.logout()
 
-    def add_product(self, p_id):
-        instr = self.get_instrument_from_symbol(p_id)
-        prod = {"id": p_id}
-        prod['asset_type'] = p_id
-        prod['fund_type'] = "USD"
-        prod['display_name'] = instr['simple_name']
-        prod["instrument"] = instr
-        self.robinhood_products.append(prod)
-        return prod
-
+    def add_products(self, products):
+        if not isinstance(products, list):
+            p_ids = [products]
+        else:
+            p_ids = products
+        prod_l = []
+        for p_id in p_ids:
+            instr = self.get_instrument_from_symbol(p_id)
+            prod = {"id": p_id}
+            prod['asset_type'] = p_id
+            prod['fund_type'] = "USD"
+            prod['display_name'] = instr['simple_name']
+            prod["instrument"] = instr
+            self.robinhood_products.append(prod)
+            prod_l.append(prod)
+        return prod_l
+    def delete_products(self, products):
+        pass
     def get_products (self, p_id=None):
         log.debug (" num  products %d" % (len(self.robinhood_products)))
         if p_id == None:

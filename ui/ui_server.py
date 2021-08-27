@@ -133,7 +133,7 @@ def server_main (port=8080, mp_pipe=None):
                             if not g_markets_list:
                                 err = "invalid market list payload"
                                 log.error (err)
-                                raise Exception (err)                            
+                                raise Exception (err)
                         else:
                             err = "invalid ui resp msg type: %s" % msg_type
                             log.error (err)
@@ -193,16 +193,16 @@ def server_main (port=8080, mp_pipe=None):
             log.error ("Unable to set active market. Exception: %s", e)
             return "{}"
         
-    @app.route('/api/add_new_market', methods=["POST"])
-    def update_market_api():        
+    @app.route('/api/update_market', methods=["POST"])
+    def update_market_api():
         def ret_code(err):
-            return json.dumps(err)       
+            return json.dumps(err)
                 
         data = request.form.to_dict()
         if len(data) <= 0 :
             err = "error: invalid request data"
             log.error (err)
-            return ret_code(err)      
+            return ret_code(err)
         
         cmd = data.get('cmd', "")
 #         req_number = int(data.get('req_number', 0))

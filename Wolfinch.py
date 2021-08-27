@@ -38,7 +38,7 @@ from market import market_init, market_init_all, market_setup, get_market_list, 
 import db
 import stats
 import ui
-from ui import ui_conn_pipe
+# from ui import ui_conn_pipe
 
 # mpl_logger = logging.getLogger('matplotlib')
 # mpl_logger.setLevel(logging.WARNING)
@@ -90,19 +90,20 @@ def add_market(exch_name, product_id):
         log.critical ("exchange %s not found! "%(exch_name))
         return False
     #add new product
-    product = exchange.add_product(product_id)
-    if product == None:
+    prod_l = exchange.add_products(product_id)
+    if prod_l == None:
         log.error("exchange product %s config failed"%(product_id))
         return False
-    #init market
-    market = market_init(exchange, product)
-    if market == None:
-        log.error ("market init failed")
-        return False
-    #setup market
-    if False == market_setup(restart=True, market):
-        log.critical ("market setup failed")
-        return False
+    for product in prod_l:
+        #init market
+        market = market_init(exchange, product)
+        if market == None:
+            log.error ("market init failed")
+            return False
+        #setup market
+        if False == market_setup(restart=True, market=market):
+            log.critical ("market setup failed")
+            return False
     return True
 
 def Wolfinch_end():
@@ -273,9 +274,9 @@ def process_ui_msgs(ui_conn_pipe):
                 elif msg_type == "GET_MARKETS":
                     process_ui_get_markets_rr(msg, ui_conn_pipe)
                 elif msg_type == "GET_MARKET_INDICATORS":
-                    process_ui_get_market_indicators_rr(msg, ui_conn_pipe)                    
+                    process_ui_get_market_indicators_rr(msg, ui_conn_pipe)
                 elif msg_type == "GET_MARKET_POSITIONS":
-                    process_ui_get_positions_rr(msg, ui_conn_pipe)                        
+                    process_ui_get_positions_rr(msg, ui_conn_pipe)
                 elif msg_type == "PAUSE_TRADING":
                     process_ui_pause_trading_notif(msg)
                 else:

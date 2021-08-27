@@ -166,6 +166,8 @@ class SIM_EXCH (exchanges.Exchange):
         if not isinstance(products, list):
             products = [products]
         self.products += products
+    def delete_products(self, products):
+        pass
     def market_init (self, market):
         #Setup the initial params
                 
