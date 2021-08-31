@@ -415,6 +415,71 @@
 		});
 
 	}
+	
+	function btn_mkt_onclick(id) {
+
+		var ticker_id = document.getElementById("ticker_id").value;
+		var req_code = document.getElementById("req_code").value;
+
+		console.log("ticker: " + ticker_id + " req_code: " + req_code);
+
+		if (ticker_id == "" || req_code == "") {
+
+			console.log("invalid input");
+			alert("invalid request!");
+			return false;
+		}
+
+		switch (id) {
+		case "btn_mkt_add":
+			cmd = "add";
+			break;
+		case "btn_mkt_del":
+			cmd = "delete";
+			break;
+		default:
+			console.log("Unknown button");
+			break;
+		}
+
+		var txt = cmd + " " + ticker_id + " with code '" + req_code + "'?";
+
+		if (active_exch == "" || active_market == "") {
+			console.log("invalid exchange or market!");
+			alert("invalid exchange or market!");
+			return false;
+		}
+
+		if (!confirm(txt)) {
+			console.log("cancel");
+			return true;
+		}
+
+		// call api to buy/sell
+		console.log("call api to " + cmd);
+		var data = {
+			"cmd" : cmd,
+			"req_code" : req_code,
+			"exch_name" : active_exch,
+			"product" : ticker_id,
+		};
+		$.ajax({
+			type : 'POST',
+			url : '/api/update_market',
+			data : data,
+			dataType : 'json',
+			success : function(data) {
+				console.log("update_market success!");
+				alert(data);
+			},
+			error : function(xhr, error) {
+				console.log("update_market failed!");
+				alert(error);
+			}
+		});
+
+	}	
+	
 </script>
 <body>
 	<div class="row align-items-start">
@@ -553,6 +618,46 @@
 			</div>
 
 		</div>
+		
+		<div class="container"
+			style="margin-top: 2vh; width: 30vw; height: auto; color: rgba(255, 255, 255, .75); background-color: rgba(0, 0, 0, 0.1);"
+			border="0">
+			<div class="row"
+				style="margin: 0; background-color: rgba(fff, 0, 0, .90); width: 30vw; height: 8vh;">
+				<div class="col-sm-12" align="center"
+					style="font-size: 2vw; border: 0;">
+					<b style="font-weight: 300;">Market</b>
+				</div>
+			</div>
+			<div class="row" style="margin: 1vw; width: 30vw; height: auto;">
+
+				<div class="col-sm-12" align="center"
+					style="font-size: 1vw; border: 0;">
+					<div class="form-group">
+						<label for="usr"
+							style="color: #d2d2dc; font-size: small; font-weight: 200;">Ticker</label>
+						<input type="text" defaultValue="" class="form-control"
+							id="ticker_id" style="margin: 0; width: 6em; height: 2vh;">
+					</div>
+				</div>
+			</div>
+
+			<div class="row"
+				style="margin: 1vw; border-top: 0em solid #555; width: 30vw; height: 7vh;
+				display: flex; flex-direction: row; align-items: center;">
+				<div class="col-sm-6  text-center" style="vertical-align: middle;">
+					<div id="btn_mkt_add" onclick="btn_mkt_onclick(this.id)"
+						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"					
+						class="btn btn-primary btn-lg">Add</div>
+				</div>
+				<div class="col-sm-6 text-center">
+					<div id="btn_mkt_del" onclick="btn_mkt_onclick(this.id)"
+						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"					
+						class="btn btn-danger btn-lg">Deleted</div>
+				</div>
+			</div>
+		</div>		
+		
 	</div>
 
 

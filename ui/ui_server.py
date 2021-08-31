@@ -42,7 +42,7 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 MARKET_STATS = "stats_market_%s_%s.json"
 
 UI_CODES_FILE = "data/ui_codes.json"
-UI_TRADE_SECRET = None
+UI_TRADE_SECRET = "123"
 UI_PAGE_SECRET = None
 
 g_mp_lock = None
@@ -210,14 +210,14 @@ def server_main (port=8080, mp_pipe=None):
         exch_name = str(data.get('exch_name', ""))
         prod_id = str(data.get('product', ""))
 
-        if cmd != "add" or cmd != "delete":
+        if cmd != "add" and cmd != "delete":
             log.error ("unknown market update kind: %s"%(cmd))
             return ret_code("unknown market update kind")
         
         log.info ("update market order: type: %s exch: %s prod: %s" % (
             cmd, exch_name, prod_id))
         
-        if (exch_name == "" or prod_id == "" or req_code == "" ):
+        if (exch_name == "" or prod_id == "" or req_code == ""):
             err = "error: incorrect request data"
             log.error (err)
             return ret_code(err)
