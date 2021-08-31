@@ -1,7 +1,7 @@
 '''
  Wolfinch Auto trading Bot
  Desc: NOOP Exchanges 
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2021 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -47,6 +47,10 @@ class Exchange(Exchange):
     def cancel_order (self):
         pass
     def get_products (self):
+        pass
+    def add_products(self, products):
+        pass
+    def delete_products(self, products):
         pass
     def get_accounts (self):
         pass     

@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # '''
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2021 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -253,6 +253,10 @@ class Binance (Exchange):
     def get_products (self):
         log.debug ("products num %s"%((self.binance_products)))
         return self.binance_products    
+    def add_products(self, products):
+        log.error("TODO: FIXME: implement")
+    def delete_products(self, products):
+        log.error("TODO: FIXME: implement")
     def get_accounts (self):
     #     log.debug (pprint.pformat(self.binance_accounts))
         log.debug ("get accounts")
