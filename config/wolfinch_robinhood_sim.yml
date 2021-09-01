@@ -76,7 +76,7 @@ backfill:
 
 simulator:
    enabled : true
-   backtesting : true 
+   backtesting : false 
    
 genetic_optimizer: 
    enabled : false

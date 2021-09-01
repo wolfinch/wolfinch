@@ -3,7 +3,7 @@
 #  Wolfinch Auto trading Bot
 #  Desc: Yahoofin exchange interactions for Wolfinch
 #
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2021 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -105,6 +105,8 @@ class Yahoofin:
 #         products += ["LYFT", "ES=F", "YM=F", "NQ=F", "RTY=F", "CL=F", "GC=F", "SI=F", "EURUSD=X", "^TNX", "^VIX"]
         self.ws_client = WebsocketClient(products=products, feed_recv_hook=cb_fn)
         self.ws_client.start()
+    def subscribe_feed(self, products):
+        self.ws_client.subscribe(products)
     def stop_feed(self):
         self.ws_client.close()
 

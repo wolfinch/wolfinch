@@ -146,27 +146,31 @@ def get_product_config (exch_name, prod_name):
                     if products != None and len(products):
                         log.debug ("processing exch products")
                         for prod in products:
+                            p_cfg = {}
                             for p_name, p_cfg in prod.items():
                                 if p_name.lower() != prod_name.lower():
                                     continue
-                                log.debug ("processing product %s:" % (p_name))
-                                tcfg, dcfg = parse_product_config(p_cfg)
-                                
-                                #get fee, market_type
-                                fee = ex_v.get('fee')
-                                if not fee :
-                                    print ("exchange fee not set")
-                                    raise Exception("exchange fee not set")
-                                order_type = ex_v.get('order_type')
-                                if not order_type :
-                                    print ("exchange order_type not set")
-                                    raise Exception("exchange order_type not set")
-                                
-                                tcfg ['order_type'] = order_type
-                                tcfg ['fee'] = fee
-                                
-                                log.debug ("tcfg: %s dcfg: %s" % (tcfg, dcfg))
-                                return tcfg, dcfg
+                                log.debug ("processing product %s: p_cfg: %s" % (p_name, p_cfg))
+                                break
+                            else:
+                                log.error("unable to get matching product config, return default config")
+                            tcfg, dcfg = parse_product_config(p_cfg)
+                            #get fee, market_type
+                            fee = ex_v.get('fee')
+                            if not fee :
+                                print ("exchange fee not set")
+                                raise Exception("exchange fee not set")
+                            order_type = ex_v.get('order_type')
+                            if not order_type :
+                                print ("exchange order_type not set")
+                                raise Exception("exchange order_type not set")
+                            
+                            tcfg ['order_type'] = order_type
+                            tcfg ['fee'] = fee
+                            
+                            log.debug ("tcfg: %s dcfg: %s" % (tcfg, dcfg))
+                            return tcfg, dcfg
+
                             
     log.error ("unable to get config for %s: %s"%(exch_name, prod_name))
     return None, None    

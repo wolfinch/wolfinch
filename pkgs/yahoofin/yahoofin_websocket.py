@@ -71,7 +71,7 @@ class WebsocketClient(object):
                 self.products+= feed_list
         if self.ws and self.products:
             cmd = {"subscribe": self.products}
-            log.info ("subscribe feed_list: %s"%(json.dumps(cmd)))                  
+            log.info ("subscribe feed_list: %s"%(json.dumps(cmd)))
             self.ws.send(json.dumps(cmd))
         
     def start(self):

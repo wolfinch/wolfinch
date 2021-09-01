@@ -124,12 +124,9 @@ class Robinhood (Exchange):
         for p in config['products']:
 #             # add the product ids
             self.robinhood_conf['products'] += p.keys()
-                    
-        portforlio = self.rbh_client.portfolios()
-        log.info ("products: %s" % (pprint.pformat(portforlio, 4)))
                 
         for p_id in self.robinhood_conf['products']:
-            self.add_products(p_id)
+            self.add_products(p_id, feed=False)
         
         # EXH supported in spectator mode.                    
         
@@ -166,20 +163,7 @@ class Robinhood (Exchange):
         for prod in self.robinhood_products:
             if not self.robinhood_accounts.get(prod["id"]):
                 log.error ("unable to find prod(%s) account in robinhood. creating one local"%(prod["id"]))
-                self.robinhood_accounts[prod["id"]] = {
-                    'average_buy_price': '0.0000',
-                    'instrument': prod["instrument"],
-                    'intraday_average_buy_price': '0.0000',
-                    'intraday_quantity': '0.00000000',
-                    'pending_average_buy_price': '0.0000',
-                    'quantity': '0.00000000',
-                    'shares_held_for_buys': '0.00000000',
-                    'shares_held_for_options_collateral': '0.00000000',
-                    'shares_held_for_options_events': '0.00000000',
-                    'shares_held_for_sells': '0.00000000',
-                    'shares_held_for_stock_grants': '0.00000000',
-                    'shares_pending_from_options_events': '0.00000000'
-                }
+                self._add_prod_account(prod)
 
         ### Start WebSocket Streams ###
         if self.stream == True:
@@ -187,7 +171,21 @@ class Robinhood (Exchange):
         
         log.info("**Robinhood init success**\n Products: %s\n Accounts: %s" % (
                         pprint.pformat(self.robinhood_products, 4), pprint.pformat(self.robinhood_accounts, 4)))
-
+    def _add_prod_account(self, prod):
+        self.robinhood_accounts[prod["id"]] = {
+            'average_buy_price': '0.0000',
+            'instrument': prod["instrument"],
+            'intraday_average_buy_price': '0.0000',
+            'intraday_quantity': '0.00000000',
+            'pending_average_buy_price': '0.0000',
+            'quantity': '0.00000000',
+            'shares_held_for_buys': '0.00000000',
+            'shares_held_for_options_collateral': '0.00000000',
+            'shares_held_for_options_events': '0.00000000',
+            'shares_held_for_sells': '0.00000000',
+            'shares_held_for_stock_grants': '0.00000000',
+            'shares_pending_from_options_events': '0.00000000'
+        }
     def __str__ (self):
         return "{Message: Robinhood Exchange }"
 
@@ -294,7 +292,7 @@ class Robinhood (Exchange):
             #log out now. 
             self.rbh_client.logout()
 
-    def add_products(self, products):
+    def add_products(self, products, feed=True):
         if not isinstance(products, list):
             p_ids = [products]
         else:
@@ -307,8 +305,13 @@ class Robinhood (Exchange):
             prod['fund_type'] = "USD"
             prod['display_name'] = instr['simple_name']
             prod["instrument"] = instr
+            self._add_prod_account(prod)
             self.robinhood_products.append(prod)
             prod_l.append(prod)
+        if self.stream == True and feed == True:
+            log.info("subscribing to new products feed")
+            self.yahoofin_client.subscribe_feed(p_ids)
+        # self.robinhood_conf['products'] += p_ids
         return prod_l
     def delete_products(self, products):
         pass
