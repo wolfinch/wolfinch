@@ -79,10 +79,14 @@ def Wolfinch_init():
     # 5. start stats thread
     stats.start()
 
-def add_market(exch_name, product_id):
+def _add_market(exch_name, product_id):
     log.info ("setting up market for exch: %s product: %s"%(exch_name, product_id))
     exchange = None
     for exh in exchanges.exchange_list:
+        log.info("EXCH NAME: %s", exh.name)
+        if hasattr(exh, "sim"):
+            #let's skip sim exchanges. This will cause dyn market add not work in backtest. which is fine.
+            continue
         if exh.name == exch_name:
             exchange = exh
             break
@@ -94,6 +98,11 @@ def add_market(exch_name, product_id):
     if prod_l == None:
         log.error("exchange product %s config failed"%(product_id))
         return False
+    #if simulator enabled, add new products to sim exch
+    if sims.simulator_on:
+        #add initialized products for sim. We can do this only here after real exch initialized products
+        log.info("sim exch products init for exch:%s"%(exch_name))
+        sims.sim_obj["exch"].add_products(prod_l)
     for product in prod_l:
         #init market
         market = market_init(exchange, product)
@@ -104,6 +113,32 @@ def add_market(exch_name, product_id):
         if False == market_setup(restart=True, market=market):
             log.critical ("market setup failed")
             return False
+    return True
+def _delete_market(exch_name, product_id):
+    log.info ("deleting market from exch: %s product: %s"%(exch_name, product_id))
+    exchange = None
+    for exh in exchanges.exchange_list:
+        if exh.name == exch_name:
+            exchange = exh
+            break
+    if exchange == None:
+        log.critical ("exchange %s not found! "%(exch_name))
+        return False
+    # #del product
+    # prod_l = exchange.del_products(product_id)
+    # if prod_l == None:
+    #     log.error("exchange product %s config failed"%(product_id))
+    #     return False
+    # for product in prod_l:
+    #     #init market
+    #     market = market_init(exchange, product)
+    #     if market == None:
+    #         log.error ("market init failed")
+    #         return False
+    #     #setup market
+    #     if False == market_setup(restart=True, market=market):
+    #         log.critical ("market setup failed")
+    #         return False
     return True
 
 def Wolfinch_end():
@@ -176,10 +211,16 @@ def process_market(market):
 def process_ui_market_update(msg):
     log.info("market update msg: %s"%(msg))
     cmd = msg.get("cmd")
+    exch_name = msg.get("exchange")
+    product = msg.get("product")
     if cmd == "add":
-        pass
+        if True != _add_market(exch_name, product):
+            log.error("error while configuring new market for exch: %s product: %s", exch_name, product)
+            return False
     elif cmd == "delete":
-        pass
+        if True != _delete_market(exch_name, product):
+            log.error("error while removing market from exch: %s product: %s", exch_name, product)
+            return False
     else:
         log.error("unknown market update")
 

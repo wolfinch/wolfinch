@@ -139,6 +139,7 @@ def market_simulator_run (market, backtesting_on):
 class SIM_EXCH (exchanges.Exchange):
     products = []
     primary = False
+    sim = True
     candle_interval = 0
     def __init__(self, name, config, primary=True):
         log.info('init SIM exchange')        
