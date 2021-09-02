@@ -116,14 +116,13 @@ def _add_market(exch_name, product_id):
     return True
 def _delete_market(exch_name, product_id):
     log.info ("deleting market from exch: %s product: %s"%(exch_name, product_id))
-    exchange = None
-    for exh in exchanges.exchange_list:
-        if exh.name == exch_name:
-            exchange = exh
-            break
-    if exchange == None:
-        log.critical ("exchange %s not found! "%(exch_name))
-        return False
+    m = get_market_by_product(exch_name, product_id)
+    if not m:
+        log.error("Unknown exchange/product exch: %s prod: %s" %(exch_name, product_id))
+    else:
+        log.info("pause trading on exch: %s prod: %s" %(exch_name, product_id))
+        m.pause_trading(True, True)
+    
     # #del product
     # prod_l = exchange.del_products(product_id)
     # if prod_l == None:

@@ -195,6 +195,7 @@ def server_main (port=8080, mp_pipe=None):
         
     @app.route('/api/update_market', methods=["POST"])
     def update_market_api():
+        global g_markets_list
         def ret_code(err):
             return json.dumps(err)
                 
@@ -221,19 +222,21 @@ def server_main (port=8080, mp_pipe=None):
             err = "error: incorrect request data"
             log.error (err)
             return ret_code(err)
-        
+                
         if req_code != UI_TRADE_SECRET:
             err = "incorrect secret"
             log.error (err)
             return ret_code(err)
         err = "success"
-        msg = {"type": "MARKET_UPDATE", "exchange": exch_name, "product": prod_id, "cmd": cmd}
+        msg = {"type": "MARKET_UPDATE", "exchange": exch_name, "product": prod_id.upper(), "cmd": cmd}
         if mp_pipe:
             mp_send_recv_msg(mp_pipe, msg)
+            #unset the current market list local copy (since market may be updated
+            g_markets_list = None
         else:
             err = "server connection can't be found!"
             log.error (err)
-        return ret_code(err)            
+        return ret_code(err)
 
     @app.route('/api/pause_market', methods=["POST"])
     def pause_market_api():
