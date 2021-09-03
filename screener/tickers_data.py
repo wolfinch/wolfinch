@@ -30,6 +30,7 @@ import logging
 import requests
 import pprint
 
+import yahoofin as yf
 from utils import getLogger
 import nasdaq
 
@@ -37,6 +38,7 @@ log = getLogger("DATA")
 log.setLevel(logging.INFO)
 
 # logging.getLogger("urllib3").setLevel(log.WARNING)
+AVG_VOL_FILTER = 500000
 
 ticker_import_time = 0
 
@@ -47,45 +49,113 @@ def get_all_ticker_lists ():
     if ticker_import_time + 24*3600 < int(time.time()) :
         log.info ("renew tickers list")
 #         t_l = nasdaq.get_all_tickers_gt50m()
-        #import all tickers
-        t_l = nasdaq.get_all_tickers()
-        if t_l:
-            allt = []
-            for ticker in t_l:
-                allt.append(ticker["symbol"].strip())
-            log.info("ALL (%d) tickers imported"%(len(allt)))
-            all_tickers["ALL"] = allt
-        #import megacap only
-        t_l = nasdaq.get_all_tickers_megacap()
-        if t_l:
-            mcap = []
-            for ticker in t_l:
-                mcap.append(ticker["symbol"].strip())
-            log.info("MEGACAP (%d) tickers imported"%(len(mcap)))
-            all_tickers["MEGACAP"] = mcap
-        #import gt50m
-        t_l = nasdaq.get_all_tickers_gt50m()
-        if t_l:
-            gt50 = []
-            for ticker in t_l:
-                gt50.append(ticker["symbol"].strip())
-            log.info("GT50M (%d) tickers imported"%(len(gt50)))
-            all_tickers["GT50M"] = gt50
-        #import lt50m
-        t_l = nasdaq.get_all_tickers_lt50m()
-        if t_l:
-            lt50 = []
-            for ticker in t_l:
-                lt50.append(ticker["symbol"].strip())
-            all_tickers["LT50M"] = lt50
-            log.info("LT50M (%d) tickers imported"%(len(lt50)))
-        #import spacs
-        t_l = get_all_spac_tickers()
-        if t_l:
-            all_tickers["SPAC"] = t_l
-            log.info("SPAC (%d) tickers imported"%(len(t_l)))
-        ticker_import_time = int(time.time())
+        try:
+            #import all tickers
+            t_l = nasdaq.get_all_tickers()
+            if t_l:
+                allt = []
+                for ticker in t_l:
+                    allt.append(ticker["symbol"].strip())
+                log.info("ALL (%d) tickers imported"%(len(allt)))
+                all_tickers["ALL"] = allt
+            #import megacap only
+            t_l = nasdaq.get_all_tickers_megacap()
+            if t_l:
+                mcap = []
+                for ticker in t_l:
+                    mcap.append(ticker["symbol"].strip())
+                log.info("MEGACAP (%d) tickers imported"%(len(mcap)))
+                all_tickers["MEGACAP"] = mcap
+            #import gt50m
+            t_l = nasdaq.get_all_tickers_gt50m()
+            if t_l:
+                gt50 = []
+                for ticker in t_l:
+                    gt50.append(ticker["symbol"].strip())
+                log.info("GT50M (%d) tickers imported"%(len(gt50)))
+                all_tickers["GT50M"] = gt50
+            #import lt50m
+            t_l = nasdaq.get_all_tickers_lt50m()
+            if t_l:
+                lt50 = []
+                for ticker in t_l:
+                    lt50.append(ticker["symbol"].strip())
+                all_tickers["LT50M"] = lt50
+                log.info("LT50M (%d) tickers imported"%(len(lt50)))
+            #import spacs
+            t_l = get_all_spac_tickers()
+            if t_l:
+                all_tickers["SPAC"] = t_l
+                log.info("SPAC (%d) tickers imported"%(len(t_l)))
+            #get filtered list based on vol
+            get_filtered_ticker_list()
+            ticker_import_time = int(time.time())
+        except Exception :
+            log.critical("exception occured while getting filtered list")
     return all_tickers
+
+def get_filtered_ticker_list():
+    global all_tickers
+    BATCH_SIZE = 400
+#     log.debug("num tickers(%d)"%(len(sym_list)))
+    YF = yf.Yahoofin ()
+    s = None
+    ss = None
+    i = 0
+    try:
+        ticker_stats = {}
+        sym_list = all_tickers["ALL"]
+        while i < len(sym_list):
+            ts, err =  YF.get_quotes(sym_list[i: i+BATCH_SIZE])
+            log.info("got %d syms out of %s", i+BATCH_SIZE, len(all_tickers["ALL"]))
+            if err == None:
+                for ti in ts:
+                    s = ti.get("symbol")
+                    ss = ticker_stats.get(s)
+                    if ss == None:
+                        ticker_stats[s] = ti
+                i += BATCH_SIZE
+            else:
+                log.critical ("yf api failed err: %s i: %d num: %d"%(err, i, len(sym_list)))
+                time.sleep(2)
+        tl = []
+        for s in all_tickers["ALL"]:
+            st = ticker_stats.get(s)
+            if st and st.get("averageDailyVolume3Month", 0) >= AVG_VOL_FILTER:
+                tl.append(s)
+        all_tickers["ALL500K"] = tl
+        log.info ("# ALL500K tickers %s", len(tl))
+        tl = []
+        for s in all_tickers["GT50M"]:
+            st = ticker_stats.get(s)
+            if st and st.get("averageDailyVolume3Month", 0) >= AVG_VOL_FILTER:
+                tl.append(s)
+        all_tickers["GT50M500K"] = tl
+        log.info ("# GT50M500K tickers %s", len(tl))
+        tl = []
+        for s in all_tickers["LT50M"]:
+            st = ticker_stats.get(s)
+            if st and st.get("averageDailyVolume3Month", 0) >= AVG_VOL_FILTER:
+                tl.append(s)
+        all_tickers["LT50M500K"] = tl
+        log.info ("# LT50M500K tickers %s", len(tl))
+        tl = []
+        for s in all_tickers["MEGACAP"]:
+            st = ticker_stats.get(s)
+            if st and st.get("averageDailyVolume3Month", 0) >= AVG_VOL_FILTER:
+                tl.append(s)
+        all_tickers["MEGACAP500K"] = tl
+        log.info ("# MEGACAP500K tickers %s", len(tl))
+        tl = []
+        for s in all_tickers["OTC"]:
+            st = ticker_stats.get(s)
+            if st and st.get("averageDailyVolume3Month", 0) >= AVG_VOL_FILTER:
+                tl.append(s)
+        all_tickers["OTC500K"] = tl
+        log.info ("# OTC500K tickers %s", len(tl))
+    except Exception as e:
+        log.critical (" Exception e: %s \n s: %s ss: %s i: %d len: %d"%(e, s, ss, i, len(sym_list)))
+        raise e
 
 Session = None
 def get_url(url):
@@ -145,8 +215,11 @@ if __name__ == '__main__':
     try:
         log.info("Starting Main")
         print("Starting Main")
-        d = get_all_spac_tickers()
-        print("d : %s"%(pprint.pformat(d)))
+        # d = get_all_spac_tickers()
+        d = get_all_ticker_lists()
+        for k, v in d.items():
+            print("%s #sym: %s"%( k, len(v)))
+        #print("d : %s"%(pprint.pformat(d)))
     except(KeyboardInterrupt, SystemExit):
         sys.exit()
     except Exception as e:

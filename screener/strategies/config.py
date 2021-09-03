@@ -23,12 +23,12 @@ from .volume_spike import VOL_SPIKE
 def Configure (cfg):
     scrnr_list = []
     
-    scrnr_list.append(VOL_SPIKE("VOL-SPIKE-MEGACAP", ticker_kind="MEGACAP", vol_multiplier=2))
+    scrnr_list.append(VOL_SPIKE("VOL-SPIKE-MEGACAP", ticker_kind="MEGACAP500K", vol_multiplier=2))
 #     scrnr_list.append(VOL_SPIKE("VOL-SPIKE-MEGACAP1", ticker_kind="MEGACAP", vol_multiplier=2))
     
 #     scrnr_list.append(VOL_SPIKE("VOL-SPIKE-ALL", ticker_kind="ALL"))
-    scrnr_list.append(VOL_SPIKE("VOL-SPIKE-GT50M", ticker_kind="GT50M", vol_multiplier=3))
-    scrnr_list.append(VOL_SPIKE("VOL-SPIKE-LT50M", ticker_kind="LT50M", vol_multiplier=4))
+    scrnr_list.append(VOL_SPIKE("VOL-SPIKE-GT50M", ticker_kind="GT50M500K", vol_multiplier=3))
+    scrnr_list.append(VOL_SPIKE("VOL-SPIKE-LT50M", ticker_kind="LT50M500K", vol_multiplier=4))
     return scrnr_list
 
 #EOF
