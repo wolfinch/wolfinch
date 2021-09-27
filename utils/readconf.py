@@ -23,5 +23,5 @@ def readConf (fileName):
             confDict = yaml.load(fp, Loader=yaml.FullLoader)
 #             print (confDict)
             return confDict
-    except : # parent of IOError, OSError *and* WindowsError where available
-        print('Oops!! Conf Read Error for %s'%(fileName))
+    except Exception as e: # parent of IOError, OSError *and* WindowsError where available
+        print('Oops!! Conf Read Error for %s e: %s'%(fileName, e))

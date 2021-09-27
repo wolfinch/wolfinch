@@ -35,9 +35,9 @@ def configure(cfg):
         return True
     else:
         return False
-def notify(name, msg):
+def notify(kind, name, msg):
     if msg_queue:
-        msg_queue.put((name, msg))
+        msg_queue.put((kind, name, msg))
 def _send_msg(msg_l):
     msg_str = ""
     for k, v_l in msg_l.items():
@@ -55,14 +55,20 @@ def _notifier_loop():
         try:
             cur_time = time.time()
             msg = msg_queue.get(timeout=sleep_time)
-            if not msg_l.get(msg[0]):
-                msg_l[msg[0]] = []
-            msg_l[msg[0]].append (msg[1])
-            msg_len += 1
-            if msg_len > 25:
-                _send_msg(msg_l)
-                msg_l = {}
-                msg_len = 0  
+            kind = msg[0]
+            name = msg[1]
+            data = msg[2]
+            if kind == "telegram":
+                if not msg_l.get(name):
+                    msg_l[name] = []
+                msg_l[name].append (data)
+                msg_len += 1
+                if msg_len > 25:
+                    _send_msg(msg_l)
+                    msg_l = {}
+                    msg_len = 0
+            else:
+                print("unknown notify type %s"%(kind))
             sleep_time = (MAIN_TICK_DELAY -(time.time()-cur_time))
             sleep_time = 0 if sleep_time < 0 else sleep_time
         except queue.Empty:
