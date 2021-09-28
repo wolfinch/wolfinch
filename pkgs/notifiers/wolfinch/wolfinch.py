@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 '''
 # 
-# Desc: Implements Telegram Bot interfaces
+# Desc: Wolfinch notifier interface Implementation
 #  Copyright: (c) 2017-2021 Joshith Rayaroth Koderi
 #  This file is part of Wolfinch.
 # 
@@ -22,18 +22,18 @@
 import sys
 from decimal import getcontext
 import logging
-from utils import getLogger #, get_product_config, load_config, get_config
+from utils import getLogger
 import time
 import requests
 import urllib
 
 # mpl_logger.setLevel(logging.WARNING)
-log = getLogger('Telegram')
+log = getLogger('Wolfinch')
 log.setLevel(log.INFO)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 Session = None
-def get_url(url):
+def post_url(url, data):
     global Session
     if Session == None:
         Session = requests.session()
@@ -44,28 +44,35 @@ def get_url(url):
 #             "Connection": "keep-alive",
 #         }
 #         Session.headers = headers
-        log.info("initialized telegram Session")
-    log.debug ("get url: %s"%(url))
-    r = Session.get(url, timeout=15)
+        log.info("initialized Wolfinch Session")
+    log.debug ("post url: %s"%(url))
+    r = Session.post(url, data=data, timeout=15)
     if r.status_code == requests.codes.ok:
         return r.json()
     else:
         log.error ("bad response code: %s resp: %s"%(str(r.status_code), r))
         return None
-        
-class Telegram():
-    def __init__(self, bot_token, chat_id=None):
-        self.bot_token = bot_token
-        self.chat_id = chat_id
-        log.info("configured Telgram Notifier instance %s id: %s"%(bot_token, chat_id))
-    def send_message (self, msg, chat_id=None):
-        log.debug ("msg: %s chat_id: %s"%(msg, chat_id))
-        TELEGRAM_SENDMSG_API = 'https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s&parse_mode=html' % (
-                        self.bot_token, chat_id if chat_id != None else self.chat_id, urllib.parse.quote_plus(msg))
+
+WOLFINCH_ADD_MARKET_API = "/api/update_market"
+class Wolfinch():
+    def __init__(self, url, exchange, secret=None):
+        self.bot_url = url
+        self.exchange = exchange
+        self.secret = secret
+        log.info("configured Wolfinch Notifier url: %s exchange %s secret: %s"%(url, exchange, secret))
+    def send_message (self, msg):
+        log.debug ("msg: %s"%(msg))
+        data = {
+            "cmd" : "add",
+            "req_code" : self.secret,
+            "exch_name" : self.exchange,
+            "product" : msg.get("symbol"),
+        }
+        URI = '%s%s' % (self.bot_url, WOLFINCH_ADD_MARKET_API)
         i = 0
         while i < 2:
             try:
-                data = get_url (TELEGRAM_SENDMSG_API)
+                data = post_url (URI, data)
                 if data:
                     log.debug("send msg success %s"%(data))
                     return True
@@ -73,7 +80,7 @@ class Telegram():
                     log.error("failed ")
                     return False
             except requests.exceptions.ConnectionError as e:
-                log.error("expection while telegram send_msg.  retrying e: %s"%(e))
+                log.error("expection while Wolfinch send_msg.  retrying e: %s"%(e))
                 time.sleep(2)
                 i += 1
 
@@ -84,12 +91,12 @@ if __name__ == '__main__':
     main entry point
     '''
     getcontext().prec = 8  # decimal precision
-    print("Starting Telegram Client..")
+    print("Starting Wolfinch Client..")
     try:
-        log.info("Starting Telegram")
-        print("Starting Telegram")
-        tgram = Telegram("1757210784:AAGXz6sjeBykY-CFCJS-", "785837454")
-        status = tgram.send_message("hello there!")
+        log.info("Starting Wolfinch")
+        print("Starting Wolfinch")
+        wfinch = Wolfinch("http://localhost:8080", "robinhood", "1234")
+        status = wfinch.send_message({"symbol":"TSLA"})
         print ("send msg status: %s"%(status))
     except(KeyboardInterrupt, SystemExit):
         sys.exit()
@@ -100,6 +107,6 @@ if __name__ == '__main__':
 #         traceback.print_exc()
 #         os.abort()
     # '''Not supposed to reach here'''
-    print("\n Telegram Client end")
+    print("\n Wolfinch Client end")
 
 # EOF

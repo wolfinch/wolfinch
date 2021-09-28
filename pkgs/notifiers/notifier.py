@@ -21,20 +21,25 @@
 import threading
 import queue
 from .telegram import Telegram
+from .wolfinch import Wolfinch
 import time
 
 telegram = None
+wolfinch = None
 msg_queue = None
 stop = False
 MAIN_TICK_DELAY = 1.000
 def configure(cfg):
-    global telegram
-    tgram = cfg.get("telegram")
-    if tgram:
-        telegram = Telegram(tgram["token"], tgram["chat-id"])
-        return True
-    else:
-        return False
+    global telegram, wolfinch
+    for k, v in cfg.items():
+        if k == "telegram":
+            telegram = Telegram(v["token"], v["chat-id"])
+        elif k == "wolfinch":
+            wolfinch = Wolfinch(v["bot"], v["exchange"], v["secret"])
+        else:
+            print ("unknown notifier %s"%(k))
+            return False
+    return True
 def notify(kind, name, msg):
     if msg_queue:
         msg_queue.put((kind, name, msg))
@@ -80,11 +85,12 @@ def _notifier_loop():
 def init(cfg):
     global notify_thread, msg_queue
     if False == configure(cfg):
-        return 
+        return False
     msg_queue = queue.Queue()
     notify_thread = threading.Thread(target=_notifier_loop)
     notify_thread.daemon = True
     notify_thread.start()
+    return True
 def end():
     global stop
     stop = True
