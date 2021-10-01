@@ -54,13 +54,25 @@
 	var exchanges;
 	var active_exch = "";
 	var active_market = "";
+	var ui_code = "";
 	$(document).ready(function() {
 
 		console.log("load stats");
-
+		
+		set_ui_code();
 		load_exch_data(init_charting);
 	});
 
+	function set_ui_code () {
+		p_l = window.location.pathname.split("/")
+		if (p_l.length > 1) {
+			if (p_l[1] != "wolfinch" || p_l[1] != "") {
+				ui_code = "/"+p_l[1]
+				console.log("ui_code - "+ui_code)
+			}
+		}	
+	}
+	
 	// exch/market selector - start
 	function exch_onclick(obj) {
 		console.log("onclick " + this.id);
@@ -86,7 +98,7 @@
 		console.log("post data:" + active_exch, active_market);
 		$.ajax({
 			type : 'POST',
-			url : '/api/set_active_market',
+			url : ui_code+'/api/set_active_market',
 			data : data,
 			dataType : 'json',
 			success : function(data) {
@@ -171,7 +183,7 @@
 		// call api to buy/sell
 		$.ajax({
 			type : 'GET',
-			url : '/api/get_markets',
+			url : ui_code+'/api/get_markets',
 			dataType : 'json',
 			success : function(data) {
 				console.log("get_markets success!" + data);
@@ -240,7 +252,7 @@
 		console.log("load positions");
 		$.ajax({
 			type : 'GET',
-			url : '/api/positions',
+			url : ui_code+'/api/positions',
 			data : {
 				from_time : 0,
 				to_time: 0,
@@ -259,7 +271,7 @@
 		console.log("load candles");
 		$.ajax({
 			type : 'GET',
-			url : '/api/candles',
+			url : ui_code+'/api/candles',
 			data : {
 				period: g_chart_period,
 				start_time : g_chart_start_time,

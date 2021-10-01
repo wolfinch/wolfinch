@@ -59,12 +59,24 @@
 	var active_market = "";
 	var buy_paused = false;
 	var sell_paused = false;
+	var ui_code = "";
 	$(document).ready(function() {
 
 		console.log("load stats");
-
+		
+		set_ui_code();
 		load_exch_data();
 	});
+	
+	function set_ui_code () {
+		p_l = window.location.pathname.split("/")
+		if (p_l.length > 1) {
+			if (p_l[1] != "wolfinch" || p_l[1] != "") {
+				ui_code = "/"+p_l[1]
+				console.log("ui_code - "+ui_code)
+			}
+		}	
+	}	
 
 	// exch/market selector - start
 	function exch_onclick(obj) {
@@ -91,7 +103,7 @@
 		console.log("post data:" + active_exch, active_market);
 		$.ajax({
 			type : 'POST',
-			url : '/api/set_active_market',
+			url : ui_code+'/api/set_active_market',
 			data : data,
 			dataType : 'json',
 			success : function(data) {
@@ -178,7 +190,7 @@
 		};
 		$.ajax({
 			type : 'POST',
-			url : '/api/pause_market',
+			url : ui_code+'/api/pause_market',
 			data : data,
 			dataType : 'json',
 			success : function(resp_data) {
@@ -300,7 +312,7 @@
 		// call api to buy/sell
 		$.ajax({
 			type : 'GET',
-			url : '/api/get_markets',
+			url : ui_code+'/api/get_markets',
 			dataType : 'json',
 			success : function(data) {
 				console.log("get_markets success!" + data);
@@ -401,7 +413,7 @@
 		};
 		$.ajax({
 			type : 'POST',
-			url : '/api/manual_order',
+			url : ui_code+'/api/manual_order',
 			data : data,
 			dataType : 'json',
 			success : function(data) {
@@ -465,7 +477,7 @@
 		};
 		$.ajax({
 			type : 'POST',
-			url : '/api/update_market',
+			url : ui_code+'/api/update_market',
 			data : data,
 			dataType : 'json',
 			success : function(data) {
