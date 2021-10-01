@@ -316,11 +316,18 @@ class SIM_EXCH (exchanges.Exchange):
     def close (self):
         log.debug("Closing SIM exchange...")
         
-    def get_products(self):
+    def get_products(self, p_id=None):
         """
         Get registered products on this exchange
-        """
-        return self.products
+        """        
+        log.debug (" num  products %d" % (len(self.products)))
+        if p_id == None:
+            return self.products
+        else:
+            for p in self.products:
+                if p["id"] == p_id:
+                    return p
+        return None 
                           
     def buy (self, trade_req) :
     #     return None

@@ -93,6 +93,10 @@ def _add_market(exch_name, product_id):
     if exchange == None:
         log.critical ("exchange %s not found! "%(exch_name))
         return False
+    #see if the product exists already
+    if exchange.get_products(product_id):
+        log.error("product already exists while adding p_id: %s"%(product_id))
+        return True
     #add new product
     prod_l = exchange.add_products(product_id)
     if prod_l == None:
