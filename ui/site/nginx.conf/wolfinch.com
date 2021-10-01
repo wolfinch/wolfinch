@@ -14,7 +14,7 @@ server {
 #              access_log off;
 #            }
 
-        location ~* (/wolfinch/screener.*$) { {
+        location ~* (/wolfinch/screener.*$) {
            proxy_pass http://localhost:8081;
         }
 
