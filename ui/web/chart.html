@@ -253,11 +253,11 @@
 		$.ajax({
 			type : 'GET',
 			url : ui_code+'/api/positions',
-			data : {
-				from_time : 0,
-				to_time: 0,
-				exch_name : active_exch,
-				product : active_market
+			data : function(d){
+				d.from_time = 0;
+				d.to_time = 0;
+				d.exch_name = active_exch;
+				d.product = active_market;
 			},
 			dataType : 'json',
 			success : load_trades,
@@ -272,11 +272,11 @@
 		$.ajax({
 			type : 'GET',
 			url : ui_code+'/api/candles',
-			data : {
-				period: g_chart_period,
-				start_time : g_chart_start_time,
-				exch_name : active_exch,
-				product : active_market
+			data : function(d){
+				d.period = g_chart_period;
+				d.start_time = g_chart_start_time;
+				d.exch_name = active_exch;
+				d.product = active_market;
 			},
 			dataType : 'json',
 			success : load_candles,

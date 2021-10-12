@@ -296,7 +296,7 @@
 
 		if (table) {
 			// previously init, just reload once and don't mess with timers
-			table.ajax.reload(null, false); // user paging is not reset on reload
+			table.ajax.reload(null, true); // user paging is not reset on reload
 			return;
 		}
 		setInterval(loadTradingStats, 120000);
@@ -334,11 +334,11 @@
 					pageLength : 25,
 					ajax : {
 						url : ui_code+'/api/positions',
-			 			data : {
-							from_time : 0,
-							to_time: 0,
-							exch_name : active_exch,
-							product : active_market
+			 			data : function(d){
+							d.from_time = 0;
+							d.to_time = 0;
+							d.exch_name = active_exch;
+							d.product = active_market;
 						},
 						dataSrc : ''
 					},
