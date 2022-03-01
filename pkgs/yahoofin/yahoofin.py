@@ -35,6 +35,12 @@ log = getLogger ('Yahoofin')
 log.setLevel(log.WARNING)
 # logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+
+# Wiki APIs - 
+# https://www.reddit.com/r/sheets/wiki/apis/finance
+# http://ogres-crypt.com/SMF/Elements/
+#
+
 # YAHOOFIN CONFIG FILE
 API_BASE="https://api.yahoofin.com/"
 
@@ -64,6 +70,49 @@ class Yahoofin:
         """
         return self.session.get(url, timeout=15).json()
     ######## public function #########
+    def get_financial_data (self, symbol):
+        ### https://query2.finance.yahoo.com/v10/finance/quoteSummary/PTON?modules=defaultkeyStatistics,assetProfile,topHoldings,fundPerformance,fundProfile,financialData
+        # modules :
+        # assetProfile
+        # balanceSheetHistory
+        # balanceSheetHistoryQuarterly
+        # calendarEvents
+        # cashflowStatementHistory
+        # cashflowStatementHistoryQuarterly
+        # defaultKeyStatistics
+        # earnings
+        # earningsHistory
+        # earningsTrend
+        # esgScores
+        # financialData - key-stats
+        # fundOwnership
+        # incomeStatementHistory
+        # incomeStatementHistoryQuarterly
+        # indexTrend
+        # industryTrend
+        # insiderHolders
+        # insiderTransactions
+        # institutionOwnership
+        # majorDirectHolders
+        # majorHoldersBreakdown
+        # netSharePurchaseActivity
+        # price
+        # recommendationTrend
+        # secFilings
+        # sectorTrend
+        # summaryDetail
+        # summaryProfile
+        # upgradeDowngradeHistory
+        # pageviews
+        # quotetype
+        url = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/%s?\
+modules=defaultkeyStatistics,assetProfile,topHoldings,fundPerformance,fundProfile,financialData,summaryDetail"%(symbol)
+        log.debug("get financial data for - %s"%(symbol))        
+        resp = self.get_url(url)
+        if resp['quoteSummary']["error"] != None:
+            log.critical ("error while fetch fin data for %s - error: %s"%(symbol, resp['quoteSummary']["error"]))
+            return None, resp['quoteSummary']["error"]
+        return resp['quoteSummary']['result'][0], None
     def get_historic_candles (self, symbol=None, interval=None, start_time=None, end_time=None):
         url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?symbol=%s&period1=%d&period2=%d&interval=%s"%(#&includePrePost=true
             symbol, symbol, start_time, end_time, interval)
@@ -125,7 +174,13 @@ def print_quotes(symbol_list):
         print ("quotes: \n %s"%(pprint.pformat(resp)))
     else:
         print("unable to find quotes, err %s"%err)
-
+def print_fs(symbol):
+    print ("printing current quotes")    
+    resp, err = yf.get_financial_data(symbol)
+    if err == None:
+        print ("fs: \n %s"%(pprint.pformat(resp)))
+    else:
+        print("unable to find fs, err %s"%err)
 def arg_parse():    
     global args, parser, YAHOOFIN_CONF
     parser = argparse.ArgumentParser(description='Yahoofin implementation')
@@ -134,6 +189,7 @@ def arg_parse():
     parser.add_argument("--s", help='symbol', required=False)
     parser.add_argument("--ch", help='dump historic candles', required=False, action='store_true')
     parser.add_argument("--q", help='dump quotes', required=False, action='store_true')
+    parser.add_argument("--fs", help='dump financial summary', required=False, action='store_true')
     args = parser.parse_args()
     if args.config:
         log.info ("using config file - %s"%(args.config))
@@ -149,7 +205,10 @@ if __name__ == '__main__':
         print_historic_candles(args.s, "60m", 1586873400, 1588660532)
     if args.q:
         yf = Yahoofin ()
-        print_quotes(["TSLA", "codx"])        
+        print_quotes(["TSLA", "codx"])
+    elif args.fs:
+        yf = Yahoofin ()
+        print_fs(args.s)
     else:
         parser.print_help()
         exit(1)                            
