@@ -70,7 +70,7 @@ class Yahoofin:
         """
         return self.session.get(url, timeout=15).json()
     ######## public function #########
-    def get_financial_data (self, symbol):
+    def get_financial_data (self, symbol, modules="price"):
         ### https://query2.finance.yahoo.com/v10/finance/quoteSummary/PTON?modules=defaultkeyStatistics,assetProfile,topHoldings,fundPerformance,fundProfile,financialData
         # modules :
         # assetProfile
@@ -106,7 +106,7 @@ class Yahoofin:
         # pageviews
         # quotetype
         url = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/%s?\
-modules=defaultkeyStatistics,assetProfile,topHoldings,fundPerformance,fundProfile,financialData,summaryDetail"%(symbol)
+modules=%s"%(symbol, modules)
         log.debug("get financial data for - %s"%(symbol))        
         resp = self.get_url(url)
         if resp['quoteSummary']["error"] != None:
