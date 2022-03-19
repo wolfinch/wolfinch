@@ -324,7 +324,8 @@ def arg_parse():
     parser.add_argument("--buy", help='buy asset', required=False, action='store_true')
     parser.add_argument("--sell", help='sell asset', required=False, action='store_true')
     parser.add_argument("--sort", help='sort', required=False)
-    parser.add_argument("--filter", help='filter kind', required=False)
+    #any kind of filter for strategy
+    parser.add_argument("--filter", help='strategy filter kind (subset of string in strategy)', required=False) 
     
     args = parser.parse_args()
     if args.config:
