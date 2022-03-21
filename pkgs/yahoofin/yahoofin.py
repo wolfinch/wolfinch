@@ -105,6 +105,8 @@ class Yahoofin:
         # upgradeDowngradeHistory
         # pageviews
         # quotetype
+        # all modules - 
+        # https://query1.finance.yahoo.com/v10/finance/quoteSummary/FB?modules=assetProfile%2CbalanceSheetHistory%2CbalanceSheetHistoryQuarterly%2CcalendarEvents%2CcashflowStatementHistory%2CcashflowStatementHistoryQuarterly%2CdefaultKeyStatistics%2Cearnings%2CearningsHistory%2CearningsTrend%2CesgScores%2CfinancialData%2CfundOwnership%2CincomeStatementHistory%2CincomeStatementHistoryQuarterly%2CindexTrend%2CindustryTrend%2CinsiderHolders%2CinsiderTransactions%2CinstitutionOwnership%2CmajorDirectHolders%2CmajorHoldersBreakdown%2CnetSharePurchaseActivity%2Cprice%2CrecommendationTrend%2CsecFilings%2CsectorTrend%2CsummaryDetail%2CsummaryProfile%2CupgradeDowngradeHistory%2Cpageviews%2Cquotetype&ssl=true
         url = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/%s?\
 modules=%s"%(symbol, modules)
         log.debug("get financial data for - %s"%(symbol))        
@@ -134,7 +136,16 @@ modules=%s"%(symbol, modules)
             log.critical ("error while get quotes - %s"%(resp['quoteResponse']["error"]))
             return None, resp['quoteResponse']["error"]
         return resp['quoteResponse']['result'], None        
-
+    def get_options(self, sym, date=None):
+        #https://query1.finance.yahoo.com/v7/finance/options/PTRA?date=1653004800
+        log.debug ("date %v", date)
+        date_opt="?date="+date if date != None else ""
+        api_url = "https://query1.finance.yahoo.com/v7/finance/options/%s%s"%(sym, date_opt)
+        resp = self.get_url(api_url)
+        if resp['optionChain']["error"] != None:
+            log.critical ("error while get options - %s"%(resp['optionChain']["error"]))
+            return None, resp['optionChain']["error"]
+        return resp['optionChain']['result'][0], None
     def get_trending(self, num=5):
         api_url = "https://query1.finance.yahoo.com/v1/finance/trending/US?count="+num
         resp = self.get_url(api_url)
