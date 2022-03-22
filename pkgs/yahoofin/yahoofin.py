@@ -192,6 +192,13 @@ def print_fs(symbol):
         print ("fs: \n %s"%(pprint.pformat(resp)))
     else:
         print("unable to find fs, err %s"%err)
+def print_options(symbol, date=None):
+    print ("printing current quotes")    
+    resp, err = yf.get_options(symbol, date)
+    if err == None:
+        print ("options: \n %s"%(pprint.pformat(resp)))
+    else:
+        print("unable to find options, err %s"%err)        
 def arg_parse():    
     global args, parser, YAHOOFIN_CONF
     parser = argparse.ArgumentParser(description='Yahoofin implementation')
@@ -201,6 +208,7 @@ def arg_parse():
     parser.add_argument("--ch", help='dump historic candles', required=False, action='store_true')
     parser.add_argument("--q", help='dump quotes', required=False, action='store_true')
     parser.add_argument("--fs", help='dump financial summary', required=False, action='store_true')
+    parser.add_argument("--opt", help='dump options', required=False, action='store_true')
     args = parser.parse_args()
     if args.config:
         log.info ("using config file - %s"%(args.config))
@@ -220,6 +228,9 @@ if __name__ == '__main__':
     elif args.fs:
         yf = Yahoofin ()
         print_fs(args.s)
+    elif args.opt:
+        yf = Yahoofin ()
+        print_options(args.s)        
     else:
         parser.print_help()
         exit(1)                            
