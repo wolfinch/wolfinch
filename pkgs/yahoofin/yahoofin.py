@@ -138,8 +138,8 @@ modules=%s"%(symbol, modules)
         return resp['quoteResponse']['result'], None        
     def get_options(self, sym, date=None):
         #https://query1.finance.yahoo.com/v7/finance/options/PTRA?date=1653004800
-        log.debug ("date %v", date)
-        date_opt="?date="+date if date != None else ""
+        log.debug ("date %s"%(date))
+        date_opt="?date="+str(date) if date != None else ""
         api_url = "https://query1.finance.yahoo.com/v7/finance/options/%s%s"%(sym, date_opt)
         resp = self.get_url(api_url)
         if resp['optionChain']["error"] != None:
