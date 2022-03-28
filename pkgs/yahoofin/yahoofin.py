@@ -142,9 +142,9 @@ modules=%s"%(symbol, modules)
         date_opt="?date="+str(date) if date != None else ""
         api_url = "https://query1.finance.yahoo.com/v7/finance/options/%s%s"%(sym, date_opt)
         resp = self.get_url(api_url)
-        if resp['optionChain']["error"] != None:
-            log.critical ("error while get options - %s"%(resp['optionChain']["error"]))
-            return None, resp['optionChain']["error"]
+        if (resp.get("finance") and resp.get("finance").get("error")) or (resp.get('optionChain') and resp.get("optionChain").get("error")):
+            log.critical ("error while get options - %s"%(resp))
+            return None, "error while getting options"
         return resp['optionChain']['result'][0], None
     def get_trending(self, num=5):
         api_url = "https://query1.finance.yahoo.com/v1/finance/trending/US?count="+num
