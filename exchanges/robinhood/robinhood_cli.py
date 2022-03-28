@@ -42,72 +42,6 @@ ROBINHOOD_CONF = 'config/robinhood.yml'
 
 
 ######## Functions for Main exec flow ########
-def get_option_chains(symbol, from_date, to_date, opt_type, sort="oi"):
-    def key_func(k):
-        #sort based on what?
-        q = k["quote"]
-        if sort == "oi":
-            v = float(q["open_interest"] or 0)
-        elif sort == "vol":
-            v = float(q["volume"] or 0)
-        elif sort == "iv":
-            v = float(q["implied_volatility"] or 0)
-        elif sort == "delta":
-            v = float(q["delta"] or 0)
-        elif sort == "theta":
-            v = float(q["theta"] or 0)
-        elif sort == "vega":
-            v = float(q["vega"] or 0)
-        elif sort == "best":
-            #do better algo  for finding best option
-            a = float(q["ask_price"] or 0)
-            b = float(q["bid_price"] or 0) 
-            if a == 0 or b == 0:
-                v = 99999
-            else:  
-                v =  a - b
-        return v
-    
-    #get chain_id
-    instr = rbh.get_instrument_from_symbol(symbol)
-    chain_id = instr["tradable_chain_id"]
-    #get chain_summary, exp_dates
-    opt_chains = rbh.get_option_chains_summary(chain_id)
-    exp_list_l = opt_chains["expiration_dates"]
-    #filter exp_list based on given time interval
-    exp_list = []
-    for exp in exp_list_l:
-        exp_d = datetime.strptime(exp, "%Y-%m-%d")
-        if from_date and from_date > exp_d:
-            continue
-        if to_date and to_date < exp_d:
-            continue
-        exp_list.append(exp)
-    opt_c_d = {}
-    #get chain @expiry
-    for exp in exp_list:
-        chain_l = rbh.get_option_chain(chain_id, exp, opt_type)
-        #get option/instrument quote/details
-        instr_list = []
-        chain_d = {}
-        for ch_e in chain_l:
-            instr_list.append(ch_e["url"])
-            chain_d[ch_e["url"]] = ch_e
-        opt_data_l = rbh.get_option_marketdata(instr_list)
-        #associate quote with instr
-#         print("opt_data_l: %s"%(pprint.pformat(opt_data_l, 4)))        
-        for opt_q in opt_data_l:
-            if opt_q == None:
-                continue
-            chain_d[opt_q['instrument']]["quote"] = opt_q
-        opt_c_l = []
-        for opt_c in chain_d.values():
-            #some of the entries may not have quote. remove those            
-            if opt_c.get("quote"):
-                opt_c_l.append(opt_c)
-        opt_c_l.sort(reverse= (False if sort == "best" else True), key=key_func)
-        opt_c_d [exp] = opt_c_l
-    return opt_c_d
 def print_option_chains(symbol, from_date, to_date, opt_type, best_num=0):
     global rbh
     #see if we have to sort, default "OI"
@@ -122,7 +56,7 @@ def print_option_chains(symbol, from_date, to_date, opt_type, best_num=0):
     rbh = Robinhood (config, stream=False, auth=True)
     #get option chains
     quote = rbh.get_quote(symbol)
-    opt_c_d = get_option_chains(symbol, from_date, to_date, opt_type, sort=sort)
+    opt_c_d = rbh.get_option_chains(symbol, from_date, to_date, opt_type, sort=sort)
 #     print ("quote: %s"%(pprint.pformat(opt_c_d, 4)))
     print ("{:<50} \n {:<50} ".format(" (%s) option chains for %s@%s"%(opt_type, symbol.upper(), quote["last_trade_price"]), 50*"-"))
     print ("{:<10}{:^10}{:<12}{:<12}{:^6}{:^6}{:^10}{:^10}{:^10}{:^10}".format("Strike", "Price", "Bid(#)", "Ask(#)", "OI", "Vol", "IV", "Delta", "Theta", "Vega"))
