@@ -806,6 +806,8 @@ class Robinhood (Exchange):
         log.debug ("options owned: %s"%(pprint.pformat(positions_l, 4)))
         return positions_l
     def get_option_chains(self, symbol, from_date, to_date, opt_type, sort="oi"):
+        if not opt_type:
+            opt_type = "call"
         def key_func(k):
             #sort based on what?
             q = k["quote"]
