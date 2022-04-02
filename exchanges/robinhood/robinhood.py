@@ -34,7 +34,7 @@ import pyrh
 from yahoofin import Yahoofin
 
 log = getLogger ('Robinhood')
-log.setLevel(log.DEBUG)
+log.setLevel(log.INFO)
 # logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 # ROBINHOOD CONFIG FILE
