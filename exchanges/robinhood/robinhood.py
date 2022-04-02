@@ -833,7 +833,13 @@ class Robinhood (Exchange):
         
         #get chain_id
         instr = self.get_instrument_from_symbol(symbol)
+        if not instr:
+            log.error ("unable to get options instrument for sym %s"%(symbol))
+            return {}
         chain_id = instr["tradable_chain_id"]
+        if not chain_id:
+            log.error ("unable to get options chain_id for sym %s"%(symbol))
+            return {} 
         #get chain_summary, exp_dates
         opt_chains = self.get_option_chains_summary(chain_id)
         exp_list_l = opt_chains["expiration_dates"]
