@@ -806,8 +806,6 @@ class Robinhood (Exchange):
         log.debug ("options owned: %s"%(pprint.pformat(positions_l, 4)))
         return positions_l
     def get_option_chains(self, symbol, from_date, to_date, opt_type, sort="oi"):
-        if not opt_type:
-            opt_type = "call"
         def key_func(k):
             #sort based on what?
             q = k["quote"]
@@ -851,7 +849,12 @@ class Robinhood (Exchange):
         opt_c_d = {}
         #get chain @expiry
         for exp in exp_list:
-            chain_l = self.get_option_chain(chain_id, exp, opt_type)
+            if opt_type == None:
+                #get both 
+                chain_l = self.get_option_chain(chain_id, exp, "call")
+                chain_l += self.get_option_chain(chain_id, exp, "put")
+            else:
+                chain_l = self.get_option_chain(chain_id, exp, opt_type)
             #get option/instrument quote/details
             instr_list = []
             chain_d = {}
