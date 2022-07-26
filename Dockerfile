@@ -42,7 +42,7 @@ WORKDIR /
 COPY . .
 
 #cleanup and protect
-# RUN rm -rf data; rm -rf config
+RUN rm -rf data; rm -rf config
 
 EXPOSE 8080
 

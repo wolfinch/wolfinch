@@ -108,12 +108,13 @@ class WebsocketClient(object):
     def close(self):
         log.info ("closing ws and keep alive threads")
         self.stop = True
+        self._disconnect()
         self.thread.join()
         log.debug ("waiting to close alive threads")            
         self.keepalive_thread.join()
         log.debug ("closed ws and keep alive threads")     
                 
-    def _keepalive(self, interval=10):
+    def _keepalive(self, interval=3):
         while not self.stop :
             #TODO: FIXME: potential race
             if self.hearbeat_time + 600 < (time.time()):

@@ -32,17 +32,30 @@ Wolfinch is a trading bot implemented in Python. It supports algorithmic trading
 
 ## Using Wolfinch
 
-Starting the bot is fairly straight forward. 
+### Running natively
+
+Starting the bot is fairly straight forward. Install the required packages and run one of the following command based on the intended mode.
 
 A few examples below covers most startup modes:
 * Fresh start: 
     `Wolfinch.py --config <config.yml>`
-* Restart from previous state: 
-    `Wolfinch.py --config <config.yml> --restart`
 * Import historic data and exit: 
     `Wolfinch.py --config <config.yml> --import_only`
+* Backtesting mode: 
+    `Wolfinch.py --config <config.yml> --backtesting`	
+* Restart from previous state: 
+    `Wolfinch.py --config <config.yml> --restart`
+* Restart in Genetic Optimizer mode: 
+    `Wolfinch.py --config <config.yml> --ga_restart`
 
-A lot of sample config files are available in config/ directory. Those should serve as a very good starting point.
+Lots of sample config files are available in config/ directory. Those should serve as a very good starting point.
+
+### Running as a Docker container
+
+Pull docker image from the dockerhub and run using the following command. Two volume mounts are required, one for the config files and other as data directory. The default UI port is 8080. In case a custom port is configured, it has to be exposed while running the container.
+
+`docker run -it -v config:/config  -v data:/data wolfinch:1.2.0  --config config/wolfinch_config.yml [optional-params]`
+
 
 **Read More here**:
 
