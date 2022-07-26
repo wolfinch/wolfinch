@@ -12,14 +12,12 @@ RUN apt-get update && apt-get install -y software-properties-common && \
 # create and activate virtual environment
 # using final folder name to avoid path issues with packages
 RUN mkdir -p /home/venv
-RUN mkdir -p /home/wolfinch
 RUN python3 -m venv /home/venv
 ENV PATH="/home/venv/bin:$PATH"
 
 # install requirements
 COPY . .
 RUN pip3 install --no-cache-dir wheel
-RUN pip3 install --no-cache-dir -r requirements.txt
 
 #install exchange specific requirements.
 RUN for l in `ls -d exchanges/*/`; do \ 
@@ -28,7 +26,7 @@ RUN for l in `ls -d exchanges/*/`; do \
         fi; \
     done;
 
-# RUN sleep 36000
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 FROM ubuntu:20.04
 RUN apt-get update && apt-get install -y software-properties-common && \
@@ -39,10 +37,12 @@ RUN apt-get update && apt-get install -y software-properties-common && \
 RUN useradd --create-home wolfinch
 COPY --from=build /home/venv /home/venv
 
-USER wolfinch
-RUN mkdir -p /home/wolfinch
-WORKDIR /home/wolfinch
+# USER wolfinch
+WORKDIR /
 COPY . .
+
+#cleanup and protect
+# RUN rm -rf data; rm -rf config
 
 EXPOSE 8080
 
@@ -52,9 +52,9 @@ ENV PYTHONUNBUFFERED=1
 # activate virtual environment
 ENV VIRTUAL_ENV=/home/venv
 ENV PATH="/home/venv/bin:$PATH"
-ENV PYTHONPATH=$PYTHONPATH:/home/wolfinch
+ENV PYTHONPATH=$PYTHONPATH:/
 
 # /dev/shm is mapped to shared memory and should be used for gunicorn heartbeat
 # this will improve performance and avoid random freezes
 
-ENTRYPOINT ["bash", "-l", "-c"]
+ENTRYPOINT ["python", "wolfinch.py"]

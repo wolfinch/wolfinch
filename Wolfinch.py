@@ -345,7 +345,7 @@ def arg_parse():
     global gRestart
     parser = argparse.ArgumentParser(description='Wolfinch Auto Trading Bot')
 
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0.1')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.2.0')
     parser.add_argument("--clean",
                         help='Clean states,dbs and exit. Clear all the existing states',
                         action='store_true')
