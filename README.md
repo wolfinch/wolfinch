@@ -5,7 +5,36 @@
 
 Wolfinch is a trading bot implemented in Python. It supports algorithmic trading for equity market and cryptocurrency exchanges. The modularized implementation is easily extensible to support more exchanges, trading strategies and indicators. A simple UI is available out of the box to view trades and allow basic controls in operation. 
 
-#### Features include : 
+## Using Wolfinch
+
+Wolfinch could be downloaded in a local computer or a VPS and run as a native python process or as a docker container. 
+
+### Running natively
+
+Starting the bot is fairly straight forward. Install the required packages and run one of the following command based on the intended mode.
+
+A few examples below covers most startup modes:
+* Fresh start: 
+    `wolfinch.py --config <config.yml>`
+* Import historic data and exit: 
+    `wolfinch.py --config <config.yml> --import_only`
+* Backtesting mode: 
+    `wolfinch.py --config <config.yml> --backtesting`	
+* Restart from previous state: 
+    `wolfinch.py --config <config.yml> --restart`
+* Restart in Genetic Optimizer mode: 
+    `wolfinch.py --config <config.yml> --ga_restart`
+
+Lots of sample config files are available in config/ directory. Those should serve as a very good starting point.
+
+### Running as a Docker container
+
+Pull docker image from the dockerhub and run using the following command. Two volume mounts are required, one for the config files and other as data directory. The default UI port is 8080. In case a custom port is configured, it has to be exposed while running the container.
+
+`docker run -it -v config:/config  -v data:/data wolfinch:1.2.0  --config config/wolfinch_config.yml [optional-params]`
+
+
+#### Features available : 
 * Auto / Manual Trading Modes
 * Multiple decision engines
 * YAML based rich configuration file support - Tons of nuts and bolts to customize
@@ -30,33 +59,6 @@ Wolfinch is a trading bot implemented in Python. It supports algorithmic trading
 * Supports cross exchange, cross pair trading (Using signals and indicators on one exchange/trading-pair to make trading decision on another exchange/trading-pair)
 * Restartability (of live trading, backtesting, genetic optimizer)
 
-## Using Wolfinch
-
-### Running natively
-
-Starting the bot is fairly straight forward. Install the required packages and run one of the following command based on the intended mode.
-
-A few examples below covers most startup modes:
-* Fresh start: 
-    `Wolfinch.py --config <config.yml>`
-* Import historic data and exit: 
-    `Wolfinch.py --config <config.yml> --import_only`
-* Backtesting mode: 
-    `Wolfinch.py --config <config.yml> --backtesting`	
-* Restart from previous state: 
-    `Wolfinch.py --config <config.yml> --restart`
-* Restart in Genetic Optimizer mode: 
-    `Wolfinch.py --config <config.yml> --ga_restart`
-
-Lots of sample config files are available in config/ directory. Those should serve as a very good starting point.
-
-### Running as a Docker container
-
-Pull docker image from the dockerhub and run using the following command. Two volume mounts are required, one for the config files and other as data directory. The default UI port is 8080. In case a custom port is configured, it has to be exposed while running the container.
-
-`docker run -it -v config:/config  -v data:/data wolfinch:1.2.0  --config config/wolfinch_config.yml [optional-params]`
-
-
 **Read More here**:
 
 [Introduction-to-the-friendly-trading-bot](https://medium.com/@joe.cet/wolfinch-introduction-to-the-friendly-trading-bot-fe9281825e59)
@@ -73,10 +75,6 @@ Join subreddit - [wolfinch](https://www.reddit.com/r/wolfinch)
 * Binance US
 * Robinhood
 * gdax [deprecated]
-
-### Disclaimer:
-
-This project is for educational purpose only. Strategies are experimental. Use them at your own risk. 
 
 #### Further Enhancements: 
 
@@ -101,6 +99,10 @@ You can donate to appreciate the countless hours spent on the development.
 
 [![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JCTW62GFL4QGW&currency_code=USD&source=url)
 
+
+### Disclaimer:
+
+Project is for research and educational purposes only. No data or code provided are financial advice. Trading strategies are experimental and provided as is. Use at your own risk. 
 
 
 ### License
