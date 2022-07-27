@@ -33,10 +33,6 @@ from market import  OHLC, feed_enQ, get_market_by_product, Order
 from exchanges.robinhood import Robinhood
 import logging
 
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("Robinhood").setLevel(logging.WARNING)
-# logging.getLogger("Robinhood").setLevel(logging.DEBUG)
-
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
 
@@ -314,17 +310,21 @@ if __name__ == '__main__':
     num = 0
     if args.n:
         num = int(args.n)
+
+    logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
+    logging.getLogger("Robinhood").setLevel(logging.WARNING)
+
+    rbh = Robinhood (config, stream=False)
+
+    # logging.getLogger("Robinhood").setLevel(logging.DEBUG)
+    
     if args.ch:
-        rbh = Robinhood (config, stream=False)
         print_historic_candles(args.s, start_t, end_t)    
     elif args.oh:
-        rbh = Robinhood (config, stream=False)
         print_order_history(args.s, start_t, end_t)
     elif args.ooh:
-        rbh = Robinhood (config, stream=False)
         print_options_order_history(args.s, start_t, end_t)
     elif args.cp:
-        rbh = Robinhood (config, stream=False)
         print_current_positions(args.s)
     elif args.oc:
         if args.type != "put" and args.type != "call":
@@ -332,10 +332,8 @@ if __name__ == '__main__':
             exit(1)
         print_option_chains(args.s,  start_t, end_t, args.type, num)        
     elif args.cop:
-        rbh = Robinhood (config, stream=False)
         print_current_options_positions(args.s)
     elif args.hrs:
-        rbh = Robinhood (config, stream=False)
         print_market_hrs()
     elif args.quote:
         if args.s == None or args.s == "":
@@ -344,10 +342,8 @@ if __name__ == '__main__':
             rbh = Robinhood (config, stream=False)
             print_market_quote(args.s)
     elif args.buy:
-        rbh = Robinhood (config, stream=False)
         exec_market_order(args.s, "buy")
     elif args.sell:
-        rbh = Robinhood (config, stream=False)
         exec_market_order(args.s, "sell")    
     else:
         parser.print_help()
