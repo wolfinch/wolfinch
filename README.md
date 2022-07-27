@@ -7,7 +7,7 @@ Wolfinch is a trading bot implemented in Python. It supports algorithmic trading
 
 ## Using Wolfinch
 
-Wolfinch could be downloaded in a local computer or a VPS and run as a native python process or as a docker container. 
+Wolfinch could be run in a local computer or in a VPS as a native python process or as a docker container. 
 
 ### Running natively
 
