@@ -31,7 +31,7 @@ Lots of sample config files are available in config/ directory. Those should ser
 
 Pull docker image from the dockerhub and run using the following command. Two volume mounts are required, one for the config files and other as data directory. The default UI port is 8080. In case a custom port is configured, it has to be exposed while running the container.
 
-`docker run -it -v config:/config  -v data:/data wolfinch:1.2.0  --config config/wolfinch_config.yml [optional-params]`
+`docker run -v </PATH/config>:/config  -v </PATH/data>:/data -p 8080:8080 wolfinch:1.2.0  --config config/wolfinch_config.yml [optional-params]`
 
 
 #### Features available : 
