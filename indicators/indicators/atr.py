@@ -1,7 +1,7 @@
 # '''
 #  Desc: Average True Range (ATR) using tulip
 #  https://tulipindicators.org/atr
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify

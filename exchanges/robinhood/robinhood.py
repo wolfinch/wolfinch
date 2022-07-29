@@ -3,7 +3,7 @@
 #  Wolfinch Auto trading Bot
 #  Desc: Robinhood exchange interactions for Wolfinch
 #
-#  Copyright: (c) 2017-2022 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -460,7 +460,7 @@ class Robinhood (Exchange):
 # account: "https://api.robinhood.com/accounts/id/"
 # average_price: null
 # cancel: "https://api.robinhood.com/orders/<id>/cancel/"
-# created_at: "2020-05-05T04:02:49.045521Z"
+# created_at: "2022-05-05T04:02:49.045521Z"
 # cumulative_quantity: "0.00000000"
 # executed_notional: null
 # executions: []
@@ -471,7 +471,7 @@ class Robinhood (Exchange):
 # investment_schedule_id: null
 # last_trail_price: null
 # last_trail_price_updated_at: null
-# last_transaction_at: "2020-05-05T04:02:49.045521Z"
+# last_transaction_at: "2022-05-05T04:02:49.045521Z"
 # override_day_trade_checks: false
 # override_dtbp_checks: false
 # position: "https://api.robinhood.com/positions/xxx/xxx"
@@ -491,7 +491,7 @@ class Robinhood (Exchange):
 # currency_id: "1072fc76-1862-41ab-82c2-485837590762"
 # trigger: "immediate"
 # type: "market"
-# updated_at: "2020-05-05T04:02:49.045534Z"
+# updated_at: "2022-05-05T04:02:49.045534Z"
 # url: "https://api.robinhood.com/orders/uuid/"
 # }
 #         Known Errors: 

@@ -3,7 +3,7 @@
 #  Wolfinch Auto trading Bot
 #  Desc: Robinhood exchange interactions for Wolfinch
 #
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -317,7 +317,7 @@ if __name__ == '__main__':
     rbh = Robinhood (config, stream=False)
 
     # logging.getLogger("Robinhood").setLevel(logging.DEBUG)
-    
+
     if args.ch:
         print_historic_candles(args.s, start_t, end_t)    
     elif args.oh:

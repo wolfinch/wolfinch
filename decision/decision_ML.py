@@ -1,7 +1,7 @@
 # Wolfinch Auto trading Bot
 # Desc: ML based decision engine impl
 # 
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify

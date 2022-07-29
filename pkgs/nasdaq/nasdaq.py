@@ -2,7 +2,7 @@
 '''
 # Nasdaq Interface Implementation
 # Desc: Implements various Nasdaq Interfaces
-#  Copyright: (c) 2017-2022 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch Screener.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
