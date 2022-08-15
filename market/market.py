@@ -41,6 +41,7 @@ import decision
 import db
 import sims
 import strategy
+import notifiers
 
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
@@ -290,6 +291,8 @@ class Market:
         self.exchange_name = None if exchange == None else exchange.name
         self.exchange = exchange  # exchange module
         self.trading_hrs = 24  #market trading hrs 24 (for equity exchanges, should config this from exchanges)
+
+        self.notify_enabled = notifiers.is_notify_enabled()
         
         self.trading_paused_buy = False
         self.trading_paused_sell = False
@@ -392,7 +395,11 @@ class Market:
                     (self.fund.initial_value * float(0.01) * self.fund.fund_liquidity_percent / self.start_market_rate) if self.start_market_rate > 0 else 0),
                 self.trading_paused_buy, self.trading_paused_sell,
                 str(self.fund), str(self.asset), str(self.order_book))
-        
+
+    def notify(self, position):
+        if self.notify_enabled == True:
+            notifiers.notify(self.name, position)
+            
     def get_fund_type(self):
         return self.fund_type
 

@@ -2,7 +2,7 @@
 '''
 # Wolfinch Auto trading Bot
 # Desc: Main File implements Bot
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -27,6 +27,7 @@ import traceback
 import argparse
 from decimal import getcontext
 import random
+from notifiers import notifier
 # import logging
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "pkgs"))
 
@@ -59,6 +60,18 @@ def Wolfinch_init():
     # 1. Retrieve states back from Db
 #     db.init_order_db(Order)
 
+    #get global config
+    cfg=get_config()
+
+    #configure notifiers
+    notify_cfg = cfg.get("notification")
+    if notify_cfg:
+        if False == notifiers.init(notify_cfg):
+            log.critical("notification module init failed")
+            raise Exception("notification module init failed")
+        else:
+            log.info("notification module initialized")
+
     # setup ui if required
     if ui.integrated_ui:
         ui.ui_conn_pipe = ui.ui_mp_init(ui.port, ui.ui_main)
@@ -68,16 +81,20 @@ def Wolfinch_init():
             sys.exit(1)
 
     # 2. Init Exchanges
-    exchanges.init_exchanges(get_config())
+    exchanges.init_exchanges(cfg)
+    log.info ("exchanges initialized")
 
     # 3. Init markets
     market_init_all(exchanges.exchange_list, get_product_config)
+    log.info ("markets initialized")
 
     # 4. Setup markets
     market_setup(restart=gRestart)
+    log.info ("markets setup completed")
 
     # 5. start stats thread
     stats.start()
+    log.info ("all init complete")
 
 def _add_market(exch_name, product_id):
     log.info ("setting up market for exch: %s product: %s"%(exch_name, product_id))

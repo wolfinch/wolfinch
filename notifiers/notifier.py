@@ -21,6 +21,7 @@
 import threading
 import queue
 import notifiers.telegram as t
+import notifiers.twitter as ti
 import notifiers.wolfinch as w
 import time
 
@@ -32,8 +33,12 @@ def configure(cfg):
     global notifiers
     for k, v in cfg.items():
         try:
-            if k == "telegram":
+            if k == "enabled":
+                continue
+            elif k == "telegram":
                 no = t.Notifier(**v)
+            elif k == "twitter":
+                no = ti.Notifier(**v)                
             elif k == "wolfinch":
                 no = w.Notifier(**v)
             else:
@@ -73,6 +78,9 @@ def _notifier_loop():
             sleep_time = MAIN_TICK_DELAY
 def init(cfg):
     global notify_thread, msg_queue
+    if cfg == None or cfg.get("enabled") == None or cfg.get("enabled") == False:
+        #notifier not configured, nothing to do
+        return True
     if False == configure(cfg):
         return False
     msg_queue = queue.Queue()
@@ -83,4 +91,6 @@ def init(cfg):
 def end():
     global stop
     stop = True
+def is_notify_enabled():
+    return notify_thread != None
 # EOF
