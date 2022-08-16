@@ -398,8 +398,8 @@ class Market:
 
     def notify(self, position):
         if self.notify_enabled == True:
-            notifiers.notify(self.name, position)
-            
+            notifiers.notify("all", self.name, position)
+
     def get_fund_type(self):
         return self.fund_type
 

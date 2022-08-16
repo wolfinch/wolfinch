@@ -156,8 +156,7 @@ class OrderBook():
         # save pos to db
         self.positionsDb.db_save_position(position)
         #send notification if configured. 
-        if self.market.notify_enabled == True:
-            self.market.notify(position)
+        self.market.notify(position)
         log.info("position open pos: %s"%(str(position)))
           
     def get_closable_position(self):
@@ -263,8 +262,7 @@ class OrderBook():
                 
             #update position
             self.positionsDb.db_save_position(position)
-            if self.market.notify_enabled == True:
-                self.market.notify(position)            
+            self.market.notify(position)            
             log.info("position closed pos: %s"%(str(position)))
         else:
             log.critical("Unable to get close_pending position. order_id: %s"%(sell_order.id))

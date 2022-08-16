@@ -33,21 +33,30 @@ log.setLevel(log.INFO)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 class Notifier():
-    def __init__(self, consumer_key="", consumer_secret="", access_token="", access_token_secret="", **kwarg):
-        self.consumer_key =consumer_key 
-        self.consumer_secret = consumer_secret
+    def __init__(self, api_key="", api_key_secret="", access_token="", access_token_secret="", **kwarg):
+        self.api_key =api_key 
+        self.api_key_secret = api_key_secret
         self.access_token = access_token
         self.access_token_secret = access_token_secret
-        self.client = tweepy.Client(consumer_key=consumer_key, consumer_secret=consumer_secret,
+        self.client = tweepy.Client(consumer_key=api_key, consumer_secret=api_key_secret,
             access_token=access_token, access_token_secret=access_token_secret)
-        log.info("configured twitter Notifier ")
-    def send_message (self, name, msg):
-        log.info ("msg: %s - %s "%(name, msg))
-        if name == None or msg == None:
+        log.info("configured twitter Notifier consumer_key: %s, consumer_secret: %s, access_token: %s, access_token_secret: %s, **kwarg: %s"%( 
+        api_key, api_key_secret, access_token, access_token_secret, kwarg))
+    def send_message (self, name, pos):
+        log.info ("msg: %s - %s "%(name, pos))
+        if name == None or pos == None:
             log.error ("invalid msg")
             return
-        response = self.client.create_tweet(text=msg, user_auth=True)
+        response = self.client.create_tweet(text=self._pos_to_msg(name, pos), user_auth=True)
         log.debug ("resp %s", response)
+    def _pos_to_msg(self, name, pos):
+        buy_str = str(pos.buy) if pos.buy else "null"
+        sell_str = str(pos.sell) if pos.sell else "null"
+        msg = """%s - %s, "open_time":"%s", "closed_time":"%s", "profit": %f, "stop_loss": %f, "take_profit":%f,
+"buy":%s\n,"sell":%s\n}"""%(name, pos.status, pos.open_time, pos.closed_time, round(pos.profit,4), round(pos.stop_loss,4),
+                             round(pos.take_profit,4),
+                            buy_str, sell_str)
+        return msg        
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     import traceback
