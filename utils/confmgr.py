@@ -24,7 +24,7 @@ from .logger import getLogger
 import sims, ui
 
 log = getLogger ('confmgr')
-log.setLevel(log.INFO)
+log.setLevel(log.ERROR)
 # Global Config 
 WolfinchConfig = None
 gDecisionConfig = {"decision": {"model": "simple"}}

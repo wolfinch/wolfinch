@@ -24,11 +24,18 @@ import notifiers.telegram as t
 import notifiers.twitter as ti
 import notifiers.wolfinch as w
 import time
+import sims
+from utils import getLogger
 
+log = getLogger('NOTIFY')
+log.setLevel(log.INFO)
+
+notify_thread = None
 msg_queue = None
 stop = False
 MAIN_TICK_DELAY = 1.000
 notifiers = {}
+
 def configure(cfg):
     global notifiers
     for k, v in cfg.items():
@@ -42,11 +49,11 @@ def configure(cfg):
             elif k == "wolfinch":
                 no = w.Notifier(**v)
             else:
-                print ("unknown notifier %s"%(k))
+                log.error ("unknown notifier %s"%(k))
                 return False
             notifiers[k] = no
         except Exception as e:
-            print ("excpetion while configuring notifier \n %s"%(e))
+            log.critical ("excpetion while configuring notifier \n %s"%(e))
             raise e
     return True
 def notify(kind, name, msg):
@@ -66,7 +73,7 @@ def _notifier_loop():
     while not stop:
         try:
             cur_time = time.time()
-            msg = msg_queue.get(timeout=sleep_time)
+            msg = msg_queue.get()
             kind = msg[0]
             name = msg[1]
             data = msg[2]
@@ -78,6 +85,9 @@ def _notifier_loop():
             sleep_time = MAIN_TICK_DELAY
 def init(cfg):
     global notify_thread, msg_queue
+    if sims.backtesting_on == True:
+        log.info("notify not enabled in backtesting mode")
+        return True
     if cfg == None or cfg.get("enabled") == None or cfg.get("enabled") == False:
         #notifier not configured, nothing to do
         return True

@@ -1,1 +1,1 @@
-from .notifier import init, end, notify, configure
+from .notifier import init, end, notify, configure, is_notify_enabled

@@ -27,7 +27,7 @@ import traceback
 import argparse
 from decimal import getcontext
 import random
-from notifiers import notifier
+import notifiers
 # import logging
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "pkgs"))
 

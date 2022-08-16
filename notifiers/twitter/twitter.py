@@ -41,8 +41,11 @@ class Notifier():
         self.client = tweepy.Client(consumer_key=consumer_key, consumer_secret=consumer_secret,
             access_token=access_token, access_token_secret=access_token_secret)
         log.info("configured twitter Notifier ")
-    def send_message (self, msg):
-        log.info ("msg: %s "%(msg))
+    def send_message (self, name, msg):
+        log.info ("msg: %s - %s "%(name, msg))
+        if name == None or msg == None:
+            log.error ("invalid msg")
+            return
         response = self.client.create_tweet(text=msg, user_auth=True)
         log.debug ("resp %s", response)
 ######### ******** MAIN ****** #########
