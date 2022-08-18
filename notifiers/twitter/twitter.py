@@ -49,22 +49,8 @@ class Notifier():
             return
         response = self.client.create_tweet(text=self._pos_to_msg(name, pos), user_auth=True)
         log.debug ("resp %s", response)
-    def _pos_to_msg(self, name, pos):
-        if pos.sell:
-            pos_str = "%d@%f"%(pos.sell.filled_size, pos.sell.price)
-        elif pos.buy:
-            pos_str = "%d@%f"%(pos.buy.filled_size, pos.buy.price)
-        else:
-            log.error("invalid position while sending notify - %s"%(pos))
-            return "bad bot"
-        # buy_str = str(pos.buy) if pos.buy else "null"
-        # sell_str = str(pos.sell) if pos.sell else "null"
-        msg = """%s - %s, "profit": %f, stop-loss: %f, take-profit:%f position: %s"""%(
-            name, pos.status, round(pos.profit,2), round(pos.stop_loss,2),
-                             round(pos.take_profit,2),
-                             pos_str)
-        log.info(">>>>>> msg %d - %s"%(len(msg), msg))
-        return msg        
+    def _pos_to_msg(self, name, pos_str):
+        return "%s: %s"%(name, pos_str)[:140]
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     import traceback
@@ -77,7 +63,7 @@ if __name__ == '__main__':
         log.info("Starting Twitter")
         print("Starting Twitter")
         ApiKey = ""
-        ApiKeySecret = "" 
+        ApiKeySecret = ""
         AccessToken = ""
         AccessTokenSecret = ""
         
