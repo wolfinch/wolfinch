@@ -59,7 +59,9 @@ def parse_product_config (cfg):
         if k == 'currency':
             parsed_tcfg ['currency'] = v
         if k == 'fund_max_liquidity':
-            parsed_tcfg ['fund_max_liquidity'] = v
+            parsed_tcfg ['fund_max_liquidity'] = v 
+        if k == 'fund_liquidity_percent':
+            parsed_tcfg ['fund_liquidity_percent'] = v            
         if k == 'fund_max_per_buy_value':
             parsed_tcfg ['fund_max_per_buy_value'] = v
         if k == 'asset_max_per_trade_size':
@@ -100,6 +102,9 @@ def parse_product_config (cfg):
         print ("trading config not set")
         raise Exception ("trading config not set")
     
+    if  not parsed_tcfg.get('fund_liquidity_percent')  or parsed_tcfg.get('fund_liquidity_percent') == 0 :
+        parsed_tcfg['fund_liquidity_percent'] = 100
+
     if not parsed_tcfg.get('stop_loss_enabled'):
         parsed_tcfg ['stop_loss_enabled'] = False        
         parsed_tcfg ['stop_loss_kind'] = 'simple'

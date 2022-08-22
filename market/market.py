@@ -321,6 +321,7 @@ class Market:
         self.fund.set_hold_value(float(0.0))
         self.fund.set_fund_liquidity(tcfg['fund_max_liquidity'])
         self.fund.set_max_per_buy_fund_value(tcfg['fund_max_per_buy_value'])
+        self.fund.set_fund_liquidity_percent(tcfg['fund_liquidity_percent'])
         fee = tcfg.get('fee')
         if fee:
             self.fund.set_fee(fee['maker'], fee['taker'])
@@ -364,9 +365,9 @@ class Market:
         self._db_commit_time = 0
             
     def __str__(self):
-#         log.critical ("get_market_rate:%f start_market_rate:%f initial_value:%f fund_liquidity_percent:%f start_market_rate:%f"%(
-#             self.get_market_rate(), self.start_market_rate,
-#                     self.fund.initial_value, self.fund.fund_liquidity_percent, self.start_market_rate))
+        # log.critical ("get_market_rate:%f start_market_rate:%f initial_value:%f fund_liquidity_percent:%f start_market_rate:%f"%(
+            # self.get_market_rate(), self.start_market_rate,
+                    # self.fund.initial_value, self.fund.fund_liquidity_percent, self.start_market_rate))
         return """
 {
 "exchange_name": "%s", "product_id": "%s","name": "%s", "current_market_rate": %f,
@@ -392,7 +393,7 @@ class Market:
                 self.num_take_profit_hit, self.num_stop_loss_hit,
                 self.num_success_trade, self.num_failed_trade,
                 (self.get_market_rate() - self.start_market_rate) * (
-                    (self.fund.initial_value * float(0.01) * self.fund.fund_liquidity_percent / self.start_market_rate) if self.start_market_rate > 0 else 0),
+                    (self.fund.fund_max_liquidity * float(0.01) * self.fund.fund_liquidity_percent / self.start_market_rate) if self.start_market_rate > 0 else 0),
                 self.trading_paused_buy, self.trading_paused_sell,
                 str(self.fund), str(self.asset), str(self.order_book))
 

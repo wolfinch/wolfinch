@@ -298,8 +298,18 @@ def process_ui_get_market_indicators_rr(msg, ui_conn_pipe):
     ind_list = {}
     if market:
         ind_list = market.get_indicator_list(num_periods, start_time)
+    # limit the number of candles to 300
+    if len(ind_list) > 300:
+        skip = len(ind_list)//300
+        i = 0
+        n_ind_list = []
+        while i < len(ind_list):
+            n_ind_list.append(ind_list[i])
+            i += skip
+    else:
+        n_ind_list = ind_list
     msg["type"] = "GET_MARKET_INDICATORS_RESP"
-    msg["data"] = ind_list
+    msg["data"] = n_ind_list
     ui_conn_pipe.send(msg)
     
 def process_ui_get_positions_rr(msg, ui_conn_pipe):
