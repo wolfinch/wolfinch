@@ -53,7 +53,7 @@ class Notifier():
         response = self.client.create_tweet(text=self._pos_to_msg(name, pos), user_auth=True)
         log.debug ("resp %s", response)
     def _pos_to_msg(self, name, pos_str):
-        return "%s: %s"%(name, pos_str)[:140]
+        return "$%s: %s"%(name, pos_str)[:140]
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     import traceback
