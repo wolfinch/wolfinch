@@ -404,11 +404,11 @@ class Market:
         if pos.sell:
             # pos_str = "%d@%.2f"%(pos.sell.filled_size, pos.sell.price)
             profit = (pos.sell.price - pos.buy.price)*100/pos.buy.price
-            msg = """%s %.2f profit: %.2f% """%(
-                pos.status, pos.sell.price, round(pos.profit,2))
+            msg = """%s %.2f profit %.2f%%"""%(
+                pos.status, pos.sell.price, round(pos.profit, 2))
         elif pos.buy:
             # pos_str = "%d@%.2f"%(pos.buy.filled_size, pos.buy.price)
-            msg = """%s %.2f stop-loss: %.2f take-profit:%.2f """%(
+            msg = """%s %.2f stop-loss %.2f take-profit %.2f """%(
                 pos.status, pos.buy.price, round(pos.stop_loss,2), round(pos.take_profit,2))            
         else:
             log.error("invalid position while sending notify - %s"%(pos))

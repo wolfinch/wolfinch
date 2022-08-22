@@ -927,7 +927,10 @@ class Robinhood (Exchange):
             options_orders.extend(past_options_orders['results'])
         log.info("%d order fetched"%(len(options_orders)))
         return options_orders
-
+    def get_all_historic_options_events(self, symbol=None):
+        log.critical("TODO: FIXME: implement")
+        #https://api.robinhood.com/options/events/?page_size=10
+        #https://api.robinhood.com/options/events/?cursor=cD0yMDIyLTA4LTEyKzIwJTNBMTglM0EzOS44NDI2NjclMkIwMCUzQTAw&page_size=10
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     import argparse

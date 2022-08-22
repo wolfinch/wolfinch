@@ -31,6 +31,9 @@ import tweepy
 log = getLogger('Twitter')
 log.setLevel(log.INFO)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests_oauthlib.oauth1_auth").setLevel(logging.WARNING)
+logging.getLogger("tweepy.client").setLevel(logging.WARNING)
+logging.getLogger("oauthlib.oauth1.rfc5849").setLevel(logging.WARNING)
 
 class Notifier():
     def __init__(self, api_key="", api_key_secret="", access_token="", access_token_secret="", **kwarg):

@@ -68,7 +68,7 @@ class Notifier():
                 self.msg_l[name] = []
             self.msg_l[name].append (msg)
             self.msg_len += 1
-        if self.msg_len > 0 and (self.msg_len > 25 or not name):
+        # if self.msg_len > 0 and (self.msg_len > 25 or not name):
             log.info("notify msg len: %d"%(self.msg_len))
             self._send_msg(self.msg_l)
             self.msg_l = {}
