@@ -400,13 +400,13 @@ class Market:
 
     def notify(self, position):
         if self.notify_enabled == True:
-            notifiers.notify("all", self.name, self._pos_to_msg(position))
+            notifiers.notify("all", self.product_id, self._pos_to_msg(position))
     def _pos_to_msg(self, pos):
         if pos.sell:
             # pos_str = "%d@%.2f"%(pos.sell.filled_size, pos.sell.price)
             profit = (pos.sell.price - pos.buy.price)*100/pos.buy.price
             msg = """%s %.2f profit %.2f%%"""%(
-                pos.status, pos.sell.price, round(pos.profit, 2))
+                pos.status, pos.sell.price, round(profit, 2))
         elif pos.buy:
             # pos_str = "%d@%.2f"%(pos.buy.filled_size, pos.buy.price)
             msg = """%s %.2f stop-loss %.2f take-profit %.2f """%(
