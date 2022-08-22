@@ -85,7 +85,7 @@ def _notifier_loop():
             sleep_time = MAIN_TICK_DELAY
 def init(cfg):
     global notify_thread, msg_queue
-    if sims.backtesting_on != True:
+    if sims.backtesting_on == True:
         log.info("notify not enabled in backtesting mode")
         return True
     if cfg == None or cfg.get("enabled") == None or cfg.get("enabled") == False:
