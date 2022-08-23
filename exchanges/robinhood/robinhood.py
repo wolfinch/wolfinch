@@ -640,13 +640,13 @@ class Robinhood (Exchange):
             return self.rbh_client.get_quote(sym.upper())
         except Exception as e:        
             log.error ("exception calling rh api - %s"%(e))
-            return None         
+            raise e         
     def _fetch_json_by_url(self, url):
         try:
             return self.rbh_client.get_url(url)
         except Exception as e:        
             log.error ("exception calling rh api - %s"%(e))
-            return None        
+            raise e
     
     def get_instrument_from_symbol(self, symbol):
         instr = self.symbol_to_instr_map.get(symbol)
@@ -662,9 +662,9 @@ class Robinhood (Exchange):
                     return instr
                 else:
                     log.error("unable to get symbol for id %s"%(symbol))
-            except Exception as e:        
+            except Exception as e:
                 log.error ("exception calling rh api - %s"%(e))
-                return None                
+                raise e                
         return None
         
     def _get_symbol_from_instrument(self, instr):
@@ -842,6 +842,9 @@ class Robinhood (Exchange):
             return {} 
         #get chain_summary, exp_dates
         opt_chains = self.get_option_chains_summary(chain_id)
+        if not opt_chains or not opt_chains.get("expiration_dates"):
+            log.critical(">>>> ERROR while get opt_chains <<<<< \n opt_chains: %s chain_id: %s symbol: %s"%(opt_chains, chain_id, symbol))
+            raise Exception(">>>> ERROR while get opt_chains <<<<< \n opt_chains: %s chain_id: %s symbol: %s"%(opt_chains, chain_id, symbol))
         exp_list_l = opt_chains["expiration_dates"]
         #filter exp_list based on given time interval
         exp_list = []
