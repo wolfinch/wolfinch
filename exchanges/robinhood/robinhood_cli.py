@@ -318,6 +318,8 @@ if __name__ == '__main__':
 
     # logging.getLogger("Robinhood").setLevel(logging.DEBUG)
 
+    if args.s:
+        args.s = args.s.upper()
     if args.ch:
         print_historic_candles(args.s, start_t, end_t)    
     elif args.oh:
