@@ -36,7 +36,7 @@ from yahoofin import Yahoofin
 
 log = getLogger ('Robinhood')
 log.setLevel(log.INFO)
-# logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.INFO)
 
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
