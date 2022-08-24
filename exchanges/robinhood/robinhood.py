@@ -186,9 +186,12 @@ class Robinhood (Exchange):
             'shares_pending_from_options_events': '0.00000000'
         }
     def _login (self):
+        log.info ("logging in .. ")
         if self.rbh_client.login(username=self.user, password=self.password, qr_code=self.mfa_key) == False:
             log.critical("Unable to Authenticate with robinhood exchange. Abort!!")
             raise Exception("login failed")
+        else:
+            log.info("login success")
     def __str__ (self):
         return "{Message: Robinhood Exchange }"
 
@@ -589,7 +592,12 @@ class Robinhood (Exchange):
             else:
                 params['order_type'] = "limit"
                 params['price'] = trade_req.price,  # USD
-            order = self.rbh_client.submit_buy_order(**params).json()
+            order_r = self.rbh_client.submit_buy_order(**params)
+            if order_r != None
+                order=order_r.json()
+            else:
+                log.critical("order None!! ")
+                raise Exception("Error with RH API - order None")            
         except Exception as e:
             log.critical ("exception while placing order - %s"%(traceback.format_exc()))
             self._login()
@@ -607,7 +615,12 @@ class Robinhood (Exchange):
             else:
                 params['order_type'] = "limit"
                 params['price'] = trade_req.price,  # USD
-            order = self.rbh_client.submit_sell_order(**params).json()
+            order_r = self.rbh_client.submit_sell_order(**params)
+            if order_r != None
+                order=order_r.json()
+            else:
+                log.critical("order None!! ")
+                raise Exception("Error with RH API - order None")
         except Exception as e:
             log.critical ("exception while placing order - %s"%(traceback.format_exc()))
             self._login()
