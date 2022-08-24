@@ -593,7 +593,7 @@ class Robinhood (Exchange):
                 params['order_type'] = "limit"
                 params['price'] = trade_req.price,  # USD
             order_r = self.rbh_client.submit_buy_order(**params)
-            if order_r != None
+            if order_r != None:
                 order=order_r.json()
             else:
                 log.critical("order None!! ")
@@ -616,7 +616,7 @@ class Robinhood (Exchange):
                 params['order_type'] = "limit"
                 params['price'] = trade_req.price,  # USD
             order_r = self.rbh_client.submit_sell_order(**params)
-            if order_r != None
+            if order_r != None:
                 order=order_r.json()
             else:
                 log.critical("order None!! ")
