@@ -30,7 +30,7 @@ from .strategy import Strategy
 from utils import getLogger
 
 log = getLogger ('TATS')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.DEBUG)
 
 class TATS(Strategy):
     config = {
@@ -94,7 +94,6 @@ class TATS(Strategy):
 #         self.set_indicator("MVWAP", (250, vwap))
 #         self.set_indicator("MACD", (24, 52, 9))
 
-        
         # states
         self.day_open = 0      
         self.day_high = 0      
@@ -346,12 +345,12 @@ class TATS(Strategy):
 
         if self.rsi_action == "buy" and (self.zone_action == "buy" or self.zone_action == ""):
             #conservative buy
-            log.debug (" >>>>>>>>>>>>>>>>>TATS: BUY z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
+            log.debug (" >>>>>>>>>>>>>>>>> BUY z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
             signal = 1
             self.rsi_action = self.zone_action = ""
         elif  self.rsi_action == "sell" or self.zone_action == "sell" or trend_signal == "sell":
             #proactive sell
-            log.debug (" >>>>>>>>>>>>>>>>TATS: SELL z_a: %s rsi_a: %s trend_signal: %s"%(self.zone_action, self.rsi_action, trend_signal))            
+            log.debug (" >>>>>>>>>>>>>>>> SELL z_a: %s rsi_a: %s trend_signal: %s"%(self.zone_action, self.rsi_action, trend_signal))            
             signal = -1
             self.rsi_action = self.zone_action = ""
         log.debug ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))

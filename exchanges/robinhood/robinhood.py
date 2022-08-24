@@ -24,6 +24,7 @@ from datetime import datetime, timedelta
 from time import sleep
 import time
 from dateutil.tz import tzlocal, tzutc
+import traceback
 
 from utils import getLogger, readConf
 from market import  OHLC, feed_enQ, get_market_by_product, Order
@@ -35,7 +36,7 @@ from yahoofin import Yahoofin
 
 log = getLogger ('Robinhood')
 log.setLevel(log.INFO)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
+# logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
@@ -99,9 +100,7 @@ class Robinhood (Exchange):
             if auth==False:
                 log.info ("init success. auth init skipped")
                 return
-            if self.rbh_client.login(username=self.user, password=self.password, qr_code=self.mfa_key) == False:
-                log.critical("Unable to Authenticate with robinhood exchange. Abort!!")
-                raise Exception("login failed")
+            self._login()
         except Exception as e:
             log.critical ("exception while logging in e:%s"%(e))        
             raise e
@@ -186,6 +185,10 @@ class Robinhood (Exchange):
             'shares_held_for_stock_grants': '0.00000000',
             'shares_pending_from_options_events': '0.00000000'
         }
+    def _login (self):
+        if self.rbh_client.login(username=self.user, password=self.password, qr_code=self.mfa_key) == False:
+            log.critical("Unable to Authenticate with robinhood exchange. Abort!!")
+            raise Exception("login failed")
     def __str__ (self):
         return "{Message: Robinhood Exchange }"
 
@@ -588,7 +591,8 @@ class Robinhood (Exchange):
                 params['price'] = trade_req.price,  # USD
             order = self.rbh_client.submit_buy_order(**params).json()
         except Exception as e:
-            log.error ("exception while placing order - %s"%(e))
+            log.critical ("exception while placing order - %s"%(traceback.format_exc()))
+            self._login()
             return None
         return self._normalized_order (order);
     
@@ -605,7 +609,8 @@ class Robinhood (Exchange):
                 params['price'] = trade_req.price,  # USD
             order = self.rbh_client.submit_sell_order(**params).json()
         except Exception as e:
-            log.error ("exception while placing order - %s"%(e))
+            log.critical ("exception while placing order - %s"%(traceback.format_exc()))
+            self._login()
             return None
         return self._normalized_order (order);
     
@@ -614,7 +619,8 @@ class Robinhood (Exchange):
         try:
             order = self.rbh_client.order_history(orderId=order_id)
         except Exception as e:
-            log.error ("exception while placing order - %s"%(e))
+            log.critical ("exception while get order - %s"%(traceback.format_exc()))
+            self._login()
             return None        
         return self._normalized_order (order);
     
@@ -623,7 +629,8 @@ class Robinhood (Exchange):
         try:
             return self.rbh_client.client.cancel_order(order_id)
         except Exception as e:
-            log.error ("exception while canceling order - %s"%(e))
+            log.critical ("exception while cancel order - %s"%(traceback.format_exc()))
+            self._login()
             return None
     
     def get_market_hrs(self, date=None):
@@ -639,13 +646,15 @@ class Robinhood (Exchange):
         try:
             return self.rbh_client.get_quote(sym.upper())
         except Exception as e:        
-            log.error ("exception calling rh api - %s"%(e))
+            log.critical ("exception while get quote - %s"%(traceback.format_exc()))
+            self._login()
             raise e         
     def _fetch_json_by_url(self, url):
         try:
             return self.rbh_client.get_url(url)
         except Exception as e:        
-            log.error ("exception calling rh api - %s"%(e))
+            log.critical ("exception while fetch_json_by_url order - %s"%(traceback.format_exc()))
+            self._login()
             raise e
     
     def get_instrument_from_symbol(self, symbol):

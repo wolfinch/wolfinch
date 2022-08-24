@@ -49,7 +49,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.ERROR)
 
 Wolfinch_market_list = []
 
@@ -522,7 +522,6 @@ class Market:
         return self.order_book.get_positions(from_time, to_time)
     
     def _handle_tp_and_sl (self):
- 
         trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())
                 
         # TODO: TBD: Disabled aggressive SL closing. SL is assessed based on candle close.
@@ -547,17 +546,14 @@ class Market:
                                    Type="market",
                                    Price=round(float(0), 8),
                                    Stop=0, Profit=0, id=pos.id))
-            
             self._execute_market_trade(trade_req_l)
                 
     def _handle_pending_trade_reqs (self):
         # TODO: FIXME:jork: Might need to extend
-
         num_pos = len(self.order_book.pending_trade_req)
         if 0 == num_pos:
             return
         log.debug("(%d) Pending Trade Reqs " % (num_pos))
-        
         market_price = self.get_market_rate()
         for trade_req in self.order_book.pending_trade_req[:]:
             if (trade_req.side == 'BUY'):
@@ -578,11 +574,9 @@ class Market:
         # this rework is assumed an abstraction and handles only simplified order status
         # if there are more order states, it should be handled/translated in the exch impl.
         log.debug ("ORDER UPDATE: %s" % (str(order)))
-        
         if order == None:
             log.error ("Invalid order, skip update")
             return None
-        
         side = order.side
         order_status = order.status
         if side == 'buy':
