@@ -718,38 +718,43 @@ class Robinhood (Exchange):
         return orders
     def get_all_history_orders(self, symbol=None, from_date=None, to_date=None):
         orders = []
-        if symbol == None:
-            past_orders = self.rbh_client.order_history()
-        else:
-            instr = self.get_instrument_from_symbol(symbol)
-            if not instr:
-                log.error("unable to get instrument from symbol")
-            instr_url = instr['url']
-            url = API_BASE +"/orders/?instrument="+instr_url
-            past_orders = self._fetch_json_by_url(url)
-        orders.extend(past_orders['results'])
-        log.debug("%d order fetched first page"%(len(orders)))    
-        while past_orders['next']:
-            next_url = past_orders['next']
-            past_orders = self._fetch_json_by_url(next_url)
-            orders.extend(past_orders['results'])
-        log.info("%d  order fetched"%(len(orders)))
-        filtered_orders = []
-        for order in orders:
-            #filter time
-            exec_d = datetime.strptime(order["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
-            if from_date and from_date > exec_d:
-                continue
-            if to_date and to_date < exec_d:
-                continue              
-            instrument = order['instrument']
-            symbol = self._get_symbol_from_instrument(instrument)
-            if symbol:
-                order['symbol'] = symbol['symbol']
-                order['bloomberg_unique'] = symbol['bloomberg_unique']
+        try:
+            if symbol == None:
+                past_orders = self.rbh_client.order_history()
             else:
-                log.error ('unable to get symbol for instrument')
-            filtered_orders.append(order)                 
+                instr = self.get_instrument_from_symbol(symbol)
+                if not instr:
+                    log.error("unable to get instrument from symbol")
+                instr_url = instr['url']
+                url = API_BASE +"/orders/?instrument="+instr_url
+                past_orders = self._fetch_json_by_url(url)
+            orders.extend(past_orders['results'])
+            log.debug("%d order fetched first page"%(len(orders)))    
+            while past_orders['next']:
+                next_url = past_orders['next']
+                past_orders = self._fetch_json_by_url(next_url)
+                orders.extend(past_orders['results'])
+            log.info("%d  order fetched"%(len(orders)))
+            filtered_orders = []
+            for order in orders:
+                #filter time
+                exec_d = datetime.strptime(order["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                if from_date and from_date > exec_d:
+                    continue
+                if to_date and to_date < exec_d:
+                    continue              
+                instrument = order['instrument']
+                symbol = self._get_symbol_from_instrument(instrument)
+                if symbol:
+                    order['symbol'] = symbol['symbol']
+                    order['bloomberg_unique'] = symbol['bloomberg_unique']
+                else:
+                    log.error ('unable to get symbol for instrument')
+                filtered_orders.append(order)                
+        except Exception as e:        
+            log.critical ("exception while order - %s"%(traceback.format_exc()))
+            self._login()
+            raise e 
         return filtered_orders
     ##################### OPTIONS######################
     def get_option_from_instrument(self, instr):

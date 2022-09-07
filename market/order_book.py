@@ -30,7 +30,7 @@ import sims
 from .order import Order
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 class Position(object):
     def __init__(self, id=None, buy=None, sell=None, profit=0, stop_loss=0,
@@ -357,11 +357,9 @@ class OrderBook():
             return None
     def get_stop_loss_positions(self, market_rate):
         sl_pos_list =[]
-        
         key_list = list(self.sl_dict.irange(minimum=market_rate, inclusive=(True, True)))
 #         log.critical("slPrice: %d"%market_rate)
 #         log.critical("key_list :%s"%(key_list))
-        
         for key in key_list:
             pos_list = self.sl_dict.pop(key)
             sl_pos_list += pos_list
@@ -376,17 +374,13 @@ class OrderBook():
                 # remove pos from take profit points
                 self.pop_take_profit_position(pos)
         self.market.num_stop_loss_hit += len(sl_pos_list)
-        
-#         if len(sl_pos_list):
-#             log.critical("num_stop_loss_hit: %d slPrice: %d"%(len(sl_pos_list), market_rate))
-        
+        if len(sl_pos_list):
+            log.info("num_stop_loss_hit: %d slPrice: %d"%(len(sl_pos_list), market_rate))
         return sl_pos_list
 
     def get_take_profit_positions(self, market_rate):
         tp_pos_list =[]
-        
         key_list = list(self.tp_dict.irange(maximum=market_rate, inclusive=(True, True)))
-        
         for key in key_list:
             pos_list = self.tp_dict.pop(key)
             tp_pos_list += pos_list
@@ -400,10 +394,10 @@ class OrderBook():
                 self.close_pending_positions[pos.id] = pos
                 # remove pos from take profit points
                 self.pop_stop_loss_position(pos)
-                
         self.market.num_take_profit_hit += len(tp_pos_list)
+        if len(tp_pos_list):
+            log.info("num_take_profit_hit: %d slPrice: %d"%(len(tp_pos_list), market_rate))        
         return tp_pos_list
-            
             
     def add_take_profit_position(self, position, market_rate, market, new_tp=0):
         tp_kind = market.tradeConfig['take_profit_kind']
@@ -568,7 +562,7 @@ class OrderBook():
 #         sys.exit()
                 
     def get_positions (self, from_time=0, to_time=0):
-        log.info("get positions ", from_time, to_time)
+        log.info("get positions from_time: %d to_time: %d"%(from_time, to_time))
         return self.all_positions[:]
         
     def dump_traded_orders(self, fd=sys.stdout):

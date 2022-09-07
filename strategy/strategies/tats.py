@@ -197,8 +197,8 @@ class TATS(Strategy):
         #trend crossover signaling
         trend_signal = ""
         if t_rev:
-            #acts only on bearish crossover rn.
             if trend == "bearish":
+                #acts only on bearish crossover rn.
                 trend_signal = "sell"
             elif trend == "bullish":
                 trend_signal = "buy"
@@ -329,6 +329,7 @@ class TATS(Strategy):
             self.rsi_trend = "OS"
         else:   #elif rsi >= 30 and rsi <= 60:
             self.rsi_trend = ""
+            self.rsi_action = "hold"
         
         if (self.rsi_trend == "OS" and 
             all(mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1)) and 
@@ -345,12 +346,12 @@ class TATS(Strategy):
 
         if self.rsi_action == "buy" and (self.zone_action == "buy" or self.zone_action == ""):
             #conservative buy
-            log.debug (" >>>>>>>>>>>>>>>>> BUY z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
+            log.debug (" >>>>>>>>>>>>>>>>> BUY z_a: %s rsi_a: %s \n\n"%(self.zone_action, self.rsi_action))            
             signal = 1
             self.rsi_action = self.zone_action = ""
         elif  self.rsi_action == "sell" or self.zone_action == "sell" or trend_signal == "sell":
             #proactive sell
-            log.debug (" >>>>>>>>>>>>>>>> SELL z_a: %s rsi_a: %s trend_signal: %s"%(self.zone_action, self.rsi_action, trend_signal))            
+            log.debug (" >>>>>>>>>>>>>>>> SELL z_a: %s rsi_a: %s trend_signal: %s\n\n"%(self.zone_action, self.rsi_action, trend_signal))            
             signal = -1
             self.rsi_action = self.zone_action = ""
         log.debug ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))

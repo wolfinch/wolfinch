@@ -33,7 +33,7 @@ from market import feed_enQ, TradeRequest, Order
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
-log.setLevel (log.CRITICAL)
+log.setLevel (log.INFO)
 
 ###### SIMULATOR Global switch ######
 sim_obj = {"exch": None, "market": None}
@@ -334,7 +334,7 @@ class SIM_EXCH (exchanges.Exchange):
         
         if not isinstance( trade_req, TradeRequest):
             return None
-        log.debug ("BUY - Placing Order on SIM exchange --" )
+        log.info ("BUY - Placing Order on SIM exchange --" )
         
         buy_order = Order(str(uuid.uuid1()), trade_req.product, "open", order_type=trade_req.type, 
                           side='buy', request_size=trade_req.size,
@@ -352,7 +352,7 @@ class SIM_EXCH (exchanges.Exchange):
     def sell (self, trade_req) :
         if not isinstance(trade_req, TradeRequest):
             return None
-        log.debug ("SELL - Placing Order on SIM exchange --" )
+        log.info ("SELL - Placing Order on SIM exchange --" )
         sell_order = Order(str(uuid.uuid1()), trade_req.product, "open", order_type=trade_req.type, 
                           side='sell', request_size=trade_req.size,
                        filled_size=0,  price=trade_req.price, funds=0,
@@ -374,6 +374,7 @@ class SIM_EXCH (exchanges.Exchange):
     #             this_order['reason'] = 'filled'    
     #             this_order['settled'] = True
     #             this_order['side'] = order.side
+        log.info ("GET - get Order on SIM exchange --" )
         for order in traded_orders[prod_id]:
             if order.id == order_id:
                 return order
