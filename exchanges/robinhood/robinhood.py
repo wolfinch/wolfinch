@@ -778,17 +778,22 @@ class Robinhood (Exchange):
         return options_l
     def get_option_chain(self, chain_id, exp_date, opt_type):
         option_chain = []
-        options_api_url = API_BASE+"/options/instruments/?chain_id=%s&expiration_dates=%s&state=active&type=%s"%(chain_id, exp_date, opt_type)
-        options_l = self._fetch_json_by_url(options_api_url)
-        option_chain.extend(options_l['results'])
-        while options_l['next']:
-            # print("{} order fetched".format(len(orders)))
-            next_url = options_l['next']
-            options_l = self._fetch_json_by_url(next_url)
+        try:
+            options_api_url = API_BASE+"/options/instruments/?chain_id=%s&expiration_dates=%s&state=active&type=%s"%(chain_id, exp_date, opt_type)
+            options_l = self._fetch_json_by_url(options_api_url)
             option_chain.extend(options_l['results'])
-        log.info("%d options fetched from chain"%(len(option_chain)))
-        
-        log.debug("option chain: \n %s"%(pprint.pformat(option_chain, 4)))
+            while options_l['next']:
+                # print("{} order fetched".format(len(orders)))
+                next_url = options_l['next']
+                options_l = self._fetch_json_by_url(next_url)
+                option_chain.extend(options_l['results'])
+            log.info("%d options fetched from chain"%(len(option_chain)))
+            
+            log.debug("option chain: \n %s"%(pprint.pformat(option_chain, 4)))
+        except Exception as e:
+            log.critical ("exception - %s"%(traceback.format_exc()))
+            self._login()
+            raise e         
         return option_chain
     def get_option_marketdata(self, instr_list):     
         if type(instr_list) != list:
@@ -796,11 +801,16 @@ class Robinhood (Exchange):
         B_SIZE = 50
         i = 0
         res_list = []
-        while i < len(instr_list):
-            i_list = instr_list[i:i+B_SIZE]
-            res = self.get_option_mdata(i_list)
-            res_list.extend(res["results"])
-            i += B_SIZE
+        try:
+            while i < len(instr_list):
+                i_list = instr_list[i:i+B_SIZE]
+                res = self.get_option_mdata(i_list)
+                res_list.extend(res["results"])
+                i += B_SIZE
+        except Exception as e:        
+            log.critical ("exception - %s"%(traceback.format_exc()))
+            self._login()
+            raise e                
         return res_list
     def get_option_mdata(self, instrument_l):
         i_str = ",".join(instrument_l)
@@ -811,26 +821,31 @@ class Robinhood (Exchange):
     def get_option_positions (self, symbol=None):
         options_api_url = API_BASE+"/options/positions/?nonzero=true"
         option_positions = []
-        options_l = self._fetch_json_by_url(options_api_url)
-        option_positions.extend(options_l['results'])
-        while options_l['next']:
-            # print("{} order fetched".format(len(orders)))
-            next_url = options_l['next']
-            options_l = self._fetch_json_by_url(next_url)
+        try:
+            options_l = self._fetch_json_by_url(options_api_url)
             option_positions.extend(options_l['results'])
-        positions_l = []
-        if symbol == None or symbol == "":
-            positions_l = option_positions
-        else:
-            for pos in option_positions:
-                if pos['chain_symbol'] == symbol.upper():
-                    #filter noise 
-                    if int(float(pos["quantity"])) != 0 : 
-                        positions_l.append(pos)            
-        log.info("%d option positions fetched"%(len(positions_l)))
-        for pos in positions_l:
-            pos["option_det"] = self.get_option_from_instrument(pos["option"])         
-        log.debug ("options owned: %s"%(pprint.pformat(positions_l, 4)))
+            while options_l['next']:
+                # print("{} order fetched".format(len(orders)))
+                next_url = options_l['next']
+                options_l = self._fetch_json_by_url(next_url)
+                option_positions.extend(options_l['results'])
+            positions_l = []
+            if symbol == None or symbol == "":
+                positions_l = option_positions
+            else:
+                for pos in option_positions:
+                    if pos['chain_symbol'] == symbol.upper():
+                        #filter noise 
+                        if int(float(pos["quantity"])) != 0 : 
+                            positions_l.append(pos)            
+            log.info("%d option positions fetched"%(len(positions_l)))
+            for pos in positions_l:
+                pos["option_det"] = self.get_option_from_instrument(pos["option"])         
+            log.debug ("options owned: %s"%(pprint.pformat(positions_l, 4)))
+        except Exception as e:        
+            log.critical ("exception - %s"%(traceback.format_exc()))
+            self._login()
+            raise e            
         return positions_l
     def get_option_chains(self, symbol, from_date, to_date, opt_type, sort="oi"):
         def key_func(k):
