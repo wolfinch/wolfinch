@@ -87,7 +87,7 @@ def print_order_history(symbol, from_date, to_date):
     orders = rbh.get_order_history(symbol, from_date, to_date)
     if len(orders):
         num_sell = num_buy = amt_sell = amt_buy = 0
-        print ("retrieved %d orders: %s"%(len(orders), pprint.pformat(orders, 4)))
+        # print ("retrieved %d orders: %s"%(len(orders), pprint.pformat(orders, 4)))
         print ("{:<6}{:^6}{:^6}{:^10}{:^10}{:^15}{:^15}".format("Ticker", "Side", "Size", "Price", "Type", "Status", "Date"))
         for o in orders:
             side        = o["side"]
