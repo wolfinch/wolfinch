@@ -886,6 +886,7 @@ class Robinhood (Exchange):
         opt_chains = self.get_option_chains_summary(chain_id)
         if not opt_chains or not opt_chains.get("expiration_dates"):
             log.critical(">>>> ERROR while get opt_chains <<<<< \n opt_chains: %s chain_id: %s symbol: %s"%(opt_chains, chain_id, symbol))
+            self._login()            
             raise Exception(">>>> ERROR while get opt_chains <<<<< \n opt_chains: %s chain_id: %s symbol: %s"%(opt_chains, chain_id, symbol))
         exp_list_l = opt_chains["expiration_dates"]
         #filter exp_list based on given time interval
