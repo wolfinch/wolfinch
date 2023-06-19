@@ -1,5 +1,5 @@
 # using ubuntu LTS version
-FROM ubuntu:20.04 AS build
+FROM ubuntu:22.04 AS build
 
 # avoid stuck build due to user prompt
 ARG DEBIAN_FRONTEND=noninteractive
@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y software-properties-common && \
 RUN mkdir -p /home/venv
 RUN python3 -m venv /home/venv
 ENV PATH="/home/venv/bin:$PATH"
+# RUN cd /home/venv ; source venv/bin/activate
 
 # install requirements
 COPY . .
@@ -28,7 +29,7 @@ RUN for l in `ls -d exchanges/*/`; do \
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 RUN apt-get update && apt-get install -y software-properties-common && \
                 ( yes | add-apt-repository ppa:deadsnakes/ppa ) && \
                 apt-get install --no-install-recommends -y python3 python3-venv && \
