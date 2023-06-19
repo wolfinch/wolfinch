@@ -31,8 +31,8 @@ def getLogger (name):
 #     FORMAT = "[%(levelname)s:%(name)s:%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
     FORMAT = "[%(asctime)s %(levelname)s:%(name)s - %(funcName)20s(%(lineno)d) ] %(message)s"
 
-    logging.basicConfig(filename='wolfinch.log', filemode='a', level=logging.DEBUG, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')   
-    # logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')     
+    # logging.basicConfig(filename='wolfinch.log', filemode='a', level=logging.DEBUG, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')   
+    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S')     
     log = logging.getLogger(name)
     log.CRITICAL =  logging.CRITICAL
     log.ERROR    =  logging.ERROR
