@@ -15,6 +15,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 import yaml
+import sys
 
 # Load  external config file
 def readConf (fileName):
@@ -25,3 +26,4 @@ def readConf (fileName):
             return confDict
     except Exception as e: # parent of IOError, OSError *and* WindowsError where available
         print('Oops!! Conf Read Error for %s e: %s'%(fileName, e))
+        sys.exit(1)
