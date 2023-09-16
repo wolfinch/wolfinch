@@ -531,7 +531,7 @@
         	.width(32);
 
    	    // trendline = techan.plot.trendline().xScale(x).yScale(y),
-   	       // supstance = techan.plot.supstance().xScale(x).yScale(y).annotation([ohlcAnnotation, percentAnnotation]);
+   	    var supstance = techan.plot.supstance().xScale(x).yScale(y); //.annotation([ohlcAnnotation, percentAnnotation]);
 		var yInit, yPercentInit, zoomableInit;
 		
 		function zoomed() {
@@ -639,12 +639,12 @@
           .attr("x", 0)
           .attr("y", 0);
 
-/*       defs.append("clipPath")
+       defs.append("clipPath")
           .attr("id", "supstanceClip")
         .append("rect")
           .attr("x", -dim.margin.left)
           .attr("y", 0);
- */
+
       defs.selectAll(".indicatorClip").data(d3.range(Object.keys(g_big_data.indicator_plots).length))
         .enter()
         .append("clipPath")
@@ -669,7 +669,10 @@
 	  	.attr("x", dim.plot.width - 5)
 	  	.attr("y", 15);
 	          
-      
+		svg.append("g")
+		.attr("class", "supstances analysis")
+		.attr("clip-path", "url(#ohlcClip)");      
+
       svg.append("g")
         .attr("class", "x axis bottom");
 
@@ -718,6 +721,8 @@
 		var accessor = candlestick.accessor();
 		var indicatorPreRoll = g_big_data.preroll;
 		var postRollData = ohlc_list.slice(indicatorPreRoll); // Don't show where indicators don't have data 
+		var dateStart = postRollData[0].date
+		var dateEnd = postRollData[postRollData.length-1].date
 		x.domain(techan.scale.plot.time(ohlc_list).domain());
 		y.domain(techan.scale.plot.ohlc(postRollData).domain());
 		yPercent.domain(techan.scale.plot.percent(y,
@@ -807,15 +812,24 @@
       }
 
       for (var i=0; i<g_big_data.indicator_lines.length; i++){
-	      var data = g_big_data.indicators[g_big_data.indicator_lines[i]];    	  
+	      var data = g_big_data.indicators[g_big_data.indicator_lines[i]];
+
+		  if (g_big_data.indicator_lines[i] == "supstance" && g_chart_period == 1 && data.length > 0) {
+      		//svg.select("g.trendlines").datum(stock.trendlines).call(trendline).call(trendline.drag);
+			var supstanceData = [];
+			for (i=0; i<data[0].value.length; i++) {
+				supstanceData.push ({ start: data[0].date, end: data[data.length-1].date, value: data[0].value[i]});
+			}
+      		svg.select("g.supstances").datum(supstanceData).call(supstance);//.call(supstance.drag);
+			continue;
+		  }
+
 	      svg.select("g.sma.ma-"+i).datum(data).call(ind_line).append("title").text(g_big_data.indicator_lines[i])
 	       	.on("mouseenter", lineenter).on("mouseout", lineout);
 	      //svg.select("g.indicator.annotation.ma-"+i)
 	      //.datum([data[data.length-1]]).call(ohlcIndicatorAnnotation);
       }
       
-      //svg.select("g.trendlines").datum(stock.trendlines).call(trendline).call(trendline.drag);
-      //svg.select("g.supstances").datum(stock.supstances).call(supstance).call(supstance.drag);
       resize(selection);
       selection.call(draw);
     }
@@ -890,9 +904,9 @@
 		        .attr("width", dim.plot.width)
 		        .attr("height", dim.ohlc.height);
 
-/* 		      selection.selectAll("defs #supstanceClip > rect")
+ 		      selection.selectAll("defs #supstanceClip > rect")
 		        .attr("width", dim.width)
-		        .attr("height", dim.ohlc.height); */
+		        .attr("height", dim.ohlc.height);
 
 		      selection.selectAll("defs .indicatorClip > rect")
 		        .attr("y", function (d, i) {
@@ -962,8 +976,10 @@
 		    }
 	        
 	       // svg.select("g.trendlines").call(trendline.refresh);
-	        //svg.select("g.supstances").call(supstance.refresh)
+		   if (g_chart_period == 1) {
+	        	svg.select("g.supstances").call(supstance.refresh)
 	         // .selectAll("g.data .supstance").attr("clip-path", "url(#ohlcClip)"); // FIXME Component should do the clipping, too much internal knowledge here
+		   }
 	      }
 
 		return bigchart;
@@ -1111,7 +1127,7 @@
 			<p>
 				<small>
 					<div class="row">
-						<em>&copy; 2017-2022 Wolfinch Bot</em>
+						<em>&copy; 2017-2023 Wolfinch Bot</em>
 					</div>
 				</small>
 

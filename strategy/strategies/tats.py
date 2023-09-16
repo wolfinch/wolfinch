@@ -115,6 +115,7 @@ class TATS(Strategy):
         self.close_time = 0
         self.bought = True
         self.trend = ""
+        self.supstance = []
 
     def generate_signal (self, candles):
 #         '''
@@ -139,6 +140,8 @@ class TATS(Strategy):
                 self.s2 = self.pp - (self.day_high - self.day_low)
                 self.r3 = self.day_high + 2*(self.pp - self.day_low)
                 self.s3 = self.day_low - 2*(self.day_high - self.pp)
+                self.supstance = [self.pp, self.r1, self.r2, self.r3, self.s1, self.s2, self.s3]
+                self.supstance.sort()
                 self.s_l = sorteddict.SortedDict({self.s1:0, self.s2:0, self.s3:0, self.pp:0})
                 self.r_l = sorteddict.SortedDict({self.r1:0, self.r2:0, self.r3:0})
                 log.debug ("setting up levels for day: %d high: %f low: %f close: %f open: %f"%(day, self.day_high, self.day_low, self.day_close, self.day_open))                
@@ -156,6 +159,7 @@ class TATS(Strategy):
                 self.day_high = cdl.high
             if self.day_low > cdl.low:
                 self.day_low = cdl.low
+        candles[-1]["supstance"]=self.supstance ## HACK_ALERT: this is a hack to set support-resistence levels as indicator for UI
         if len_candles < self.period:
             return 0
         mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)

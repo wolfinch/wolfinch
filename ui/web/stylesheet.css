@@ -226,7 +226,7 @@ path.middle, path.zero {
 }
 
 .analysis path, .analysis circle {
-	stroke: blue;
+	stroke: #00ff9d;
 	stroke-width: 0.8;
 }
 

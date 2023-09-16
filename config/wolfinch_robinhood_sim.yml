@@ -26,7 +26,7 @@ exchanges:
       role: 'primary'
       config: 'config/robinhood.yml'
       products:
-         - 'SOFI':
+         - 'ENPH':
             fund_type: USD
             fund_max_liquidity : 900 #$$               
             fund_max_per_buy_value : 500 #$100 max per buy
