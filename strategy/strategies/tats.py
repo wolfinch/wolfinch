@@ -91,18 +91,12 @@ class TATS(Strategy):
 #         self.set_indicator("VEMAOSC", (self.vosc_short, self.vosc_long))
         self.set_indicator("close")
         self.set_indicator("VWAP")
+        self.set_indicator("PIVOTPS")
 #         self.set_indicator("MVWAP", (250, vwap))
 #         self.set_indicator("MACD", (24, 52, 9))
 
         # states
-        self.day_open = 0      
-        self.day_high = 0      
-        self.day_low = 0     
-        self.day_close = 0
         self.day = 0
-        self.pp = 0
-        self.r1 = self.r2 = self.r3 = 0
-        self.s1 = self.s2 = self.s3 = 0
         self.r_l = sorteddict.SortedDict()
         self.s_l = sorteddict.SortedDict()
         self.zone_action = ""
@@ -129,39 +123,21 @@ class TATS(Strategy):
         signal = 0
         cdl = candles[-1]['ohlc']
         dt = datetime.fromtimestamp(cdl.time)
+        if len_candles < self.period:
+            return 0
+        
         day = dt.date().day
         if  day != self.day:
-            if self.day != 0:
-                #skip the first day cdls, and setup support, resitstance levels.
-                self.pp = (self.day_high + self.day_low + self.day_close)/3
-                self.r1 = 2*self.pp - self.day_low
-                self.s1 = 2*self.pp - self.day_high
-                self.r2 = self.pp + (self.day_high - self.day_low)
-                self.s2 = self.pp - (self.day_high - self.day_low)
-                self.r3 = self.day_high + 2*(self.pp - self.day_low)
-                self.s3 = self.day_low - 2*(self.day_high - self.pp)
-                self.supstance = [self.pp, self.r1, self.r2, self.r3, self.s1, self.s2, self.s3]
-                self.supstance.sort()
-                self.s_l = sorteddict.SortedDict({self.s1:0, self.s2:0, self.s3:0, self.pp:0})
-                self.r_l = sorteddict.SortedDict({self.r1:0, self.r2:0, self.r3:0})
-                log.debug ("setting up levels for day: %d high: %f low: %f close: %f open: %f"%(day, self.day_high, self.day_low, self.day_close, self.day_open))                
+            log.debug("******###########################\n\n new day(%d) \n################################*******"%(day))
             self.day = day
             self.open_time = cdl.time
             self.close_time = int(self.open_time + 6.5*3600) #market hrs are 6.5hrs
-            self.day_open = cdl.open
-            self.day_high = cdl.high
-            self.day_low = cdl.low
-            self.day_close = cdl.close
-            log.debug("******###########################\n\n new day(%d) \n################################*******"%(day))            
-        else:
-            self.day_close = cdl.close 
-            if self.day_high < cdl.high:
-                self.day_high = cdl.high
-            if self.day_low > cdl.low:
-                self.day_low = cdl.low
-        candles[-1]["supstance"]=self.supstance ## HACK_ALERT: this is a hack to set support-resistence levels as indicator for UI
-        if len_candles < self.period:
-            return 0
+            pps = self.indicator(candles, 'PIVOTPS')
+            if pps.get("pp") == None:
+                return self.signal
+            self.s_l = sorteddict.SortedDict({pps["s1"]:0, pps["s2"]:0, pps["s3"]:0, pps["pp"]:0})
+            self.r_l = sorteddict.SortedDict({pps["r1"]:0, pps["r2"]:0, pps["r3"]:0})
+
         mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
         rsi_l = self.indicator(candles, 'RSI', self.rsi, history=self.rsi_dir_len)
         

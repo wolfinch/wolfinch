@@ -814,11 +814,12 @@
       for (var i=0; i<g_big_data.indicator_lines.length; i++){
 	      var data = g_big_data.indicators[g_big_data.indicator_lines[i]];
 
-		  if (g_big_data.indicator_lines[i] == "supstance" && g_chart_period == 1 && data.length > 0) {
+		  if (g_big_data.indicator_lines[i].toLowerCase() == "pivotps" && g_chart_period == 1 && data.length > 0) {
       		//svg.select("g.trendlines").datum(stock.trendlines).call(trendline).call(trendline.drag);
 			var supstanceData = [];
-			for (i=0; i<data[0].value.length; i++) {
-				supstanceData.push ({ start: data[0].date, end: data[data.length-1].date, value: data[0].value[i]});
+			var vals = Object.values(data[0].value)
+			for (i=0; i<vals.length; i++) {
+				supstanceData.push ({ start: data[0].date, end: data[data.length-1].date, value:vals[i]});
 			}
       		svg.select("g.supstances").datum(supstanceData).call(supstance);//.call(supstance.drag);
 			continue;
