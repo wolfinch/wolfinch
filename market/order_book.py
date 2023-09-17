@@ -28,6 +28,7 @@ import stats
 import db
 import sims
 from .order import Order
+from datetime import datetime
 
 log = getLogger('ORDER-BOOK')
 log.setLevel(log.INFO)
@@ -85,8 +86,11 @@ class Position(object):
     def __str__(self):
         buy_str = str(self.buy) if self.buy else "null"
         sell_str = str(self.sell) if self.sell else "null"
+        open_time =  str(int(datetime.fromisoformat(self.open_time).timestamp())) if self.open_time else "None"
+        closed_time =  str(int(datetime.fromisoformat(self.closed_time).timestamp())) if self.closed_time else "None"        
+        
         return """{\n"id":"%s", "status":"%s", "open_time":"%s", "closed_time":"%s", "profit": %f, "stop_loss": %f, "take_profit":%f,
-"buy":%s\n,"sell":%s\n}"""%(self.id, self.status, self.open_time, self.closed_time, round(self.profit,4), round(self.stop_loss,4),
+"buy":%s\n,"sell":%s\n}"""%(self.id, self.status, open_time, closed_time, round(self.profit,4), round(self.stop_loss,4),
                              round(self.take_profit,4),
                             buy_str, sell_str)
     def __repr__(self):

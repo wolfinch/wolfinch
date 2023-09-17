@@ -296,7 +296,7 @@
 			if (d.closed_time && d.closed_time != "None") {
 				//console.log ("closed_time: "+d.closed_time+" price:"+d.sell.price)
 				trades.push({
-					date : d3.isoParse(d.closed_time),
+					date : new Date (d.closed_time*1000), //d3.isoParse(d.closed_time),
 					type : "sell",
 					price : d.sell.price,
 					low : d.sell.price,
@@ -307,7 +307,7 @@
 			if (d.open_time && d.open_time != "None") {
 				//console.log ("open_time: "+d.open_time+" price:"+d.buy.price)
 				trades.push({
-					date : d3.isoParse(d.open_time),
+					date : new Date (d.open_time*1000), //d3.isoParse(d.open_time),
 					type : "buy",
 					price : d.buy.price,
 					low : d.buy.price,

@@ -457,7 +457,7 @@
 									if (data.open_time != undefined
 											&& data.open_time != 'None'
 											&& data.open_time != null) {
-										date = moment(data.open_time);
+										date = moment(data.open_time*1000);
 										//console.log(date.fromNow());
 
 										if (type == "sort") {
@@ -479,7 +479,7 @@
 									if (data.closed_time != undefined
 											&& data.closed_time != 'None'
 											&& data.closed_time != null) {
-										date = moment(data.closed_time);
+										date = moment(data.closed_time*1000);
 										//console.log(date.fromNow());
 										if (type == "sort") {
 											return date.unix();
