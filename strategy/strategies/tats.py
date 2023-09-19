@@ -2,7 +2,7 @@
 # Wolfinch Auto trading Bot
 # Desc:  TATS (Truly Amazing Trading Strategy)
 #
-#  Copyright: (c) 2017-2022 Wolfinch Inc.
+#  Copyright: (c) 2017-2023 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -130,8 +130,8 @@ class TATS(Strategy):
         if  day != self.day:
             log.debug("******###########################\n\n new day(%d) \n################################*******"%(day))
             self.day = day
-            self.open_time = cdl.time
-            self.close_time = int(self.open_time + 6.5*3600) #market hrs are 6.5hrs
+            self.open_time = cdl.time - 60
+            self.close_time = int(self.open_time + 6.5*3600 - 60) #market hrs are 6.5hrs
             pps = self.indicator(candles, 'PIVOTPS')
             if pps.get("pp") == None:
                 return self.signal
@@ -324,7 +324,8 @@ class TATS(Strategy):
             self.rsi_action = "sell"
         ####### RSI/MFI signaling ########
 
-        if self.rsi_action == "buy" and (self.zone_action == "buy" or self.zone_action == ""):
+        ########## final actioning $################
+        if self.rsi_action == "buy" and (self.zone_action == "buy" or self.zone_action == "") and dir == "up":
             #conservative buy
             log.debug (" >>>>>>>>>>>>>>>>> BUY z_a: %s rsi_a: %s \n\n"%(self.zone_action, self.rsi_action))            
             signal = 1
@@ -334,16 +335,22 @@ class TATS(Strategy):
             log.debug (" >>>>>>>>>>>>>>>> SELL z_a: %s rsi_a: %s trend_signal: %s\n\n"%(self.zone_action, self.rsi_action, trend_signal))            
             signal = -1
             self.rsi_action = self.zone_action = ""
-        log.debug ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
-        if (cdl.time < self.open_time + self.open_delay*60) or (cdl.time > self.close_time - (self.close_delay+10)*60):
-            #let's not buy anything within half n hr of market open and sell everything 15min in to market close
-            # don't buy if we are with in 10mins of close delay window below
-            log.debug ("TATS - open delay skip trade signal: %d"%(signal))      
-            signal = 0
-        elif cdl.time > self.close_time - self.close_delay*60:
+
+        log.debug ("cdl time; %d market open_time: %d closing_time: %d "%(cdl.time , self.open_time, self.close_time))
+        if cdl.time > self.close_time - self.close_delay*60:
             # we are a day trading strategy and let's not carry over to next day            
             log.debug ("TATS - closing day window. SELL everything signal: %d"%(signal))
-            signal = -1
+            signal = -1        
+        elif (cdl.time < self.open_time + self.open_delay*60) :
+            #let's not buy anything within half n hr of market open and sell everything 15min in to market close
+            # don't buy if we are with in 10mins of close delay window below
+            log.debug ("TATS - open delay (%d) skip trade signal: %d"%((self.open_time + self.open_delay*60 - cdl.time), signal))      
+            signal = 0            
+        elif (cdl.time > self.close_time - (self.close_delay+10)*60):
+            #let's not buy anything within half n hr of market open and sell everything 15min in to market close
+            # don't buy if we are with in 10mins of close delay window below
+            log.debug ("TATS - close delay (%d) skip trade signal: %d"%((cdl.time - self.close_time + (self.close_delay+10)*60), signal))      
+            signal = 0
             
         return signal
     

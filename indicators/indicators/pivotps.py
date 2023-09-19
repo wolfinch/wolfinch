@@ -59,8 +59,8 @@ class PIVOTPS (Indicator):
                 #cache PPs
                 self.supstance = {"pp":self.pp,"r1": self.r1, "r2":self.r2, "r3":self.r3, "s1":self.s1, "s2":self.s2, "s3":self.s3}
             self.day = day
-            self.open_time = cdl.time
-            self.close_time = int(self.open_time + 6.5*3600) #market hrs are 6.5hrs
+            self.open_time = cdl.time - 60
+            self.close_time = int(self.open_time + 6.5*3600 - 60) #market hrs are 6.5hrs
             self.day_open = cdl.open
             self.day_high = cdl.high
             self.day_low = cdl.low
