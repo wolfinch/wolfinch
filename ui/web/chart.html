@@ -326,8 +326,7 @@
 		console.log("candles data len: " + data.length);
 
 		//data = data.slice(data.length - 201, data.length - 1);
-		
-		
+				
 		data = data.sort(function(a, b) {
 			return d3.ascending(a['ohlc'].time, b['ohlc'].time);
 		});
@@ -335,6 +334,9 @@
 		if (!data.length) {
 			return;
 		}
+
+		g_cur_display_date = (data[0]["ohlc"].time)*1000;
+		setDate();
 
 		//create indicators lists
 		// normalize OBV(2, 4) => OBV24
@@ -988,7 +990,36 @@
 
 	var ONE_DAY_IN_SEC = 24*60*60;
 	var g_chart_period = 1;
+	var g_cur_display_date = 0;
 	var g_chart_start_time = 0; //Math.floor(Date.now()/1000);
+
+    function getDate() {
+        var datePicker = document.getElementById("datePicker");
+        var selectedDate = new Date((new Date(datePicker.value)).toISOString().split('T')[0]);
+
+		curDate = (new Date()).toISOString().split('T')[0];
+		// get new start time 
+		g_chart_start_time = -Math.floor(((new Date(curDate) - selectedDate)/(ONE_DAY_IN_SEC*1000)));
+
+        console.log("Selected Date: " +  selectedDate, g_chart_start_time);
+
+		console.log("load stats");
+		loadPositions();
+		loadCandles();
+    }
+
+    function setDate() {
+        var datePicker = document.getElementById("datePicker");
+        
+        // Create a JavaScript Date object with the desired date
+        var desiredDate = new Date(g_cur_display_date);
+
+        // Format the date as "YYYY-MM-DD" for setting the input value
+        var formattedDate = desiredDate.toISOString().split('T')[0];
+
+        // Set the value of the date input
+        datePicker.value = formattedDate;
+    }	
 
 	function btn_onclick(id) {
 
@@ -1105,14 +1136,19 @@
 					<button id="btn7" onclick="btn_onclick(this.id)"
 						class="btn btn-primary btn-xs ">7 Days</button>
 					<button id="btn30" onclick="btn_onclick(this.id)"
-						class="btn btn-primary btn-xs ">30 Days</button>					
+						class="btn btn-primary btn-xs ">30 Days</button>
+						
+						
 					<button id="btn_prev" onclick="btn_onclick(this.id)"
 						class="btn btn-success btn-sm ">
 						<span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span></button>						
 					<button id="btn_next" onclick="btn_onclick(this.id)"
 						class="btn btn-success btn-sm ">
-						<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>						
-												
+						<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>		
+						<!-- <div class="col-sm-2" style="position: relative; float: revert;"> -->
+							<input type="date" id="datePicker" style="float: revert;" form-control" value="2023-08-30" onchange="getDate()">
+						<!-- </div> -->
+																	 -->
 				</div>
 			</div>
 			<div class="row">

@@ -325,7 +325,7 @@ class TATS(Strategy):
         ####### RSI/MFI signaling ########
 
         ########## final actioning $################
-        if self.rsi_action == "buy" and (self.zone_action == "buy" or self.zone_action == "") and dir == "up":
+        if ((self.zone_action == "buy"  and self.rsi_action != "sell") or (self.rsi_action == "buy" and  self.zone_action == "")) and dir == "up":
             #conservative buy
             log.debug (" >>>>>>>>>>>>>>>>> BUY z_a: %s rsi_a: %s \n\n"%(self.zone_action, self.rsi_action))            
             signal = 1
