@@ -24,6 +24,12 @@
 # 3. Volume Oscilator (https://www.investopedia.com/articles/technical/02/082702.asp)
 # def gen_sig():
 
+## NOTES: TODO:
+# 1. for ZA breakage, when a retrace happens, don't declare zone break unless previous high is broken
+# 2. Volume confirmation
+# 3. kind/shape of the candle
+####  NOTES: END
+
 from sortedcontainers import sorteddict
 from datetime import datetime
 from .strategy import Strategy
@@ -111,21 +117,13 @@ class TATS(Strategy):
         self.trend = ""
         self.supstance = []
 
-    def generate_signal (self, candles):
-#         '''
-#         Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
-#         '''
-        #   rsi oversold/bought
-        # mfi and rsi are in same direction
-        # relate with support/resistance on movement
-        # trend reversal (signal)
-        len_candles = len (candles)
-        signal = 0
+    def _zone_action(self, candles, dir):
+        ######support/resistance zone handling###########
+        vwap = self.indicator(candles, 'VWAP')
+        cur_close = self.indicator(candles, 'close')
+        atr = self.indicator(candles, 'ATR', self.atr)
         cdl = candles[-1]['ohlc']
         dt = datetime.fromtimestamp(cdl.time)
-        if len_candles < self.period:
-            return 0
-        
         day = dt.date().day
         if  day != self.day:
             log.debug("******###########################\n\n new day(%d) \n################################*******"%(day))
@@ -137,56 +135,8 @@ class TATS(Strategy):
                 return self.signal
             self.s_l = sorteddict.SortedDict({pps["s1"]:0, pps["s2"]:0, pps["s3"]:0, pps["pp"]:0})
             self.r_l = sorteddict.SortedDict({pps["r1"]:0, pps["r2"]:0, pps["r3"]:0})
-
-        mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
-        rsi_l = self.indicator(candles, 'RSI', self.rsi, history=self.rsi_dir_len)
-        
-#         vosc = self.indicator(candles, 'VEMAOSC', (self.vosc_short, self.vosc_long))
-        cur_close = self.indicator(candles, 'close')
-        
-#         obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
-        
-        atr = self.indicator(candles, 'ATR', self.atr)
-        ema_sh = self.indicator(candles, 'EMA', self.ema, history=2)
-        ema_s = ema_sh[-1]
-        ema_l = self.indicator(candles, 'EMA', self.ema_l)        
-        vwap = self.indicator(candles, 'VWAP')
-        rsi = rsi_l[-1]
-        
-        #simple direction
-        if ema_sh[0] > ema_sh[-1]:
-            dir = "down"
-        elif ema_sh[0] < ema_sh[-1]:
-            dir = "up"
-        else:
-            dir = ""
-        #simple direction
-        #trend, reversal
-        trend = ""
-        if ema_s >= ema_l + atr:
-            trend = "bullish"
-        elif ema_s <= ema_l - atr:
-            trend = "bearish"
-#         else:
-#             trend = ""
-        t_rev = False
-        if self.trend != trend:
-            t_rev = True
-            self.trend = trend
-        #trend, reversal
-        #trend crossover signaling
-        trend_signal = ""
-        if t_rev:
-            if trend == "bearish":
-                #acts only on bearish crossover rn.
-                trend_signal = "sell"
-            elif trend == "bullish":
-                trend_signal = "buy"
-        #trend crossover signaling
-        
-        ######support/resistance zone handling###########
-        log.debug ("*******%d:(%s) zone_s: %s zone_r: %s vwap: %f rsi: %f atr: %f cur_close: %f"%(cdl.time,
-            dt.time(), self.s_l, self.r_l, vwap, rsi, atr, cur_close))
+        log.debug ("*******%d:(%s) zone_s: %s zone_r: %s vwap: %f atr: %f cur_close: %f"%(cdl.time,
+            dt.time(), self.s_l, self.r_l, vwap, atr, cur_close))
         za = ""        
         if dir == "up":
             #see if we are near any resistance zones or crossed
@@ -300,9 +250,11 @@ class TATS(Strategy):
             #there is a new state else maintain previous state
             log.debug (" -- >new zone action :%s < --"%(za))
             self.zone_action = za                       
-        ######support/resistance zone handling###########
-        
-        ####### RSI/MFI signaling ########
+        ######support/resistance zone handling###########        
+    def _rsi_mfi_action(self, candles):
+        mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
+        rsi_l = self.indicator(candles, 'RSI', self.rsi, history=self.rsi_dir_len)
+        rsi = rsi_l[-1]
         if rsi > self.rsi_overbought:
             self.rsi_trend = "OB"
         elif rsi < self.rsi_oversold:
@@ -323,6 +275,62 @@ class TATS(Strategy):
             log.debug("TATS - overbought(%f) SELL"%(rsi))            
             self.rsi_action = "sell"
         ####### RSI/MFI signaling ########
+    def generate_signal (self, candles):
+#         '''
+#         Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
+#         '''
+        #   rsi oversold/bought
+        # mfi and rsi are in same direction
+        # relate with support/resistance on movement
+        # trend reversal (signal)
+        len_candles = len (candles)
+        signal = 0
+        if len_candles < self.period:
+            return 0        
+        cdl = candles[-1]['ohlc']
+#         vosc = self.indicator(candles, 'VEMAOSC', (self.vosc_short, self.vosc_long))
+#         obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
+        atr = self.indicator(candles, 'ATR', self.atr)
+        ema_sh = self.indicator(candles, 'EMA', self.ema, history=2)
+        ema_s = ema_sh[-1]
+        ema_l = self.indicator(candles, 'EMA', self.ema_l)        
+        
+        #simple direction
+        if ema_sh[0] > ema_sh[-1]:
+            dir = "down"
+        elif ema_sh[0] < ema_sh[-1]:
+            dir = "up"
+        else:
+            dir = ""
+        #simple direction
+        #trend, reversal
+        trend = ""
+        if ema_s >= ema_l + atr:
+            trend = "bullish"
+        elif ema_s <= ema_l - atr:
+            trend = "bearish"
+#         else:
+#             trend = ""
+        t_rev = False
+        if self.trend != trend:
+            t_rev = True
+            self.trend = trend
+        #trend, reversal
+        #trend crossover signaling
+        trend_signal = ""
+        if t_rev:
+            if trend == "bearish":
+                #acts only on bearish crossover rn.
+                trend_signal = "sell"
+            elif trend == "bullish":
+                trend_signal = "buy"
+        #trend crossover signaling
+        
+        ######support/resistance zone handling###########
+        self._zone_action(candles, dir)
+        
+        ####### RSI/MFI signaling ########
+        self._rsi_mfi_action(candles)
 
         ########## final actioning $################
         if ((self.zone_action == "buy"  and self.rsi_action != "sell") or (self.rsi_action == "buy" and  self.zone_action == "")) and dir == "up":
