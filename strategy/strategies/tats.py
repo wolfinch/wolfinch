@@ -25,7 +25,7 @@
 # def gen_sig():
 
 ## NOTES: TODO:
-# 1. for ZA breakage, when a retrace happens, don't declare zone break unless previous high is broken
+# 1. for ZA break, when a retrace happens, don't declare zone break unless previous high is broken
 # 2. Volume confirmation
 # 3. kind/shape of the candle
 ####  NOTES: END

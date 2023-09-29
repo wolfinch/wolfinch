@@ -288,15 +288,25 @@
 
 	function load_trades(data) {
 		var trades = [];
+		var beg_time = 0;
+		var end_time = 0; 
+		if (g_big_data.indicators.ohlc.length>0) {
+			beg_time = g_big_data.indicators.ohlc[0].date;
+			end_time = g_big_data.indicators.ohlc[g_big_data.indicators.ohlc.length-1].date;
+		}
 
 		console.log("positions data len: " + data.length);
 		for (var i = 0; i < data.length; i++) {
 			d = data[i];
 
 			if (d.closed_time && d.closed_time != "None") {
+				cdate = new Date (d.closed_time*1000);
+				// if ((beg_time>0 && (date < beg_time)) || (end_time > 0 && (date > end_time))){
+				// 	continue
+				// }
 				//console.log ("closed_time: "+d.closed_time+" price:"+d.sell.price)
 				trades.push({
-					date : new Date (d.closed_time*1000), //d3.isoParse(d.closed_time),
+					date : cdate, //d3.isoParse(d.closed_time),
 					type : "sell",
 					price : d.sell.price,
 					low : d.sell.price,
@@ -306,8 +316,12 @@
 
 			if (d.open_time && d.open_time != "None") {
 				//console.log ("open_time: "+d.open_time+" price:"+d.buy.price)
+				odate = new Date (d.open_time*1000);
+				// if ((beg_time>0 && (date < beg_time)) || (end_time > 0 && (date > end_time))){
+				// 	continue
+				// }				
 				trades.push({
-					date : new Date (d.open_time*1000), //d3.isoParse(d.open_time),
+					date : odate,
 					type : "buy",
 					price : d.buy.price,
 					low : d.buy.price,
@@ -317,6 +331,7 @@
 		}
 
 		g_big_data.positions = trades;
+		// d3.select("#chart").call(g_big_chart);
 	}
 
 	function load_candles(data) {
@@ -1004,8 +1019,8 @@
         console.log("Selected Date: " +  selectedDate, g_chart_start_time);
 
 		console.log("load stats");
-		loadPositions();
 		loadCandles();
+		loadPositions();
     }
 
     function setDate() {
@@ -1067,8 +1082,8 @@
 		console.log("btn clicked: " + id + " new period:" + g_chart_period);
 
 		console.log("load stats");
-		loadPositions();
 		loadCandles();
+		loadPositions();
 	}
 </script>
 
