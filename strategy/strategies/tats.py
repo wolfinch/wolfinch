@@ -38,6 +38,8 @@ from utils import getLogger
 log = getLogger ('TATS')
 log.setLevel(log.DEBUG)
 
+BULLISH = "bullish"
+BEARISH = "bearish"
 class TATS(Strategy):
     config = {
 #         'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
@@ -135,6 +137,14 @@ class TATS(Strategy):
                 return self.signal
             self.s_l = sorteddict.SortedDict({pps["s1"]:0, pps["s2"]:0, pps["s3"]:0, pps["pp"]:0})
             self.r_l = sorteddict.SortedDict({pps["r1"]:0, pps["r2"]:0, pps["r3"]:0})
+            #find round numbers (x5s) in the range and them too
+            ppr = int((pps["pp"]-(pps["pp"]%5))+5) # ex. 121.3 -> 125
+            lsr = int((pps["s3"] - pps["s3"]%5))
+            hrr = int((pps["r3"]- pps["r3"]%5)+5)
+            for n in range(lsr, ppr,  5):
+                self.s_l[n] = 0
+            for n in range(ppr, hrr,  5):
+                self.r_l[n] = 0                
         log.debug ("*******%d:(%s) zone_s: %s zone_r: %s vwap: %f atr: %f cur_close: %f"%(cdl.time,
             dt.time(), self.s_l, self.r_l, vwap, atr, cur_close))
         za = ""        
@@ -275,6 +285,23 @@ class TATS(Strategy):
             log.debug("TATS - overbought(%f) SELL"%(rsi))            
             self.rsi_action = "sell"
         ####### RSI/MFI signaling ########
+    def _trade_window_adjust_signal(self, cdl, signal: int) -> int:
+        log.debug ("cdl time; %d market open_time: %d closing_time: %d "%(cdl.time , self.open_time, self.close_time))
+        if cdl.time > self.close_time - self.close_delay*60:
+            # we are a day trading strategy and let's not carry over to next day            
+            log.debug ("TATS - closing day window. SELL everything signal: %d"%(signal))
+            signal = -1        
+        elif (cdl.time < self.open_time + self.open_delay*60) :
+            #let's not buy anything within half n hr of market open and sell everything 15min in to market close
+            # don't buy if we are with in 10mins of close delay window below
+            log.debug ("TATS - open delay (%d) skip trade signal: %d"%((self.open_time + self.open_delay*60 - cdl.time), signal))      
+            signal = 0            
+        elif (cdl.time > self.close_time - (self.close_delay+10)*60):
+            #let's not buy anything within half n hr of market open and sell everything 15min in to market close
+            # don't buy if we are with in 10mins of close delay window below
+            log.debug ("TATS - close delay (%d) skip trade signal: %d"%((cdl.time - self.close_time + (self.close_delay+10)*60), signal))      
+            signal = 0
+        return signal         
     def generate_signal (self, candles):
 #         '''
 #         Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
@@ -305,24 +332,24 @@ class TATS(Strategy):
         #simple direction
         #trend, reversal
         trend = ""
-        if ema_s >= ema_l + atr:
-            trend = "bullish"
-        elif ema_s <= ema_l - atr:
-            trend = "bearish"
-#         else:
-#             trend = ""
+        if ema_s > ema_l + atr:
+            trend = BULLISH
+        elif ema_s < ema_l - atr:
+            trend = BEARISH
+        # else:
+            # trend = ""
         t_rev = False
-        if self.trend != trend:
+        if trend in [BULLISH, BEARISH] and self.trend != trend:
             t_rev = True
             self.trend = trend
         #trend, reversal
         #trend crossover signaling
         trend_signal = ""
         if t_rev:
-            if trend == "bearish":
+            if trend == BEARISH:
                 #acts only on bearish crossover rn.
                 trend_signal = "sell"
-            elif trend == "bullish":
+            elif trend == BULLISH:
                 trend_signal = "buy"
         #trend crossover signaling
         
@@ -344,22 +371,8 @@ class TATS(Strategy):
             signal = -1
             self.rsi_action = self.zone_action = ""
 
-        log.debug ("cdl time; %d market open_time: %d closing_time: %d "%(cdl.time , self.open_time, self.close_time))
-        if cdl.time > self.close_time - self.close_delay*60:
-            # we are a day trading strategy and let's not carry over to next day            
-            log.debug ("TATS - closing day window. SELL everything signal: %d"%(signal))
-            signal = -1        
-        elif (cdl.time < self.open_time + self.open_delay*60) :
-            #let's not buy anything within half n hr of market open and sell everything 15min in to market close
-            # don't buy if we are with in 10mins of close delay window below
-            log.debug ("TATS - open delay (%d) skip trade signal: %d"%((self.open_time + self.open_delay*60 - cdl.time), signal))      
-            signal = 0            
-        elif (cdl.time > self.close_time - (self.close_delay+10)*60):
-            #let's not buy anything within half n hr of market open and sell everything 15min in to market close
-            # don't buy if we are with in 10mins of close delay window below
-            log.debug ("TATS - close delay (%d) skip trade signal: %d"%((cdl.time - self.close_time + (self.close_delay+10)*60), signal))      
-            signal = 0
-            
-        return signal
+        #adjust signal based on trading window 
+        return self._trade_window_adjust_signal(cdl, signal)
+
     
 # EOF
