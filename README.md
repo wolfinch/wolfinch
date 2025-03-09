@@ -3,7 +3,7 @@
 ********
 # Wolfinch
 
-Wolfinch is a trading bot implemented in Python. It supports algorithmic trading for equity market and cryptocurrency exchanges. The modularized implementation is easily extensible to support more exchanges, trading strategies and indicators. A simple UI is available out of the box to view trades and allow basic controls in operation. 
+Wolfinch is a trading bot implemented in Python. It supports algorithmic trading for equity market and cryptocurrency exchanges. The modularized implementation is easily extensible to support more exchanges, trading strategies and indicators. A simple UI is available out of the box to view trades and allow basic controls in operation.
 
 ## Using Wolfinch
 
