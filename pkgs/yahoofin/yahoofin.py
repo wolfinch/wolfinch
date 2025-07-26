@@ -27,13 +27,14 @@ import time
 from dateutil.tz import tzlocal, tzutc
 import requests
 from .yahoofin_websocket import WebsocketClient
+# import logging
 
 from utils import getLogger
 
 parser = args = None
 log = getLogger ('Yahoofin')
 log.setLevel(log.WARNING)
-# logging.getLogger("urllib3").setLevel(logging.WARNING)
+# logging.getLogger("urllib3").setLevel(logging.DEBUG)
 
 
 # Wiki APIs - 
@@ -52,23 +53,120 @@ class Yahoofin:
     ###########################################################################
 
     def __init__(self):
-        self.session = requests.session()
+        self.session = requests.sessions.Session()
 #         self.session.proxies = getproxies()
         self.headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5",  # noqa: E501
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9",
             "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-            "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",            
+            # "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",            
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
             "Connection": "keep-alive",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
+            "Priority": "u=0, i",
+
         }
         self.session.headers = self.headers
+        self.crumb = None
+        self.cookie = None
+        self._init_crumb()
         log.info("initialized yahoofin")
-    def get_url(self, url):
+    
+    def _init_crumb(self):
+        """
+        Initialize crumb and cookie for Yahoo Finance API authentication
+        """
+        try:
+            # First, get the cookie by visiting Yahoo Finance
+            crumb_url = "https://finance.yahoo.com/quote/AAPL"
+            self.session.headers.update(self.headers)
+            response = self.session.get(crumb_url, headers=self.headers, timeout=15)
+            if response.status_code != 200:
+                log.warning("Failed to get initial cookie from Yahoo Finance. response: %d"% (response.status_code))
+                return
+            
+            # log.debug("session cookies: %s" % self.session.cookies.get_dict())
+            # log.debug("response headers: %s" % response.headers)
+            # log.debug("session headers: %s" % self.session.headers)
+            # Extract crumb from the page content
+            import re
+            crumb_pattern = r'"CrumbStore":\{"crumb":"([^"]+)"\}'
+            match = re.search(crumb_pattern, response.text)
+            
+            # match = False
+            if match:
+                self.crumb = match.group(1)
+                log.info(f"Successfully obtained crumb: {self.crumb[:10]}...")
+            else:
+                # Alternative method: try the crumb endpoint
+                self._get_crumb_from_endpoint()
+                
+        except Exception as e:
+            log.error(f"Error initializing crumb: {e}")
+            self.crumb = None
+    
+    def _get_crumb_from_endpoint(self):
+        """
+        Alternative method to get crumb from Yahoo's crumb endpoint
+        """
+        try:
+            # crumb_url = "https://query1.finance.yahoo.com/v1/test/getcrumb"
+            crumb_url = "https://query2.finance.yahoo.com/v1/test/getcrumb"
+            response = self.session.get(crumb_url, timeout=15)
+            
+            if response.status_code == 200:
+                self.crumb = response.text.strip()
+                log.info(f"Got crumb from endpoint: {self.crumb[:10]}...")
+            else:
+                log.warning("Failed to get crumb from endpoint. Response: %d response: %s" % (response.status_code, response.text))
+                self.crumb = None
+                exit(1)  # Exit if crumb cannot be obtained
+        except Exception as e:
+            log.error(f"Error getting crumb from endpoint: {e}")
+    
+    def _refresh_crumb(self):
+        """
+        Refresh the crumb when it expires
+        """
+        log.info("Refreshing crumb...")
+        self._init_crumb()
+    def get_url(self, url, use_crumb=True):
         """
             Flat wrapper for fetching URL directly
         """
-        return self.session.get(url, timeout=15).json()
+        # Add crumb to URL if available and requested
+        if use_crumb and self.crumb:
+            separator = "&" if "?" in url else "?"
+            url = f"{url}{separator}crumb={self.crumb}"
+        
+        try:
+            # log.debug("Fetching URL: %s" % url)
+            resp = self.session.get(url, timeout=15)
+            # log.debug("resp: %s"%(pprint.pformat(resp)))
+            
+            # Handle different status codes
+            if resp.status_code == 200:
+                return resp.json()
+            elif resp.status_code == 401 or resp.status_code == 429:
+                # Unauthorized - crumb might be expired
+                log.warning("Received 401, refreshing crumb...")
+                self._refresh_crumb()
+                # Retry once with new crumb
+                if use_crumb and self.crumb:
+                    separator = "&" if "?" in url.split("crumb=")[0] else "?"
+                    url = f"{url.split('crumb=')[0].rstrip('&?')}{separator}crumb={self.crumb}"
+                resp = self.session.get(url, timeout=15)
+                return resp.json() if resp.status_code == 200 else {"error": f"Unable to fetch data from {url}, status code: {resp.status_code}"}
+            else:
+                return {"error": f"Unable to fetch data from {url}, status code: {resp.status_code}"}
+                
+        except Exception as e:
+            log.error(f"Error fetching URL {url}: {e}")
+            return {"error": f"Request failed: {str(e)}"}   
     ######## public function #########
     def get_financial_data (self, symbol, modules="price"):
         ### https://query2.finance.yahoo.com/v10/finance/quoteSummary/PTON?modules=defaultkeyStatistics,assetProfile,topHoldings,fundPerformance,fundProfile,financialData
@@ -109,9 +207,13 @@ class Yahoofin:
         # https://query1.finance.yahoo.com/v10/finance/quoteSummary/FB?modules=assetProfile%2CbalanceSheetHistory%2CbalanceSheetHistoryQuarterly%2CcalendarEvents%2CcashflowStatementHistory%2CcashflowStatementHistoryQuarterly%2CdefaultKeyStatistics%2Cearnings%2CearningsHistory%2CearningsTrend%2CesgScores%2CfinancialData%2CfundOwnership%2CincomeStatementHistory%2CincomeStatementHistoryQuarterly%2CindexTrend%2CindustryTrend%2CinsiderHolders%2CinsiderTransactions%2CinstitutionOwnership%2CmajorDirectHolders%2CmajorHoldersBreakdown%2CnetSharePurchaseActivity%2Cprice%2CrecommendationTrend%2CsecFilings%2CsectorTrend%2CsummaryDetail%2CsummaryProfile%2CupgradeDowngradeHistory%2Cpageviews%2Cquotetype&ssl=true
         url = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/%s?\
 modules=%s"%(symbol, modules)
-        log.debug("get financial data for - %s"%(symbol))        
+        log.debug("get financial data for - %s url: %s"%(symbol, url))
         resp = self.get_url(url)
-        if resp['quoteSummary']["error"] != None:
+        log.debug("resp: %s"%(pprint.pformat(resp)))
+        if resp.get('error'):
+            log.critical ("error while fetch fin data for %s - error: %s"%(symbol, resp['error']))
+            return None, resp['error']
+        elif resp.get('quoteSummary') and resp['quoteSummary']["error"] != None:
             log.critical ("error while fetch fin data for %s - error: %s"%(symbol, resp['quoteSummary']["error"]))
             return None, resp['quoteSummary']["error"]
         return resp['quoteSummary']['result'][0], None
@@ -131,10 +233,12 @@ modules=%s"%(symbol, modules)
         fields = "&fields=longName,shortName,regularMarketPrice,regularMarketChange,regularMarketChangePercent,marketCap,underlyingSymbol,underlyingExchangeSymbol,headSymbolAsString,regularMarketVolume,averageDailyVolume10Day,averageDailyVolume3Month,uuid,regularMarketOpen,fiftyTwoWeekLow,fiftyTwoWeekHigh"
         sym_str= ",".join(sym_list)
         url = "https://query1.finance.yahoo.com/v7/finance/quote?&symbols="+sym_str+fields
-        resp = self.get_url(url)
-        if resp['quoteResponse']["error"] != None:
+        resp = self.get_url(url, use_crumb=True)  # Quotes usually don't need crumb
+        if resp.get('quoteResponse') and resp['quoteResponse']["error"] != None:
             log.critical ("error while get quotes - %s"%(resp['quoteResponse']["error"]))
             return None, resp['quoteResponse']["error"]
+        elif resp.get('error'):
+            return None, resp['error']
         return resp['quoteResponse']['result'], None        
     def get_options(self, sym, date=None):
         #https://query1.finance.yahoo.com/v7/finance/options/PTRA?date=1653004800
@@ -179,7 +283,7 @@ def print_historic_candles(symbol, interval, from_date, to_date):
     else:
         print("unable to find order history, err %s"%err)
 def print_quotes(symbol_list):
-    print ("printing current quotes")    
+    print ("printing current crumbs - quotes %s"%(yf.crumb))
     resp, err = yf.get_quotes(symbol_list)
     if err == None:
         print ("quotes: \n %s"%(pprint.pformat(resp)))
@@ -214,6 +318,7 @@ def arg_parse():
         log.info ("using config file - %s"%(args.config))
         YAHOOFIN_CONF = args.config
 ######### ******** MAIN ****** #########
+yf = None
 if __name__ == '__main__':
     import argparse
     
