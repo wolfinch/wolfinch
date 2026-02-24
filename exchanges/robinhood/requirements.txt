@@ -1,2 +1,2 @@
-pyrh==2.0
-protobuf==4.21.3
+robin_stocks>=3.2.0
+protobuf>=5.29.0

@@ -16,18 +16,20 @@ RUN python3 -m venv /home/venv
 ENV PATH="/home/venv/bin:$PATH"
 # RUN cd /home/venv ; source venv/bin/activate
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 # install requirements
-COPY . .
-RUN pip3 install --no-cache-dir wheel
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen
 
-#install exchange specific requirements.
-RUN for l in `ls -d exchanges/*/`; do \ 
-        if [ -f $l/requirements.txt ]; then \ 
-            pip3 install -r $l/requirements.txt; \
-        fi; \
-    done;
+# install exchange specific requirements.
+# RUN for l in `ls -d exchanges/*/`; do \ 
+#         if [ -f $l/requirements.txt ]; then \ 
+#             pip3 install -r $l/requirements.txt; \
+#         fi; \
+#     done;
 
-RUN pip3 install --no-cache-dir -r requirements.txt
+# RUN pip3 install --no-cache-dir -r requirements.txt
 
 FROM ubuntu:22.04
 RUN apt-get update && apt-get install -y software-properties-common && \

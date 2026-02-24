@@ -30,7 +30,7 @@ from utils import getLogger, readConf
 from market import  OHLC, feed_enQ, get_market_by_product, Order
 from exchanges import Exchange
 import logging
-import pyrh
+import robin_stocks.robinhood as r
 # import yahoofin as yahoofin
 from yahoofin import Yahoofin
 
@@ -96,7 +96,7 @@ class Robinhood (Exchange):
             return None
         
         try :
-            self.rbh_client = pyrh.Robinhood()
+            # self.rbh_client = pyrh.Robinhood() # Removed pyrh
             if auth==False:
                 log.info ("init success. auth init skipped")
                 return
@@ -129,35 +129,41 @@ class Robinhood (Exchange):
         
         # EXH supported in spectator mode.                    
         
-        portfolio = self.rbh_client.portfolios()
+        portfolio = r.profiles.load_portfolio_profile()
         if (portfolio == None):
             log.critical("Unable to get portfolio details!!")
             return False
         log.debug ("Exchange portfolio: %s" % (pprint.pformat(portfolio, 4)))
         
         # Popoulate the account details for each interested currencies
-        accounts = self.rbh_client.get_account()
+        accounts = r.profiles.load_account_profile()
         if (accounts == None):
             log.critical("Unable to get account details!!")
             return False
         log.debug ("Exchange Accounts: %s" % (pprint.pformat(accounts, 4)))
         self.robinhood_accounts["USD"] = accounts 
                 
-        positions = self.rbh_client.positions()
+        positions = r.account.build_holdings()
         if (positions == None):
             log.critical("Unable to get positions details!!")
             return False
 #         log.debug ("Exchange positions: %s" % (pprint.pformat(positions, 4)))
 
-        balances = positions ['results']
+        # balances = positions ['results'] # robin_stocks returns a dictionary where keys are tickers
+        # We need to adapt this logic since structure is different
+        # robin_stocks.build_holdings() returns:
+        # {'AAPL': {'price': '...', 'quantity': '...', ...}, ...}
+        
         for prod in self.robinhood_products:
-            log.debug ("prod_id: %s" % (prod['id']))
-            instr = prod['instrument']
-            for balance in balances:
-                if balance['instrument'] == instr['url']:
-                    self.robinhood_accounts[prod['id']] = balance
-                    log.debug ("Interested Account Found for asset: %s size: %s"%( prod['id'], balance['quantity']))
-                    break
+             log.debug ("prod_id: %s" % (prod['id']))
+             # instr = prod['instrument'] # Not directly available in build_holdings keys
+             # logic change: iterate products and check if in positions
+             p_id = prod['id']
+             if p_id in positions:
+                 balance = positions[p_id]
+                 self.robinhood_accounts[p_id] = balance
+                 log.debug ("Interested Account Found for asset: %s size: %s"%( p_id, balance['quantity']))
+
         #for the instuments we never traded before, there may be no account in RBH. so create a dummy here
         for prod in self.robinhood_products:
             if not self.robinhood_accounts.get(prod["id"]):
@@ -187,11 +193,13 @@ class Robinhood (Exchange):
         }
     def _login (self):
         log.info ("logging in .. ")
-        if self.rbh_client.login(username=self.user, password=self.password, qr_code=self.mfa_key) == False:
-            log.critical("Unable to Authenticate with robinhood exchange. Abort!!")
-            raise Exception("login failed")
-        else:
+        # login(username, password, expiresIn=86400, scope='internal', by_sms=True, store_session=True, mfa_code=None)
+        resp = r.login(username=self.user, password=self.password, mfa_code=self.mfa_key)
+        if resp:
             log.info("login success")
+        else:
+             log.critical("Unable to Authenticate with robinhood exchange. Abort!!")
+             raise Exception("login failed")
     def __str__ (self):
         return "{Message: Robinhood Exchange }"
 
@@ -296,7 +304,7 @@ class Robinhood (Exchange):
         log.info ("exch being closed")
         if self.auth:
             #log out now. 
-            self.rbh_client.logout()
+            r.logout()
 
     def add_products(self, products, feed=True):
         if not isinstance(products, list):
@@ -584,19 +592,18 @@ class Robinhood (Exchange):
     def buy (self, trade_req) :
         log.debug ("BUY - Placing Order on exchange --")
         try:
-            instr = self.get_instrument_from_symbol(trade_req.product)
-            params = {'symbol':trade_req.product, 'side' : "buy", 'quantity':trade_req.size, "instrument_URL": instr["url"],
-                      "time_in_force": "GTC", 'trigger':"immediate" }  # asset
+            symbol = trade_req.product
+            quantity = trade_req.size
             if trade_req.type == "market":
-                params['order_type'] = "market"
+                order = r.orders.order_buy_market(symbol, quantity, timeInForce='gtc')
             else:
-                params['order_type'] = "limit"
-                params['price'] = trade_req.price,  # USD
-            order_r = self.rbh_client.submit_buy_order(**params)
-            if order_r != None:
-                order=order_r.json()
+                price = trade_req.price
+                order = r.orders.order_buy_limit(symbol, quantity, price, timeInForce='gtc')
+            
+            if order and order.get('id'):
+                pass
             else:
-                log.critical("order None!! ")
+                log.critical("order None/Invalid!! %s"%(order))
                 raise Exception("Error with RH API - order None")            
         except Exception as e:
             log.critical ("exception while placing order - %s"%(traceback.format_exc()))
@@ -607,19 +614,18 @@ class Robinhood (Exchange):
     def sell (self, trade_req) :
         log.debug ("SELL - Placing Order on exchange --")
         try:
-            instr = self.get_instrument_from_symbol(trade_req.product)
-            params = {'symbol':trade_req.product, 'side' : "sell", 'quantity':trade_req.size, "instrument_URL": instr["url"],
-                  "time_in_force": "GTC", 'trigger':"immediate" }  # asset
+            symbol = trade_req.product
+            quantity = trade_req.size
             if trade_req.type == "market":
-                params['order_type'] = "market"
+                order = r.orders.order_sell_market(symbol, quantity, timeInForce='gtc')
             else:
-                params['order_type'] = "limit"
-                params['price'] = trade_req.price,  # USD
-            order_r = self.rbh_client.submit_sell_order(**params)
-            if order_r != None:
-                order=order_r.json()
+                price = trade_req.price
+                order = r.orders.order_sell_limit(symbol, quantity, price, timeInForce='gtc')
+            
+            if order and order.get('id'):
+                pass
             else:
-                log.critical("order None!! ")
+                log.critical("order None/Invalid!! %s"%(order))
                 raise Exception("Error with RH API - order None")
         except Exception as e:
             log.critical ("exception while placing order - %s"%(traceback.format_exc()))
@@ -630,7 +636,7 @@ class Robinhood (Exchange):
     def get_order (self, prod_id, order_id):
         log.debug ("GET - prod(%s) order (%s) " % (prod_id, order_id))
         try:
-            order = self.rbh_client.order_history(orderId=order_id)
+            order = r.orders.get_stock_order_info(order_id)
         except Exception as e:
             log.critical ("exception while get order - %s"%(traceback.format_exc()))
             self._login()
@@ -640,7 +646,7 @@ class Robinhood (Exchange):
     def cancel_order (self, prod_id, order_id):
         log.debug ("CANCEL - prod(%s) order (%s) " % (prod_id, order_id))
         try:
-            return self.rbh_client.client.cancel_order(order_id)
+            return r.orders.cancel_stock_order(order_id)
         except Exception as e:
             log.critical ("exception while cancel order - %s"%(traceback.format_exc()))
             self._login()
@@ -657,14 +663,14 @@ class Robinhood (Exchange):
     
     def get_quote (self, sym):
         try:
-            return self.rbh_client.get_quote(sym.upper())
+            return r.stocks.get_stock_quote_by_symbol(sym.upper())
         except Exception as e:        
             log.critical ("exception while get quote - %s"%(traceback.format_exc()))
             self._login()
             raise e         
     def _fetch_json_by_url(self, url):
         try:
-            return self.rbh_client.get_url(url)
+            return r.helper.request_get(url)
         except Exception as e:        
             log.critical ("exception while fetch_json_by_url order - %s"%(traceback.format_exc()))
             self._login()
@@ -677,8 +683,10 @@ class Robinhood (Exchange):
             return instr
         else:
             try:
-                instr = self.rbh_client.instrument(symbol)
-                if instr :
+                # instr = self.rbh_client.instrument(symbol)
+                res = r.stocks.get_instruments_by_symbols(symbol)
+                if res and len(res) > 0 and res[0]:
+                    instr = res[0]
                     log.debug("got symbol for id %s symbol: %s"%(symbol, instr['id']))   
                     self.instr_to_symbol_map[symbol] = instr
                     return instr
@@ -720,20 +728,14 @@ class Robinhood (Exchange):
         orders = []
         try:
             if symbol == None:
-                past_orders = self.rbh_client.order_history()
+                # get_all_stock_orders returns list of all orders
+                past_orders = r.orders.get_all_stock_orders()
             else:
-                instr = self.get_instrument_from_symbol(symbol)
-                if not instr:
-                    log.error("unable to get instrument from symbol")
-                instr_url = instr['url']
-                url = API_BASE +"/orders/?instrument="+instr_url
-                past_orders = self._fetch_json_by_url(url)
-            orders.extend(past_orders['results'])
-            log.debug("%d order fetched first page"%(len(orders)))    
-            while past_orders['next']:
-                next_url = past_orders['next']
-                past_orders = self._fetch_json_by_url(next_url)
-                orders.extend(past_orders['results'])
+                # Filter by symbol later or use if API supports it (robin_stocks doesn't natively filter by symbol in all_orders efficiently without fetching all)
+                # But it's safer to fetch all and filter or use get_all_stock_orders() 
+                past_orders = r.orders.get_all_stock_orders()
+            
+            orders.extend(past_orders)
             log.info("%d  order fetched"%(len(orders)))
             filtered_orders = []
             for order in orders:
@@ -819,16 +821,9 @@ class Robinhood (Exchange):
         mdata_l = self._fetch_json_by_url(options_api_url)        
         return mdata_l  
     def get_option_positions (self, symbol=None):
-        options_api_url = API_BASE+"/options/positions/?nonzero=true"
-        option_positions = []
         try:
-            options_l = self._fetch_json_by_url(options_api_url)
-            option_positions.extend(options_l['results'])
-            while options_l['next']:
-                # print("{} order fetched".format(len(orders)))
-                next_url = options_l['next']
-                options_l = self._fetch_json_by_url(next_url)
-                option_positions.extend(options_l['results'])
+            # r.options.get_open_option_positions() returns list of positions
+            option_positions = r.options.get_open_option_positions()
             positions_l = []
             if symbol == None or symbol == "":
                 positions_l = option_positions
@@ -964,13 +959,9 @@ class Robinhood (Exchange):
             return self._fetch_json_by_url(url)        
     def get_all_history_options_orders(self, symbol=None):
         options_orders = []
-        past_options_orders = self.options_order_history(symbol)
-        options_orders.extend(past_options_orders['results'])
-        while past_options_orders['next']:
-            # print("{} order fetched".format(len(orders)))
-            next_url = past_options_orders['next']
-            past_options_orders = self._fetch_json_by_url(next_url)
-            options_orders.extend(past_options_orders['results'])
+        # get_all_option_orders returns all orders, handles pagination
+        past_options_orders = r.options.get_all_option_orders()
+        options_orders.extend(past_options_orders)
         log.info("%d order fetched"%(len(options_orders)))
         return options_orders
     def get_all_historic_options_events(self, symbol=None):

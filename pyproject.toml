@@ -1,0 +1,51 @@
+[project]
+name = "wolfinch"
+version = "0.1.0"
+description = "Wolfinch trading bot"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "bintrees==2.2.0",
+    "cbpro>=1.1.4",
+    "certifi>=2024.0.0",
+    "chardet>=5.0.0",
+    "charset-normalizer>=3.0.0",
+    "click>=8.1.7",
+    "dateutils>=0.6.12",
+    "deap>=1.4.1",
+    "flask>=3.0.0",
+    "gevent>=24.2.1",
+    "greenlet>=3.0.3",
+    "itsdangerous>=2.1.2",
+    "jinja2>=3.1.3",
+    "markupsafe>=2.1.5",
+    "numpy>=2.0.0",
+    "octobot-tulipy>=0.4.10",
+    "protobuf>=5.29.0",
+    "pyaml>=23.0.0",
+    "pymongo>=4.16.0",
+    "python-binance>=1.0.35",
+    "python-dateutil>=2.9.0",
+    "pytz>=2024.1",
+    "pyyaml>=6.0.1",
+    "requests>=2.32.0",
+    "robin-stocks>=3.2.0",
+    "six>=1.16.0",
+    "sortedcontainers>=2.4.0",
+    "sqlalchemy>=2.0.0",
+    "tweepy>=4.16.0",
+    "websocket-client>=1.8.0",
+    "werkzeug>=3.0.0",
+    "zope-event>=5.0",
+    "zope-interface>=6.0",
+]
+
+[[tool.uv.dependency-metadata]]
+name = "cbpro"
+version = "1.1.4"
+requires-dist = ["websocket-client>=0.40.0", "six>=1.10.0", "requests>=2.13.0", "pymongo>=3.5.1"]
+
+[dependency-groups]
+dev = [
+    "grpcio-tools>=1.78.0",
+]

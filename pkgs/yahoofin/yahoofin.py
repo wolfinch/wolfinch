@@ -26,7 +26,10 @@ from time import sleep
 import time
 from dateutil.tz import tzlocal, tzutc
 import requests
-from .yahoofin_websocket import WebsocketClient
+try:
+    from .yahoofin_websocket import WebsocketClient
+except ImportError:
+    from yahoofin_websocket import WebsocketClient
 # import logging
 
 from utils import getLogger

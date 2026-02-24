@@ -351,6 +351,6 @@ if __name__ == '__main__':
         parser.print_help()
         exit(1)                            
 #     sleep(10)
-    rbh.close()
+    # rbh.close()
 #     print ("Done")
 # EOF    
