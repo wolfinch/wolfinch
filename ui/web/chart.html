@@ -16,36 +16,17 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
+<!doctype html>
 <html lang="en">
 
 <head>
-<title>Wolfinch Trading Bot</title>
+<title>Wolfinch Trading Bot — Charts</title>
+<link rel="icon" href="https://wolfinch.com/favicon.ico">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet"
-	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-<script
-	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script
-	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
-</head>
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="stylesheet.css" rel="stylesheet">
-<script
-	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-	integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-	crossorigin="anonymous"></script>
-
-
-<link rel="stylesheet" type="text/css"
-	href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
-
-<script type="text/javascript" charset="utf8"
-	src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
-
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="js/techan.min.js"></script>
 
@@ -64,117 +45,79 @@
 	});
 
 	function set_ui_code () {
-		p_l = window.location.pathname.split("/")
-		if (p_l.length > 1) {
-			if (p_l[1] != "wolfinch" || p_l[1] != "") {
-				ui_code = "/"+p_l[1]
-				console.log("ui_code - "+ui_code)
-			}
-		}	
+		var p_l = window.location.pathname.split("/");
+		if (p_l.length > 1 && p_l[1] !== "wolfinch" && p_l[1] !== "") {
+			ui_code = "/" + p_l[1];
+		}
 	}
 	
 	// exch/market selector - start
 	function exch_onclick(obj) {
-		console.log("onclick " + this.id);
-
 		active_exch = this.text;
-		var btn = document.getElementById("exch_btn_id");
-		btn.innerHTML = active_exch + ' <span class="caret"></span>';
-
+		document.getElementById("exch_btn_id").textContent = active_exch;
 		load_markets_dd();
+		document.querySelectorAll('.pill-menu').forEach(function(m){ m.classList.remove('show'); });
 	}
 
 	function market_onclick(obj) {
-		console.log("onclick " + this.id);
-
 		active_market = this.text;
-		var btn = document.getElementById("markets_btn_id");
-		btn.innerHTML = active_market + ' <span class="caret"></span>';
-
-		// TODO: FIXME: jork: do rest of logic
-		// call api to buy/sell
+		document.getElementById("markets_btn_id").textContent = active_market;
+		document.querySelectorAll('.pill-menu').forEach(function(m){ m.classList.remove('show'); });
 		var data = {};
 		data[active_exch] = active_market;
-		console.log("post data:" + active_exch, active_market);
 		$.ajax({
 			type : 'POST',
 			url : ui_code+'/api/set_active_market',
 			data : data,
 			dataType : 'json',
-			success : function(data) {
-				console.log("set_active_market success!" + data);
-			},
-			error : function(xhr, error) {
-				console.log("set_active_market failed!");
-			}
+			success : function(data) { console.log("set_active_market success!"); },
+			error : function(xhr, error) { console.log("set_active_market failed!"); }
 		});
 	}
 
+	function toggleMenu(menuId) {
+		document.querySelectorAll('.pill-menu').forEach(function(m) {
+			if (m.id !== menuId) m.classList.remove('show');
+		});
+		document.getElementById(menuId).classList.toggle('show');
+	}
+	document.addEventListener('click', function(e) {
+		if (!e.target.closest('.pill-select')) {
+			document.querySelectorAll('.pill-menu').forEach(function(m){ m.classList.remove('show'); });
+		}
+	});
+
 	function load_exchanges_dd() {
 		var list = document.getElementById("exchangesDdId");
-
 		Object.keys(exchanges).forEach(function(exch_name) {
-			console.log("loading " + exch_name);
 			var li = document.createElement("li");
 			var link = document.createElement("a");
-			var text = document.createTextNode(exch_name);
-			link.appendChild(text);
+			link.textContent = exch_name;
 			link.href = "#";
-			link.id = "li_exch_id_" + exch_name;
 			link.onclick = exch_onclick;
 			li.appendChild(link);
 			list.appendChild(li);
 		});
-
-		var btn = document.getElementById("exch_btn_id");
-		if (active_exch != undefined && active_exch != "") {
-			console.log("setting active exch " + active_exch);
-			btn.innerHTML = active_exch + ' <span class="caret"></span>';
-		} else {
-			btn.innerHTML = 'Exchange <span class="caret"></span>';
-		}
+		if (active_exch) document.getElementById("exch_btn_id").textContent = active_exch;
 	}
 
 	function load_markets_dd() {
-		console.log("load_markets_dd active_exch:" + active_exch);
-
-		markets_l = exchanges[active_exch]
+		var markets_l = exchanges[active_exch];
 		var list = document.getElementById("marketsDdId");
-
-		if (markets_l == undefined) {
-			console.log("no active exchange set");
-			return;
-		}
-
-		while (list.hasChildNodes()) {
-			console.log("purge old node - " + list.firstChild.innerText);
-			list.removeChild(list.firstChild);
-		}
-
+		if (!markets_l) return;
+		while (list.firstChild) list.removeChild(list.firstChild);
 		markets_l.forEach(function(market) {
-			console.log("loading " + market["product_id"]);
 			var li = document.createElement("li");
 			var link = document.createElement("a");
-			var text = document.createTextNode(market["product_id"]);
-			link.appendChild(text);
+			link.textContent = market["product_id"];
 			link.href = "#";
-			link.id = "li_exch_id_" + market["product_id"];
 			link.onclick = market_onclick;
 			li.appendChild(link);
 			list.appendChild(li);
 		});
-
-		if (active_market != undefined && active_market != "") {
-			var btn = document.getElementById("markets_btn_id");
-
-			console.log ("active_market: "+active_market+markets_l);
-			
-			btn.innerHTML = 'Market <span class="caret"></span>';			
-			markets_l.forEach(function(market) {
-				if (market["product_id"] == active_market) {
-					btn.innerHTML = active_market + ' <span class="caret"></span>';					
-				}
-			});
+		if (active_market) {
+			var found = markets_l.some(function(m){ return m["product_id"] == active_market; });
+			document.getElementById("markets_btn_id").textContent = found ? active_market : "Market";
 		}
 	}
 
@@ -1037,10 +980,7 @@
     }	
 
 	function btn_onclick(id) {
-
-		d3.select("#btn" + g_chart_period).node().classList
-				.remove("btn-success");
-		d3.select("#btn" + g_chart_period).node().classList.add("btn-primary");
+		d3.select("#btn" + g_chart_period).node().classList.remove("active");
 		switch (id) {
 		case "btn1":
 			g_chart_period = 1;
@@ -1076,115 +1016,69 @@
 			console.log("Unknown button");
 			break;
 		}
-		d3.select("#btn" + g_chart_period).node().classList
-				.remove("btn-primary");
-		d3.select("#btn" + g_chart_period).node().classList.add("btn-success");
+		d3.select("#btn" + g_chart_period).node().classList.add("active");
 		console.log("btn clicked: " + id + " new period:" + g_chart_period);
-
-		console.log("load stats");
 		loadCandles();
 		loadPositions();
 	}
 </script>
-
-<style>
-.btn {
-	position: initial;
-}
-</style>
+</head>
 
 <body>
 
-	<div class="row align-items-start">
-		<div class="col-12">
-			<div class="navbar navbar-inverse navbar-static-top">
-				<div class="container">
-					<header class="clearfix">
-						<h3 class="brand">
-							<a href="/">Wolfinch</a>
-							<div class="btn-group dropdown"
-								style="float: right; margin-left: 2rem;">
-								<div class="btn-group btn-group-xs " role="group">
-									<button type="button" style="position: initial;"
-										class="btn btn-default dropdown-toggle btn-primary"
-										data-toggle="dropdown" aria-haspopup="true"
-										aria-expanded="false" id="exch_btn_id">
-										Exchange <span class="caret"></span>
-									</button>
-									<ul class="dropdown-menu .dropdown-menu-right"
-										id="exchangesDdId">
-									</ul>
-								</div>
-								<div class="btn-group btn-group-xs" role="group">
-									<button type="button" style="position: initial;"
-										class="btn btn-default dropdown-toggle btn-primary"
-										data-toggle="dropdown" aria-haspopup="true"
-										aria-expanded="false" id="markets_btn_id"
-										onclick="load_markets_dd">
-										Market <span class="caret"></span>
-									</button>
-									<ul class="dropdown-menu .dropdown-menu-right" id="marketsDdId">
-									</ul>
-								</div>
-							</div>
-						</h3>
-						<ul class="nav masthead-nav">
-							<li><a href="../wolfinch"> Home</a></li>
-							<li class="active"><a href="chart.html">Charts </a></li>
-							<li><a href="trading.html"> Trading</a></li>
-							<li><a href="/"> Documentation</a></li>
-						</ul>
-					</header>
+	<!-- ── Top Nav ── -->
+	<nav class="top-nav">
+		<a class="brand-link" href="/wolfinch"><span class="brand-icon">◈</span> Wolfinch</a>
+
+		<div class="pill-pair">
+			<span class="nav-label">Exchange</span>
+			<div class="pill-select">
+				<div class="pill-select-btn" onclick="toggleMenu('exchangesDdId')">
+					<span id="exch_btn_id">—</span>
+					<span class="caret">▾</span>
 				</div>
+				<ul class="pill-menu" id="exchangesDdId"></ul>
 			</div>
 		</div>
+
+		<div class="pill-pair">
+			<span class="nav-label">Market</span>
+			<div class="pill-select">
+				<div class="pill-select-btn" onclick="toggleMenu('marketsDdId')">
+					<span id="markets_btn_id">—</span>
+					<span class="caret">▾</span>
+				</div>
+				<ul class="pill-menu" id="marketsDdId"></ul>
+			</div>
+		</div>
+
+		<div class="nav-links">
+			<a href="../wolfinch">Dashboard</a>
+			<a href="chart.html" class="active">Charts</a>
+			<a href="trading.html">Trading</a>
+		</div>
+	</nav>
+
+	<!-- ── Chart Controls ── -->
+	<div class="chart-toolbar">
+		<div class="filter-tabs">
+			<button id="btn1"     class="filter-tab active" onclick="btn_onclick(this.id)">1D</button>
+			<button id="btn3"     class="filter-tab"        onclick="btn_onclick(this.id)">3D</button>
+			<button id="btn7"     class="filter-tab"        onclick="btn_onclick(this.id)">7D</button>
+			<button id="btn30"    class="filter-tab"        onclick="btn_onclick(this.id)">30D</button>
+		</div>
+		<div class="chart-nav-btns">
+			<button id="btn_prev" class="btn btn--ghost btn--sm" onclick="btn_onclick(this.id)">&#8249;</button>
+			<button id="btn_next" class="btn btn--ghost btn--sm" onclick="btn_onclick(this.id)">&#8250;</button>
+		</div>
+		<input type="date" id="datePicker" class="input chart-date-input" value="2023-08-30" onchange="getDate()">
 	</div>
 
-	<div class="jumbotron jumbotron-fluid">
-		<div class="container">
-			<div class="row" style="margin-left: 1em;">
-				<div class="col-sm-12" style="position: relative">
-					<button id="btn1" onclick="btn_onclick(this.id)"
-						class="btn btn-success btn-xs ">1 Day</button>
-					<button id="btn3" onclick="btn_onclick(this.id)"
-						class="btn btn-primary btn-xs ">3 Day</button>
-					<button id="btn7" onclick="btn_onclick(this.id)"
-						class="btn btn-primary btn-xs ">7 Days</button>
-					<button id="btn30" onclick="btn_onclick(this.id)"
-						class="btn btn-primary btn-xs ">30 Days</button>
-						
-						
-					<button id="btn_prev" onclick="btn_onclick(this.id)"
-						class="btn btn-success btn-sm ">
-						<span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span></button>						
-					<button id="btn_next" onclick="btn_onclick(this.id)"
-						class="btn btn-success btn-sm ">
-						<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>		
-						<!-- <div class="col-sm-2" style="position: relative; float: revert;"> -->
-							<input type="date" id="datePicker" style="float: revert;" form-control" value="2023-08-30" onchange="getDate()">
-						<!-- </div> -->
-																	 -->
-				</div>
-			</div>
-			<div class="row">
-
-				<div class="chartcontainer" id="chart"></div>
-			</div>
-
-		</div>
+	<!-- ── Chart Container ── -->
+	<div class="chart-wrap">
+		<div class="chartcontainer" id="chart"></div>
 	</div>
 
-	<footer class="footer">
-		<div class="container">
-			<p>
-				<small>
-					<div class="row">
-						<em>&copy; 2017-2023 Wolfinch Bot</em>
-					</div>
-				</small>
-
-			</p>
-		</div>
-	</footer>
+	<footer class="footer">© 2017-2025 Wolfinch Bot</footer>
 </body>
 </html>
