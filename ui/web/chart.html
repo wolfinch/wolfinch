@@ -236,10 +236,10 @@
 		g_volume_series = g_lw_chart.addHistogramSeries({
 			priceFormat: { type: 'volume' },
 			priceScaleId: 'volume',
-			color: 'rgba(187,187,187,0.35)'
+			color: 'rgba(187,187,187,0.65)'
 		});
 		g_lw_chart.priceScale('volume').applyOptions({
-			scaleMargins: { top: 0.8, bottom: 0 }
+			scaleMargins: { top: 0.75, bottom: 0 }
 		});
 	}
 
@@ -462,7 +462,7 @@
 			return {
 				time: d.time,
 				value: d.volume,
-				color: d.close >= d.open ? 'rgba(0,170,0,0.3)' : 'rgba(255,0,0,0.3)'
+				color: d.close >= d.open ? 'rgba(0,170,0,0.55)' : 'rgba(255,0,0,0.55)'
 			};
 		});
 		g_volume_series.setData(volData);
