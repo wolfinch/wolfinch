@@ -42,7 +42,8 @@ class SqliteDb (DbBase):
             return None
         else:            
             self.connection = self.engine.connect()
-            self.metadata = db.MetaData(bind=self.connection, reflect=True)           
+            self.metadata = db.MetaData()
+            self.metadata.reflect(bind=self.engine)
             self.session = sessionmaker(bind=self.engine)()
             
             if read_only == True:

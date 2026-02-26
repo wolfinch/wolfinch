@@ -16,15 +16,12 @@
 <html lang="en">
 
 <head>
-<title>Wolfinch Trading Bot</title>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet"
-	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-<script
-	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script
-	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+	<title>Wolfinch Trading Bot</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
 </head>
 <!-- 
  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
@@ -35,19 +32,15 @@
 
  -->
 <link href="stylesheet.css" rel="stylesheet">
-<script
-	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
 	integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
 	crossorigin="anonymous"></script>
 
-<link rel="stylesheet" type="text/css"
-	href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
 
-<script type="text/javascript" charset="utf8"
-	src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
 
 <script src="https://momentjs.com/downloads/moment.min.js"></script>
 
@@ -60,23 +53,23 @@
 	var buy_paused = false;
 	var sell_paused = false;
 	var ui_code = "";
-	$(document).ready(function() {
+	$(document).ready(function () {
 
 		console.log("load stats");
-		
+
 		set_ui_code();
 		load_exch_data();
 	});
-	
-	function set_ui_code () {
+
+	function set_ui_code() {
 		p_l = window.location.pathname.split("/")
 		if (p_l.length > 1) {
 			if (p_l[1] != "wolfinch" || p_l[1] != "") {
-				ui_code = "/"+p_l[1]
-				console.log("ui_code - "+ui_code)
+				ui_code = "/" + p_l[1]
+				console.log("ui_code - " + ui_code)
 			}
-		}	
-	}	
+		}
+	}
 
 	// exch/market selector - start
 	function exch_onclick(obj) {
@@ -102,19 +95,19 @@
 		data[active_exch] = active_market;
 		console.log("post data:" + active_exch, active_market);
 		$.ajax({
-			type : 'POST',
-			url : ui_code+'/api/set_active_market',
-			data : data,
-			dataType : 'json',
-			success : function(data) {
+			type: 'POST',
+			url: ui_code + '/api/set_active_market',
+			data: data,
+			dataType: 'json',
+			success: function (data) {
 				console.log("set_active_market success!" + data);
-				exchanges[active_exch].forEach(function(market) {
+				exchanges[active_exch].forEach(function (market) {
 					if (market["product_id"] == active_market) {
 
 						// Pause Buy
 						buy_paused = market["buy_paused"];
 						console.log("market: " + active_market + " paused: "
-								+ buy_paused);
+							+ buy_paused);
 						pause_btn = document.getElementById("btn_pause_buy");
 						if (buy_paused) {
 							pause_btn.innerText = "Buy Resume";
@@ -127,7 +120,7 @@
 						// Pause Sell
 						sell_paused = market["sell_paused"];
 						console.log("market: " + active_market + " paused: "
-								+ sell_paused);
+							+ sell_paused);
 						pause_btn = document.getElementById("btn_pause_sell");
 						if (sell_paused) {
 							pause_btn.innerText = "Sell Resume";
@@ -139,7 +132,7 @@
 					}
 				});
 			},
-			error : function(xhr, error) {
+			error: function (xhr, error) {
 				console.log("set_active_market failed!");
 			}
 		});
@@ -165,7 +158,7 @@
 		}
 
 		var txt = "Pause trading for " + active_exch + ":" + active_market
-				+ " with code '" + req_code + "?";
+			+ " with code '" + req_code + "?";
 
 		if (!confirm(txt)) {
 			console.log("cancel");
@@ -182,25 +175,25 @@
 
 		// call api to pause/resume
 		var data = {
-			"buy_pause" : (buy_paused) * 1,
-			"sell_pause" : (sell_paused) * 1,
-			"req_code" : req_code,
-			"exch_name" : active_exch,
-			"product" : active_market,
+			"buy_pause": (buy_paused) * 1,
+			"sell_pause": (sell_paused) * 1,
+			"req_code": req_code,
+			"exch_name": active_exch,
+			"product": active_market,
 		};
 		$.ajax({
-			type : 'POST',
-			url : ui_code+'/api/pause_market',
-			data : data,
-			dataType : 'json',
-			success : function(resp_data) {
+			type: 'POST',
+			url: ui_code + '/api/pause_market',
+			data: data,
+			dataType: 'json',
+			success: function (resp_data) {
 				alert(resp_data);
 
 				if (resp_data == "success") {
 					console.log("pause / resume market success!");
 				} else {
 					console.log("pause / resume market failed! resp:"
-							+ resp_data);
+						+ resp_data);
 					if (id == "btn_pause_buy") {
 						buy_paused = !buy_paused;
 					} else if (id == "btn_pause_sell") {
@@ -230,7 +223,7 @@
 					pause_btn.className = "btn btn-danger btn-xs";
 				}
 			},
-			error : function(xhr, error) {
+			error: function (xhr, error) {
 				console.log("pause / resume market failed!");
 				alert(error);
 			}
@@ -241,7 +234,7 @@
 	function load_exchanges_dd() {
 		var list = document.getElementById("exchangesDdId");
 
-		Object.keys(exchanges).forEach(function(exch_name) {
+		Object.keys(exchanges).forEach(function (exch_name) {
 			console.log("loading " + exch_name);
 			var li = document.createElement("li");
 			var link = document.createElement("a");
@@ -279,7 +272,7 @@
 			list.removeChild(list.firstChild);
 		}
 
-		markets_l.forEach(function(market) {
+		markets_l.forEach(function (market) {
 			console.log("loading " + market["product_id"]);
 			var li = document.createElement("li");
 			var link = document.createElement("a");
@@ -298,10 +291,10 @@
 			console.log("active_market: " + active_market + markets_l);
 
 			btn.innerHTML = 'Market <span class="caret"></span>';
-			markets_l.forEach(function(market) {
+			markets_l.forEach(function (market) {
 				if (market["product_id"] == active_market) {
 					btn.innerHTML = active_market
-							+ ' <span class="caret"></span>';
+						+ ' <span class="caret"></span>';
 				}
 			});
 		}
@@ -311,10 +304,10 @@
 		console.log("loading exchanges and markets");
 		// call api to buy/sell
 		$.ajax({
-			type : 'GET',
-			url : ui_code+'/api/get_markets',
-			dataType : 'json',
-			success : function(data) {
+			type: 'GET',
+			url: ui_code + '/api/get_markets',
+			dataType: 'json',
+			success: function (data) {
 				console.log("get_markets success!" + data);
 				exchanges = data["all"];
 				if (data["active"]) {
@@ -324,8 +317,8 @@
 					sell_paused = data["active"]["SELL_PAUSED"];
 
 					console.log("active exhc:" + active_exch + " markt: "
-							+ active_market + " buy_paused: " + buy_paused
-							+ " sell_paused: " + sell_paused);
+						+ active_market + " buy_paused: " + buy_paused
+						+ " sell_paused: " + sell_paused);
 				}
 				load_exchanges_dd();
 				load_markets_dd();
@@ -354,7 +347,7 @@
 					exch_cb();
 				}
 			},
-			error : function(xhr, error) {
+			error: function (xhr, error) {
 				console.log("get_markets failed!");
 				alert(error);
 			}
@@ -378,15 +371,15 @@
 		}
 
 		switch (id) {
-		case "btn_buy":
-			cmd = "buy";
-			break;
-		case "btn_sell":
-			cmd = "sell";
-			break;
-		default:
-			console.log("Unknown button");
-			break;
+			case "btn_buy":
+				cmd = "buy";
+				break;
+			case "btn_sell":
+				cmd = "sell";
+				break;
+			default:
+				console.log("Unknown button");
+				break;
 		}
 
 		var txt = cmd + " " + req_number + " with code '" + req_code + "'?";
@@ -405,29 +398,29 @@
 		// call api to buy/sell
 		console.log("call api to " + cmd);
 		var data = {
-			"cmd" : cmd,
-			"req_number" : req_number,
-			"req_code" : req_code,
-			"exch_name" : active_exch,
-			"product" : active_market,
+			"cmd": cmd,
+			"req_number": req_number,
+			"req_code": req_code,
+			"exch_name": active_exch,
+			"product": active_market,
 		};
 		$.ajax({
-			type : 'POST',
-			url : ui_code+'/api/manual_order',
-			data : data,
-			dataType : 'json',
-			success : function(data) {
+			type: 'POST',
+			url: ui_code + '/api/manual_order',
+			data: data,
+			dataType: 'json',
+			success: function (data) {
 				console.log("manual_order success!");
 				alert(data);
 			},
-			error : function(xhr, error) {
+			error: function (xhr, error) {
 				console.log("manual_order failed!");
 				alert(error);
 			}
 		});
 
 	}
-	
+
 	function btn_mkt_onclick(id) {
 
 		var ticker_id = document.getElementById("ticker_id").value;
@@ -443,15 +436,15 @@
 		}
 
 		switch (id) {
-		case "btn_mkt_add":
-			cmd = "add";
-			break;
-		case "btn_mkt_del":
-			cmd = "delete";
-			break;
-		default:
-			console.log("Unknown button");
-			break;
+			case "btn_mkt_add":
+				cmd = "add";
+				break;
+			case "btn_mkt_del":
+				cmd = "delete";
+				break;
+			default:
+				console.log("Unknown button");
+				break;
 		}
 
 		var txt = cmd + " " + ticker_id + " with code '" + req_code + "'?";
@@ -470,29 +463,30 @@
 		// call api to buy/sell
 		console.log("call api to " + cmd);
 		var data = {
-			"cmd" : cmd,
-			"req_code" : req_code,
-			"exch_name" : active_exch,
-			"product" : ticker_id,
+			"cmd": cmd,
+			"req_code": req_code,
+			"exch_name": active_exch,
+			"product": ticker_id,
 		};
 		$.ajax({
-			type : 'POST',
-			url : ui_code+'/api/update_market',
-			data : data,
-			dataType : 'json',
-			success : function(data) {
+			type: 'POST',
+			url: ui_code + '/api/update_market',
+			data: data,
+			dataType: 'json',
+			success: function (data) {
 				console.log("update_market success!");
 				alert(data);
 			},
-			error : function(xhr, error) {
+			error: function (xhr, error) {
 				console.log("update_market failed!");
 				alert(error);
 			}
 		});
 
-	}	
-	
+	}
+
 </script>
+
 <body>
 	<div class="row align-items-start">
 		<div class="col-12">
@@ -501,24 +495,20 @@
 					<header class="clearfix">
 						<h3 class="brand">
 							<a href="/">Wolfinch</a>
-							<div class="btn-group dropdown"
-								style="float: right; margin-left: 2rem;">
+							<div class="btn-group dropdown" style="float: right; margin-left: 2rem;">
 								<div class="btn-group btn-group-xs " role="group">
 									<button type="button" style="position: initial;"
-										class="btn btn-default dropdown-toggle btn-primary"
-										data-toggle="dropdown" aria-haspopup="true"
-										aria-expanded="false" id="exch_btn_id">
+										class="btn btn-default dropdown-toggle btn-primary" data-toggle="dropdown"
+										aria-haspopup="true" aria-expanded="false" id="exch_btn_id">
 										Exchange <span class="caret"></span>
 									</button>
-									<ul class="dropdown-menu .dropdown-menu-right"
-										id="exchangesDdId">
+									<ul class="dropdown-menu .dropdown-menu-right" id="exchangesDdId">
 									</ul>
 								</div>
 								<div class="btn-group btn-group-xs" role="group">
 									<button type="button" style="position: initial;"
-										class="btn btn-default dropdown-toggle btn-primary"
-										data-toggle="dropdown" aria-haspopup="true"
-										aria-expanded="false" id="markets_btn_id"
+										class="btn btn-default dropdown-toggle btn-primary" data-toggle="dropdown"
+										aria-haspopup="true" aria-expanded="false" id="markets_btn_id"
 										onclick="load_markets_dd">
 										Market <span class="caret"></span>
 									</button>
@@ -534,8 +524,7 @@
 									<!-- 			<label for="usr"
 										style="color: #d2d2dc; font-size: small; font-weight: 200;">Code</label> -->
 									<input type="
-										text" class="form-control"
-										id="req_code" style="margin: 0; width: 4vw; height: 2vh;">
+										text" class="form-control" id="req_code" style="margin: 0; width: 4vw; height: 2vh;">
 								</div>
 							</li>
 
@@ -554,37 +543,32 @@
 		<div class="container"
 			style="margin: false; width: 30vw; height: auto; color: rgba(255, 255, 255, .75); background-color: rgba(0, 0, 0, 0.1);"
 			border="0">
-			<div class="row"
-				style="margin: 0; background-color: rgba(fff, 0, 0, .90); width: 30vw; height: 8vh;">
-				<div class="col-sm-12" align="center"
-					style="font-size: 2vw; border: 0;">
+			<div class="row" style="margin: 0; background-color: rgba(fff, 0, 0, .90); width: 30vw; height: 8vh;">
+				<div class="col-sm-12" align="center" style="font-size: 2vw; border: 0;">
 					<b style="font-weight: 300;">Trade Positions</b>
 				</div>
 			</div>
 			<div class="row" style="margin: 1vw; width: 30vw; height: auto;">
 
-				<div class="col-sm-12" align="center"
-					style="font-size: 1vw; border: 0;">
+				<div class="col-sm-12" align="center" style="font-size: 1vw; border: 0;">
 					<div class="form-group">
-						<label for="usr"
-							style="color: #d2d2dc; font-size: small; font-weight: 200;">#Positions</label>
-						<input type="number" defaultValue="0" class="form-control"
-							id="req_number" style="margin: 0; width: 6em; height: 2vh;">
+						<label for="usr" style="color: #d2d2dc; font-size: small; font-weight: 200;">#Positions</label>
+						<input type="number" defaultValue="0" class="form-control" id="req_number"
+							style="margin: 0; width: 6em; height: 2vh;">
 					</div>
 				</div>
 			</div>
 
-			<div class="row"
-				style="margin: 1vw; border-top: 0em solid #555; width: 30vw; height: 7vh;
+			<div class="row" style="margin: 1vw; border-top: 0em solid #555; width: 30vw; height: 7vh;
 				display: flex; flex-direction: row; align-items: center;">
 				<div class="col-sm-6  text-center" style="vertical-align: middle;">
 					<div id="btn_buy" onclick="btn_onclick(this.id)"
-						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"					
+						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"
 						class="btn btn-primary btn-lg">Buy</div>
 				</div>
 				<div class="col-sm-6 text-center">
 					<div id="btn_sell" onclick="btn_onclick(this.id)"
-						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"					
+						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"
 						class="btn btn-danger btn-lg">Sell</div>
 				</div>
 			</div>
@@ -593,33 +577,29 @@
 		<div class="container"
 			style="margin-top: 2vh; width: 30vw; height: auto; color: rgba(255, 255, 255, .75); background-color: rgba(0, 0, 0, 0.1);"
 			border="0">
-			<div class="row"
-				style="margin: 1vh; background-color: rgba(fff, 0, 0, .90); width: 28vw; height: 6vh;">
+			<div class="row" style="margin: 1vh; background-color: rgba(fff, 0, 0, .90); width: 28vw; height: 6vh;">
 				<div class="col-sm-8" align="center"
 					style="height: 6vh; font-size: 2vw; border: 0; display: flex; align-items: center;">
 					<b style="font-weight: 300;">Pause Auto Trading</b>
 				</div>
 
-				<div class="col-sm-4" align="center"
-					style="font-size: 2vw; border: 0;">
+				<div class="col-sm-4" align="center" style="font-size: 2vw; border: 0;">
 
-					<div class="row"
-						style="margin: 0vw; border-top: 0em solid #555; height: 3vh; width: 8vw; display: flex;
+					<div class="row" style="margin: 0vw; border-top: 0em solid #555; height: 3vh; width: 8vw; display: flex;
 						 flex-direction: row; align-items: center;">
 
 						<div class="col-sm-6  text-center" style="vertical-align: middle; padding: 0;">
-							<div id="btn_pause_buy" onclick="pause_onclick(this.id)" 
-								style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"							
+							<div id="btn_pause_buy" onclick="pause_onclick(this.id)"
+								style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"
 								class="btn btn-danger btn-xs">Pause Buy</div>
 						</div>
 					</div>
-					<div class="row"
-						style="margin: 0vw; border-top: 0em solid #555; height: 3vh; width: 8vw; display: flex;
+					<div class="row" style="margin: 0vw; border-top: 0em solid #555; height: 3vh; width: 8vw; display: flex;
 						 flex-direction: row; align-items: center;">
 
 						<div class="col-sm-6  text-center" style="vertical-align: middle; padding: 0;">
-							<div id="btn_pause_sell" onclick="pause_onclick(this.id)" 
-							style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"
+							<div id="btn_pause_sell" onclick="pause_onclick(this.id)"
+								style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"
 								class="btn btn-danger btn-xs">Pause Sell</div>
 						</div>
 					</div>
@@ -630,46 +610,41 @@
 			</div>
 
 		</div>
-		
+
 		<div class="container"
 			style="margin-top: 2vh; width: 30vw; height: auto; color: rgba(255, 255, 255, .75); background-color: rgba(0, 0, 0, 0.1);"
 			border="0">
-			<div class="row"
-				style="margin: 0; background-color: rgba(fff, 0, 0, .90); width: 30vw; height: 8vh;">
-				<div class="col-sm-12" align="center"
-					style="font-size: 2vw; border: 0;">
+			<div class="row" style="margin: 0; background-color: rgba(fff, 0, 0, .90); width: 30vw; height: 8vh;">
+				<div class="col-sm-12" align="center" style="font-size: 2vw; border: 0;">
 					<b style="font-weight: 300;">Market</b>
 				</div>
 			</div>
 			<div class="row" style="margin: 1vw; width: 30vw; height: auto;">
 
-				<div class="col-sm-12" align="center"
-					style="font-size: 1vw; border: 0;">
+				<div class="col-sm-12" align="center" style="font-size: 1vw; border: 0;">
 					<div class="form-group">
-						<label for="usr"
-							style="color: #d2d2dc; font-size: small; font-weight: 200;">Ticker</label>
-						<input type="text" defaultValue="" class="form-control"
-							id="ticker_id" style="margin: 0; width: 6em; height: 2vh;">
+						<label for="usr" style="color: #d2d2dc; font-size: small; font-weight: 200;">Ticker</label>
+						<input type="text" defaultValue="" class="form-control" id="ticker_id"
+							style="margin: 0; width: 6em; height: 2vh;">
 					</div>
 				</div>
 			</div>
 
-			<div class="row"
-				style="margin: 1vw; border-top: 0em solid #555; width: 30vw; height: 7vh;
+			<div class="row" style="margin: 1vw; border-top: 0em solid #555; width: 30vw; height: 7vh;
 				display: flex; flex-direction: row; align-items: center;">
 				<div class="col-sm-6  text-center" style="vertical-align: middle;">
 					<div id="btn_mkt_add" onclick="btn_mkt_onclick(this.id)"
-						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"					
+						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"
 						class="btn btn-primary btn-lg">Add</div>
 				</div>
 				<div class="col-sm-6 text-center">
 					<div id="btn_mkt_del" onclick="btn_mkt_onclick(this.id)"
-						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"					
+						style="width: 8vw; font-size: 1vw; padding-left: 0px; padding-right: 0px;"
 						class="btn btn-danger btn-lg">Deleted</div>
 				</div>
 			</div>
-		</div>		
-		
+		</div>
+
 	</div>
 
 
@@ -686,4 +661,5 @@
 		</div>
 	</footer>
 </body>
+
 </html>

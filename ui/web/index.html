@@ -17,19 +17,16 @@
 -->
 <!doctype html>
 
-<html lang="en" >
+<html lang="en">
 
-<head>	
-<title>Wolfinch Trading Bot</title>
-<link rel="icon" href="https://wolfinch.com/favicon.ico">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet"
-	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-<script
-	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script
-	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<head>
+	<title>Wolfinch Trading Bot</title>
+	<link rel="icon" href="https://wolfinch.com/favicon.ico">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
 </head>
 
 <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
@@ -39,20 +36,16 @@
 	crossorigin="anonymous"></script> -->
 
 <link href="wolfinch/stylesheet.css" rel="stylesheet">
-<script
-	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
 	integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
 	crossorigin="anonymous"></script>
 
 
-<link rel="stylesheet" type="text/css"
-	href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 
-<script type="text/javascript" charset="utf8"
-	src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
 
 <script src="https://momentjs.com/downloads/moment.min.js"></script>
 <script type="text/javascript">
@@ -61,22 +54,22 @@
 	var active_exch = "";
 	var active_market = "";
 	var ui_code = "";
-	$(document).ready(function() {
+	$(document).ready(function () {
 		set_ui_code();
 		console.log("load stats");
 		load_exch_data(load_tables);
 	});
 
-	function set_ui_code () {
+	function set_ui_code() {
 		p_l = window.location.pathname.split("/")
 		if (p_l.length > 1) {
 			if (p_l[1] != "wolfinch" || p_l[1] != "") {
-				ui_code = "/"+p_l[1]
-				console.log("ui_code - "+ui_code)
+				ui_code = "/" + p_l[1]
+				console.log("ui_code - " + ui_code)
 			}
-		}	
+		}
 	}
-	
+
 	// exch/market selector - start
 	function exch_onclick(obj) {
 		console.log("onclick " + this.id);
@@ -100,15 +93,15 @@
 		data[active_exch] = active_market;
 		console.log("post data:" + active_exch, active_market);
 		$.ajax({
-			type : 'POST',
-			url : ui_code+'/api/set_active_market',
-			data : data,
-			dataType : 'json',
-			success : function(data) {
+			type: 'POST',
+			url: ui_code + '/api/set_active_market',
+			data: data,
+			dataType: 'json',
+			success: function (data) {
 				console.log("set_active_market success!" + data);
 				load_tables();
 			},
-			error : function(xhr, error) {
+			error: function (xhr, error) {
 				console.log("set_active_market failed!");
 			}
 		});
@@ -117,7 +110,7 @@
 	function load_exchanges_dd() {
 		var list = document.getElementById("exchangesDdId");
 
-		Object.keys(exchanges).forEach(function(exch_name) {
+		Object.keys(exchanges).forEach(function (exch_name) {
 			console.log("loading " + exch_name);
 			var li = document.createElement("li");
 			var link = document.createElement("a");
@@ -155,7 +148,7 @@
 			list.removeChild(list.firstChild);
 		}
 
-		markets_l.forEach(function(market) {
+		markets_l.forEach(function (market) {
 			console.log("loading " + market["product_id"]);
 			var li = document.createElement("li");
 			var link = document.createElement("a");
@@ -171,12 +164,12 @@
 		if (active_market != undefined && active_market != "") {
 			var btn = document.getElementById("markets_btn_id");
 
-			console.log ("active_market: "+active_market+markets_l);
-			
-			btn.innerHTML = 'Market <span class="caret"></span>';			
-			markets_l.forEach(function(market) {
+			console.log("active_market: " + active_market + markets_l);
+
+			btn.innerHTML = 'Market <span class="caret"></span>';
+			markets_l.forEach(function (market) {
 				if (market["product_id"] == active_market) {
-					btn.innerHTML = active_market + ' <span class="caret"></span>';					
+					btn.innerHTML = active_market + ' <span class="caret"></span>';
 				}
 			});
 		}
@@ -186,19 +179,19 @@
 		console.log("loading exchanges and markets");
 		// call api to buy/sell
 		$.ajax({
-			type : 'GET',
-			url : ui_code+'/api/get_markets',
-			dataType : 'json',
-			success : function(data) {
+			type: 'GET',
+			url: ui_code + '/api/get_markets',
+			dataType: 'json',
+			success: function (data) {
 				console.log("get_markets success!" + data);
 				exchanges = data["all"];
 				if (data["active"]) {
 					active_exch = data["active"]["EXCH_NAME"];
 					active_market = data["active"]["PRODUCT_ID"];
 					paused = data["active"]["PAUSED"];
-					
+
 					console.log("active exhc:" + active_exch + " markt: "
-							+ active_market+" paused: "+paused);
+						+ active_market + " paused: " + paused);
 				}
 				load_exchanges_dd();
 				load_markets_dd();
@@ -207,7 +200,7 @@
 					exch_cb();
 				}
 			},
-			error : function(xhr, error) {
+			error: function (xhr, error) {
 				console.log("get_markets failed!");
 				alert(error);
 			}
@@ -218,15 +211,15 @@
 
 	function loadTradingStats() {
 		console.log("load market stats")
-		
+
 		$.ajax({
-			type : 'GET',
-			url : ui_code+'/api/market_stats',
-			data : {
-				get_param : 'value'
+			type: 'GET',
+			url: ui_code + '/api/market_stats',
+			data: {
+				get_param: 'value'
 			},
-			dataType : 'json',
-			success : function(data) {
+			dataType: 'json',
+			success: function (data) {
 				if (data.exchange_name == undefined) {
 					console.log("invalid data");
 					return;
@@ -250,7 +243,7 @@
 				$("#failed_trades").text(data.num_failed_trade)
 				$("#buyn_hold_profit").text(data.cur_buy_and_hold_profit)
 				$("#cur_candle_time").text(
-						moment(data.cur_candle_time * 1000).fromNow())
+					moment(data.cur_candle_time * 1000).fromNow())
 				$("#cur_candle_vol").text(data.cur_candle_vol)
 				$("#num_candles").text(data.num_candles)
 				$("#cur_market_rate").text(data.current_market_rate)
@@ -289,12 +282,12 @@
 	function load_tables() {
 
 		console.log("load stats")
-		
+
 		if (active_exch == "" || active_market == "") {
 			console.log("markets not set");
 			return;
 		}
-		
+
 		loadTradingStats();
 
 		if (table) {
@@ -330,177 +323,177 @@
 		 */
 
 		table = $('#statsTable').DataTable(
-				{
-					//data : dataSet,
-					//ajax: '/api/data',
-					"processing" : true,
-					pageLength : 25,
-					ajax : {
-						url : ui_code+'/api/positions',
-			 			data : function(d){
-							d.from_time = 0;
-							d.to_time = 0;
-							d.exch_name = active_exch;
-							d.product = active_market;
-						},
-						dataSrc : ''
+			{
+				//data : dataSet,
+				//ajax: '/api/data',
+				"processing": true,
+				pageLength: 25,
+				ajax: {
+					url: ui_code + '/api/positions',
+					data: function (d) {
+						d.from_time = 0;
+						d.to_time = 0;
+						d.exch_name = active_exch;
+						d.product = active_market;
 					},
+					dataSrc: ''
+				},
 
-					columns : [
-							{
-								title : "status",
-								data : "status"
-							},
-							{
-								title : "buy price",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.price;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "sell price",
-								data : null,
-								render : function(data, type, row) {
-									//console.log("data:"+data)
-									if (data.sell != undefined) {
-										return data.sell.price;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "stop loss",
-								data : "stop_loss"
-							},
-							{
-								title : "take profit",
-								data : "take_profit"
-							},
-							{
-								title : "profit",
-								data : "profit"
-							},
-							{
-								title : "type",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.order_type;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "request size",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.request_size;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "buy filled size",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.filled_size;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "sell filled size",
-								data : null,
-								render : function(data, type, row) {
-									if (data.sell != undefined) {
-										return data.sell.filled_size;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "remaining size",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.remaining_size;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "funds ",
-								data : null,
-								render : function(data, type, row) {
-									if (data.buy != undefined) {
-										return data.buy.funds;
-									} else {
-										return "-";
-									}
-								}
-							},
-							{
-								title : "open time",
-								//data : "open_time",
-								data : null,
-								render : function(data, type, row) {
-									if (data.open_time != undefined
-											&& data.open_time != 'None'
-											&& data.open_time != null) {
-										date = moment(data.open_time*1000);
-										//console.log(date.fromNow());
+				columns: [
+					{
+						title: "status",
+						data: "status"
+					},
+					{
+						title: "buy price",
+						data: null,
+						render: function (data, type, row) {
+							if (data.buy != undefined) {
+								return data.buy.price;
+							} else {
+								return "-";
+							}
+						}
+					},
+					{
+						title: "sell price",
+						data: null,
+						render: function (data, type, row) {
+							//console.log("data:"+data)
+							if (data.sell != undefined) {
+								return data.sell.price;
+							} else {
+								return "-";
+							}
+						}
+					},
+					{
+						title: "stop loss",
+						data: "stop_loss"
+					},
+					{
+						title: "take profit",
+						data: "take_profit"
+					},
+					{
+						title: "profit",
+						data: "profit"
+					},
+					{
+						title: "type",
+						data: null,
+						render: function (data, type, row) {
+							if (data.buy != undefined) {
+								return data.buy.order_type;
+							} else {
+								return "-";
+							}
+						}
+					},
+					{
+						title: "request size",
+						data: null,
+						render: function (data, type, row) {
+							if (data.buy != undefined) {
+								return data.buy.request_size;
+							} else {
+								return "-";
+							}
+						}
+					},
+					{
+						title: "buy filled size",
+						data: null,
+						render: function (data, type, row) {
+							if (data.buy != undefined) {
+								return data.buy.filled_size;
+							} else {
+								return "-";
+							}
+						}
+					},
+					{
+						title: "sell filled size",
+						data: null,
+						render: function (data, type, row) {
+							if (data.sell != undefined) {
+								return data.sell.filled_size;
+							} else {
+								return "-";
+							}
+						}
+					},
+					{
+						title: "remaining size",
+						data: null,
+						render: function (data, type, row) {
+							if (data.buy != undefined) {
+								return data.buy.remaining_size;
+							} else {
+								return "-";
+							}
+						}
+					},
+					{
+						title: "funds ",
+						data: null,
+						render: function (data, type, row) {
+							if (data.buy != undefined) {
+								return data.buy.funds;
+							} else {
+								return "-";
+							}
+						}
+					},
+					{
+						title: "open time",
+						//data : "open_time",
+						data: null,
+						render: function (data, type, row) {
+							if (data.open_time != undefined
+								&& data.open_time != 'None'
+								&& data.open_time != null) {
+								date = moment(data.open_time * 1000);
+								//console.log(date.fromNow());
 
-										if (type == "sort") {
-											//console.log(date.unix());																	
-											return date.unix();
-										} else {
-											return date.fromNow();
-											//return data.closed_time;
-										}
-									} else {
-										return "-";
-									}
+								if (type == "sort") {
+									//console.log(date.unix());																	
+									return date.unix();
+								} else {
+									return date.fromNow();
+									//return data.closed_time;
 								}
-							},
-							{
-								title : "closed time",
-								data : null,
-								render : function(data, type, row) {
-									if (data.closed_time != undefined
-											&& data.closed_time != 'None'
-											&& data.closed_time != null) {
-										date = moment(data.closed_time*1000);
-										//console.log(date.fromNow());
-										if (type == "sort") {
-											return date.unix();
-										} else {
-											return date.fromNow();
-											//return data.closed_time;
-										}
-									} else {
-										return "-";
-									}
+							} else {
+								return "-";
+							}
+						}
+					},
+					{
+						title: "closed time",
+						data: null,
+						render: function (data, type, row) {
+							if (data.closed_time != undefined
+								&& data.closed_time != 'None'
+								&& data.closed_time != null) {
+								date = moment(data.closed_time * 1000);
+								//console.log(date.fromNow());
+								if (type == "sort") {
+									return date.unix();
+								} else {
+									return date.fromNow();
+									//return data.closed_time;
 								}
-							} ],
+							} else {
+								return "-";
+							}
+						}
+					}],
 
-					"order" : [ [ 0, "desc" ], [ 12, "desc" ] ],
-					responsive : true
-				});
+				"order": [[0, "desc"], [12, "desc"]],
+				responsive: true
+			});
 
-		setInterval(function() {
+		setInterval(function () {
 			table.ajax.reload(null, false); // user paging is not reset on reload
 		}, 120000);
 	}
@@ -515,24 +508,20 @@
 					<header class="clearfix">
 						<h3 class="brand">
 							<a href="/">Wolfinch</a>
-							<div class="btn-group dropdown"
-								style="float: right; margin-left: 2rem;">
+							<div class="btn-group dropdown" style="float: right; margin-left: 2rem;">
 								<div class="btn-group btn-group-xs " role="group">
 									<button type="button" style="position: initial;"
-										class="btn btn-default dropdown-toggle btn-primary"
-										data-toggle="dropdown" aria-haspopup="true"
-										aria-expanded="false" id="exch_btn_id">
+										class="btn btn-default dropdown-toggle btn-primary" data-toggle="dropdown"
+										aria-haspopup="true" aria-expanded="false" id="exch_btn_id">
 										Exchange <span class="caret"></span>
 									</button>
-									<ul class="dropdown-menu .dropdown-menu-right"
-										id="exchangesDdId">
+									<ul class="dropdown-menu .dropdown-menu-right" id="exchangesDdId">
 									</ul>
 								</div>
 								<div class="btn-group btn-group-xs" role="group">
 									<button type="button" style="position: initial;"
-										class="btn btn-default dropdown-toggle btn-primary"
-										data-toggle="dropdown" aria-haspopup="true"
-										aria-expanded="false" id="markets_btn_id"
+										class="btn btn-default dropdown-toggle btn-primary" data-toggle="dropdown"
+										aria-haspopup="true" aria-expanded="false" id="markets_btn_id"
 										onclick="load_markets_dd">
 										Market <span class="caret"></span>
 									</button>
@@ -569,31 +558,33 @@
 									<table style="margin: false; height: auto;" border="1">
 										<tbody>
 											<tr style="background-color: rgba(0, 0, 0, 0.1);">
-												<td align="center" style="font-size: 2vw; border: 0;"
-													colspan="16"><b>Trades</b></td>
+												<td align="center" style="font-size: 2vw; border: 0;" colspan="16">
+													<b>Trades</b></td>
 											</tr>
 											<tr style="margin: 0; background-color: rgba(0, 0, 0, 0.1);">
-												<td align="center" colspan="3"
-													style="font-size: 1vw; border: 0;">Number of.</td>
+												<td align="center" colspan="3" style="font-size: 1vw; border: 0;">Number
+													of.</td>
 
 												<td align="center" style="font-size: 1vw; border: 0;">Requests</td>
 												<td align="center" style="font-size: 1vw; border: 0;">Rejects</td>
 												<td align="center" style="font-size: 1vw; border: 0;">Orders</td>
 												<td align="center" style="font-size: 1vw; border: 0;">Success</td>
 												<td align="center" style="font-size: 1vw; border: 0;">Failed</td>
-												<td align="center" style="font-size: 1vw; border: 0;"
-													colspan="2">#Hits</td>
-												<td align="center" style="font-size: 1vw; border: 0;"
-													colspan="2">#Trade Result</td>
-												<td align="center" style="font-size: 1vw; border: 0;"
-													colspan="4">Candle Stats</td>
+												<td align="center" style="font-size: 1vw; border: 0;" colspan="2">#Hits
+												</td>
+												<td align="center" style="font-size: 1vw; border: 0;" colspan="2">#Trade
+													Result</td>
+												<td align="center" style="font-size: 1vw; border: 0;" colspan="4">Candle
+													Stats</td>
 											</tr>
 
 											<tr style="border-top: 0em solid #555;">
 												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Exchange</td>
+													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">
+													Exchange</td>
 												<td id="exch"
-													style="font-size: 1vw; border: 0; width: 9.2em; height: auto;">0</td>
+													style="font-size: 1vw; border: 0; width: 9.2em; height: auto;">0
+												</td>
 
 												<td style="font-size: 1vw; border: 0; width: 5.0em;">&nbsp;Buy</td>
 												<td align="center" id="nbuy"
@@ -607,12 +598,14 @@
 												<td align="center" id="nbuy_odr_f"
 													style="font-size: 1vw; border: 0; width: 15.8em;">0</td>
 												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Stop
+													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">
+													Stop
 													Loss</td>
 												<td align="center" id="sl_hits"
 													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
 												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Win</td>
+													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">
+													Win</td>
 												<td align="center" id="success_trades"
 													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
 												<td
@@ -621,16 +614,18 @@
 												<td align="center" id="cur_candle_time"
 													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
 												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">market
+													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">
+													market
 													Rate</td>
 												<td align="center" id="cur_market_rate"
 													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
 											</tr>
 											<tr style="background-color: rgba(0, 0, 0, 0.1);">
-												<td
-													style="font-size: 1vw; border: 0; width: 7.4em; height: auto;">Market</td>
+												<td style="font-size: 1vw; border: 0; width: 7.4em; height: auto;">
+													Market</td>
 												<td id="mkt"
-													style="font-size: 1vw; border: 0; width: 9.2em; height: auto;">0</td>
+													style="font-size: 1vw; border: 0; width: 9.2em; height: auto;">0
+												</td>
 
 												<td style="font-size: 1vw; border: 0; width: 5.0em;">&nbsp;Sell</td>
 												<td align="center" id="nsell"
@@ -644,21 +639,25 @@
 												<td align="center" id="nsell_odr_f"
 													style="font-size: 1vw; border: 0; width: 15.8em;">0</td>
 												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Take
+													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">
+													Take
 													Profit</td>
 												<td align="center" id="tp_hits"
 													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
 												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Loss</td>
+													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">
+													Loss</td>
 												<td align="center" id="failed_trades"
 													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
 												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">Cur
+													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">
+													Cur
 													Vol</td>
 												<td align="center" id="cur_candle_vol"
 													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
 												<td
-													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">#
+													style="font-size: 1vw; border: 0em solid #555555; width: 7.4em; height: auto;">
+													#
 													candles</td>
 												<td align="center" id="num_candles"
 													style="font-size: 1vw; border: 0; width: 5.8em;">0</td>
@@ -672,10 +671,8 @@
 							<td style="width: 33%;"></td>
 						</tr>
 
-						<tr style="font-size: 1vw; width: auto; height: auto;"
-							align="center">
-							<td
-								style="font-size: 1vw; width: 85%; height: auto; border-collapse: collapse;"
+						<tr style="font-size: 1vw; width: auto; height: auto;" align="center">
+							<td style="font-size: 1vw; width: 85%; height: auto; border-collapse: collapse;"
 								colspan="1">
 
 								<div class="table-responsive">
@@ -708,8 +705,7 @@
 								<div class="table-responsive">
 
 									<table border="0" class="w-auto"
-										style="font-size: 1vw; border-collapse: collapse; width: 100%;"
-										class="display">
+										style="font-size: 1vw; border-collapse: collapse; width: 100%;" class="display">
 										<tbody>
 											<tr style="background-color: rgba(0, 0, 0, 0.1);">
 												<td align="center" colspan="9"><b>Funds</b></td>
@@ -847,4 +843,5 @@
 		</div>
 	</footer>
 </body>
+
 </html>

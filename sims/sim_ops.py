@@ -62,6 +62,9 @@ def do_backtesting (simulator_on=False):
         
     for market in get_market_list():
         log.info ("backtest setup for market: %s num_candles:%d"%(market.name, market.num_candles))
+        if market.num_candles == 0:
+            log.critical ("No candle data for market: %s, skipping backtest"%(market.name))
+            continue
         market.backtesting_idx = 0
                           
     while (all_done < 5) : 
@@ -72,6 +75,8 @@ def do_backtesting (simulator_on=False):
             feed_Q_process_msg (msg)
             msg = feed_deQ(0)        
         for market in get_market_list():
+            if not hasattr(market, 'backtesting_idx') or market.num_candles == 0:
+                continue
             market.update_market_states()
             market.cur_candle_time = market.market_indicators_data[market.backtesting_idx]['ohlc'].time
             # Trade only on primary markets
