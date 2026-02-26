@@ -27,11 +27,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="stylesheet.css" rel="stylesheet">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="js/techan.min.js"></script>
+<script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
 
 <script>
-	var table;
 	var exchanges;
 	var active_exch = "";
 	var active_market = "";
@@ -50,6 +48,17 @@
 			ui_code = "/" + p_l[1];
 		}
 	}
+
+	// ── Lightweight Charts globals ──────────────────────────────
+	var g_lw_chart = null;        // main LW chart instance
+	var g_candle_series = null;   // CandlestickSeries
+	var g_volume_series = null;   // HistogramSeries
+	var g_line_series = {};       // overlay lines keyed by indicator name
+	var g_pane_series = {};       // sub-pane series keyed by indicator name
+	var g_pane_charts = {};       // sub-pane LW chart instances
+
+	// colour palette for overlay lines
+	var LINE_COLORS = ['#1f77b4','#ff7f0e','#aec7e8','#ff9fae','#1f78b4','#aec9e8','#ff740e','#ff70ae'];
 	
 	// exch/market selector - start
 	function exch_onclick(obj) {
@@ -164,29 +173,141 @@
 		preroll : 0
 	};
 
-	var g_big_chart;
-
 	function init_charting() {
 		console.log("ready!");
 		g_big_data.name = active_market;
 
-		g_big_chart = BigChart();
+		initChart();
 
-		window.onresize = function() {
-			d3.select('#chart').call(g_big_chart.resize);
-		};
+		window.addEventListener('resize', function() {
+			resizeCharts();
+		});
 
 		console.log("load stats");
 		loadPositions();
 		setTimeout(loadCandles, 1000);
-		//setInterval(loadPositions, 120000);
-		//setInterval(loadCandles, 120000);
 	}
 
-	var dateFormat = d3.timeFormat("%c"), valueFormat = d3.format(',.4f');
+	// ── Chart init ──────────────────────────────────────────────
+	function initChart() {
+		var container = document.getElementById('chart');
+		if (!container) return;
+
+		// Remove any existing charts
+		container.innerHTML = '';
+		g_pane_charts = {};
+		g_pane_series = {};
+		g_line_series = {};
+
+		var w = container.clientWidth || container.offsetWidth || 800;
+		var h = container.clientHeight || container.offsetHeight || 500;
+
+		g_lw_chart = LightweightCharts.createChart(container, {
+			width: w,
+			height: Math.round(h * 0.72),
+			layout: {
+				background: { type: 'solid', color: '#0d1117' },
+				textColor: '#aaaaaa',
+				fontFamily: "'JetBrains Mono', monospace",
+				fontSize: 11
+			},
+			grid: {
+				vertLines: { color: '#1e2530' },
+				horzLines: { color: '#1e2530' }
+			},
+			crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+			rightPriceScale: { borderColor: '#2a3347' },
+			timeScale: {
+				borderColor: '#2a3347',
+				timeVisible: true,
+				secondVisible: false
+			}
+		});
+
+		g_candle_series = g_lw_chart.addCandlestickSeries({
+			upColor:   '#00AA00',
+			downColor: '#FF0000',
+			borderUpColor:   '#00AA00',
+			borderDownColor: '#FF0000',
+			wickUpColor:   '#00AA00',
+			wickDownColor: '#FF0000'
+		});
+
+		g_volume_series = g_lw_chart.addHistogramSeries({
+			priceFormat: { type: 'volume' },
+			priceScaleId: 'volume',
+			color: 'rgba(187,187,187,0.65)'
+		});
+		g_lw_chart.priceScale('volume').applyOptions({
+			scaleMargins: { top: 0.75, bottom: 0 }
+		});
+	}
+
+	// ── Sub-pane chart for an indicator ────────────────────────
+	var INDICATOR_COLORS = {
+		rsi:    'cyan',
+		mfi:    '#aec7e8',
+		vosc:   '#ff9fae',
+		vemaosc:'#ff7f0e',
+		obv:    '#aec9e8',
+		atr:    '#ff9fae',
+		macd:   '#5599ff',
+		signal: '#FF9999'
+	};
+
+	function getIndicatorColor(key) {
+		var lower = key.toLowerCase();
+		for (var k in INDICATOR_COLORS) {
+			if (lower.indexOf(k) !== -1) return INDICATOR_COLORS[k];
+		}
+		return '#aaaaaa';
+	}
+
+	function createPaneChart(container, height) {
+		var w = container.clientWidth || container.offsetWidth || 800;
+		return LightweightCharts.createChart(container, {
+			width: w,
+			height: height,
+			layout: {
+				background: { type: 'solid', color: '#0b0f18' },
+				textColor: '#888888',
+				fontFamily: "'JetBrains Mono', monospace",
+				fontSize: 10
+			},
+			grid: {
+				vertLines: { color: '#1a2030' },
+				horzLines: { color: '#1a2030' }
+			},
+			crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+			rightPriceScale: { borderColor: '#2a3347' },
+			timeScale: {
+				borderColor: '#2a3347',
+				timeVisible: true,
+				secondVisible: false
+			}
+		});
+	}
+
+	function resizeCharts() {
+		var container = document.getElementById('chart');
+		if (!container) return;
+		var w = container.clientWidth || container.offsetWidth;
+		var totalH = container.clientHeight || container.offsetHeight;
+		var numPanes = Object.keys(g_pane_charts).length;
+		var mainH = numPanes > 0 ? Math.round(totalH * 0.72) : totalH;
+		var paneH = numPanes > 0 ? Math.round((totalH - mainH) / numPanes) : 0;
+
+		if (g_lw_chart) g_lw_chart.resize(w, mainH);
+		for (var key in g_pane_charts) {
+			var pc = g_pane_charts[key];
+			if (pc && paneH > 0) pc.resize(w, paneH);
+		}
+	}
+
+	var valueFormat = function(v) { return parseFloat(v).toFixed(4); };
 
 	var parseDate = function(utcSeconds) {
-		var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
+		var d = new Date(0);
 		d.setUTCSeconds(utcSeconds);
 		return d;
 	}
@@ -231,792 +352,242 @@
 
 	function load_trades(data) {
 		var trades = [];
-		var beg_time = 0;
-		var end_time = 0; 
-		if (g_big_data.indicators.ohlc.length>0) {
-			beg_time = g_big_data.indicators.ohlc[0].date;
-			end_time = g_big_data.indicators.ohlc[g_big_data.indicators.ohlc.length-1].date;
-		}
-
 		console.log("positions data len: " + data.length);
 		for (var i = 0; i < data.length; i++) {
 			d = data[i];
 
 			if (d.closed_time && d.closed_time != "None") {
-				cdate = new Date (d.closed_time*1000);
-				// if ((beg_time>0 && (date < beg_time)) || (end_time > 0 && (date > end_time))){
-				// 	continue
-				// }
-				//console.log ("closed_time: "+d.closed_time+" price:"+d.sell.price)
 				trades.push({
-					date : cdate, //d3.isoParse(d.closed_time),
+					date : new Date(d.closed_time * 1000),
 					type : "sell",
-					price : d.sell.price,
-					low : d.sell.price,
-					high : d.sell.price
+					price : d.sell.price
 				});
 			}
-
 			if (d.open_time && d.open_time != "None") {
-				//console.log ("open_time: "+d.open_time+" price:"+d.buy.price)
-				odate = new Date (d.open_time*1000);
-				// if ((beg_time>0 && (date < beg_time)) || (end_time > 0 && (date > end_time))){
-				// 	continue
-				// }				
 				trades.push({
-					date : odate,
+					date : new Date(d.open_time * 1000),
 					type : "buy",
-					price : d.buy.price,
-					low : d.buy.price,
-					high : d.buy.price
+					price : d.buy.price
 				});
 			}
 		}
-
 		g_big_data.positions = trades;
-		// d3.select("#chart").call(g_big_chart);
 	}
 
 	function load_candles(data) {
 
-		//var accessor = candlestick.accessor();
-
 		console.log("candles data len: " + data.length);
 
-		//data = data.slice(data.length - 201, data.length - 1);
-				
 		data = data.sort(function(a, b) {
-			return d3.ascending(a['ohlc'].time, b['ohlc'].time);
+			return a['ohlc'].time - b['ohlc'].time;
 		});
 
-		if (!data.length) {
-			return;
-		}
+		if (!data.length) return;
 
-		g_cur_display_date = (data[0]["ohlc"].time)*1000;
+		g_cur_display_date = data[0]['ohlc'].time * 1000;
 		setDate();
 
-		//create indicators lists
-		// normalize OBV(2, 4) => OBV24
-		regexp = /[\s\(\),]/g;
-		 
-		g_big_data.indicator_plots = [],
-			g_big_data.indicator_lines = [],	
-			g_big_data.indicators = {ohlc: []},
-			g_big_data.preroll = 0;
-	
-		d = data[0];
-		Object.keys(d).forEach(function(key) {
-			console.log ("indiactor_name:"+key);
-			
-			if (key.toLowerCase().indexOf("ohlc") != -1 ) {
-				///g_big_data.indicator_plots [key.replace(regexp, '')] = "candlestick";	
-				console.log ("skip candlestick");
-			} else if ((key.toLowerCase().indexOf("rsi") != -1 ) || 
-					(key.toLowerCase().indexOf("mfi") != -1) ||
-					(key.toLowerCase().indexOf("vosc") != -1) ||
-					(key.toLowerCase().indexOf("vemaosc") != -1) ||					
-					(key.toLowerCase().indexOf("atr") != -1 ) ||
-					(key.toLowerCase().indexOf("obv") != -1)) {
-				g_big_data.indicator_plots [key.replace(regexp, '')] = "rsi";
-			} else if (key.toLowerCase().indexOf("macd") != -1) {
-				// Add supported indicators to plot in separate pane				
-				g_big_data.indicator_plots [key.replace(regexp, '')] = "macd";				
-			} /* else if (key.toLowerCase().indexOf("atr") != -1 ) {
-				console.log("atr freestyle plot");
-				g_big_data.indicator_plots [key.replace(regexp, '')] = "atr";				
-			} */ else {
-				// overlay lines
-				if (key != "close"){
-					g_big_data.indicator_lines.push(key.replace(regexp, ''));
-				}
+		var regexp = /[\s\(\),]/g;
+
+		g_big_data.indicator_plots = [];
+		g_big_data.indicator_lines = [];
+		g_big_data.indicators = {ohlc: []};
+		g_big_data.preroll = 0;
+
+		var d0 = data[0];
+		Object.keys(d0).forEach(function(key) {
+			var kl = key.toLowerCase();
+			if (kl.indexOf('ohlc') !== -1) {
+				// skip
+			} else if (kl.indexOf('rsi') !== -1 || kl.indexOf('mfi') !== -1 ||
+					kl.indexOf('vosc') !== -1 || kl.indexOf('vemaosc') !== -1 ||
+					kl.indexOf('atr') !== -1  || kl.indexOf('obv') !== -1) {
+				g_big_data.indicator_plots[key.replace(regexp, '')] = 'rsi';
+			} else if (kl.indexOf('macd') !== -1) {
+				g_big_data.indicator_plots[key.replace(regexp, '')] = 'macd';
+			} else if (key !== 'close') {
+				g_big_data.indicator_lines.push(key.replace(regexp, ''));
 			}
-			
 			g_big_data.indicators[key.replace(regexp, '')] = [];
-			
 		});
-		
-		// Candles Indicator Values 
-		data = data.map(function(dd) {
-			d = dd['ohlc'];
-			var date = parseDate(d.time);
+
+		// Parse all candle data
+		data.forEach(function(dd) {
+			var ohlc = dd['ohlc'];
+			var date = parseDate(ohlc.time);
 			g_big_data.indicators['ohlc'].push({
-				date : date,
-				open : +d.open,
-				high : +d.high,
-				low : +d.low,
-				close : +d.close,
-				volume : +d.volume
+				date:   date,
+				time:   ohlc.time,
+				open:   +ohlc.open,
+				high:   +ohlc.high,
+				low:    +ohlc.low,
+				close:  +ohlc.close,
+				volume: +ohlc.volume
 			});
-			
 			Object.keys(dd).forEach(function(key) {
-				//console.log ("date:"+date);
-				if (key.toLowerCase().indexOf("macd") != -1) {
-					// MACD
-					g_big_data.indicators[key.replace(regexp, '')].push({	
-						//TODO: fixme: FIXME:
-					  date: date,
-					  macd: dd[key],
-					  zero: 50,
-					  signal: 70,
-					  difference: 20
-					});
-				} else if (key.toLowerCase().indexOf("rsi") != -1) {
-					// RSIs
-					g_big_data.indicators[key.replace(regexp, '')].push({					
-					  date: date,
-					  rsi: dd[key],
-					});
-				} else if ((key.toLowerCase().indexOf("vosc") != -1) ||
-						(key.toLowerCase().indexOf("vemaosc") != -1)){
-					// Mimic Vosc plot with RSI plot as techan doesn't support VOSC out of the box
-					g_big_data.indicators[key.replace(regexp, '')].push({					
-					  date: date,
-					  rsi: dd[key],
-					});
-				} else if (key.toLowerCase().indexOf("mfi") != -1) {
-					// Mimic MFI plot with an RSI style plot
-					g_big_data.indicators[key.replace(regexp, '')].push({					
-					  date: date,
-					  rsi: dd[key],
-					});
- 				}  else if (key.toLowerCase().indexOf("atr") != -1) {
-					// Mimic ATR plot with an RSI style plot
-					g_big_data.indicators[key.replace(regexp, '')].push({					
-					  date: date,
-					  rsi: dd[key],
-					}); 
-				}   else if (key.toLowerCase().indexOf("obv") != -1) {
-					// Mimic OBV plot with an RSI style plot
-					g_big_data.indicators[key.replace(regexp, '')].push({					
-					  date: date,
-					  rsi: dd[key],
-					}); 
-				} else if (key.toLowerCase().indexOf("ohlc") == -1) {
-					// all other indicators except ohlc
-					d = dd[key];
-					g_big_data.indicators[key.replace(regexp, '')].push({date: date, value: d});
+				if (key.toLowerCase().indexOf('ohlc') !== -1) return;
+				var nk = key.replace(regexp, '');
+				var kl = key.toLowerCase();
+				if (kl.indexOf('macd') !== -1) {
+					g_big_data.indicators[nk].push({ date: date, time: ohlc.time, value: dd[key] });
+				} else if (kl.indexOf('rsi') !== -1 || kl.indexOf('vosc') !== -1 ||
+						kl.indexOf('vemaosc') !== -1 || kl.indexOf('mfi') !== -1 ||
+						kl.indexOf('atr') !== -1 || kl.indexOf('obv') !== -1) {
+					g_big_data.indicators[nk].push({ date: date, time: ohlc.time, value: dd[key] });
+				} else {
+					g_big_data.indicators[nk].push({ date: date, time: ohlc.time, value: dd[key] });
 				}
 			});
 		});
 
-		// normalize
-		function getMinRsi(data ){
-			  return data.reduce((min, b) => Math.min(min, b.rsi), data[0].rsi);
-			}
-		function getMaxRsi(data){
-			  return data.reduce((max, b) => Math.max(max, b.rsi), data[0].rsi);
-			}
-		
-		Object.keys(g_big_data.indicators).forEach(function(key) {
-			var data = g_big_data.indicators[key];
-			
-			if ((key.toLowerCase().indexOf("rsi") != -1) ||
-					(key.toLowerCase().indexOf("obv")  != -1) || 					
-					(key.toLowerCase().indexOf("atr")  != -1) || 					
-					(key.toLowerCase().indexOf("mfi")  != -1) ) {
-				min = getMinRsi(data);
-				max = getMaxRsi(data);
-				console.log ("key "+key+" min "+min+" max "+max);
-				
-				data.forEach (function addMinMaxRsi (di) {
-					di.overbought = max;
-					di.oversold = min;
-					di.middle = (max+min)/2
-					});
-			} else if ((key.toLowerCase().indexOf("vosc")  != -1) || 
-					(key.toLowerCase().indexOf("vemaosc")  != -1)) {
-				min = getMinRsi(data);
-				max = getMaxRsi(data);
-				console.log ("key "+key+" min "+min+" max "+max);
-				
-				data.forEach (function addMinMaxRsi (di) {
-					di.overbought = max;
-					di.oversold = min;
-					di.middle = 0
-					});
-			} 
-			else if ((key.toLowerCase().indexOf("macd")) != -1) {
-				//do something else
-					console.log ("############## normalize impl. macd ##########");
-			}
-		});
-		//g_big_data.indicators.ohlc = data;
-
-		d3.select("#chart").call(g_big_chart);
+		renderChart();
 	}
 	
-	function listContains (list, key) {
-		lower = [];
-		for (i=0; i<list.length; i++){
-			if (list[i].toLowerCase().indexOf(key) != -1) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	function BigChart() {
-	    var dim = {
-	    	      width: null, height: null,
-	    	      margin: { top: 25, right: 50, bottom: 25, left: 50 },
-	    	      plot: { width: null, height: null },
-	    	      ohlc: { height: null },
-	    	      indicator: { height: null, padding: null, top: null, bottom: null }
-	    	    };
-
-		var x = techan.scale.financetime();
-		var y = d3.scaleLinear();
-   	    var yPercent = y.copy(),
-   	        indicatorTop = d3.scaleLinear(),
-   	        yVolume = d3.scaleLinear(),
-   	        candlestick = techan.plot.candlestick().xScale(x).yScale(y),   	     	
-   	        volume = techan.plot.volume().accessor(candlestick.accessor()).xScale(x).yScale(yVolume),
-   	        xAxis = d3.axisBottom(x),
-   	        xAxisTop = d3.axisTop(x),
-   	        timeAnnotation = techan.plot.axisannotation().orient('bottom').axis(xAxis).format(d3.timeFormat('%Y-%m-%d')).width(65),
-   	        timeAnnotationTop = techan.plot.axisannotation().orient('top').axis(xAxisTop).format(d3.timeFormat('%X')).width(65),
-   	        yAxis = d3.axisRight(y),
-   	        ohlcAnnotation = techan.plot.axisannotation().orient('right').axis(yAxis).format(d3.format(',.2f')),
-   	        closeAnnotation = techan.plot.axisannotation().orient('right').accessor(candlestick.accessor()).axis(yAxis).format(d3.format(',.2f')),
-   	        percentAxis = d3.axisLeft(yPercent).tickFormat(d3.format('+.1%')),
-   	        percentAnnotation = techan.plot.axisannotation().orient('left').axis(percentAxis),
-   	        volumeAxis = d3.axisRight(yVolume).ticks(3).tickFormat(d3.format(',.3s')),
-   	        volumeAnnotation = techan.plot.axisannotation().orient('right').axis(volumeAxis).width(35),
-   	        ohlcCrosshair = techan.plot.crosshair().xScale(x).yScale(y).xAnnotation([timeAnnotation, timeAnnotationTop])
-   	        				.yAnnotation([ohlcAnnotation, percentAnnotation, volumeAnnotation]);
-   	    var ohlcIndicatorAnnotation = techan.plot.axisannotation()
-    	    .axis(yAxis)//.accessor(candlestick.accessor())
-        	.orient('right').format(d3.format(',.2f'))
-        	.width(32);
-
-   	    // trendline = techan.plot.trendline().xScale(x).yScale(y),
-   	    var supstance = techan.plot.supstance().xScale(x).yScale(y); //.annotation([ohlcAnnotation, percentAnnotation]);
-		var yInit, yPercentInit, zoomableInit;
-		
-		function zoomed() {
-
-			console.log("zoomed");
-	        var rescaledY = d3.event.transform.rescaleY(y);
-	        yAxis.scale(rescaledY);
-	        candlestick.yScale(rescaledY);
-
-	        // Emulates D3 behaviour, required for financetime due to secondary zoomable scale
-	        x.zoomable().domain(d3.event.transform.rescaleX(zoomableInit).domain());
-			
-			y.domain(d3.event.transform.rescaleY(yInit).domain());
-			yPercent.domain(d3.event.transform.rescaleY(yPercentInit).domain());
-
-			draw(d3.select("#chart"));
-		}
-
-		var zoom = d3.zoom().on("zoom", zoomed);
-
-		var tradearrow = techan.plot.tradearrow().xScale(x).yScale(y).y(
-				function(d) {
-					//console.log ("trade arrow "+d);
-					// Display the buy and sell arrows a bit above and below the price, so the price is still visible
-					if (d.type === 'buy')
-						return y(d.low) + 5;
-					if (d.type === 'sell')
-						return y(d.high) - 5;
-					else
-						return y(d.price);
-				}).orient(function(d) {
-			return d.type.startsWith("buy") ? "up" : "down";
-		}).on("mouseenter", enter).on("mouseout", out);
-
-		function enter(d) {
-			console.log ("enter");			
-	        valueText.style("display", "inline");
-			refreshText(d);
-		}
-
-		function out() {
-			console.log ("out");
-	        valueText.style("display", "none");
-		}
-
-		function refreshText(d) {
-			console.log ("refresh");			
-	        valueText.text("Trade: " + dateFormat(d.date) + ", " + d.type + ", " + valueFormat(d.price))
-	        .attr("x", dim.plot.width - 5)
-		  	.attr("y", 15);
-		}
-
-		////////////// TODO: generic, add more supported indicators here to plot.
-
-		function lineenter(d) {
-			console.log ("line enter");			
-	        valueText.style("display", "inline");
-			refreshText(d);
-		}
-
-		function lineout() {
-			console.log ("line out");
-	        valueText.style("display", "none");
-		}
-
-		function linerefreshText(d) {
-			console.log ("line refresh");			
-	        valueText.text("Trade: " + dateFormat(d.date) + ", " + d.type + ", " + valueFormat(d.price));
-		}
-
-		var ind_line = techan.plot.sma().xScale(x).yScale(y);
-		//.on("mouseenter", lineenter).on("mouseout", lineout);		
-		
-		console.log ("check and declare plots");
-
-     		yScale = [];
-     		indi_plot = [];
-     		Axis = [];
-     		Annotation = [];
-     		AxisLeft = [];
-     		AnnotationLeft = [];
-     		Crosshair = [];
-     		
-		////////////////////
-	    
-  function bigchart(selection) {
+	// ── Render chart with current g_big_data ───────────────────
+	function renderChart() {
 		var ohlc_list = g_big_data.indicators.ohlc;
+		if (!ohlc_list || ohlc_list.length === 0) return;
 
-		if (ohlc_list.length == 0)
-			return;	    	
+		// Rebuild chart completely (handles indicator pane count change)
+		initChart();
 
-      var svg = selection.select("svg")      
-		if (svg.node() != null) {
-			console.log("remove old svg");
-			svg.remove();
-		}      
-      
-      var svg = selection.append("svg"),
-      defs = svg.append("defs");
-      
+		// ── OHLC candlestick data ──
+		var candleData = ohlc_list.map(function(d) {
+			return { time: d.time, open: d.open, high: d.high, low: d.low, close: d.close };
+		});
+		g_candle_series.setData(candleData);
 
-      defs.append("clipPath")
-          .attr("id", "ohlcClip")
-        .append("rect")
-          .attr("x", 0)
-          .attr("y", 0);
+		// ── Volume data ──
+		var volData = ohlc_list.map(function(d) {
+			return {
+				time: d.time,
+				value: d.volume,
+				color: d.close >= d.open ? 'rgba(0,170,0,0.55)' : 'rgba(255,0,0,0.55)'
+			};
+		});
+		g_volume_series.setData(volData);
 
-       defs.append("clipPath")
-          .attr("id", "supstanceClip")
-        .append("rect")
-          .attr("x", -dim.margin.left)
-          .attr("y", 0);
+		// ── Overlay lines (MA, EMA, etc.) ──
+		g_big_data.indicator_lines.forEach(function(key, idx) {
+			var rawData = g_big_data.indicators[key];
+			if (!rawData || rawData.length === 0) return;
 
-      defs.selectAll(".indicatorClip").data(d3.range(Object.keys(g_big_data.indicator_plots).length))
-        .enter()
-        .append("clipPath")
-          .attr("id", function(d, i) { return "indicatorClip-" + i; })
-          .attr("class", "indicatorClip")
-        .append("rect")
-          .attr("x", 0);
+			// Skip pivotps (support/resistance) — different structure
+			if (key.toLowerCase() === 'pivotps') return;
 
-      svg = svg.append("g")
-        .attr("class", "chart")
-        .attr("transform", "translate(" + dim.margin.left + "," + dim.margin.top + ")");
+			var series = g_lw_chart.addLineSeries({
+				color: LINE_COLORS[idx % LINE_COLORS.length],
+				lineWidth: 1,
+				priceLineVisible: false,
+				lastValueVisible: true,
+				title: key
+			});
+			var lineData = rawData
+				.filter(function(d) { return d.value !== null && d.value !== undefined && !isNaN(+d.value); })
+				.map(function(d) { return { time: d.time, value: +d.value }; });
+			if (lineData.length > 0) series.setData(lineData);
+			g_line_series[key] = series;
+		});
 
-      svg.append('text')
-        .attr("class", "symbol")
-        .attr("x", 5)
-        .attr("y", 15)
-        .text(g_big_data.name);   
+		// ── Trade markers ──
+		applyTradeMarkers();
 
- 	  valueText = svg.append('text')
- 	 	.style("text-anchor", "end")
-	  	.attr("class", "coords")
-	  	.attr("x", dim.plot.width - 5)
-	  	.attr("y", 15);
-	          
-		svg.append("g")
-		.attr("class", "supstances analysis")
-		.attr("clip-path", "url(#ohlcClip)");      
+		// ── Sub-pane indicators ──
+		var container = document.getElementById('chart');
+		var indicatorKeys = Object.keys(g_big_data.indicator_plots);
+		indicatorKeys.forEach(function(key) {
+			var rawData = g_big_data.indicators[key];
+			if (!rawData || rawData.length === 0) return;
 
-      svg.append("g")
-        .attr("class", "x axis bottom");
+			var paneDiv = document.createElement('div');
+			paneDiv.style.cssText = 'width:100%;border-top:1px solid #1e2530;';
+			container.appendChild(paneDiv);
 
-      svg.append("g")
-        .attr("class", "x axis top");
+			var pc = createPaneChart(paneDiv, 120);
+			g_pane_charts[key] = pc;
 
-      var ohlcSelection = svg.append("g")
-        .attr("class", "ohlc")
-        .attr("transform", "translate(0,0)");
+			var color = getIndicatorColor(key);
+			var ps = pc.addLineSeries({
+				color: color,
+				lineWidth: 1,
+				priceLineVisible: false,
+				title: key
+			});
+			var paneData = rawData
+				.filter(function(d) { return d.value !== null && d.value !== undefined && !isNaN(+d.value); })
+				.map(function(d) { return { time: d.time, value: +d.value }; });
+			if (paneData.length > 0) ps.setData(paneData);
+			g_pane_series[key] = ps;
+		});
 
-      ohlcSelection.append("g")
-          .attr("class", "y axis");
+		resizeCharts();
+	}
 
-      ohlcSelection.append("g")
-        .attr("class", "closeValue annotation up");
+	// ── Apply trade buy/sell markers to candle series ───────────
+	function applyTradeMarkers() {
+		if (!g_candle_series || !g_big_data.positions.length) return;
+		var ohlc = g_big_data.indicators.ohlc;
+		var t0 = ohlc.length > 0 ? ohlc[0].time : 0;
+		var t1 = ohlc.length > 0 ? ohlc[ohlc.length-1].time : Infinity;
 
-      ohlcSelection.append("g")
-        .attr("class", "volume")
-        .attr("clip-path", "url(#ohlcClip)");
-
-      ohlcSelection.append("g")
-        .attr("class", "candlestick")
-        .attr("clip-path", "url(#ohlcClip)");
-
-      // indicator lines
-      for (i=0; i< g_big_data.indicator_lines.length; i++) {
-			console.log ("add indicator line-"+i);
-	       	var indline = ohlcSelection.append("g")
-	        	.attr("class", "indicator sma ma-"+i)
-	        	.attr("clip-path", "url(#ohlcClip)");
-	       //	ohlcSelection.append("g")
-           // 	.attr("class", "indicator annotation ma-"+i+" up");
-	        svg.append('text')
-	        .attr("class", "ma-"+i)
-	        .attr("x", 5)
-	        .attr("y", 25+i*10)
-	        .text(g_big_data.indicator_lines[i]);	       	
-      }
-      
-      ohlcSelection.append("g")
-        .attr("class", "percent axis");
-
-      ohlcSelection.append("g")
-        .attr("class", "volume axis");
-      
-		var accessor = candlestick.accessor();
-		var indicatorPreRoll = g_big_data.preroll;
-		var postRollData = ohlc_list.slice(indicatorPreRoll); // Don't show where indicators don't have data 
-		var dateStart = postRollData[0].date
-		var dateEnd = postRollData[postRollData.length-1].date
-		x.domain(techan.scale.plot.time(ohlc_list).domain());
-		y.domain(techan.scale.plot.ohlc(postRollData).domain());
-		yPercent.domain(techan.scale.plot.percent(y,
-				accessor(ohlc_list[indicatorPreRoll])).domain());
-		yVolume.domain(techan.scale.plot.volume(postRollData).domain());
-		// Stash for zooming
-		//zoomableInit = x.zoomable().domain(
-		//		[ indicatorPreRoll, data.length ]).copy(); // Zoom in a little to hide indicator preroll
-		zoomableInit = x.zoomable().clamp(false).copy();
-		//zoomableInit = x.copy();
-		yInit = y.copy();
-		yPercentInit = yPercent.copy();
-		x.zoomable().domain([ indicatorPreRoll, ohlc_list.length ]); // Zoom in a little to hide indicator preroll
-
-      // Add trendlines and other interactions last to be above zoom pane
-		svg.append('g').attr("class", "crosshair ohlc");
-		svg.append("g").attr("class", "tradearrow").attr("clip-path",
-					"url(#ohlcClip)");
-
-      svg.select("g.candlestick").datum(ohlc_list).call(candlestick);
-      svg.select("g.closeValue.annotation").datum([ohlc_list[ohlc_list.length - 1] ]).call(closeAnnotation);
-      svg.select("g.volume").datum(ohlc_list).call(volume);
-      
-      svg.select("g.crosshair.ohlc").call(ohlcCrosshair).call(zoom);
-      
-      console.log ("indi selection");
-      ////////// TODO: generic g_big_data.indicator_plots).enter() // svg.selectAll("svg > g.indicator")
-      var indicatorSelection = svg.selectAll("svg > g.indicator")
-      	.data(Object.keys(g_big_data.indicator_plots).filter(function (d) {return (d != "ohlc")})).enter()
-        .append("g")
-        .attr("class", function(d) {
-        	console.log("indi "+d);
-        	return d + " indicator"; });
-
-      indicatorSelection.append("g")
-        .attr("class", "axis right");
-
-      indicatorSelection.append("g")
-        .attr("class", "axis left");
-
-      indicatorSelection.append("g")
-        .attr("class", "indicator-plot")
-        .attr("clip-path", function(d, i) { return "url(#indicatorClip-" + i + ")"; });      
-      svg.select("g.crosshair.ohlc").call(ohlcCrosshair);
-
-  
-      for (key in g_big_data.indicator_plots){
-	        val = g_big_data.indicator_plots[key];
-	        
-		  	yScale[key] = d3.scaleLinear(),	        
- 	        Axis[key] = d3.axisRight(yScale[key]).ticks(3),
- 	        Annotation[key] = techan.plot.axisannotation().orient('right').axis(Axis[key]).format(d3.format(',.2s')),
- 	        AxisLeft[key] = d3.axisLeft(yScale[key]).ticks(3),
- 	        AnnotationLeft[key] = techan.plot.axisannotation().orient('left').axis(AxisLeft[key]).format(d3.format(',.2s')),
- 	        Crosshair[key] = techan.plot.crosshair().xScale(x).yScale(yScale[key])
- 	        		.xAnnotation([timeAnnotation, timeAnnotationTop]).yAnnotation([Annotation[key], AnnotationLeft[key]]);				
-				        
-		    var Data = g_big_data.indicators[key];
-			if (val.toLowerCase().indexOf("rsi") != -1) {
-				console.log("RSI plot");
-//	        	yScale[key].domain(techan.scale.plot.rsi(Data).domain());
-	        	yScale[key].domain([Data[0].oversold, Data[0].overbought]); 		
-	        	indi_plot[key] = techan.plot.rsi().xScale(x).yScale(yScale[key]);
-	      	}
-	      	if (val.toLowerCase().indexOf("macd") != -1) {      
-				console.log("MACD plot");	      		
-			    yScale[key].domain(techan.scale.plot.macd(Data).domain()); 				
-	        	indi_plot[key] = techan.plot.macd().xScale(x).yScale(yScale[key]);			    
-			}
-/* 	      	if (key.toLowerCase().indexOf("atr") != -1) {      
-				console.log("ATR plot");	      		
-			    yScale[key].domain([0,50]);//techan.scale.plot.atr(Data).domain()); 				
-	        	//indi_plot[key] = techan.plot.atr().xScale(x).yScale(yScale[key]);	        	
-			} */	      	
-	      	
-	        svg.append('g').attr("class", "crosshair "+key);	        	
-		    svg.select("g."+key+" .indicator-plot").datum(Data).call(indi_plot[key]);
-	    
-		    svg.select("g.crosshair."+key).call(Crosshair[key]);		
-		    
-		    svg.select("g.crosshair."+key).append('text')
-	        .attr("class", "symbol")
-	        .attr("id", "symbol-"+key)
- 	        .attr("x", 5)
-	        .attr("y", 0)
-	        .text(key);			    
-      }
-
-      for (var i=0; i<g_big_data.indicator_lines.length; i++){
-	      var data = g_big_data.indicators[g_big_data.indicator_lines[i]];
-
-		  if (g_big_data.indicator_lines[i].toLowerCase() == "pivotps" && g_chart_period == 1 && data.length > 0) {
-      		//svg.select("g.trendlines").datum(stock.trendlines).call(trendline).call(trendline.drag);
-			var supstanceData = [];
-			var vals = Object.values(data[0].value)
-			for (i=0; i<vals.length; i++) {
-				supstanceData.push ({ start: data[0].date, end: data[data.length-1].date, value:vals[i]});
-			}
-      		svg.select("g.supstances").datum(supstanceData).call(supstance);//.call(supstance.drag);
-			continue;
-		  }
-
-	      svg.select("g.sma.ma-"+i).datum(data).call(ind_line).append("title").text(g_big_data.indicator_lines[i])
-	       	.on("mouseenter", lineenter).on("mouseout", lineout);
-	      //svg.select("g.indicator.annotation.ma-"+i)
-	      //.datum([data[data.length-1]]).call(ohlcIndicatorAnnotation);
-      }
-      
-      resize(selection);
-      selection.call(draw);
-    }
-
-
-		bigchart.resize = function(selection) {
-			selection.call(resize).call(draw);
-		};
-		
-		function resize(selection) {
-		      dim.width = selection.node().clientWidth;
-		      dim.height = selection.node().clientHeight;
-		      dim.plot.width = dim.width - dim.margin.left - dim.margin.right;
-		      dim.plot.height = dim.height - dim.margin.top - dim.margin.bottom;
-		      
-		      var ind_plot_num = Object.keys(g_big_data.indicator_plots).length;
-		      
-		      dim.ohlc.height = dim.plot.height * (1 - 
-		    		 (ind_plot_num?0.151*(Math.min(ind_plot_num, 3)):0.001)); //0.67777777;
-		    
-			  var ind_h = Math.min(dim.plot.height * 0.144444, dim.plot.height*.42/(ind_plot_num || 1));		    		 
-		      dim.indicator.height = ind_h;
-		      dim.indicator.padding = dim.plot.height * 0.01111111111;
-		      dim.indicator.top = dim.ohlc.height + dim.indicator.padding;
-		      dim.indicator.bottom = dim.indicator.top + dim.indicator.height + dim.indicator.padding;
-
-		      var xRange = [0, dim.plot.width],
-		          yRange = [dim.ohlc.height, 0],
-		          ohlcVerticalTicks = Math.min(10, Math.round(dim.height/70)),
-		          xTicks = Math.min(10, Math.round(dim.width/130));
-
-		      indicatorTop.range([dim.indicator.top, dim.indicator.bottom]);
-		      x.range(xRange);
-		      xAxis.ticks(xTicks);
-		      xAxisTop.ticks(xTicks);
-		      y.range(yRange);
-		      yAxis.ticks(ohlcVerticalTicks);
-		      yPercent.range(y.range());
-		      percentAxis.ticks(ohlcVerticalTicks);
-		      yVolume.range([yRange[0], yRange[0]-0.2*yRange[0]]);
-		      volumeAxis.ticks(Math.min(3, Math.round(dim.height/150)));
-		      timeAnnotation.translate([0, dim.plot.height]);
-		      ohlcAnnotation.translate([xRange[1], 0]);
-		      closeAnnotation.translate([xRange[1], 0]);
-		      ohlcIndicatorAnnotation.translate([xRange[1], 0]);
-		      ohlcCrosshair.verticalWireRange([0, dim.plot.height]);
-
-		      var j = 0;
-	          for (key in g_big_data.indicator_plots){
-					val = g_big_data.indicator_plots[key];
-					yScale[key].range([indicatorTop(j) + dim.indicator.height, indicatorTop(j)]);
-				    Annotation[key].translate([xRange[1], 0]);
-				    Crosshair[key].verticalWireRange([0, dim.plot.height]);		
-				    d3.select("#symbol-"+key).attr("y", indicatorTop(j)+7).attr("color", "blue");	    
-			        j++;
-		      }
-
-	          selection.select('tooltiptext')
-	       	 	.style("text-anchor", "end")
-	        	.attr("class", "coords")
-	        	.attr("x", dim.plot.width - 5)
-	        	.attr("y", dim.plot.top + 15);	          
-		      
-		      selection.select("svg")
-		        .attr("width", dim.width)
-		        .attr("height", dim.height);
-
-		      selection.select("text.version")
-		          .attr("x", dim.width-5)
-		          .attr("y", dim.height);
-		      selection.selectAll("defs #ohlcClip > rect")
-		        .attr("width", dim.plot.width)
-		        .attr("height", dim.ohlc.height);
-
- 		      selection.selectAll("defs #supstanceClip > rect")
-		        .attr("width", dim.width)
-		        .attr("height", dim.ohlc.height);
-
-		      selection.selectAll("defs .indicatorClip > rect")
-		        .attr("y", function (d, i) {
-		          return indicatorTop(i);
-		        })
-		        .attr("width", dim.plot.width)
-		        .attr("height", dim.indicator.height);
-
-		      selection.select("g.x.axis.bottom")
-		        .attr("transform", "translate(0," + dim.plot.height + ")");
-
-		      selection.select("g.ohlc g.y.axis")
-		        .attr("transform", "translate(" + xRange[1] + ",0)");
-
-		      selection.selectAll("g.indicator g.axis.right")
-		        .attr("transform", "translate(" + xRange[1] + ",0)");
-		      selection.selectAll("g.indicator g.axis.left")
-		        .attr("transform", "translate(" + xRange[0] + ",0)");
-	       
-		      //console.log("resize dim:"+JSON.stringify(dim)+" indTop: "+indicatorTop(0));
-		}
-
-	    function draw(selection) {
-	        var svg = selection.select("svg");
-	        svg.select("g.x.axis.bottom").call(xAxis);
-	        svg.select("g.x.axis.top").call(xAxisTop);
-	        svg.select("g.ohlc .axis").call(yAxis);
-	        svg.select("g.volume.axis").call(volumeAxis);
-	        svg.select("g.percent.axis").call(percentAxis);
-
-			if (g_big_data.indicators.ohlc.length == 0)
-				return;
-
-			var i = 0;
-			var pos_list = [];
-			if (g_big_data.indicators.ohlc.length > 0 && g_big_data.positions.length > 0) {
-				for (i = 0; i < g_big_data.positions.length; i++) {
-					if (g_big_data.positions[i].date >= g_big_data.indicators.ohlc[0].date)
-						break;
-				}
-				//console.log("pos len"+g_big_data.positions.length+"i:"+i);
-				pos_list = g_big_data.positions.slice(i);
-			}
-			console.log("positions in perspective: " + pos_list.length);
-			if (pos_list.length) {
-				svg.select("g.tradearrow").datum(pos_list).call(tradearrow);
-			}	        
-	        
-	        // We know the data does not change, a simple refresh that does not perform data joins will suffice.
-	        svg.select("g.candlestick").call(candlestick.refresh);
-	        svg.select("g.closeValue.annotation").call(closeAnnotation.refresh);
-	        svg.select("g.volume").call(volume.refresh);	        
-	        svg.select("g.crosshair.ohlc").call(ohlcCrosshair.refresh);
-	        
-	        for (key in g_big_data.indicator_plots){
-		        val = g_big_data.indicator_plots[key];
-		        console.log ("key "+key+" val "+val);
-			    svg.select("g."+key+" .axis.right").call(Axis[key]);
-			    svg.select("g."+key+" .axis.left").call(AxisLeft[key]);	        
-				svg.select("g."+key+" .indicator-plot").call(indi_plot[key].refresh);
-		        svg.select("g.crosshair."+key).call(Crosshair[key].refresh);
-		    }
-	        
-		    for (i=0; i<g_big_data.indicator_lines.length; i++) {		    
-				svg.select("g .sma.ma-"+i).call(ind_line.refresh);
-			    //svg.select("g.indicator.annotation.ma-"+i).call(ohlcIndicatorAnnotation.refresh);
-		    }
-	        
-	       // svg.select("g.trendlines").call(trendline.refresh);
-		   if (g_chart_period == 1) {
-	        	svg.select("g.supstances").call(supstance.refresh)
-	         // .selectAll("g.data .supstance").attr("clip-path", "url(#ohlcClip)"); // FIXME Component should do the clipping, too much internal knowledge here
-		   }
-	      }
-
-		return bigchart;
+		var markers = [];
+		g_big_data.positions.forEach(function(p) {
+			var ts = Math.floor(p.date.getTime() / 1000);
+			if (ts < t0 || ts > t1) return;
+			markers.push({
+				time: ts,
+				position: p.type === 'buy' ? 'belowBar' : 'aboveBar',
+				color: p.type === 'buy' ? '#4488ff' : '#c2f23d',
+				shape: p.type === 'buy' ? 'arrowUp' : 'arrowDown',
+				text: p.type === 'buy' ? 'B' : 'S'
+			});
+		});
+		markers.sort(function(a, b) { return a.time - b.time; });
+		g_candle_series.setMarkers(markers);
 	}
 
 	var ONE_DAY_IN_SEC = 24*60*60;
 	var g_chart_period = 1;
 	var g_cur_display_date = 0;
-	var g_chart_start_time = 0; //Math.floor(Date.now()/1000);
+	var g_chart_start_time = 0;
 
     function getDate() {
         var datePicker = document.getElementById("datePicker");
         var selectedDate = new Date((new Date(datePicker.value)).toISOString().split('T')[0]);
-
-		curDate = (new Date()).toISOString().split('T')[0];
-		// get new start time 
+		var curDate = (new Date()).toISOString().split('T')[0];
 		g_chart_start_time = -Math.floor(((new Date(curDate) - selectedDate)/(ONE_DAY_IN_SEC*1000)));
-
-        console.log("Selected Date: " +  selectedDate, g_chart_start_time);
-
-		console.log("load stats");
+        console.log("Selected Date: " + selectedDate, g_chart_start_time);
 		loadCandles();
 		loadPositions();
     }
 
     function setDate() {
         var datePicker = document.getElementById("datePicker");
-        
-        // Create a JavaScript Date object with the desired date
         var desiredDate = new Date(g_cur_display_date);
-
-        // Format the date as "YYYY-MM-DD" for setting the input value
-        var formattedDate = desiredDate.toISOString().split('T')[0];
-
-        // Set the value of the date input
-        datePicker.value = formattedDate;
-    }	
+        datePicker.value = desiredDate.toISOString().split('T')[0];
+    }
 
 	function btn_onclick(id) {
-		d3.select("#btn" + g_chart_period).node().classList.remove("active");
+		document.getElementById("btn" + g_chart_period).classList.remove("active");
 		switch (id) {
-		case "btn1":
-			g_chart_period = 1;
-			g_chart_start_time = 0;// -= g_chart_period*ONE_DAY_IN_SEC;
-			break;
-		case "btn3":
-			g_chart_period = 3;
-			g_chart_start_time  = 0; //-= g_chart_period*ONE_DAY_IN_SEC;			
-			break;
-		case "btn7":
-			g_chart_period = 7;
-			g_chart_start_time  = 0; //-= g_chart_period*ONE_DAY_IN_SEC;			
-			break;
-		case "btn30":
-			g_chart_period = 30;
-			g_chart_start_time  = 0; //-= g_chart_period*ONE_DAY_IN_SEC;			
-			break;
+		case "btn1":  g_chart_period = 1;  g_chart_start_time = 0; break;
+		case "btn3":  g_chart_period = 3;  g_chart_start_time = 0; break;
+		case "btn7":  g_chart_period = 7;  g_chart_start_time = 0; break;
+		case "btn30": g_chart_period = 30; g_chart_start_time = 0; break;
 		case "btn_prev":
-			g_chart_start_time -= 1 ; //(g_chart_period*ONE_DAY_IN_SEC*0.85);
-			console.log("load prev candles starting "+g_chart_start_time);			
+			g_chart_start_time -= 1;
+			console.log("load prev candles starting " + g_chart_start_time);
 			break;
 		case "btn_next":
-			g_chart_start_time += 1; //(g_chart_period*ONE_DAY_IN_SEC*0.85);
-			if (g_chart_start_time > 0) {
-				g_chart_start_time = 0;
-			}
-/* 			if (g_chart_start_time > Math.floor(Date.now()/1000)) {
-				g_chart_start_time = Math.floor(Date.now()/1000)
-			} */
-			console.log("load next candles starting "+g_chart_start_time);						
-			break;			
+			g_chart_start_time += 1;
+			if (g_chart_start_time > 0) g_chart_start_time = 0;
+			console.log("load next candles starting " + g_chart_start_time);
+			break;
 		default:
 			console.log("Unknown button");
 			break;
 		}
-		d3.select("#btn" + g_chart_period).node().classList.add("active");
+		document.getElementById("btn" + g_chart_period).classList.add("active");
 		console.log("btn clicked: " + id + " new period:" + g_chart_period);
 		loadCandles();
 		loadPositions();

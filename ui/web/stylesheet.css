@@ -787,108 +787,11 @@ td.price-tp { color: var(--green) !important; }
   border-radius: var(--radius);
 }
 
-/* ── D3 / Techan chart styles (scoped to chartcontainer) ─────── */
+/* ── Lightweight Charts container layout ─────────────────────── */
 
-/* SVG base */
-.chartcontainer svg { background: transparent; }
-.chartcontainer svg, .chartcontainer text { font: 10px var(--font-mono, sans-serif); }
-.chartcontainer text { fill: #dddddd; }
-
-/* Axes */
-.chartcontainer .axis path,
-.chartcontainer .axis line {
-  fill: none;
-  stroke: #555;
-  shape-rendering: crispEdges;
-}
-.chartcontainer .axis text { fill: #aaa; }
-
-/* All paths default: no fill, 1px stroke */
-.chartcontainer path { fill: none; stroke-width: 1; }
-
-/* Candlesticks */
-.chartcontainer path.candle        { stroke: #777777; fill: #777777; }
-.chartcontainer path.candle.body   { stroke-width: 0; }
-.chartcontainer path.candle.up     { fill: #00AA00; stroke: #00AA00; }
-.chartcontainer path.candle.down   { fill: #FF0000; stroke: #FF0000; }
-
-/* Close value annotation */
-.chartcontainer .closeValue.annotation.up   path { fill: #00AA00; }
-.chartcontainer .closeValue.annotation.down path { fill: #FF0000; }
-
-/* Volume bars */
-.chartcontainer path.volume { fill: rgba(187,187,187,0.35); }
-
-/* Indicator plot lines */
-.chartcontainer .indicator-plot path.line { fill: none; stroke-width: 1; }
-
-/* MACD */
-.chartcontainer path.macd       { stroke: #5599ff; }
-.chartcontainer path.signal     { stroke: #FF9999; }
-.chartcontainer path.difference { fill: #888; opacity: 0.4; }
-
-/* RSI */
-.chartcontainer path.rsi        { stroke: cyan; fill: none; }
-.chartcontainer path.overbought,
-.chartcontainer path.oversold   { stroke: #FF9999; stroke-dasharray: 5, 5; }
-
-/* Dashed reference lines */
-.chartcontainer path.zero,
-.chartcontainer path.middle     { stroke: #888; stroke-dasharray: 5, 5; }
-
-/* Moving average lines */
-.chartcontainer .ma-0 path.line { stroke: #1f77b4; }
-.chartcontainer .ma-1 path.line { stroke: #ff7f0e; }
-.chartcontainer .ma-2 path.line { stroke: #aec7e8; }
-.chartcontainer .ma-3 path.line { stroke: #ff9fae; }
-.chartcontainer .ma-4 path.line { stroke: #1f78b4; }
-.chartcontainer .ma-5 path.line { stroke: #aec9e8; }
-.chartcontainer .ma-6 path.line { stroke: #ff740e; }
-.chartcontainer .ma-7 path.line { stroke: #ff70ae; }
-
-/* MA axis annotations */
-.chartcontainer .indicator.annotation.ma-0 path { fill: #1f77b4; }
-.chartcontainer .indicator.annotation.ma-1 path { fill: #ff7f0e; }
-.chartcontainer .indicator.annotation.ma-2 path { fill: #aec7e8; }
-.chartcontainer .indicator.annotation.ma-3 path { fill: #ff9fae; }
-
-/* Trade arrows */
-.chartcontainer .tradearrow path.tradearrow { stroke: none; }
-.chartcontainer .tradearrow path.buy        { fill: #4488ff; }
-.chartcontainer .tradearrow path.sell       { fill: #c2f23d; }
-.chartcontainer .tradearrow path.highlight  { fill: none; stroke-width: 2; }
-.chartcontainer .tradearrow path.highlight.buy  { stroke: #4488ff; }
-.chartcontainer .tradearrow path.highlight.sell { stroke: #c2f23d; }
-
-/* Crosshair */
-.chartcontainer .crosshair               { cursor: crosshair; }
-.chartcontainer .crosshair path.wire     { stroke: #666; stroke-dasharray: 1, 1; }
-.chartcontainer .crosshair .axisannotation path { fill: #555; }
-
-/* Y annotation */
-.chartcontainer .y.annotation.right path { fill: #cc3333; }
-
-/* Supstances (support/resistance) */
-.chartcontainer .supstance path             { stroke-dasharray: 2, 2; }
-.chartcontainer .supstances .interaction path { pointer-events: all; cursor: ns-resize; }
-.chartcontainer .supstances .axisannotation { display: none; }
-.chartcontainer .supstances .mouseover .axisannotation { display: inline; }
-.chartcontainer .supstances .axisannotation path { fill: #806517; stroke: none; }
-
-/* Trendlines */
-.chartcontainer .trendline circle       { stroke-width: 0; display: none; }
-.chartcontainer .mouseover .trendline path  { stroke-width: 1.2; }
-.chartcontainer .mouseover .trendline circle { stroke-width: 1; display: inline; }
-.chartcontainer .dragging .trendline path,
-.chartcontainer .dragging .trendline circle { stroke: darkblue; }
-.chartcontainer .interaction path,
-.chartcontainer .interaction circle     { pointer-events: all; }
-.chartcontainer .interaction .body      { cursor: move; }
-.chartcontainer .trendlines .interaction .start,
-.chartcontainer .trendlines .interaction .end { cursor: nwse-resize; }
-
-/* Version text */
-.chartcontainer text.version { fill: #555; font: 10px sans-serif; }
+/* Lightweight Charts injects its own canvas/divs — just ensure they fill the container */
+.chartcontainer > div { width: 100% !important; }
+.chartcontainer canvas { display: block; }
 
 /* ── Dashboard layout (positions + sidebar) ─ */
 .dash-layout {
