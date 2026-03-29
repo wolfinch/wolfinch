@@ -24,12 +24,15 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+	<link
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+		rel="stylesheet">
 	<link href="wolfinch/stylesheet.css" rel="stylesheet">
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+	<script type="text/javascript" charset="utf8"
+		src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
 	<script src="https://momentjs.com/downloads/moment.min.js"></script>
 
 	<script type="text/javascript">
@@ -270,11 +273,11 @@
 						title: "Status", data: "status",
 						render: function (d) { return statusBadge(d); }
 					},
-					{ title: "Buy $",   data: null, render: function (d) { return d.buy  ? d.buy.price  : "—"; } },
-					{ title: "Sell $",  data: null, render: function (d) { return d.sell ? d.sell.price : "—"; } },
-					{ title: "Size",    data: null, render: function (d) { return d.buy  ? d.buy.filled_size : "—"; } },
-					{ title: "Stop Loss",    data: "stop_loss",   render: function (d) { return '<span class="text-red">' + (d || "—") + '</span>'; } },
-					{ title: "Take Profit",  data: "take_profit", render: function (d) { return '<span class="text-green">' + (d || "—") + '</span>'; } },
+					{ title: "Buy $", data: null, render: function (d) { return d.buy ? d.buy.price : "—"; } },
+					{ title: "Sell $", data: null, render: function (d) { return d.sell ? d.sell.price : "—"; } },
+					{ title: "Size", data: null, render: function (d) { return d.buy ? d.buy.filled_size : "—"; } },
+					{ title: "Stop Loss", data: "stop_loss", render: function (d) { return '<span class="text-red">' + (d || "—") + '</span>'; } },
+					{ title: "Take Profit", data: "take_profit", render: function (d) { return '<span class="text-green">' + (d || "—") + '</span>'; } },
 					{
 						title: "P&L", data: "profit",
 						render: function (d) {
@@ -285,8 +288,8 @@
 							return '<span class="' + cls + '">' + prefix + d + '</span>';
 						}
 					},
-					{ title: "Type",    data: null, render: function (d) { return d.buy  ? d.buy.order_type    : "—"; } },
-					{ title: "Req Sz",  data: null, render: function (d) { return d.buy  ? d.buy.request_size  : "—"; } },
+					{ title: "Type", data: null, render: function (d) { return d.buy ? d.buy.order_type : "—"; } },
+					{ title: "Req Sz", data: null, render: function (d) { return d.buy ? d.buy.request_size : "—"; } },
 					{ title: "Remaining", data: null, render: function (d) { return d.buy ? d.buy.remaining_size : "—"; } },
 					{ title: "Sell Filled", data: null, render: function (d) { return d.sell ? d.sell.filled_size : "—"; } },
 					{
@@ -329,7 +332,20 @@
 
 	<!-- ── Top Nav ── -->
 	<nav class="top-nav">
-		<a class="brand-link" href="/"><svg class="brand-icon-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M100,100 L20,160 Q10,100 40,50 Z" fill="#22c55e" opacity="0.9"/><path d="M100,100 L15,175 L35,140 Z" fill="#1a9e4a" opacity="0.85"/><circle cx="115" cy="105" r="72" fill="#4f8ef7" opacity="0.22"/><circle cx="115" cy="105" r="54" fill="#4f8ef7" opacity="0.28"/><circle cx="115" cy="110" r="38" fill="#2563b8" opacity="0.85"/><circle cx="138" cy="88" r="32" fill="#0d1117"/><circle cx="138" cy="88" r="24" fill="#4f8ef7"/><circle cx="143" cy="82" r="8" fill="#ffffff"/><circle cx="145" cy="83" r="4.5" fill="#0d1117"/><circle cx="143" cy="80" r="1.8" fill="#ffffff"/><polygon points="162,92 178,98 162,104" fill="#f59e0b"/></svg> Wolfinch</a>
+		<a class="brand-link" href="/"><svg class="brand-icon-img" xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 200 200">
+				<path d="M100,100 L20,160 Q10,100 40,50 Z" fill="#22c55e" opacity="0.9" />
+				<path d="M100,100 L15,175 L35,140 Z" fill="#1a9e4a" opacity="0.85" />
+				<circle cx="115" cy="105" r="72" fill="#4f8ef7" opacity="0.22" />
+				<circle cx="115" cy="105" r="54" fill="#4f8ef7" opacity="0.28" />
+				<circle cx="115" cy="110" r="38" fill="#2563b8" opacity="0.85" />
+				<circle cx="138" cy="88" r="32" fill="#0d1117" />
+				<circle cx="138" cy="88" r="24" fill="#4f8ef7" />
+				<circle cx="143" cy="82" r="8" fill="#ffffff" />
+				<circle cx="145" cy="83" r="4.5" fill="#0d1117" />
+				<circle cx="143" cy="80" r="1.8" fill="#ffffff" />
+				<polygon points="162,92 178,98 162,104" fill="#f59e0b" />
+			</svg> Wolfinch</a>
 
 		<div class="pill-pair">
 			<span class="nav-label">Exchange</span>
@@ -380,18 +396,18 @@
 			<span class="stat-label">Buys</span>
 			<span class="stat-value" id="nbuy">—</span>
 			<div class="stat-tags">
-				<span class="tag tag--red"   title="Rejected">Rej <span id="nbuy_rej">0</span></span>
+				<span class="tag tag--red" title="Rejected">Rej <span id="nbuy_rej">0</span></span>
 				<span class="tag tag--green" title="Success">✓ <span id="nbuy_odr_s">0</span></span>
-				<span class="tag tag--red"   title="Failed">✗ <span id="nbuy_odr_f">0</span></span>
+				<span class="tag tag--red" title="Failed">✗ <span id="nbuy_odr_f">0</span></span>
 			</div>
 		</div>
 		<div class="stat-item">
 			<span class="stat-label">Sells</span>
 			<span class="stat-value" id="nsell">—</span>
 			<div class="stat-tags">
-				<span class="tag tag--red"   title="Rejected">Rej <span id="nsell_rej">0</span></span>
+				<span class="tag tag--red" title="Rejected">Rej <span id="nsell_rej">0</span></span>
 				<span class="tag tag--green" title="Success">✓ <span id="nsell_odr_s">0</span></span>
-				<span class="tag tag--red"   title="Failed">✗ <span id="nsell_odr_f">0</span></span>
+				<span class="tag tag--red" title="Failed">✗ <span id="nsell_odr_f">0</span></span>
 			</div>
 		</div>
 		<div class="stat-item">
@@ -403,7 +419,7 @@
 			</span>
 			<div class="stat-tags">
 				<span class="tag tag--yellow" title="Stop Loss Hits">SL <span id="sl_hits">0</span></span>
-				<span class="tag tag--cyan"   title="Take Profit Hits">TP <span id="tp_hits">0</span></span>
+				<span class="tag tag--cyan" title="Take Profit Hits">TP <span id="tp_hits">0</span></span>
 			</div>
 		</div>
 		<div class="stat-item">
@@ -429,17 +445,28 @@
 				<div class="card-head">
 					<span class="card-title"><span class="icon">◉</span> Positions</span>
 					<div class="filter-tabs">
-						<button class="filter-tab active" data-f="all"    onclick="setFilter('all')">All</button>
-						<button class="filter-tab"        data-f="open"   onclick="setFilter('open')">Open</button>
-						<button class="filter-tab"        data-f="closed" onclick="setFilter('closed')">Closed</button>
+						<button class="filter-tab active" data-f="all" onclick="setFilter('all')">All</button>
+						<button class="filter-tab" data-f="open" onclick="setFilter('open')">Open</button>
+						<button class="filter-tab" data-f="closed" onclick="setFilter('closed')">Closed</button>
 					</div>
 				</div>
 				<div style="overflow-x:auto;">
 					<table id="statsTable" class="display compact" style="width:100%">
 						<thead>
 							<tr>
-								<th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-								<th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th>
+								<th>0</th>
+								<th>1</th>
+								<th>2</th>
+								<th>3</th>
+								<th>4</th>
+								<th>5</th>
+								<th>6</th>
+								<th>7</th>
+								<th>8</th>
+								<th>9</th>
+								<th>10</th>
+								<th>11</th>
+								<th>12</th>
 							</tr>
 						</thead>
 						<tbody></tbody>
@@ -455,16 +482,26 @@
 					<span class="card-title"><span class="icon">$</span> Funds</span>
 				</div>
 				<div class="info-grid">
-					<div class="info-row"><span class="label">Initial</span>          <span class="value" id="fund_init">—</span></div>
-					<div class="info-row"><span class="label">Current</span>          <span class="value" id="fund_curr">—</span></div>
-					<div class="info-row"><span class="label">Current Hold</span>     <span class="value" id="curr_hold">—</span></div>
-					<div class="info-row"><span class="label">Realized P&amp;L</span> <span class="value" id="fund_profit_panel">—</span></div>
-					<div class="info-row"><span class="label">Total Traded</span>     <span class="value" id="fund_traded">—</span></div>
-					<div class="info-row"><span class="label">Avg Buy Price</span>    <span class="value" id="fund_avg_price">—</span></div>
-					<div class="info-row"><span class="label">Last Buy Price</span>   <span class="value" id="fund_last_price">—</span></div>
-					<div class="info-row"><span class="label">Fee Accrued</span>      <span class="value" id="fund_trade_fee">—</span></div>
-					<div class="info-row"><span class="label">Liquidity %</span>      <span class="value" id="fund_liq_cent">—</span></div>
-					<div class="info-row"><span class="label">Max Per Buy</span>      <span class="value" id="fund_max_per_buy">—</span></div>
+					<div class="info-row"><span class="label">Initial</span> <span class="value" id="fund_init">—</span>
+					</div>
+					<div class="info-row"><span class="label">Current</span> <span class="value" id="fund_curr">—</span>
+					</div>
+					<div class="info-row"><span class="label">Current Hold</span> <span class="value"
+							id="curr_hold">—</span></div>
+					<div class="info-row"><span class="label">Realized P&amp;L</span> <span class="value"
+							id="fund_profit_panel">—</span></div>
+					<div class="info-row"><span class="label">Total Traded</span> <span class="value"
+							id="fund_traded">—</span></div>
+					<div class="info-row"><span class="label">Avg Buy Price</span> <span class="value"
+							id="fund_avg_price">—</span></div>
+					<div class="info-row"><span class="label">Last Buy Price</span> <span class="value"
+							id="fund_last_price">—</span></div>
+					<div class="info-row"><span class="label">Fee Accrued</span> <span class="value"
+							id="fund_trade_fee">—</span></div>
+					<div class="info-row"><span class="label">Liquidity %</span> <span class="value"
+							id="fund_liq_cent">—</span></div>
+					<div class="info-row"><span class="label">Max Per Buy</span> <span class="value"
+							id="fund_max_per_buy">—</span></div>
 				</div>
 			</div>
 
@@ -473,20 +510,27 @@
 					<span class="card-title"><span class="icon">◈</span> Assets</span>
 				</div>
 				<div class="info-grid">
-					<div class="info-row"><span class="label">Initial Size</span>     <span class="value" id="asset_init">—</span></div>
-					<div class="info-row"><span class="label">Current Size</span>     <span class="value" id="asset_curr">—</span></div>
-					<div class="info-row"><span class="label">Current Hold</span>     <span class="value" id="asset_cur_hold_sz">—</span></div>
-					<div class="info-row"><span class="label">Total Traded</span>     <span class="value" id="asset_traded">—</span></div>
-					<div class="info-row"><span class="label">Last Traded Size</span> <span class="value" id="asset_last_traded">—</span></div>
-					<div class="info-row"><span class="label">Max Per Trade</span>    <span class="value" id="asset_max_per_trade">—</span></div>
-					<div class="info-row"><span class="label">Hold Size</span>        <span class="value" id="asset_hold_sz">—</span></div>
+					<div class="info-row"><span class="label">Initial Size</span> <span class="value"
+							id="asset_init">—</span></div>
+					<div class="info-row"><span class="label">Current Size</span> <span class="value"
+							id="asset_curr">—</span></div>
+					<div class="info-row"><span class="label">Current Hold</span> <span class="value"
+							id="asset_cur_hold_sz">—</span></div>
+					<div class="info-row"><span class="label">Total Traded</span> <span class="value"
+							id="asset_traded">—</span></div>
+					<div class="info-row"><span class="label">Last Traded Size</span> <span class="value"
+							id="asset_last_traded">—</span></div>
+					<div class="info-row"><span class="label">Max Per Trade</span> <span class="value"
+							id="asset_max_per_trade">—</span></div>
+					<div class="info-row"><span class="label">Hold Size</span> <span class="value"
+							id="asset_hold_sz">—</span></div>
 				</div>
 			</div>
 		</div>
 
 	</div>
 
-	<footer class="footer">© 2017-2025 Wolfinch Bot</footer>
+	<footer class="footer">© 2017-2026 Wolfinch Bot</footer>
 </body>
 
 </html>

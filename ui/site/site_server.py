@@ -33,7 +33,7 @@ log = getLogger ('UI')
 log.setLevel(log.DEBUG)
 
 
-def server_main (port=8080):
+def server_main (port=8081):
             
     app = Flask(__name__, static_folder='web/', static_url_path='/web/')
    
