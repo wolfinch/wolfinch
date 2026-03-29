@@ -1,7 +1,7 @@
 # '''
 #  Wolfinch Auto trading Bot
 #  Desc:  exchange interactions Simulation
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@ from market import feed_enQ, TradeRequest, Order
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
-log.setLevel (log.CRITICAL)
+log.setLevel (log.INFO)
 
 ###### SIMULATOR Global switch ######
 sim_obj = {"exch": None, "market": None}
@@ -139,6 +139,7 @@ def market_simulator_run (market, backtesting_on):
 class SIM_EXCH (exchanges.Exchange):
     products = []
     primary = False
+    sim = True
     candle_interval = 0
     def __init__(self, name, config, primary=True):
         log.info('init SIM exchange')        
@@ -166,6 +167,8 @@ class SIM_EXCH (exchanges.Exchange):
         if not isinstance(products, list):
             products = [products]
         self.products += products
+    def delete_products(self, products):
+        pass
     def market_init (self, market):
         #Setup the initial params
                 
@@ -313,18 +316,25 @@ class SIM_EXCH (exchanges.Exchange):
     def close (self):
         log.debug("Closing SIM exchange...")
         
-    def get_products(self):
+    def get_products(self, p_id=None):
         """
         Get registered products on this exchange
-        """
-        return self.products
+        """        
+        log.debug (" num  products %d" % (len(self.products)))
+        if p_id == None:
+            return self.products
+        else:
+            for p in self.products:
+                if p["id"] == p_id:
+                    return p
+        return None 
                           
     def buy (self, trade_req) :
     #     return None
         
         if not isinstance( trade_req, TradeRequest):
             return None
-        log.debug ("BUY - Placing Order on SIM exchange --" )
+        log.info ("BUY - Placing Order on SIM exchange --" )
         
         buy_order = Order(str(uuid.uuid1()), trade_req.product, "open", order_type=trade_req.type, 
                           side='buy', request_size=trade_req.size,
@@ -342,7 +352,7 @@ class SIM_EXCH (exchanges.Exchange):
     def sell (self, trade_req) :
         if not isinstance(trade_req, TradeRequest):
             return None
-        log.debug ("SELL - Placing Order on SIM exchange --" )
+        log.info ("SELL - Placing Order on SIM exchange --" )
         sell_order = Order(str(uuid.uuid1()), trade_req.product, "open", order_type=trade_req.type, 
                           side='sell', request_size=trade_req.size,
                        filled_size=0,  price=trade_req.price, funds=0,
@@ -364,6 +374,7 @@ class SIM_EXCH (exchanges.Exchange):
     #             this_order['reason'] = 'filled'    
     #             this_order['settled'] = True
     #             this_order['side'] = order.side
+        log.info ("GET - get Order on SIM exchange --" )
         for order in traded_orders[prod_id]:
             if order.id == order_id:
                 return order

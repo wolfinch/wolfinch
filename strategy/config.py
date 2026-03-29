@@ -5,7 +5,7 @@
 # ref. implementation.
 # All the globally available market strategies are instantiated and configured here.
 #
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify

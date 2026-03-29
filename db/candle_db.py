@@ -1,7 +1,7 @@
 #
 # wolfinch Auto trading Bot
 # Desc: order_db impl
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -22,7 +22,8 @@
 from utils import getLogger
 from .db import init_db
 from sqlalchemy import *
-from sqlalchemy.orm import mapper 
+from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.orm import registry
 
 log = getLogger ('CANDLE-DB')
 log.setLevel (log.DEBUG)
@@ -34,7 +35,7 @@ class CandlesDb(object):
         log.info ("init candlesdb: %s %s"%(exchange_name, product_id))
         
         self.table_name = "candle_%s_%s"%(exchange_name, product_id)
-        if not self.db.engine.dialect.has_table(self.db.engine, self.table_name):  # If table don't exist, Create.
+        if not sa_inspect(self.db.engine).has_table(self.table_name):  # If table don't exist, Create.
             # Create a table with the appropriate Columns
             log.info ("creating table: %s"%(self.table_name))            
             self.table = Table(self.table_name, self.db.metadata,
@@ -62,7 +63,7 @@ class CandlesDb(object):
                     self.close = c.close
                     self.volume = c.volume
             self.ohlcCls = T
-            self.mapping = mapper(self.ohlcCls, self.table)
+            self.mapping = registry().map_imperatively(self.ohlcCls, self.table)
         except Exception as e:
             log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(e))
 #             self.mapping = mapper(ohlcCls, self.table, non_primary=True)            
@@ -116,9 +117,7 @@ class CandlesDb(object):
     def db_get_all_candles (self):
         log.debug ("retrieving candles from db")
         try:
-#             query = select([self.table])
-#             ResultProxy = self.db.connection.execute(query)
-#             ResultSet = ResultProxy.fetchall()
+            res_list = []
             ResultSet = self.db.session.query(self.mapping).order_by(self.ohlcCls.time).all()
             log.info ("Retrieved %d candles for table: %s"%(len(ResultSet), self.table_name))
             

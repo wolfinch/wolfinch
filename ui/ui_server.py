@@ -2,7 +2,7 @@
 #
 # Wolfinch Auto trading Bot
 # Desc: Main UI impl
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -42,7 +42,7 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 MARKET_STATS = "stats_market_%s_%s.json"
 
 UI_CODES_FILE = "data/ui_codes.json"
-UI_TRADE_SECRET = None
+UI_TRADE_SECRET = "123"
 UI_PAGE_SECRET = None
 
 g_mp_lock = None
@@ -118,7 +118,11 @@ def server_main (port=8080, mp_pipe=None):
         return app.send_static_file('index.html')        
 
     @app.route('/api/get_markets')
-    def get_markets_api():
+    @app.route('/<secret>/api/get_markets')
+    def get_markets_api(secret=None):
+        if secret != get_ui_secret():
+            log.error ("wrong code: " + str(secret))
+            return ""        
         global g_markets_list, g_active_market
         try:
             if not g_markets_list:
@@ -133,7 +137,7 @@ def server_main (port=8080, mp_pipe=None):
                             if not g_markets_list:
                                 err = "invalid market list payload"
                                 log.error (err)
-                                raise Exception (err)                            
+                                raise Exception (err)
                         else:
                             err = "invalid ui resp msg type: %s" % msg_type
                             log.error (err)
@@ -165,7 +169,11 @@ def server_main (port=8080, mp_pipe=None):
             return "{}"
 
     @app.route('/api/set_active_market', methods=["POST"])
-    def set_active_market_api():
+    @app.route('/<secret>/api/set_active_market', methods=["POST"])
+    def set_active_market_api(secret=None):
+        if secret != get_ui_secret():
+            log.error ("wrong code: " + str(secret))
+            return ""        
         global g_active_market
         try:
             data = request.form.to_dict()
@@ -192,13 +200,66 @@ def server_main (port=8080, mp_pipe=None):
         except Exception as e:
             log.error ("Unable to set active market. Exception: %s", e)
             return "{}"
+        
+    @app.route('/api/update_market', methods=["POST"])
+    @app.route('/<secret>/api/update_market', methods=["POST"])
+    def update_market_api(secret=None):
+        if secret != get_ui_secret():
+            log.error ("wrong code: " + str(secret))
+            return ""        
+        global g_markets_list
+        def ret_code(err):
+            return json.dumps(err)
+        if secret != get_ui_secret():
+            log.error ("wrong code: " + str(secret))
+            return ""
+        data = request.form.to_dict()
+        if len(data) <= 0 :
+            err = "error: invalid request data"
+            log.error (err)
+            return ret_code(err)
+        
+        cmd = data.get('cmd', "")
+#         req_number = int(data.get('req_number', 0))
+        req_code = str(data.get('req_code', ""))
+        exch_name = str(data.get('exch_name', ""))
+        prod_id = str(data.get('product', ""))
+
+        if cmd != "add" and cmd != "delete":
+            log.error ("unknown market update kind: %s"%(cmd))
+            return ret_code("unknown market update kind")
+        
+        log.info ("update market order: type: %s exch: %s prod: %s" % (
+            cmd, exch_name, prod_id))
+        
+        if (exch_name == "" or prod_id == "" or req_code == ""):
+            err = "error: incorrect request data"
+            log.error (err)
+            return ret_code(err)
+                
+        if req_code != UI_TRADE_SECRET:
+            err = "incorrect secret"
+            log.error (err)
+            return ret_code(err)
+        err = "success"
+        msg = {"type": "MARKET_UPDATE", "exchange": exch_name, "product": prod_id.upper(), "cmd": cmd}
+        if mp_pipe:
+            mp_send_recv_msg(mp_pipe, msg)
+            #unset the current market list local copy (since market may be updated
+            g_markets_list = None
+        else:
+            err = "server connection can't be found!"
+            log.error (err)
+        return ret_code(err)
 
     @app.route('/api/pause_market', methods=["POST"])
-    def pause_market_api():
-
+    @app.route('/<secret>/api/pause_market', methods=["POST"])
+    def pause_market_api(secret=None):
         def ret_code(err):
             return json.dumps(err)       
-                
+        if secret != get_ui_secret():
+            log.error ("wrong code: " + str(secret))
+            return ""                
         data = request.form.to_dict()
         if len(data) <= 0 :
             err = "error: invalid request data"
@@ -243,7 +304,11 @@ def server_main (port=8080, mp_pipe=None):
         return ret_code(err)            
 
     @app.route('/api/market_stats')
-    def market_stats_api():
+    @app.route('/<secret>/api/market_stats')
+    def market_stats_api(secret=None):
+        if secret != get_ui_secret():
+            log.error ("wrong code: " + str(secret))
+            return ""        
         try:
             if len(g_active_market) <= 0:
                 log.error ("active market not set")
@@ -259,7 +324,11 @@ def server_main (port=8080, mp_pipe=None):
             return "{}"
             
     @app.route('/api/candles')
-    def candle_list_api():       
+    @app.route('/<secret>/api/candles')
+    def candle_list_api(secret=None):
+        if secret != get_ui_secret():
+            log.error ("wrong code: " + str(secret))
+            return ""        
         period = request.args.get('period', default=1, type=int)
         start_time = request.args.get('start_time', default=0, type=int)
         exch_name = str(request.args.get('exch_name', ""))
@@ -309,7 +378,11 @@ def server_main (port=8080, mp_pipe=None):
             return "[]"        
         
     @app.route('/api/positions')
-    def position_list_api():     
+    @app.route('/<secret>/api/positions')
+    def position_list_api(secret=None):
+        if secret != get_ui_secret():
+            log.error ("wrong code: " + str(secret))
+            return ""        
         from_time = request.args.get('from_time', default=0, type=int)
         to_time = request.args.get('to_time', default=0, type=int)        
         exch_name = str(request.args.get('exch_name', ""))
@@ -323,7 +396,7 @@ def server_main (port=8080, mp_pipe=None):
             
             msg = {"type": "GET_MARKET_POSITIONS",
                    "from_time": from_time,
-                   "to_time": to_time,                   
+                   "to_time": to_time,
                    "exchange": exch_name,
                    "product": prod_id
                    }
@@ -362,8 +435,11 @@ def server_main (port=8080, mp_pipe=None):
 #         return db_events.get_all_positions()
             
     @app.route('/api/manual_order', methods=["POST"])
-    def exec_manual_order_api():
-
+    @app.route('/<secret>/api/manual_order', methods=["POST"])
+    def exec_manual_order_api(secret=None):
+        if secret != get_ui_secret():
+            log.error ("wrong code: " + str(secret))
+            return ""
         def ret_code(err):
             return json.dumps(err)       
                 

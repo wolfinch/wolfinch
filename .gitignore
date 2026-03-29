@@ -1,6 +1,7 @@
 *.pyc
 *.bak
 *.yml
+*.log
 data/*.db*
 data/*.json
 data/*.log

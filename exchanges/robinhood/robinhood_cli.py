@@ -3,7 +3,7 @@
 #  Wolfinch Auto trading Bot
 #  Desc: Robinhood exchange interactions for Wolfinch
 #
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -24,69 +24,35 @@ from datetime import datetime, timedelta
 from time import sleep
 import time
 from dateutil.tz import tzlocal, tzutc
+import sys
+import os
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "../../pkgs"))
 
 from utils import getLogger, readConf
 from market import  OHLC, feed_enQ, get_market_by_product, Order
 from exchanges.robinhood import Robinhood
 import logging
 
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("Robinhood").setLevel(logging.WARNING)
-# logging.getLogger("Robinhood").setLevel(logging.DEBUG)
-
 # ROBINHOOD CONFIG FILE
 ROBINHOOD_CONF = 'config/robinhood.yml'
 
 
 ######## Functions for Main exec flow ########
-def get_option_chains(symbol, from_date, to_date, opt_type):
-    def key_func(k):
-        #sort based on what?
-        return k["quote"]["open_interest"]
-    #get chain_id
-    instr = rbh.get_instrument_from_symbol(symbol)
-    chain_id = instr["tradable_chain_id"]
-    #get chain_summary, exp_dates
-    opt_chains = rbh.get_option_chains_summary(chain_id)
-    exp_list_l = opt_chains["expiration_dates"]
-    #filter exp_list based on given time interval
-    exp_list = []
-    for exp in exp_list_l:
-        exp_d = datetime.strptime(exp, "%Y-%m-%d")
-        if from_date and from_date > exp_d:
-            continue
-        if to_date and to_date < exp_d:
-            continue
-        exp_list.append(exp)
-    opt_c_d = {}
-    #get chain @expiry
-    for exp in exp_list:
-        chain_l = rbh.get_option_chain(chain_id, exp, opt_type)
-        #get option/instrument quote/details
-        instr_list = []
-        chain_d = {}
-        for ch_e in chain_l:
-            instr_list.append(ch_e["url"])
-            chain_d[ch_e["url"]] = ch_e
-        opt_data_l = rbh.get_option_marketdata(instr_list)
-        #associate quote with instr
-#         print("opt_data_l: %s"%(pprint.pformat(opt_data_l, 4)))        
-        for opt_q in opt_data_l:
-            if opt_q == None:
-                continue
-            chain_d[opt_q['instrument']]["quote"] = opt_q
-        opt_c_l = []
-        for opt_c in chain_d.values():
-            #some of the entries may not have quote. remove those            
-            if opt_c.get("quote"):
-                opt_c_l.append(opt_c)
-        opt_c_l.sort(reverse=True, key=key_func)
-        opt_c_d [exp] = opt_c_l
-    return opt_c_d
 def print_option_chains(symbol, from_date, to_date, opt_type, best_num=0):
+    global rbh
+    #see if we have to sort, default "OI"
+    sort = "oi"
+    sort_opt = ["best", "oi", "vol", "iv", "delta", "theta", "vega"]
+    if args.sort:
+        if args.sort not in sort_opt:
+            print ("Invalid sort method (%s) available options are - %s"%(args.sort, sort_opt))
+            exit(1)
+        sort = args.sort
+    #get rbh instance
+    rbh = Robinhood (config, stream=False, auth=True)
     #get option chains
     quote = rbh.get_quote(symbol)
-    opt_c_d = get_option_chains(symbol, from_date, to_date, opt_type)
+    opt_c_d = rbh.get_option_chains(symbol, from_date, to_date, opt_type, sort=sort)
 #     print ("quote: %s"%(pprint.pformat(opt_c_d, 4)))
     print ("{:<50} \n {:<50} ".format(" (%s) option chains for %s@%s"%(opt_type, symbol.upper(), quote["last_trade_price"]), 50*"-"))
     print ("{:<10}{:^10}{:<12}{:<12}{:^6}{:^6}{:^10}{:^10}{:^10}{:^10}".format("Strike", "Price", "Bid(#)", "Ask(#)", "OI", "Vol", "IV", "Delta", "Theta", "Vega"))
@@ -121,7 +87,7 @@ def print_order_history(symbol, from_date, to_date):
     orders = rbh.get_order_history(symbol, from_date, to_date)
     if len(orders):
         num_sell = num_buy = amt_sell = amt_buy = 0
-        print ("retrieved %d orders: %s"%(len(orders), pprint.pformat(orders, 4)))
+        # print ("retrieved %d orders: %s"%(len(orders), pprint.pformat(orders, 4)))
         print ("{:<6}{:^6}{:^6}{:^10}{:^10}{:^15}{:^15}".format("Ticker", "Side", "Size", "Price", "Type", "Status", "Date"))
         for o in orders:
             side        = o["side"]
@@ -169,21 +135,28 @@ def print_options_order_history(symbol, from_date, to_date):
             side        = "NONE"# o["side"]
             status      = o["state"]            
             proc_quant       = float(0 if o["processed_quantity"]==None else o["processed_quantity"])
-            quant       = float(0 if o["quantity"]==None else o["quantity"])
-            if status == "cancelled" or status == "rejected":
+            req_quant       = float(0 if o["quantity"]==None else o["quantity"])
+            if status == "rejected":
                 continue
             if o["closing_strategy"]:
                 strat = o["closing_strategy"]
             else:
-                strat = o["opening_strategy"]            
-            if proc_quant != quant :# or strat == "long_call_spread":
-                log.critical("ERROR!!! proc_quant != quant:: FIXME:: %s"%(pprint.pformat(o, 4)))
-                raise
+                strat = o["opening_strategy"]
+            #filter with strategy
+            if args.filter != None and args.filter not in strat:
+                continue
+            #Partial execution..
+#             if proc_quant != req_quant :# or strat == "long_call_spread":
+#                 print("ERROR!!! proc_quant != quant:: FIXME:: %s"%(pprint.pformat(o, 4)))
+#                 raise
             avg_price   = float(0 if o["premium"]==None else o["premium"])
             typ         = o["type"]
             dir         = o["direction"]
             for leg in o["legs"]:
                 exec_l = leg["executions"]
+                if len(exec_l) == 0:
+                    #cancelled orders will have 0 eexecc, partially exec orders can be cancelled but non-zero exec
+                    break
 #                 if len(exec_l) > 1:
 #                     log.critical ("FIXME: TODO: multi leg multi option o: %s"%(pprint.pformat(o, 4)))
 #                     raise
@@ -199,7 +172,7 @@ def print_options_order_history(symbol, from_date, to_date):
                 expiry_date = leg["option_det"]["expiration_date"]
                 strike = leg["option_det"]["strike_price"]
                 opt_type = leg["option_det"]["type"]                
-                if status == "filled":
+                if status != "rejected": #accommodate partial exec (filled, cancelled)
                     if side == "sell":
                         num_sell += quant
                         amt_sell += price
@@ -208,7 +181,7 @@ def print_options_order_history(symbol, from_date, to_date):
                         amt_buy += price                
                 print ("{:<6}{:^10}{:^15}{:^10}{:^6}{:^8}{:^8.0f}{:^10.3f}{:^10}{:^10}{:^10}{:^25}{:^15}".format(sym, 
                         strike, expiry_date, opt_type, side, pos_effect,
-                         quant, price, typ, status, dir, strat,  o["created_at"]))
+                         quant, price/quant, typ, status, dir, strat,  o["created_at"]))
         print("Summary:\n num_buy: %d \n amt_buy: %.2f \n num_sell: %d \n amt_sell: %.2f\n profit: %.2f"%(
             num_buy, amt_buy, num_sell, amt_sell, (amt_sell-amt_buy)))
     else:
@@ -280,6 +253,9 @@ def arg_parse():
     parser.add_argument("--quote", help='print quote', required=False, action='store_true')
     parser.add_argument("--buy", help='buy asset', required=False, action='store_true')
     parser.add_argument("--sell", help='sell asset', required=False, action='store_true')
+    parser.add_argument("--sort", help='sort', required=False)
+    #any kind of filter for strategy
+    parser.add_argument("--filter", help='strategy filter kind (subset of string in strategy)', required=False) 
     
     args = parser.parse_args()
     if args.config:
@@ -334,29 +310,32 @@ if __name__ == '__main__':
     num = 0
     if args.n:
         num = int(args.n)
+
+    logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
+    logging.getLogger("Robinhood").setLevel(logging.WARNING)
+
+    rbh = Robinhood (config, stream=False)
+
+    # logging.getLogger("Robinhood").setLevel(logging.DEBUG)
+
+    if args.s:
+        args.s = args.s.upper()
     if args.ch:
-        rbh = Robinhood (config, stream=False)
         print_historic_candles(args.s, start_t, end_t)    
     elif args.oh:
-        rbh = Robinhood (config, stream=False)
         print_order_history(args.s, start_t, end_t)
     elif args.ooh:
-        rbh = Robinhood (config, stream=False)
         print_options_order_history(args.s, start_t, end_t)
     elif args.cp:
-        rbh = Robinhood (config, stream=False)
         print_current_positions(args.s)
     elif args.oc:
         if args.type != "put" and args.type != "call":
             print ("invalid option type: %s"%(args.type))
             exit(1)
-        rbh = Robinhood (config, stream=False, auth=True)
         print_option_chains(args.s,  start_t, end_t, args.type, num)        
     elif args.cop:
-        rbh = Robinhood (config, stream=False)
         print_current_options_positions(args.s)
     elif args.hrs:
-        rbh = Robinhood (config, stream=False)
         print_market_hrs()
     elif args.quote:
         if args.s == None or args.s == "":
@@ -365,15 +344,13 @@ if __name__ == '__main__':
             rbh = Robinhood (config, stream=False)
             print_market_quote(args.s)
     elif args.buy:
-        rbh = Robinhood (config, stream=False)
         exec_market_order(args.s, "buy")
     elif args.sell:
-        rbh = Robinhood (config, stream=False)
         exec_market_order(args.s, "sell")    
     else:
         parser.print_help()
         exit(1)                            
 #     sleep(10)
-    rbh.close()
+    # rbh.close()
 #     print ("Done")
 # EOF    

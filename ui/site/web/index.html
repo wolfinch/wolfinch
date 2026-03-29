@@ -1,5 +1,5 @@
 <!-- 
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>. 
 -->
+<!doctype html>
 <html lang="en">
 <head>
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-155929371-1"></script>
@@ -22,93 +23,78 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'UA-155929371-1');
 </script>
-
-<title>Wolfinch.com</title>
+<title>Wolfinch — Algorithmic Trading Bot</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet"
-	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-<script
-	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script
-	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
-<script async defer src="https://buttons.github.io/buttons.js"></script>	
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="/stylesheet.css" rel="stylesheet">
+<script async defer src="https://buttons.github.io/buttons.js"></script>
 </head>
 
-<link href="/stylesheet.css" rel="stylesheet">
-<script
-	src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-	integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-	crossorigin="anonymous"></script>
-
-<script src="https://momentjs.com/downloads/moment.min.js"></script>
-
-
 <body>
-	<div class="row align-items-start">
-		<div class="col-12">
-			<div class="navbar navbar-inverse navbar-static-top">
-				<div class="container">
-					<header class="clearfix">
-						<h3 class="brand">
-							<a href="/">Wolfinch</a>
-						</h3>
-						<ul class="nav masthead-nav">
-							<li class="active"><a href="#"> Home</a></li>
-							<li><a href=https://github.com/joshith/Wolfinch> Documentation</a></li>
-							<li><a href=https://github.com/joshith/Wolfinch> Examples</a></li>							
-						</ul>
-					</header>
-				</div>
-			</div>
-		</div>
-	</div>
-	<div>
-		<p></p>
-		<p></p>
-	</div>
 
-		<div class="container">
-			<div class="row" style="margin-left: 1em;">
-			<img src="/img/front.png" alt="Active Trading"  style="width:100rem;">
+<!-- ── Top Nav ── -->
+<nav class="top-nav">
+  <a class="brand-link" href="/">
+    <svg class="brand-icon-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M100,100 L20,160 Q10,100 40,50 Z" fill="#22c55e" opacity="0.9"/><path d="M100,100 L15,175 L35,140 Z" fill="#1a9e4a" opacity="0.85"/><circle cx="115" cy="105" r="72" fill="#4f8ef7" opacity="0.22"/><circle cx="115" cy="105" r="54" fill="#4f8ef7" opacity="0.28"/><circle cx="115" cy="110" r="38" fill="#2563b8" opacity="0.85"/><circle cx="138" cy="88" r="32" fill="#0d1117"/><circle cx="138" cy="88" r="24" fill="#4f8ef7"/><circle cx="143" cy="82" r="8" fill="#ffffff"/><circle cx="145" cy="83" r="4.5" fill="#0d1117"/><circle cx="143" cy="80" r="1.8" fill="#ffffff"/><polygon points="162,92 178,98 162,104" fill="#f59e0b"/></svg>
+    Wolfinch
+  </a>
+  <div class="nav-links">
+    <a href="/" class="active">Home</a>
+    <a href="https://medium.com/@joe.cet/wolfinch-introduction-to-the-friendly-trading-bot-fe9281825e59" target="_blank">Documentation</a>
+    <a href="https://github.com/joshith/Wolfinch" target="_blank">GitHub</a>
+  </div>
+</nav>
 
-			</div>
-		</div>
-<div class="container">
-    <div class="row">
-        <div class="col-md-9 col-md-offset-1" style="margin-top: 2rem;">
-            <p class="lead text-center">
-				Wolfinch is a full spectrum trading bot, works on crypto currency and equity markets alike. <br>
-				It supports trading strategies based on technical analysis, AI/ML, sentiment analysis etc. <br>
-				Supports multiple exchanges, strategies and indicators out of the box. <br>
-  				Wolfinch is written in python and is very extensible. 
-            </p>
-            <p class="lead text-center">
-
-<a class="github-button" href="https://github.com/joshith/Wolfinch/archive/master.zip" data-color-scheme="no-preference: light; light: light; dark: light;" data-icon="octicon-cloud-download" data-size="large" aria-label="Download joshith/Wolfinch on GitHub">Download</a> 
-<a class="github-button" href="https://github.com/joshith/Wolfinch" data-color-scheme="no-preference: light; light: light; dark: light;" data-icon="octicon-star" data-size="large" aria-label="Star joshith/Wolfinch on GitHub">Star</a>
-<a class="github-button" href="https://github.com/joshith/Wolfinch/fork" data-color-scheme="no-preference: light; light: light; dark: light;" data-icon="octicon-repo-forked" data-size="large" aria-label="Fork joshith/Wolfinch on GitHub">Fork</a>
-<a class="github-button" href="https://github.com/sponsors/joshith" data-color-scheme="no-preference: light; light: light; dark: light;" data-icon="octicon-heart" data-size="large" aria-label="Sponsor @joshith on GitHub">Sponsor</a>
-        </div>
+<!-- ── Hero ── -->
+<section class="site-hero">
+  <div class="site-hero-inner">
+    <h1 class="site-hero-title">Algorithmic Trading,<br><span class="text-accent">Simplified</span></h1>
+    <p class="site-hero-sub">
+      Wolfinch is a full-spectrum trading bot for crypto and equity markets.<br>
+      Technical analysis, AI/ML, sentiment strategies — all in one extensible Python framework.
+    </p>
+    <div class="site-hero-actions">
+      <a class="github-button" href="https://github.com/joshith/Wolfinch/archive/master.zip" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-cloud-download" data-size="large" aria-label="Download joshith/Wolfinch on GitHub">Download</a>
+      <a class="github-button" href="https://github.com/joshith/Wolfinch" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-star" data-size="large" aria-label="Star joshith/Wolfinch on GitHub">Star</a>
+      <a class="github-button" href="https://github.com/joshith/Wolfinch/fork" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-repo-forked" data-size="large" aria-label="Fork joshith/Wolfinch on GitHub">Fork</a>
+      <a class="github-button" href="https://github.com/sponsors/joshith" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-heart" data-size="large" aria-label="Sponsor @joshith on GitHub">Sponsor</a>
     </div>
-</div>		
-</body>
+  </div>
+</section>
 
-	<footer class="footer">
-		<div class="container">
-			<p>
-				<small>
-					<div class="row">
-						<em>&copy; 2017-2020 Wolfinch.com</em>
-					</div>
-				</small>
-			</p>
-		</div>
-	</footer>
+<!-- ── Screenshot ── -->
+<section class="site-screenshot-wrap">
+  <img src="/img/front.jpg" alt="Wolfinch Dashboard" class="site-screenshot">
+</section>
+
+<!-- ── Feature Cards ── -->
+<section class="site-features">
+  <div class="site-feature-card">
+    <div class="site-feature-icon">📈</div>
+    <h3>Multi-Market</h3>
+    <p>Trades crypto and equity markets using the same unified framework and strategy engine.</p>
+  </div>
+  <div class="site-feature-card">
+    <div class="site-feature-icon">🤖</div>
+    <h3>AI / ML Strategies</h3>
+    <p>Supports technical analysis, machine learning, and sentiment-based trading strategies out of the box.</p>
+  </div>
+  <div class="site-feature-card">
+    <div class="site-feature-icon">🔌</div>
+    <h3>Multi-Exchange</h3>
+    <p>Connects to multiple exchanges simultaneously. Easily extensible with new connectors.</p>
+  </div>
+  <div class="site-feature-card">
+    <div class="site-feature-icon">🐍</div>
+    <h3>Python Native</h3>
+    <p>Written entirely in Python. Clean architecture makes adding new indicators and strategies straightforward.</p>
+  </div>
+</section>
+
+<footer class="footer">© 2017-2025 Wolfinch.com</footer>
+
+</body>
 </html>

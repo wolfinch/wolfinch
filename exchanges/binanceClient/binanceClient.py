@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # '''
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -250,9 +250,18 @@ class Binance (Exchange):
             if not reactor._stopped:
                 reactor.stop()
             log.debug("Closed websockets")
-    def get_products (self):
-        log.debug ("products num %s"%((self.binance_products)))
-        return self.binance_products    
+    def get_products (self, p_id=None): 
+        if p_id == None:
+            return self.binance_products
+        else:
+            for p in self.binance_products:
+                if p["id"] == p_id:
+                    return p
+        return None     
+    def add_products(self, products):
+        log.error("TODO: FIXME: implement")
+    def delete_products(self, products):
+        log.error("TODO: FIXME: implement")
     def get_accounts (self):
     #     log.debug (pprint.pformat(self.binance_accounts))
         log.debug ("get accounts")

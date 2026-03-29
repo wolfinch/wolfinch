@@ -1,4 +1,4 @@
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -15,6 +15,7 @@
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 
 import yaml
+import sys
 
 # Load  external config file
 def readConf (fileName):
@@ -23,5 +24,6 @@ def readConf (fileName):
             confDict = yaml.load(fp, Loader=yaml.FullLoader)
 #             print (confDict)
             return confDict
-    except : # parent of IOError, OSError *and* WindowsError where available
-        print('Oops!! Conf Read Error for %s'%(fileName))
+    except Exception as e: # parent of IOError, OSError *and* WindowsError where available
+        print('Oops!! Conf Read Error for %s e: %s'%(fileName, e))
+        sys.exit(1)

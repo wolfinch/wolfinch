@@ -1,6 +1,6 @@
 # Wolfinch Auto trading Bot
 # Desc: Market/trading routines
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -41,6 +41,7 @@ import decision
 import db
 import sims
 import strategy
+import notifiers
 
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
@@ -48,7 +49,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 log = getLogger ('MARKET')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.ERROR)
 
 Wolfinch_market_list = []
 
@@ -290,6 +291,8 @@ class Market:
         self.exchange_name = None if exchange == None else exchange.name
         self.exchange = exchange  # exchange module
         self.trading_hrs = 24  #market trading hrs 24 (for equity exchanges, should config this from exchanges)
+
+        self.notify_enabled = notifiers.is_notify_enabled()
         
         self.trading_paused_buy = False
         self.trading_paused_sell = False
@@ -318,6 +321,7 @@ class Market:
         self.fund.set_hold_value(float(0.0))
         self.fund.set_fund_liquidity(tcfg['fund_max_liquidity'])
         self.fund.set_max_per_buy_fund_value(tcfg['fund_max_per_buy_value'])
+        self.fund.set_fund_liquidity_percent(tcfg['fund_liquidity_percent'])
         fee = tcfg.get('fee')
         if fee:
             self.fund.set_fee(fee['maker'], fee['taker'])
@@ -361,9 +365,9 @@ class Market:
         self._db_commit_time = 0
             
     def __str__(self):
-#         log.critical ("get_market_rate:%f start_market_rate:%f initial_value:%f fund_liquidity_percent:%f start_market_rate:%f"%(
-#             self.get_market_rate(), self.start_market_rate,
-#                     self.fund.initial_value, self.fund.fund_liquidity_percent, self.start_market_rate))
+        # log.critical ("get_market_rate:%f start_market_rate:%f initial_value:%f fund_liquidity_percent:%f start_market_rate:%f"%(
+            # self.get_market_rate(), self.start_market_rate,
+                    # self.fund.initial_value, self.fund.fund_liquidity_percent, self.start_market_rate))
         return """
 {
 "exchange_name": "%s", "product_id": "%s","name": "%s", "current_market_rate": %f,
@@ -389,10 +393,28 @@ class Market:
                 self.num_take_profit_hit, self.num_stop_loss_hit,
                 self.num_success_trade, self.num_failed_trade,
                 (self.get_market_rate() - self.start_market_rate) * (
-                    (self.fund.initial_value * float(0.01) * self.fund.fund_liquidity_percent / self.start_market_rate) if self.start_market_rate > 0 else 0),
+                    (self.fund.fund_max_liquidity * float(0.01) * self.fund.fund_liquidity_percent / self.start_market_rate) if self.start_market_rate > 0 else 0),
                 self.trading_paused_buy, self.trading_paused_sell,
                 str(self.fund), str(self.asset), str(self.order_book))
-        
+
+
+    def notify(self, position):
+        if self.notify_enabled == True:
+            notifiers.notify("all", self.product_id, self._pos_to_msg(position))
+    def _pos_to_msg(self, pos):
+        if pos.sell:
+            # pos_str = "%d@%.2f"%(pos.sell.filled_size, pos.sell.price)
+            profit = (pos.sell.price - pos.buy.price)*100/pos.buy.price
+            msg = """%s %.2f profit %.2f%%"""%(
+                pos.status, pos.sell.price, round(profit, 2))
+        elif pos.buy:
+            # pos_str = "%d@%.2f"%(pos.buy.filled_size, pos.buy.price)
+            msg = """%s %.2f stop-loss %.2f take-profit %.2f """%(
+                pos.status, pos.buy.price, round(pos.stop_loss,2), round(pos.take_profit,2))            
+        else:
+            log.error("invalid position while sending notify - %s"%(pos))
+            return "bad bot"
+        return msg
     def get_fund_type(self):
         return self.fund_type
 
@@ -500,7 +522,6 @@ class Market:
         return self.order_book.get_positions(from_time, to_time)
     
     def _handle_tp_and_sl (self):
- 
         trade_pos_l = self.order_book.get_take_profit_positions(self.get_market_rate())
                 
         # TODO: TBD: Disabled aggressive SL closing. SL is assessed based on candle close.
@@ -525,17 +546,14 @@ class Market:
                                    Type="market",
                                    Price=round(float(0), 8),
                                    Stop=0, Profit=0, id=pos.id))
-            
             self._execute_market_trade(trade_req_l)
                 
     def _handle_pending_trade_reqs (self):
         # TODO: FIXME:jork: Might need to extend
-
         num_pos = len(self.order_book.pending_trade_req)
         if 0 == num_pos:
             return
         log.debug("(%d) Pending Trade Reqs " % (num_pos))
-        
         market_price = self.get_market_rate()
         for trade_req in self.order_book.pending_trade_req[:]:
             if (trade_req.side == 'BUY'):
@@ -556,11 +574,9 @@ class Market:
         # this rework is assumed an abstraction and handles only simplified order status
         # if there are more order states, it should be handled/translated in the exch impl.
         log.debug ("ORDER UPDATE: %s" % (str(order)))
-        
         if order == None:
             log.error ("Invalid order, skip update")
             return None
-        
         side = order.side
         order_status = order.status
         if side == 'buy':
@@ -1310,8 +1326,31 @@ def get_market_by_product (exchange_name, product_id):
         if market.product_id == product_id and market.exchange_name == exchange_name:
             return market
 
+def market_init(exchange, product):
+    log.info ("init market for %s"%(product["id"]))
+    tcfg, dcfg = exchange.get_product_config (exchange.name, product.get('id', None))
+    if tcfg == None or dcfg == None:
+        log.critical ("""Unable to get product config for exch: %s prod: %s
+            skip configuring market""" % (exchange.name, product.get('id', None)))
+        return None
+    # init new Market for product
+    try:
+        log.info ("configuring market for exch: %s prod: %s" % (exchange, product))
+        market = Market(product=product, exchange=exchange)
+        market = exchange.market_init (market)
+        if (market == None):
+            log.critical ("Market Init Failed for exchange: %s product: %s" % (exchange.name, str(product)))
+            return None
+        else:
+            log.info ("market init success for exchange (%s) product: %s" % (exchange.name, str(product)))
+            Wolfinch_market_list.append(market)
+            return market
+    except:
+        log.critical ("Unable to get Market for exchange: %s product: %s e: %s" % (
+            exchange.name, str(product), traceback.format_exc()))
+        return None
         
-def market_init (exchange_list, get_product_config_hook):
+def market_init_all (exchange_list, get_product_config_hook):
     '''
     Initialize per exchange, per product data.
     This is where we want to keep all the run stats
@@ -1322,25 +1361,7 @@ def market_init (exchange_list, get_product_config_hook):
         products = exchange.get_products()
         if products:
             for product in products:
-                tcfg, dcfg = exchange.get_product_config (exchange.name, product.get('id', None))
-                if tcfg == None or dcfg == None:
-                    log.critical ("""Unable to get product config for exch: %s prod: %s
-                    skip configuring market""" % (exchange.name, product.get('id', None)))
-                    continue
-                # init new Market for product
-                try:
-                    log.info ("configuring market for exch: %s prod: %s" % (exchange, product))
-                    market = Market(product=product, exchange=exchange)
-                except:
-                    log.critical ("Unable to get Market for exchange: %s product: %s e: %s" % (
-                        exchange.name, str(product), traceback.format_exc()))
-                else:
-                    market = exchange.market_init (market)
-                    if (market == None):
-                        log.critical ("Market Init Failed for exchange: %s product: %s" % (exchange.name, str(product)))
-                    else:
-                        log.info ("market init success for exchange (%s) product: %s" % (exchange.name, str(product)))
-                        Wolfinch_market_list.append(market)
+                market_init(exchange, product)
         else:
             log.error ("No products found in exchange:%s" % (exchange.name))
     if (sims.simulator_on and not sims.backtesting_on):
@@ -1350,18 +1371,22 @@ def market_init (exchange_list, get_product_config_hook):
         sims.sim_obj["market"]  = Market(product=product, exchange=sims.sim_obj["exch"])
         sims.sim_obj["market"]  = sims.sim_obj["exch"].market_init (sims.sim_obj["market"])
         
-def market_setup (restart=False):
+def market_setup (restart=False, market=None):
     '''
     Setup market states.
     This is where we want to keep all the run stats
     '''
     global Wolfinch_market_list
     
-    if not len (Wolfinch_market_list):
+    if market :
+        market_list = [market]
+    else:
+        market_list = Wolfinch_market_list
+    if not len (market_list):
         log.critical("No Markets configured. Nothing to do!")
         exit (0)
     
-    for market in Wolfinch_market_list:
+    for market in market_list:
         status = market.market_setup (restart)
         if (status == False):
             log.critical ("Market Init Failed for market: %s" % (market.name))
@@ -1371,17 +1396,17 @@ def market_setup (restart=False):
         
     if sims.import_only:
         log.info ("import_only! skip rest of setup")
-        return
+        return True
                 
     log.info ("market setup complete for all markets, init decision engines now")
-    for market in Wolfinch_market_list:
-        status = market.decision_setup (Wolfinch_market_list)
+    for market in market_list:
+        status = market.decision_setup (market_list)
         if (status == False):
             log.critical ("decision_setup Failed for market: %s" % (market.name))
             return False
         else:
             log.info ("decision_setup completed for market: %s" % (market.name))
-
+    return True
                         
 def get_all_market_stats ():
     market_stats = {}

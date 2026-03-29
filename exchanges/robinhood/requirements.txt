@@ -1,0 +1,2 @@
+robin_stocks>=3.2.0
+protobuf>=5.29.0

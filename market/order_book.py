@@ -2,7 +2,7 @@
 #  Wolfinch Auto trading Bot
 #  Desc:  exchange interactions Simulation
 #
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -28,9 +28,10 @@ import stats
 import db
 import sims
 from .order import Order
+from datetime import datetime
 
 log = getLogger('ORDER-BOOK')
-log.setLevel(log.CRITICAL)
+log.setLevel(log.INFO)
 
 class Position(object):
     def __init__(self, id=None, buy=None, sell=None, profit=0, stop_loss=0,
@@ -85,8 +86,11 @@ class Position(object):
     def __str__(self):
         buy_str = str(self.buy) if self.buy else "null"
         sell_str = str(self.sell) if self.sell else "null"
+        open_time =  str(int(datetime.fromisoformat(self.open_time).timestamp())) if self.open_time else "None"
+        closed_time =  str(int(datetime.fromisoformat(self.closed_time).timestamp())) if self.closed_time else "None"        
+        
         return """{\n"id":"%s", "status":"%s", "open_time":"%s", "closed_time":"%s", "profit": %f, "stop_loss": %f, "take_profit":%f,
-"buy":%s\n,"sell":%s\n}"""%(self.id, self.status, self.open_time, self.closed_time, round(self.profit,4), round(self.stop_loss,4),
+"buy":%s\n,"sell":%s\n}"""%(self.id, self.status, open_time, closed_time, round(self.profit,4), round(self.stop_loss,4),
                              round(self.take_profit,4),
                             buy_str, sell_str)
     def __repr__(self):
@@ -155,6 +159,9 @@ class OrderBook():
 #         log.debug("\n\n\n***open_position: open(%d) closed(%d) close_pend(%d)"%(len(self.open_positions), len(self.closed_positions), len(self.close_pending_positions)))
         # save pos to db
         self.positionsDb.db_save_position(position)
+        #send notification if configured. 
+        self.market.notify(position)
+        log.info("position open pos: %s"%(str(position)))
           
     def get_closable_position(self):
         log.info("get_closable_position ")
@@ -257,8 +264,9 @@ class OrderBook():
                 self.market.num_failed_trade += 1
             self.closed_positions.append(position)
                 
-                #update position
+            #update position
             self.positionsDb.db_save_position(position)
+            self.market.notify(position)            
             log.info("position closed pos: %s"%(str(position)))
         else:
             log.critical("Unable to get close_pending position. order_id: %s"%(sell_order.id))
@@ -353,11 +361,9 @@ class OrderBook():
             return None
     def get_stop_loss_positions(self, market_rate):
         sl_pos_list =[]
-        
         key_list = list(self.sl_dict.irange(minimum=market_rate, inclusive=(True, True)))
 #         log.critical("slPrice: %d"%market_rate)
 #         log.critical("key_list :%s"%(key_list))
-        
         for key in key_list:
             pos_list = self.sl_dict.pop(key)
             sl_pos_list += pos_list
@@ -372,17 +378,13 @@ class OrderBook():
                 # remove pos from take profit points
                 self.pop_take_profit_position(pos)
         self.market.num_stop_loss_hit += len(sl_pos_list)
-        
-#         if len(sl_pos_list):
-#             log.critical("num_stop_loss_hit: %d slPrice: %d"%(len(sl_pos_list), market_rate))
-        
+        if len(sl_pos_list):
+            log.info("num_stop_loss_hit: %d slPrice: %d"%(len(sl_pos_list), market_rate))
         return sl_pos_list
 
     def get_take_profit_positions(self, market_rate):
         tp_pos_list =[]
-        
         key_list = list(self.tp_dict.irange(maximum=market_rate, inclusive=(True, True)))
-        
         for key in key_list:
             pos_list = self.tp_dict.pop(key)
             tp_pos_list += pos_list
@@ -396,10 +398,10 @@ class OrderBook():
                 self.close_pending_positions[pos.id] = pos
                 # remove pos from take profit points
                 self.pop_stop_loss_position(pos)
-                
         self.market.num_take_profit_hit += len(tp_pos_list)
+        if len(tp_pos_list):
+            log.info("num_take_profit_hit: %d slPrice: %d"%(len(tp_pos_list), market_rate))        
         return tp_pos_list
-            
             
     def add_take_profit_position(self, position, market_rate, market, new_tp=0):
         tp_kind = market.tradeConfig['take_profit_kind']
@@ -564,7 +566,7 @@ class OrderBook():
 #         sys.exit()
                 
     def get_positions (self, from_time=0, to_time=0):
-        log.info("get positions ", from_time, to_time)
+        log.info("get positions from_time: %d to_time: %d"%(from_time, to_time))
         return self.all_positions[:]
         
     def dump_traded_orders(self, fd=sys.stdout):

@@ -2,7 +2,7 @@
 # Wolfinch Auto trading Bot
 # Desc:  TATS (Truly Amazing Trading Strategy)
 #
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2023 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -24,11 +24,22 @@
 # 3. Volume Oscilator (https://www.investopedia.com/articles/technical/02/082702.asp)
 # def gen_sig():
 
+## NOTES: TODO:
+# 1. for ZA break, when a retrace happens, don't declare zone break unless previous high is broken
+# 2. Volume confirmation
+# 3. kind/shape of the candle
+####  NOTES: END
+
 from sortedcontainers import sorteddict
 from datetime import datetime
 from .strategy import Strategy
+from utils import getLogger
 
+log = getLogger ('TATS')
+log.setLevel(log.DEBUG)
 
+BULLISH = "bullish"
+BEARISH = "bearish"
 class TATS(Strategy):
     config = {
 #         'period' : {'default': 120, 'var': {'type': int, 'min': 20, 'max': 200, 'step': 5 }},
@@ -50,7 +61,7 @@ class TATS(Strategy):
 #         'timeout_sell' : {'default': 5, 'var': {'type': int, 'min': 0, 'max': 50, 'step': 2 }},
         }
     
-    def __init__ (self, name, period=30, ema=6, atr=50, mfi=50, rsi=14, rsi_overbought=70, rsi_oversold=20,
+    def __init__ (self, name, period=30, ema=6, ema_l=24, atr=50, mfi=50, rsi=14, rsi_overbought=70, rsi_oversold=20,
                   open_delay=20, close_delay=15, atr_mx=2, mfi_dir_len=2, rsi_dir_len=2
                  ):
         self.name = name
@@ -58,6 +69,7 @@ class TATS(Strategy):
     
         self.atr = atr
         self.ema = ema
+        self.ema_l = ema_l
         self.mfi = mfi
         self.mfi_dir_len = mfi_dir_len #mfi_dir_len
         self.rsi_dir_len = rsi_dir_len
@@ -79,6 +91,7 @@ class TATS(Strategy):
         # configure required indicators
         self.set_indicator("ATR", atr)
         self.set_indicator("EMA", ema)
+        self.set_indicator("EMA", ema_l)        
         self.set_indicator("MFI", mfi)
         #self.set_indicator("VOSC", {(vosc_short, vosc_long)}) 
 #         self.set_indicator("OBV")
@@ -86,17 +99,12 @@ class TATS(Strategy):
 #         self.set_indicator("VEMAOSC", (self.vosc_short, self.vosc_long))
         self.set_indicator("close")
         self.set_indicator("VWAP")
+        self.set_indicator("PIVOTPS")
 #         self.set_indicator("MVWAP", (250, vwap))
-        
+#         self.set_indicator("MACD", (24, 52, 9))
+
         # states
-        self.day_open = 0      
-        self.day_high = 0      
-        self.day_low = 0     
-        self.day_close = 0
         self.day = 0
-        self.pp = 0
-        self.r1 = self.r2 = self.r3 = 0
-        self.s1 = self.s2 = self.s3 = 0
         self.r_l = sorteddict.SortedDict()
         self.s_l = sorteddict.SortedDict()
         self.zone_action = ""
@@ -108,93 +116,59 @@ class TATS(Strategy):
         self.open_time = 0
         self.close_time = 0
         self.bought = True
+        self.trend = ""
+        self.supstance = []
 
-    def generate_signal (self, candles):
-#         '''
-#         Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
-#         '''
-        #   rsi oversold/bought
-        # mfi and rsi are in same direction
-        # relate with support/resistance on movement
-        # trend reversal (signal)
-        len_candles = len (candles)
-        signal = 0
+    def _zone_action(self, candles, dir):
+        ######support/resistance zone handling###########
+        vwap = self.indicator(candles, 'VWAP')
+        cur_close = self.indicator(candles, 'close')
+        atr = self.indicator(candles, 'ATR', self.atr)
         cdl = candles[-1]['ohlc']
         dt = datetime.fromtimestamp(cdl.time)
         day = dt.date().day
         if  day != self.day:
-            if self.day != 0:
-                #skip the first day cdls, and setup support, resitstance levels.
-                self.pp = (self.day_high + self.day_low + self.day_close)/3
-                self.r1 = 2*self.pp - self.day_low
-                self.s1 = 2*self.pp - self.day_high
-                self.r2 = self.pp + (self.day_high - self.day_low)
-                self.s2 = self.pp - (self.day_high - self.day_low)
-                self.r3 = self.day_high + 2*(self.pp - self.day_low)
-                self.s3 = self.day_low - 2*(self.day_high - self.pp)
-                self.s_l = sorteddict.SortedDict({self.s1:0, self.s2:0, self.s3:0, self.pp:0})
-                self.r_l = sorteddict.SortedDict({self.r1:0, self.r2:0, self.r3:0})
-                print ("setting up levels for day: %d high: %f low: %f close: %f open: %f"%(day, self.day_high, self.day_low, self.day_close, self.day_open))                
+            log.debug("******###########################\n\n new day(%d) \n################################*******"%(day))
             self.day = day
-            self.open_time = cdl.time
-            self.close_time = int(self.open_time + 6.5*3600) #market hrs are 6.5hrs
-            self.day_open = cdl.open
-            self.day_high = cdl.high
-            self.day_low = cdl.low
-            self.day_close = cdl.close
-            print("******###########################\n\n new day(%d) \n################################*******"%(day))            
-        else:
-            self.day_close = cdl.close 
-            if self.day_high < cdl.high:
-                self.day_high = cdl.high
-            if self.day_low > cdl.low:
-                self.day_low = cdl.low
-        if len_candles < self.period:
-            return 0
-        mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
-        rsi_l = self.indicator(candles, 'RSI', self.rsi, history=self.rsi_dir_len)
-        
-#         vosc = self.indicator(candles, 'VEMAOSC', (self.vosc_short, self.vosc_long))
-        cur_close = self.indicator(candles, 'close')
-        
-#         obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
-        
-        atr = self.indicator(candles, 'ATR', self.atr)
-        ema_l = self.indicator(candles, 'EMA', self.ema, history=2)
-        vwap = self.indicator(candles, 'VWAP')
-        rsi = rsi_l[-1]
-        
-        #short trend, simple direction
-        if ema_l[0] > ema_l[-1]:
-            trend = "down"
-        elif ema_l[0] < ema_l[-1]:
-            trend = "up"
-        else:
-            trend = ""
-        ######support/resistance zone handling###########
-        print ("*******%d:(%s) zone_s: %s zone_r: %s vwap: %f rsi: %f atr: %f cur_close: %f"%(cdl.time,
-            dt.time(), self.s_l, self.r_l, vwap, rsi, atr, cur_close))
+            self.open_time = cdl.time - 60
+            self.close_time = int(self.open_time + 6.5*3600 - 60) #market hrs are 6.5hrs
+            pps = self.indicator(candles, 'PIVOTPS')
+            if pps.get("pp") == None:
+                return self.signal
+            self.s_l = sorteddict.SortedDict({pps["s1"]:0, pps["s2"]:0, pps["s3"]:0, pps["pp"]:0})
+            self.r_l = sorteddict.SortedDict({pps["r1"]:0, pps["r2"]:0, pps["r3"]:0})
+            #find round numbers (x5s) in the range and them too
+            ppr = int((pps["pp"]-(pps["pp"]%5))+5) # ex. 121.3 -> 125
+            lsr = int((pps["s3"] - pps["s3"]%5))
+            hrr = int((pps["r3"]- pps["r3"]%5)+5)
+            for n in range(lsr, ppr,  5):
+                self.s_l[n] = 0
+            for n in range(ppr, hrr,  5):
+                self.r_l[n] = 0
+        ###### start #######
+        log.debug ("*******%d:(%s) zone_s: %s zone_r: %s vwap: %f atr: %f cur_close: %f"%(cdl.time,
+            dt.time(), self.s_l, self.r_l, vwap, atr, cur_close))
         za = ""        
-        if trend == "up":
-            #see if we are near any resistance zones or crossed
+        if dir == "up":
+            #see if we are near any pivot-points resistance zones or crossed
             try:
                 i = 0
-                while True:
+                while i < len( self.r_l):
                     r, w = self.r_l.peekitem(i)
                     #czse 1. moving up from resistance
                     if cur_close >= r + (w + self.atr_mx)*atr:
                         #resistance crossed, flip roles - resistance becomes support now
-                        print ("TATS - broke resistance %f: %d cur_close: %f"%(r, w, cur_close))                    
+                        log.debug ("TATS - broke resistance %f: %d cur_close: %f"%(r, w, cur_close))                    
                         self.s_l[r] = 0
                         del(self.r_l[r])                   
                         if za == "":
                             #cases where we broke one res and in the zone of other, don't buy (conservative buy)
                             za = "buy"
                             self.res_try_break = False
-    #                     break #could we break multiple resistance in one candle? yes!
+                        # break #could we break multiple resistance in one candle? yes!
                     elif cur_close >= r - ( self.atr_mx)*atr:
                         #case 2: trying to break resistance. within the range now.
-                        print ("TATS - trying to break resistance %f: %d cur_close: %f"%(r, w, cur_close))
+                        log.debug ("TATS - trying to break resistance %f: %d cur_close: %f"%(r, w, cur_close))
                         if self.res_try_break == False:
                             #count the res zone entry
                             self.res_try_break = True 
@@ -210,14 +184,13 @@ class TATS(Strategy):
 
             #case3: check if we are in vwap resistance zone
             if cur_close >= vwap + self.atr_mx*atr:
-                if self.vwap_try_break == True:
-                    #broke VWAP resistance, new break
-                    print ("TATS - broke vwap(%f) resistance BUY "%(vwap))                    
-                    if za == "":
-                        self.vwap_try_break = False
-                        za = "buy"
+                #broke VWAP resistance, new break
+                log.debug ("TATS - broke vwap(%f) resistance BUY "%(vwap))                    
+                if za == "":
+                    self.vwap_try_break = False
+                    za = "buy"
             elif cur_close >= vwap - self.atr_mx*atr:
-                print ("TATS - trying to break VWAP resistance %f"%(vwap))                
+                log.debug ("TATS - trying to break VWAP resistance %f"%(vwap))                
                 self.vwap_try_break = True
                 za = "hold"             
             #case 4. moving up from support, see if we are out of zone
@@ -227,11 +200,11 @@ class TATS(Strategy):
                     #out of support range, we might go up now
                     if za == "":
                         #couldn't break support zone, makes support stronger
-                        print ("TATS - unable to break support, BUY ")                                            
+                        log.debug ("TATS - unable to break support, BUY ")                                            
                         self.s_l[s] = w+1                        
                         self.sup_try_break = False             
                         za = "buy"    
-        elif trend == "down":
+        elif dir == "down":
             #see if we are near any support zones or crossed
             try:
                 i = -1
@@ -240,14 +213,14 @@ class TATS(Strategy):
                     #case 1: support broke. we might go down further. sell. 
                     if cur_close <= s - (w + self.atr_mx)*atr:
                         #support broke, flip roles
-                        print ("TATS - broke support %f: %d cur_close: %f"%(s, w, cur_close))                    
+                        log.debug ("TATS - broke support %f: %d cur_close: %f"%(s, w, cur_close))                    
                         self.r_l[s] = 0
                         del(self.s_l[s])                   
                         za = "sell"
                         self.sup_try_break = False
                     elif cur_close <= s + (self.atr_mx)*atr:
                         #case 2: trying to break support. within the range now.
-                        print ("TATS - trying to break support %f: %d cur_close: %f"%(s, w, cur_close))
+                        log.debug ("TATS - trying to break support %f: %d cur_close: %f"%(s, w, cur_close))
                         if self.sup_try_break == False:
                             #count the sup zone entry
                             self.sup_try_break = True 
@@ -266,12 +239,12 @@ class TATS(Strategy):
                 #broke VWAP support, new break from range
                     self.vwap_try_break = False
                     za = "sell"
-                    print ("TATS - SELL vwap(%f) support broke cur_close: %f "%(vwap, cur_close))                
+                    log.debug ("TATS - SELL vwap(%f) support broke cur_close: %f "%(vwap, cur_close))                
             elif cur_close <= vwap + self.atr_mx*atr:
                 self.vwap_try_break = True
                 if za == "":                
                     za = "hold"
-                    print ("TATS - HOLD vwap(%f) support range cur_close: %f "%(vwap, cur_close))                    
+                    log.debug ("TATS - HOLD vwap(%f) support range cur_close: %f "%(vwap, cur_close))                    
             #case 2: tried break resistance and failed. we could go further down. sell
             if self.res_try_break == True:
                 r, w = self.r_l.peekitem(0)
@@ -279,66 +252,127 @@ class TATS(Strategy):
                     #out of resistance range, we might go down further
                     if za == "":
                         #couldn't break resistance zone, makes reistance stronger
-                        print ("TATS - unable to break resistance, SELL ")                        
+                        log.debug ("TATS - unable to break resistance, SELL ")                        
                         self.r_l[r] = w+1                        
                         self.res_try_break = False             
                         za = "sell"
         if za != "":
             #there is a new state else maintain previous state
-            print (" -- >new zone action :%s < --"%(za))
+            log.debug (" -- >new zone action :%s < --"%(za))
             self.zone_action = za                       
-        ######support/resistance zone handling###########
-        
-        ####### RSI/MFI signaling ########
+        ######support/resistance zone handling###########        
+    def _rsi_mfi_action(self, candles):
+        mfi_l = self.indicator(candles, 'MFI', self.mfi, history=self.mfi_dir_len)
+        rsi_l = self.indicator(candles, 'RSI', self.rsi, history=self.rsi_dir_len)
+        rsi = rsi_l[-1]
         if rsi > self.rsi_overbought:
             self.rsi_trend = "OB"
         elif rsi < self.rsi_oversold:
             self.rsi_trend = "OS"
         else:   #elif rsi >= 30 and rsi <= 60:
             self.rsi_trend = ""
+            self.rsi_action = "hold"
         
         if (self.rsi_trend == "OS" and 
             all(mfi_l[i] <= mfi_l[i+1] for i in range(len(mfi_l)-1)) and 
             all(rsi_l[i] <= rsi_l[i+1] for i in range(len(rsi_l)-1))):
             #recovering
-            print("TATS - recovering from oversold(%f). BUY"%(rsi))
+            log.debug("TATS - recovering from oversold(%f). BUY"%(rsi))
             self.rsi_action = "buy"
         elif (self.rsi_trend == "OB" and 
               all(mfi_l[i] >= mfi_l[i+1] for i in range(len(mfi_l)-1)) and 
               all(rsi_l[i] >= rsi_l[i+1] for i in range(len(rsi_l)-1))):
-            print("TATS - overbought(%f) SELL"%(rsi))            
+            log.debug("TATS - overbought(%f) SELL"%(rsi))            
             self.rsi_action = "sell"
         ####### RSI/MFI signaling ########
-
-        if self.rsi_action == "buy" and (self.zone_action == "buy" or self.zone_action == ""):
-            #conservative buy
-            print (" >>>>>>>>>>>>>>>>>TATS: BUY z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
-            signal = 1
-            self.rsi_action = self.zone_action = ""
-        elif  self.rsi_action == "sell" or self.zone_action == "sell":
-            #proactive sell
-            print (" >>>>>>>>>>>>>>>>TATS: SELL z_a: %s rsi_a: %s"%(self.zone_action, self.rsi_action))            
-            signal = -1
-            self.rsi_action = self.zone_action = ""
-        print ("cdl time; %d opentime: %d %d "%(cdl.time , self.open_time + 30*60, self.close_time))
-        if (cdl.time < self.open_time + self.open_delay*60) or (cdl.time > self.close_time - (self.close_delay+10)*60):
+    def _trade_window_adjust_signal(self, cdl, signal: int) -> int:
+        log.debug ("cdl time; %d market open_time: %d closing_time: %d "%(cdl.time , self.open_time, self.close_time))
+        if cdl.time > self.close_time - self.close_delay*60:
+            # we are a day trading strategy and let's not carry over to next day            
+            log.debug ("TATS - closing day window. SELL everything signal: %d"%(signal))
+            signal = -1        
+        elif (cdl.time < self.open_time + self.open_delay*60) :
             #let's not buy anything within half n hr of market open and sell everything 15min in to market close
             # don't buy if we are with in 10mins of close delay window below
-            print ("TATS - open delay skip trade signal: %d"%(signal))      
+            log.debug ("TATS - open delay (%d) skip trade signal: %d"%((self.open_time + self.open_delay*60 - cdl.time), signal))      
+            signal = 0            
+        elif (cdl.time > self.close_time - (self.close_delay+10)*60):
+            #let's not buy anything within half n hr of market open and sell everything 15min in to market close
+            # don't buy if we are with in 10mins of close delay window below
+            log.debug ("TATS - close delay (%d) skip trade signal: %d"%((cdl.time - self.close_time + (self.close_delay+10)*60), signal))      
             signal = 0
-        elif cdl.time > self.close_time - self.close_delay*60:
-            # we are a day trading strategy and let's not carry over to next day            
-            print ("TATS - closing day window. SELL everything signal: %d"%(signal))
-            signal = -1
+        return signal         
+    def generate_signal (self, candles):
+#         '''
+#         Trade Signal in range(-3..0..3), ==> (strong sell .. 0 .. strong buy) 0 is neutral (hold) signal 
+#         '''
+        #   rsi oversold/bought
+        # mfi and rsi are in same direction
+        # relate with support/resistance on movement
+        # trend reversal (signal)
+        len_candles = len (candles)
+        signal = 0
+        if len_candles < self.period:
+            return 0        
+        cdl = candles[-1]['ohlc']
+#         vosc = self.indicator(candles, 'VEMAOSC', (self.vosc_short, self.vosc_long))
+#         obv_l = self.indicator(candles, 'OBV', history=self.obv_dir_len)
+        atr = self.indicator(candles, 'ATR', self.atr)
+        ema_sh = self.indicator(candles, 'EMA', self.ema, history=2)
+        ema_s = ema_sh[-1]
+        ema_l = self.indicator(candles, 'EMA', self.ema_l)        
         
-        #let's keep only one open position at a time
-        if signal > 0 and self.signal > 0:
-            signal = 0
-        elif signal < 0 and self.signal < 0:
-            signal = 0
-        elif signal != 0:
-            self.signal = signal
-            
-        return signal
+        #simple direction
+        if ema_sh[0] > ema_sh[-1]:
+            dir = "down"
+        elif ema_sh[0] < ema_sh[-1]:
+            dir = "up"
+        else:
+            dir = ""
+        #simple direction
+        #trend, reversal
+        trend = ""
+        if ema_s > ema_l + atr:
+            trend = BULLISH
+        elif ema_s < ema_l - atr:
+            trend = BEARISH
+        # else:
+            # trend = ""
+        t_rev = False
+        if trend in [BULLISH, BEARISH] and self.trend != trend:
+            t_rev = True
+            self.trend = trend
+        #trend, reversal
+        #trend crossover signaling
+        trend_signal = ""
+        if t_rev:
+            if trend == BEARISH:
+                #acts only on bearish crossover rn.
+                trend_signal = "sell"
+            elif trend == BULLISH:
+                trend_signal = "buy"
+        #trend crossover signaling
+        
+        ######support/resistance zone handling###########
+        self._zone_action(candles, dir)
+        
+        ####### RSI/MFI signaling ########
+        self._rsi_mfi_action(candles)
+
+        ########## final actioning $################
+        if ((self.zone_action == "buy"  and self.rsi_action != "sell") or (self.rsi_action == "buy" and  self.zone_action == "")) and dir == "up":
+            #conservative buy
+            log.debug (" >>>>>>>>>>>>>>>>> BUY z_a: %s rsi_a: %s \n\n"%(self.zone_action, self.rsi_action))            
+            signal = 1
+            self.rsi_action = self.zone_action = ""
+        elif  self.rsi_action == "sell" or self.zone_action == "sell" or trend_signal == "sell":
+            #proactive sell
+            log.debug (" >>>>>>>>>>>>>>>> SELL z_a: %s rsi_a: %s trend_signal: %s\n\n"%(self.zone_action, self.rsi_action, trend_signal))            
+            signal = -1
+            self.rsi_action = self.zone_action = ""
+
+        #adjust signal based on trading window 
+        return self._trade_window_adjust_signal(cdl, signal)
+
     
 # EOF

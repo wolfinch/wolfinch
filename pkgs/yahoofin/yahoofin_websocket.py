@@ -3,7 +3,7 @@
 #  Wolfinch Auto trading Bot
 #  Desc: Yahoofin exchange interactions for Wolfinch
 #
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -29,7 +29,10 @@ from threading import Thread
 import threading
 from websocket import create_connection, WebSocketConnectionClosedException
 from utils import getLogger
-from .yahoofin_pricingdata_pb2 import PricingData
+try:
+    from .yahoofin_pricingdata_pb2 import PricingData
+except ImportError:
+    from yahoofin_pricingdata_pb2 import PricingData
 
 parser = args = None
 log = getLogger ('YahoofinWS')
@@ -71,7 +74,7 @@ class WebsocketClient(object):
                 self.products+= feed_list
         if self.ws and self.products:
             cmd = {"subscribe": self.products}
-            log.info ("subscribe feed_list: %s"%(json.dumps(cmd)))                  
+            log.info ("subscribe feed_list: %s"%(json.dumps(cmd)))
             self.ws.send(json.dumps(cmd))
         
     def start(self):
@@ -108,12 +111,13 @@ class WebsocketClient(object):
     def close(self):
         log.info ("closing ws and keep alive threads")
         self.stop = True
+        self._disconnect()
         self.thread.join()
         log.debug ("waiting to close alive threads")            
         self.keepalive_thread.join()
         log.debug ("closed ws and keep alive threads")     
                 
-    def _keepalive(self, interval=10):
+    def _keepalive(self, interval=3):
         while not self.stop :
             #TODO: FIXME: potential race
             if self.hearbeat_time + 600 < (time.time()):

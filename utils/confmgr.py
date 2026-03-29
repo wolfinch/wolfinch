@@ -2,7 +2,7 @@
 #
 # Wolfinch Auto trading Bot
 # Desc: Main File implements Bot
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@ from .logger import getLogger
 import sims, ui
 
 log = getLogger ('confmgr')
-log.setLevel(log.INFO)
+log.setLevel(log.ERROR)
 # Global Config 
 WolfinchConfig = None
 gDecisionConfig = {"decision": {"model": "simple"}}
@@ -59,7 +59,9 @@ def parse_product_config (cfg):
         if k == 'currency':
             parsed_tcfg ['currency'] = v
         if k == 'fund_max_liquidity':
-            parsed_tcfg ['fund_max_liquidity'] = v
+            parsed_tcfg ['fund_max_liquidity'] = v 
+        if k == 'fund_liquidity_percent':
+            parsed_tcfg ['fund_liquidity_percent'] = v            
         if k == 'fund_max_per_buy_value':
             parsed_tcfg ['fund_max_per_buy_value'] = v
         if k == 'asset_max_per_trade_size':
@@ -100,6 +102,9 @@ def parse_product_config (cfg):
         print ("trading config not set")
         raise Exception ("trading config not set")
     
+    if  not parsed_tcfg.get('fund_liquidity_percent')  or parsed_tcfg.get('fund_liquidity_percent') == 0 :
+        parsed_tcfg['fund_liquidity_percent'] = 100
+
     if not parsed_tcfg.get('stop_loss_enabled'):
         parsed_tcfg ['stop_loss_enabled'] = False        
         parsed_tcfg ['stop_loss_kind'] = 'simple'
@@ -146,27 +151,31 @@ def get_product_config (exch_name, prod_name):
                     if products != None and len(products):
                         log.debug ("processing exch products")
                         for prod in products:
+                            p_cfg = {}
                             for p_name, p_cfg in prod.items():
                                 if p_name.lower() != prod_name.lower():
                                     continue
-                                log.debug ("processing product %s:" % (p_name))
-                                tcfg, dcfg = parse_product_config(p_cfg)
-                                
-                                #get fee, market_type
-                                fee = ex_v.get('fee')
-                                if not fee :
-                                    print ("exchange fee not set")
-                                    raise Exception("exchange fee not set")
-                                order_type = ex_v.get('order_type')
-                                if not order_type :
-                                    print ("exchange order_type not set")
-                                    raise Exception("exchange order_type not set")
-                                
-                                tcfg ['order_type'] = order_type
-                                tcfg ['fee'] = fee
-                                
-                                log.debug ("tcfg: %s dcfg: %s" % (tcfg, dcfg))
-                                return tcfg, dcfg
+                                log.debug ("processing product %s: p_cfg: %s" % (p_name, p_cfg))
+                                break
+                            else:
+                                log.error("unable to get matching product config, return default config")
+                            tcfg, dcfg = parse_product_config(p_cfg)
+                            #get fee, market_type
+                            fee = ex_v.get('fee')
+                            if not fee :
+                                print ("exchange fee not set")
+                                raise Exception("exchange fee not set")
+                            order_type = ex_v.get('order_type')
+                            if not order_type :
+                                print ("exchange order_type not set")
+                                raise Exception("exchange order_type not set")
+                            
+                            tcfg ['order_type'] = order_type
+                            tcfg ['fee'] = fee
+                            
+                            log.debug ("tcfg: %s dcfg: %s" % (tcfg, dcfg))
+                            return tcfg, dcfg
+
                             
     log.error ("unable to get config for %s: %s"%(exch_name, prod_name))
     return None, None    

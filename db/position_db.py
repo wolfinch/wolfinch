@@ -1,7 +1,7 @@
 #
 # wolfinch Auto trading Bot
 # Desc: Position impl
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -20,7 +20,8 @@
 from utils import getLogger
 from .db import init_db, is_db_enabled
 from sqlalchemy import *
-from sqlalchemy.orm import mapper 
+from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.orm import registry
 import sims
 
 log = getLogger ('POSITION-DB')
@@ -52,7 +53,7 @@ class PositionDb(object):
         
         log.info ("init positionsdb")
         self.table_name = "position_%s_%s"%(self.exchange_name, self.product_id)
-        if not self.db.engine.dialect.has_table(self.db.engine, self.table_name):  # If table don't exist, Create.
+        if not sa_inspect(self.db.engine).has_table(self.table_name):  # If table don't exist, Create.
             # Create a table with the appropriate Columns
             log.info ("creating table: %s"%(self.table_name))
             self.table = Table(self.table_name, self.db.metadata,   
@@ -85,7 +86,7 @@ class PositionDb(object):
                     self.open_time = c.open_time
                     self.closed_time = c.closed_time                      
             self.positionCls = T
-            self.mapping = mapper(self.positionCls, self.table)
+            self.mapping = registry().map_imperatively(self.positionCls, self.table)
         except Exception as e:
             log.debug ("mapping failed with except: %s \n trying once again with non_primary mapping"%(e))
             raise e

@@ -5,7 +5,7 @@
 # ref. implementation.
 # All the globally available market Indicators are instantiated and configured here.
 # If a market specific Indicators list is required, a similar config may be made specific to the market
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -25,21 +25,6 @@ import importlib
 
 market_indicators = {}
 # init_done = False
-
-# Manually configure all required indicators. Should be used with auto-generation strategy 
-manual_indicator_config = {
-    'close': {},
-    'SMA' : {15, 50},
-    'EMA': {80, 50, 5, 120, 13, 21},    
-    'BBANDS': {},
-    'TRIX' : {30},
-    'ADX' : {},
-    'CCI' : {},
-    'SAR' : {},
-    'MACD': {},
-    'RSI': {21, 14},
-    'TRIX': {30},
-    }
 
 def Configure (exchange_name, product_id, config_list):
     global init_done, market_indicators
@@ -97,6 +82,20 @@ def import_indicator(ind_cls_name):
 ######### ******** MAIN ****** #########
 if __name__ == '__main__':
     print ("Market Indicators Test")
+    # Manually configure all required indicators. Should be used with auto-generation strategy 
+    manual_indicator_config = {
+        'close': {},
+        'SMA' : {15, 50},
+        'EMA': {80, 50, 5, 120, 13, 21},    
+        'BBANDS': {},
+        'TRIX' : {30},
+        'ADX' : {},
+        'CCI' : {},
+        'SAR' : {},
+        'MACD': {},
+        'RSI': {21, 14},
+        'TRIX': {30},
+        }    
     Configure ("SIM_EXCH", "BTC-USD", manual_indicator_config)
     
 #EOF

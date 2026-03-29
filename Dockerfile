@@ -1,0 +1,63 @@
+# using ubuntu LTS version
+FROM ubuntu:22.04 AS build
+
+# avoid stuck build due to user prompt
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y software-properties-common && \
+          ( yes | add-apt-repository ppa:deadsnakes/ppa ) && apt-get install --no-install-recommends \
+        -y python3 python3-dev python3-venv python3-pip python3-wheel build-essential && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# create and activate virtual environment
+# using final folder name to avoid path issues with packages
+RUN mkdir -p /home/venv
+RUN python3 -m venv /home/venv
+ENV PATH="/home/venv/bin:$PATH"
+# RUN cd /home/venv ; source venv/bin/activate
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# install requirements
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen
+
+# install exchange specific requirements.
+# RUN for l in `ls -d exchanges/*/`; do \ 
+#         if [ -f $l/requirements.txt ]; then \ 
+#             pip3 install -r $l/requirements.txt; \
+#         fi; \
+#     done;
+
+# RUN pip3 install --no-cache-dir -r requirements.txt
+
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y software-properties-common && \
+                ( yes | add-apt-repository ppa:deadsnakes/ppa ) && \
+                apt-get install --no-install-recommends -y python3 python3-venv && \
+                apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home wolfinch
+COPY --from=build /home/venv /home/venv
+
+# USER wolfinch
+WORKDIR /
+COPY . .
+
+#cleanup and protect
+RUN rm -rf data; rm -rf config
+
+EXPOSE 8080
+
+# make sure all messages always reach console
+ENV PYTHONUNBUFFERED=1
+
+# activate virtual environment
+ENV VIRTUAL_ENV=/home/venv
+ENV PATH="/home/venv/bin:$PATH"
+ENV PYTHONPATH=$PYTHONPATH:/
+
+# /dev/shm is mapped to shared memory and should be used for gunicorn heartbeat
+# this will improve performance and avoid random freezes
+
+ENTRYPOINT ["python", "wolfinch.py"]

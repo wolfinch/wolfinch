@@ -2,7 +2,7 @@
 '''
 # Wolfinch Auto trading Bot
 # Desc: Main File implements Bot
-#  Copyright: (c) 2017-2020 Joshith Rayaroth Koderi
+#  Copyright: (c) 2017-2022 Wolfinch Inc.
 #  This file is part of Wolfinch.
 # 
 #  Wolfinch is free software: you can redistribute it and/or modify
@@ -22,21 +22,24 @@
 
 import time
 import sys
-# import os
+import os
 import traceback
 import argparse
 from decimal import getcontext
 import random
+import notifiers
 # import logging
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "pkgs"))
+
 from utils import getLogger, get_product_config, load_config, get_config
 import sims
 import exchanges
-from market import market_init, market_setup, get_market_list, \
+from market import market_init, market_init_all, market_setup, get_market_list, \
                  feed_Q_process_msg, feed_deQ, get_market_by_product
 import db
 import stats
 import ui
-from ui import ui_conn_pipe
+# from ui import ui_conn_pipe
 
 # mpl_logger = logging.getLogger('matplotlib')
 # mpl_logger.setLevel(logging.WARNING)
@@ -57,26 +60,106 @@ def Wolfinch_init():
     # 1. Retrieve states back from Db
 #     db.init_order_db(Order)
 
+    #get global config
+    cfg=get_config()
+
+    #configure notifiers
+    notify_cfg = cfg.get("notification")
+    if notify_cfg:
+        if False == notifiers.init(notify_cfg):
+            log.critical("notification module init failed")
+            raise Exception("notification module init failed")
+        else:
+            log.info("notification module initialized")
+
     # setup ui if required
     if ui.integrated_ui:
-        ui.ui_conn_pipe = ui.ui_mp_init(ui.port)
+        ui.ui_conn_pipe = ui.ui_mp_init(ui.port, ui.ui_main)
         if ui.ui_conn_pipe is None:
             log.critical("unable to setup ui!! ")
             print("unable to setup UI!!")
             sys.exit(1)
 
     # 2. Init Exchanges
-    exchanges.init_exchanges(get_config())
+    exchanges.init_exchanges(cfg)
+    log.info ("exchanges initialized")
 
     # 3. Init markets
-    market_init(exchanges.exchange_list, get_product_config)
+    market_init_all(exchanges.exchange_list, get_product_config)
+    log.info ("markets initialized")
 
     # 4. Setup markets
     market_setup(restart=gRestart)
+    log.info ("markets setup completed")
 
     # 5. start stats thread
     stats.start()
+    log.info ("all init complete")
 
+def _add_market(exch_name, product_id):
+    log.info ("setting up market for exch: %s product: %s"%(exch_name, product_id))
+    exchange = None
+    for exh in exchanges.exchange_list:
+        log.info("EXCH NAME: %s", exh.name)
+        if hasattr(exh, "sim"):
+            #let's skip sim exchanges. This will cause dyn market add not work in backtest. which is fine.
+            continue
+        if exh.name == exch_name:
+            exchange = exh
+            break
+    if exchange == None:
+        log.critical ("exchange %s not found! "%(exch_name))
+        return False
+    #see if the product exists already
+    if exchange.get_products(product_id):
+        log.error("product already exists while adding p_id: %s"%(product_id))
+        return True
+    #add new product
+    prod_l = exchange.add_products(product_id)
+    if prod_l == None:
+        log.error("exchange product %s config failed"%(product_id))
+        return False
+    #if simulator enabled, add new products to sim exch
+    if sims.simulator_on:
+        #add initialized products for sim. We can do this only here after real exch initialized products
+        log.info("sim exch products init for exch:%s"%(exch_name))
+        sims.sim_obj["exch"].add_products(prod_l)
+    for product in prod_l:
+        #init market
+        market = market_init(exchange, product)
+        if market == None:
+            log.error ("market init failed")
+            return False
+        #setup market
+        if False == market_setup(restart=True, market=market):
+            log.critical ("market setup failed")
+            return False
+    return True
+def _delete_market(exch_name, product_id):
+    log.info ("deleting market from exch: %s product: %s"%(exch_name, product_id))
+    m = get_market_by_product(exch_name, product_id)
+    if not m:
+        log.error("Unknown exchange/product exch: %s prod: %s" %(exch_name, product_id))
+    else:
+        log.info("pause trading on exch: %s prod: %s" %(exch_name, product_id))
+        m.pause_trading(True, True)
+    
+    # #del product
+    # prod_l = exchange.del_products(product_id)
+    # if prod_l == None:
+    #     log.error("exchange product %s config failed"%(product_id))
+    #     return False
+    # for product in prod_l:
+    #     #init market
+    #     market = market_init(exchange, product)
+    #     if market == None:
+    #         log.error ("market init failed")
+    #         return False
+    #     #setup market
+    #     if False == market_setup(restart=True, market=market):
+    #         log.critical ("market setup failed")
+    #         return False
+    return True
 
 def Wolfinch_end():
     log.info("Finalizing Wolfinch")
@@ -145,6 +228,21 @@ def process_market(market):
     # commit market states to the db periodically(this logic is rate-limited)
     market.lazy_commit_market_states()
 
+def process_ui_market_update(msg):
+    log.info("market update msg: %s"%(msg))
+    cmd = msg.get("cmd")
+    exch_name = msg.get("exchange")
+    product = msg.get("product")
+    if cmd == "add":
+        if True != _add_market(exch_name, product):
+            log.error("error while configuring new market for exch: %s product: %s", exch_name, product)
+            return False
+    elif cmd == "delete":
+        if True != _delete_market(exch_name, product):
+            log.error("error while removing market from exch: %s product: %s", exch_name, product)
+            return False
+    else:
+        log.error("unknown market update")
 
 def process_ui_trade_notif(msg):
     exch = msg.get("exchange")
@@ -200,8 +298,18 @@ def process_ui_get_market_indicators_rr(msg, ui_conn_pipe):
     ind_list = {}
     if market:
         ind_list = market.get_indicator_list(num_periods, start_time)
+    # limit the number of candles to 300
+    if len(ind_list) > 300:
+        skip = len(ind_list)//300
+        i = 0
+        n_ind_list = []
+        while i < len(ind_list):
+            n_ind_list.append(ind_list[i])
+            i += skip
+    else:
+        n_ind_list = ind_list
     msg["type"] = "GET_MARKET_INDICATORS_RESP"
-    msg["data"] = ind_list
+    msg["data"] = n_ind_list
     ui_conn_pipe.send(msg)
     
 def process_ui_get_positions_rr(msg, ui_conn_pipe):
@@ -232,12 +340,14 @@ def process_ui_msgs(ui_conn_pipe):
                 msg_type = msg.get("type")
                 if msg_type == "TRADE":
                     process_ui_trade_notif(msg)
+                elif msg_type == "MARKET_UPDATE":
+                    process_ui_market_update(msg)
                 elif msg_type == "GET_MARKETS":
                     process_ui_get_markets_rr(msg, ui_conn_pipe)
                 elif msg_type == "GET_MARKET_INDICATORS":
-                    process_ui_get_market_indicators_rr(msg, ui_conn_pipe)                    
+                    process_ui_get_market_indicators_rr(msg, ui_conn_pipe)
                 elif msg_type == "GET_MARKET_POSITIONS":
-                    process_ui_get_positions_rr(msg, ui_conn_pipe)                        
+                    process_ui_get_positions_rr(msg, ui_conn_pipe)
                 elif msg_type == "PAUSE_TRADING":
                     process_ui_pause_trading_notif(msg)
                 else:
@@ -262,7 +372,7 @@ def arg_parse():
     global gRestart
     parser = argparse.ArgumentParser(description='Wolfinch Auto Trading Bot')
 
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0.1')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.2.0')
     parser.add_argument("--clean",
                         help='Clean states,dbs and exit. Clear all the existing states',
                         action='store_true')
