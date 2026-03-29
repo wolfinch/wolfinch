@@ -102,6 +102,15 @@ a:hover { color: #76aaf9; }
   font-size: 1.1rem;
 }
 
+.brand-icon-img {
+  width: 26px;
+  height: 26px;
+  vertical-align: middle;
+  margin-right: .1rem;
+  position: relative;
+  top: -1px;
+}
+
 /* Nav label prefix (Exchange / Market) */
 .nav-label {
   font-size: .68rem;
