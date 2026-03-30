@@ -21,7 +21,6 @@
 
 from .readconf import readConf
 from .logger import getLogger
-import sims, ui
 
 log = getLogger ('confmgr')
 log.setLevel(log.ERROR)
@@ -184,6 +183,7 @@ def get_product_config (exch_name, prod_name):
 def load_config (cfg_file):
     global WolfinchConfig
     global gDecisionConfig, gTradingConfig
+    import sims, ui
     WolfinchConfig = readConf(cfg_file)
     
     log.debug ("cfg: %s" % WolfinchConfig)

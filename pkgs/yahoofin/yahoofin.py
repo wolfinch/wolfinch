@@ -28,8 +28,11 @@ from dateutil.tz import tzlocal, tzutc
 import requests
 try:
     from .yahoofin_websocket import WebsocketClient
-except ImportError:
-    from yahoofin_websocket import WebsocketClient
+except (ImportError, ModuleNotFoundError):
+    try:
+        from yahoofin_websocket import WebsocketClient
+    except (ImportError, ModuleNotFoundError):
+        WebsocketClient = None
 # import logging
 
 from utils import getLogger

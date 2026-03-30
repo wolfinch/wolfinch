@@ -20,586 +20,601 @@
 <html lang="en">
 
 <head>
-<title>Wolfinch Trading Bot — Charts</title>
-<link rel="icon" href="https://wolfinch.com/favicon.ico">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link href="stylesheet.css" rel="stylesheet">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
+	<title>Wolfinch Trading Bot — Charts</title>
+	<link rel="icon" href="https://wolfinch.com/favicon.ico">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+		rel="stylesheet">
+	<link href="stylesheet.css" rel="stylesheet">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
 
-<script>
-	var exchanges;
-	var active_exch = "";
-	var active_market = "";
-	var ui_code = "";
-	$(document).ready(function() {
+	<script>
+		var exchanges;
+		var active_exch = "";
+		var active_market = "";
+		var ui_code = "";
+		$(document).ready(function () {
 
-		console.log("load stats");
-		
-		set_ui_code();
-		load_exch_data(init_charting);
-	});
+			console.log("load stats");
 
-	function set_ui_code () {
-		var p_l = window.location.pathname.split("/");
-		if (p_l.length > 1 && p_l[1] !== "wolfinch" && p_l[1] !== "") {
-			ui_code = "/" + p_l[1];
-		}
-	}
-
-	// ── Lightweight Charts globals ──────────────────────────────
-	var g_lw_chart = null;        // main LW chart instance
-	var g_candle_series = null;   // CandlestickSeries
-	var g_volume_series = null;   // HistogramSeries
-	var g_line_series = {};       // overlay lines keyed by indicator name
-	var g_pane_series = {};       // sub-pane series keyed by indicator name
-	var g_pane_charts = {};       // sub-pane LW chart instances
-
-	// colour palette for overlay lines
-	var LINE_COLORS = ['#1f77b4','#ff7f0e','#aec7e8','#ff9fae','#1f78b4','#aec9e8','#ff740e','#ff70ae'];
-	
-	// exch/market selector - start
-	function exch_onclick(obj) {
-		active_exch = this.text;
-		document.getElementById("exch_btn_id").textContent = active_exch;
-		load_markets_dd();
-		document.querySelectorAll('.pill-menu').forEach(function(m){ m.classList.remove('show'); });
-	}
-
-	function market_onclick(obj) {
-		active_market = this.text;
-		document.getElementById("markets_btn_id").textContent = active_market;
-		document.querySelectorAll('.pill-menu').forEach(function(m){ m.classList.remove('show'); });
-		var data = {};
-		data[active_exch] = active_market;
-		$.ajax({
-			type : 'POST',
-			url : ui_code+'/api/set_active_market',
-			data : data,
-			dataType : 'json',
-			success : function(data) { console.log("set_active_market success!"); },
-			error : function(xhr, error) { console.log("set_active_market failed!"); }
-		});
-	}
-
-	function toggleMenu(menuId) {
-		document.querySelectorAll('.pill-menu').forEach(function(m) {
-			if (m.id !== menuId) m.classList.remove('show');
-		});
-		document.getElementById(menuId).classList.toggle('show');
-	}
-	document.addEventListener('click', function(e) {
-		if (!e.target.closest('.pill-select')) {
-			document.querySelectorAll('.pill-menu').forEach(function(m){ m.classList.remove('show'); });
-		}
-	});
-
-	function load_exchanges_dd() {
-		var list = document.getElementById("exchangesDdId");
-		Object.keys(exchanges).forEach(function(exch_name) {
-			var li = document.createElement("li");
-			var link = document.createElement("a");
-			link.textContent = exch_name;
-			link.href = "#";
-			link.onclick = exch_onclick;
-			li.appendChild(link);
-			list.appendChild(li);
-		});
-		if (active_exch) document.getElementById("exch_btn_id").textContent = active_exch;
-	}
-
-	function load_markets_dd() {
-		var markets_l = exchanges[active_exch];
-		var list = document.getElementById("marketsDdId");
-		if (!markets_l) return;
-		while (list.firstChild) list.removeChild(list.firstChild);
-		markets_l.forEach(function(market) {
-			var li = document.createElement("li");
-			var link = document.createElement("a");
-			link.textContent = market["product_id"];
-			link.href = "#";
-			link.onclick = market_onclick;
-			li.appendChild(link);
-			list.appendChild(li);
-		});
-		if (active_market) {
-			var found = markets_l.some(function(m){ return m["product_id"] == active_market; });
-			document.getElementById("markets_btn_id").textContent = found ? active_market : "Market";
-		}
-	}
-
-	function load_exch_data(exch_cb) {
-		console.log("loading exchanges and markets");
-		// call api to buy/sell
-		$.ajax({
-			type : 'GET',
-			url : ui_code+'/api/get_markets',
-			dataType : 'json',
-			success : function(data) {
-				console.log("get_markets success!" + data);
-				exchanges = data["all"];
-				if (data["active"]) {
-					active_exch = data["active"]["EXCH_NAME"];
-					active_market = data["active"]["PRODUCT_ID"];
-					paused = data["active"]["PAUSED"];
-					
-					console.log("active exhc:" + active_exch + " markt: "
-							+ active_market+" paused: "+paused);
-				}
-				load_exchanges_dd();
-				load_markets_dd();
-
-				if (exch_cb) {					
-					exch_cb();
-				}
-			},
-			error : function(xhr, error) {
-				console.log("get_markets failed!");
-				alert(error);
-			}
+			set_ui_code();
+			load_exch_data(init_charting);
 		});
 
-	}
-	// exch/market selector - done
-
-	var g_big_data = {
-		name : "BTC-USD",
-		indicator_plots : [],
-		indicator_lines : [],	
-		indicators: {ohlc: []},
-		positions : [],
-		preroll : 0
-	};
-
-	function init_charting() {
-		console.log("ready!");
-		g_big_data.name = active_market;
-
-		initChart();
-
-		window.addEventListener('resize', function() {
-			resizeCharts();
-		});
-
-		console.log("load stats");
-		loadPositions();
-		setTimeout(loadCandles, 1000);
-	}
-
-	// ── Chart init ──────────────────────────────────────────────
-	function initChart() {
-		var container = document.getElementById('chart');
-		if (!container) return;
-
-		// Remove any existing charts
-		container.innerHTML = '';
-		g_pane_charts = {};
-		g_pane_series = {};
-		g_line_series = {};
-
-		var w = container.clientWidth || container.offsetWidth || 800;
-		var h = container.clientHeight || container.offsetHeight || 500;
-
-		g_lw_chart = LightweightCharts.createChart(container, {
-			width: w,
-			height: Math.round(h * 0.72),
-			layout: {
-				background: { type: 'solid', color: '#0d1117' },
-				textColor: '#aaaaaa',
-				fontFamily: "'JetBrains Mono', monospace",
-				fontSize: 11
-			},
-			grid: {
-				vertLines: { color: '#1e2530' },
-				horzLines: { color: '#1e2530' }
-			},
-			crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-			rightPriceScale: { borderColor: '#2a3347' },
-			timeScale: {
-				borderColor: '#2a3347',
-				timeVisible: true,
-				secondVisible: false
-			}
-		});
-
-		g_candle_series = g_lw_chart.addCandlestickSeries({
-			upColor:   '#00AA00',
-			downColor: '#FF0000',
-			borderUpColor:   '#00AA00',
-			borderDownColor: '#FF0000',
-			wickUpColor:   '#00AA00',
-			wickDownColor: '#FF0000'
-		});
-
-		g_volume_series = g_lw_chart.addHistogramSeries({
-			priceFormat: { type: 'volume' },
-			priceScaleId: 'volume',
-			color: 'rgba(187,187,187,0.65)'
-		});
-		g_lw_chart.priceScale('volume').applyOptions({
-			scaleMargins: { top: 0.75, bottom: 0 }
-		});
-	}
-
-	// ── Sub-pane chart for an indicator ────────────────────────
-	var INDICATOR_COLORS = {
-		rsi:    'cyan',
-		mfi:    '#aec7e8',
-		vosc:   '#ff9fae',
-		vemaosc:'#ff7f0e',
-		obv:    '#aec9e8',
-		atr:    '#ff9fae',
-		macd:   '#5599ff',
-		signal: '#FF9999'
-	};
-
-	function getIndicatorColor(key) {
-		var lower = key.toLowerCase();
-		for (var k in INDICATOR_COLORS) {
-			if (lower.indexOf(k) !== -1) return INDICATOR_COLORS[k];
-		}
-		return '#aaaaaa';
-	}
-
-	function createPaneChart(container, height) {
-		var w = container.clientWidth || container.offsetWidth || 800;
-		return LightweightCharts.createChart(container, {
-			width: w,
-			height: height,
-			layout: {
-				background: { type: 'solid', color: '#0b0f18' },
-				textColor: '#888888',
-				fontFamily: "'JetBrains Mono', monospace",
-				fontSize: 10
-			},
-			grid: {
-				vertLines: { color: '#1a2030' },
-				horzLines: { color: '#1a2030' }
-			},
-			crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-			rightPriceScale: { borderColor: '#2a3347' },
-			timeScale: {
-				borderColor: '#2a3347',
-				timeVisible: true,
-				secondVisible: false
-			}
-		});
-	}
-
-	function resizeCharts() {
-		var container = document.getElementById('chart');
-		if (!container) return;
-		var w = container.clientWidth || container.offsetWidth;
-		var totalH = container.clientHeight || container.offsetHeight;
-		var numPanes = Object.keys(g_pane_charts).length;
-		var mainH = numPanes > 0 ? Math.round(totalH * 0.72) : totalH;
-		var paneH = numPanes > 0 ? Math.round((totalH - mainH) / numPanes) : 0;
-
-		if (g_lw_chart) g_lw_chart.resize(w, mainH);
-		for (var key in g_pane_charts) {
-			var pc = g_pane_charts[key];
-			if (pc && paneH > 0) pc.resize(w, paneH);
-		}
-	}
-
-	var valueFormat = function(v) { return parseFloat(v).toFixed(4); };
-
-	var parseDate = function(utcSeconds) {
-		var d = new Date(0);
-		d.setUTCSeconds(utcSeconds);
-		return d;
-	}
-
-	function loadPositions() {
-		console.log("load positions");
-		$.ajax({
-			type : 'GET',
-			url : ui_code+'/api/positions',
-			data : {
-				from_time : 0,
-				to_time: 0,
-				exch_name : active_exch,
-				product : active_market
-			},
-			dataType : 'json',
-			success : load_trades,
-			error : function(xhr, error) {
-				console.log("get positions failed!"+error+xhr);
-			}			
-		});
-	}
-
-	function loadCandles() {
-		console.log("load candles");
-		$.ajax({
-			type : 'GET',
-			url : ui_code+'/api/candles',
-			data : {
-				period: g_chart_period,
-				start_time : g_chart_start_time,
-				exch_name : active_exch,
-				product : active_market
-			},
-			dataType : 'json',
-			success : load_candles,
-			error : function(xhr, error) {
-				console.log("get candles failed!"+error+xhr);
-			}			
-		});
-	}
-
-	function load_trades(data) {
-		var trades = [];
-		console.log("positions data len: " + data.length);
-		for (var i = 0; i < data.length; i++) {
-			d = data[i];
-
-			if (d.closed_time && d.closed_time != "None") {
-				trades.push({
-					date : new Date(d.closed_time * 1000),
-					type : "sell",
-					price : d.sell.price
-				});
-			}
-			if (d.open_time && d.open_time != "None") {
-				trades.push({
-					date : new Date(d.open_time * 1000),
-					type : "buy",
-					price : d.buy.price
-				});
+		function set_ui_code() {
+			var p_l = window.location.pathname.split("/");
+			if (p_l.length > 1 && p_l[1] !== "wolfinch" && p_l[1] !== "") {
+				ui_code = "/" + p_l[1];
 			}
 		}
-		g_big_data.positions = trades;
-	}
 
-	function load_candles(data) {
+		// ── Lightweight Charts globals ──────────────────────────────
+		var g_lw_chart = null;        // main LW chart instance
+		var g_candle_series = null;   // CandlestickSeries
+		var g_volume_series = null;   // HistogramSeries
+		var g_line_series = {};       // overlay lines keyed by indicator name
+		var g_pane_series = {};       // sub-pane series keyed by indicator name
+		var g_pane_charts = {};       // sub-pane LW chart instances
 
-		console.log("candles data len: " + data.length);
+		// colour palette for overlay lines
+		var LINE_COLORS = ['#1f77b4', '#ff7f0e', '#aec7e8', '#ff9fae', '#1f78b4', '#aec9e8', '#ff740e', '#ff70ae'];
 
-		data = data.sort(function(a, b) {
-			return a['ohlc'].time - b['ohlc'].time;
-		});
+		// exch/market selector - start
+		function exch_onclick(obj) {
+			active_exch = this.text;
+			document.getElementById("exch_btn_id").textContent = active_exch;
+			load_markets_dd();
+			document.querySelectorAll('.pill-menu').forEach(function (m) { m.classList.remove('show'); });
+		}
 
-		if (!data.length) return;
-
-		g_cur_display_date = data[0]['ohlc'].time * 1000;
-		setDate();
-
-		var regexp = /[\s\(\),]/g;
-
-		g_big_data.indicator_plots = [];
-		g_big_data.indicator_lines = [];
-		g_big_data.indicators = {ohlc: []};
-		g_big_data.preroll = 0;
-
-		var d0 = data[0];
-		Object.keys(d0).forEach(function(key) {
-			var kl = key.toLowerCase();
-			if (kl.indexOf('ohlc') !== -1) {
-				// skip
-			} else if (kl.indexOf('rsi') !== -1 || kl.indexOf('mfi') !== -1 ||
-					kl.indexOf('vosc') !== -1 || kl.indexOf('vemaosc') !== -1 ||
-					kl.indexOf('atr') !== -1  || kl.indexOf('obv') !== -1) {
-				g_big_data.indicator_plots[key.replace(regexp, '')] = 'rsi';
-			} else if (kl.indexOf('macd') !== -1) {
-				g_big_data.indicator_plots[key.replace(regexp, '')] = 'macd';
-			} else if (key !== 'close') {
-				g_big_data.indicator_lines.push(key.replace(regexp, ''));
-			}
-			g_big_data.indicators[key.replace(regexp, '')] = [];
-		});
-
-		// Parse all candle data
-		data.forEach(function(dd) {
-			var ohlc = dd['ohlc'];
-			var date = parseDate(ohlc.time);
-			g_big_data.indicators['ohlc'].push({
-				date:   date,
-				time:   ohlc.time,
-				open:   +ohlc.open,
-				high:   +ohlc.high,
-				low:    +ohlc.low,
-				close:  +ohlc.close,
-				volume: +ohlc.volume
+		function market_onclick(obj) {
+			active_market = this.text;
+			document.getElementById("markets_btn_id").textContent = active_market;
+			document.querySelectorAll('.pill-menu').forEach(function (m) { m.classList.remove('show'); });
+			var data = {};
+			data[active_exch] = active_market;
+			$.ajax({
+				type: 'POST',
+				url: ui_code + '/api/set_active_market',
+				data: data,
+				dataType: 'json',
+				success: function (data) { console.log("set_active_market success!"); },
+				error: function (xhr, error) { console.log("set_active_market failed!"); }
 			});
-			Object.keys(dd).forEach(function(key) {
-				if (key.toLowerCase().indexOf('ohlc') !== -1) return;
-				var nk = key.replace(regexp, '');
+		}
+
+		function toggleMenu(menuId) {
+			document.querySelectorAll('.pill-menu').forEach(function (m) {
+				if (m.id !== menuId) m.classList.remove('show');
+			});
+			document.getElementById(menuId).classList.toggle('show');
+		}
+		document.addEventListener('click', function (e) {
+			if (!e.target.closest('.pill-select')) {
+				document.querySelectorAll('.pill-menu').forEach(function (m) { m.classList.remove('show'); });
+			}
+		});
+
+		function load_exchanges_dd() {
+			var list = document.getElementById("exchangesDdId");
+			Object.keys(exchanges).forEach(function (exch_name) {
+				var li = document.createElement("li");
+				var link = document.createElement("a");
+				link.textContent = exch_name;
+				link.href = "#";
+				link.onclick = exch_onclick;
+				li.appendChild(link);
+				list.appendChild(li);
+			});
+			if (active_exch) document.getElementById("exch_btn_id").textContent = active_exch;
+		}
+
+		function load_markets_dd() {
+			var markets_l = exchanges[active_exch];
+			var list = document.getElementById("marketsDdId");
+			if (!markets_l) return;
+			while (list.firstChild) list.removeChild(list.firstChild);
+			markets_l.forEach(function (market) {
+				var li = document.createElement("li");
+				var link = document.createElement("a");
+				link.textContent = market["product_id"];
+				link.href = "#";
+				link.onclick = market_onclick;
+				li.appendChild(link);
+				list.appendChild(li);
+			});
+			if (active_market) {
+				var found = markets_l.some(function (m) { return m["product_id"] == active_market; });
+				document.getElementById("markets_btn_id").textContent = found ? active_market : "Market";
+			}
+		}
+
+		function load_exch_data(exch_cb) {
+			console.log("loading exchanges and markets");
+			// call api to buy/sell
+			$.ajax({
+				type: 'GET',
+				url: ui_code + '/api/get_markets',
+				dataType: 'json',
+				success: function (data) {
+					console.log("get_markets success!" + data);
+					exchanges = data["all"];
+					if (data["active"]) {
+						active_exch = data["active"]["EXCH_NAME"];
+						active_market = data["active"]["PRODUCT_ID"];
+						paused = data["active"]["PAUSED"];
+
+						console.log("active exhc:" + active_exch + " markt: "
+							+ active_market + " paused: " + paused);
+					}
+					load_exchanges_dd();
+					load_markets_dd();
+
+					if (exch_cb) {
+						exch_cb();
+					}
+				},
+				error: function (xhr, error) {
+					console.log("get_markets failed!");
+					alert(error);
+				}
+			});
+
+		}
+		// exch/market selector - done
+
+		var g_big_data = {
+			name: "BTC-USD",
+			indicator_plots: [],
+			indicator_lines: [],
+			indicators: { ohlc: [] },
+			positions: [],
+			preroll: 0
+		};
+
+		function init_charting() {
+			console.log("ready!");
+			g_big_data.name = active_market;
+
+			initChart();
+
+			window.addEventListener('resize', function () {
+				resizeCharts();
+			});
+
+			console.log("load stats");
+			loadPositions();
+			setTimeout(loadCandles, 1000);
+		}
+
+		// ── Chart init ──────────────────────────────────────────────
+		function initChart() {
+			var container = document.getElementById('chart');
+			if (!container) return;
+
+			// Remove any existing charts
+			container.innerHTML = '';
+			g_pane_charts = {};
+			g_pane_series = {};
+			g_line_series = {};
+
+			var w = container.clientWidth || container.offsetWidth || 800;
+			var h = container.clientHeight || container.offsetHeight || 500;
+
+			g_lw_chart = LightweightCharts.createChart(container, {
+				width: w,
+				height: Math.round(h * 0.72),
+				layout: {
+					background: { type: 'solid', color: '#0d1117' },
+					textColor: '#aaaaaa',
+					fontFamily: "'JetBrains Mono', monospace",
+					fontSize: 11
+				},
+				grid: {
+					vertLines: { color: '#1e2530' },
+					horzLines: { color: '#1e2530' }
+				},
+				crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+				rightPriceScale: { borderColor: '#2a3347' },
+				timeScale: {
+					borderColor: '#2a3347',
+					timeVisible: true,
+					secondVisible: false
+				}
+			});
+
+			g_candle_series = g_lw_chart.addCandlestickSeries({
+				upColor: '#00AA00',
+				downColor: '#FF0000',
+				borderUpColor: '#00AA00',
+				borderDownColor: '#FF0000',
+				wickUpColor: '#00AA00',
+				wickDownColor: '#FF0000'
+			});
+
+			g_volume_series = g_lw_chart.addHistogramSeries({
+				priceFormat: { type: 'volume' },
+				priceScaleId: 'volume',
+				color: 'rgba(187,187,187,0.65)'
+			});
+			g_lw_chart.priceScale('volume').applyOptions({
+				scaleMargins: { top: 0.75, bottom: 0 }
+			});
+		}
+
+		// ── Sub-pane chart for an indicator ────────────────────────
+		var INDICATOR_COLORS = {
+			rsi: 'cyan',
+			mfi: '#aec7e8',
+			vosc: '#ff9fae',
+			vemaosc: '#ff7f0e',
+			obv: '#aec9e8',
+			atr: '#ff9fae',
+			macd: '#5599ff',
+			signal: '#FF9999'
+		};
+
+		function getIndicatorColor(key) {
+			var lower = key.toLowerCase();
+			for (var k in INDICATOR_COLORS) {
+				if (lower.indexOf(k) !== -1) return INDICATOR_COLORS[k];
+			}
+			return '#aaaaaa';
+		}
+
+		function createPaneChart(container, height) {
+			var w = container.clientWidth || container.offsetWidth || 800;
+			return LightweightCharts.createChart(container, {
+				width: w,
+				height: height,
+				layout: {
+					background: { type: 'solid', color: '#0b0f18' },
+					textColor: '#888888',
+					fontFamily: "'JetBrains Mono', monospace",
+					fontSize: 10
+				},
+				grid: {
+					vertLines: { color: '#1a2030' },
+					horzLines: { color: '#1a2030' }
+				},
+				crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+				rightPriceScale: { borderColor: '#2a3347' },
+				timeScale: {
+					borderColor: '#2a3347',
+					timeVisible: true,
+					secondVisible: false
+				}
+			});
+		}
+
+		function resizeCharts() {
+			var container = document.getElementById('chart');
+			if (!container) return;
+			var w = container.clientWidth || container.offsetWidth;
+			var totalH = container.clientHeight || container.offsetHeight;
+			var numPanes = Object.keys(g_pane_charts).length;
+			var mainH = numPanes > 0 ? Math.round(totalH * 0.72) : totalH;
+			var paneH = numPanes > 0 ? Math.round((totalH - mainH) / numPanes) : 0;
+
+			if (g_lw_chart) g_lw_chart.resize(w, mainH);
+			for (var key in g_pane_charts) {
+				var pc = g_pane_charts[key];
+				if (pc && paneH > 0) pc.resize(w, paneH);
+			}
+		}
+
+		var valueFormat = function (v) { return parseFloat(v).toFixed(4); };
+
+		var parseDate = function (utcSeconds) {
+			var d = new Date(0);
+			d.setUTCSeconds(utcSeconds);
+			return d;
+		}
+
+		function loadPositions() {
+			console.log("load positions");
+			$.ajax({
+				type: 'GET',
+				url: ui_code + '/api/positions',
+				data: {
+					from_time: 0,
+					to_time: 0,
+					exch_name: active_exch,
+					product: active_market
+				},
+				dataType: 'json',
+				success: load_trades,
+				error: function (xhr, error) {
+					console.log("get positions failed!" + error + xhr);
+				}
+			});
+		}
+
+		function loadCandles() {
+			console.log("load candles");
+			$.ajax({
+				type: 'GET',
+				url: ui_code + '/api/candles',
+				data: {
+					period: g_chart_period,
+					start_time: g_chart_start_time,
+					exch_name: active_exch,
+					product: active_market
+				},
+				dataType: 'json',
+				success: load_candles,
+				error: function (xhr, error) {
+					console.log("get candles failed!" + error + xhr);
+				}
+			});
+		}
+
+		function load_trades(data) {
+			var trades = [];
+			console.log("positions data len: " + data.length);
+			for (var i = 0; i < data.length; i++) {
+				d = data[i];
+
+				if (d.closed_time && d.closed_time != "None") {
+					trades.push({
+						date: new Date(d.closed_time * 1000),
+						type: "sell",
+						price: d.sell.price
+					});
+				}
+				if (d.open_time && d.open_time != "None") {
+					trades.push({
+						date: new Date(d.open_time * 1000),
+						type: "buy",
+						price: d.buy.price
+					});
+				}
+			}
+			g_big_data.positions = trades;
+		}
+
+		function load_candles(data) {
+
+			console.log("candles data len: " + data.length);
+
+			data = data.sort(function (a, b) {
+				return a['ohlc'].time - b['ohlc'].time;
+			});
+
+			if (!data.length) return;
+
+			g_cur_display_date = data[0]['ohlc'].time * 1000;
+			setDate();
+
+			var regexp = /[\s\(\),]/g;
+
+			g_big_data.indicator_plots = [];
+			g_big_data.indicator_lines = [];
+			g_big_data.indicators = { ohlc: [] };
+			g_big_data.preroll = 0;
+
+			var d0 = data[0];
+			Object.keys(d0).forEach(function (key) {
 				var kl = key.toLowerCase();
-				if (kl.indexOf('macd') !== -1) {
-					g_big_data.indicators[nk].push({ date: date, time: ohlc.time, value: dd[key] });
-				} else if (kl.indexOf('rsi') !== -1 || kl.indexOf('vosc') !== -1 ||
+				if (kl.indexOf('ohlc') !== -1) {
+					// skip
+				} else if (kl.indexOf('rsi') !== -1 || kl.indexOf('mfi') !== -1 ||
+					kl.indexOf('vosc') !== -1 || kl.indexOf('vemaosc') !== -1 ||
+					kl.indexOf('atr') !== -1 || kl.indexOf('obv') !== -1) {
+					g_big_data.indicator_plots[key.replace(regexp, '')] = 'rsi';
+				} else if (kl.indexOf('macd') !== -1) {
+					g_big_data.indicator_plots[key.replace(regexp, '')] = 'macd';
+				} else if (key !== 'close') {
+					g_big_data.indicator_lines.push(key.replace(regexp, ''));
+				}
+				g_big_data.indicators[key.replace(regexp, '')] = [];
+			});
+
+			// Parse all candle data
+			data.forEach(function (dd) {
+				var ohlc = dd['ohlc'];
+				var date = parseDate(ohlc.time);
+				g_big_data.indicators['ohlc'].push({
+					date: date,
+					time: ohlc.time,
+					open: +ohlc.open,
+					high: +ohlc.high,
+					low: +ohlc.low,
+					close: +ohlc.close,
+					volume: +ohlc.volume
+				});
+				Object.keys(dd).forEach(function (key) {
+					if (key.toLowerCase().indexOf('ohlc') !== -1) return;
+					var nk = key.replace(regexp, '');
+					var kl = key.toLowerCase();
+					if (kl.indexOf('macd') !== -1) {
+						g_big_data.indicators[nk].push({ date: date, time: ohlc.time, value: dd[key] });
+					} else if (kl.indexOf('rsi') !== -1 || kl.indexOf('vosc') !== -1 ||
 						kl.indexOf('vemaosc') !== -1 || kl.indexOf('mfi') !== -1 ||
 						kl.indexOf('atr') !== -1 || kl.indexOf('obv') !== -1) {
-					g_big_data.indicators[nk].push({ date: date, time: ohlc.time, value: dd[key] });
-				} else {
-					g_big_data.indicators[nk].push({ date: date, time: ohlc.time, value: dd[key] });
-				}
+						g_big_data.indicators[nk].push({ date: date, time: ohlc.time, value: dd[key] });
+					} else {
+						g_big_data.indicators[nk].push({ date: date, time: ohlc.time, value: dd[key] });
+					}
+				});
 			});
-		});
 
-		renderChart();
-	}
-	
-	// ── Render chart with current g_big_data ───────────────────
-	function renderChart() {
-		var ohlc_list = g_big_data.indicators.ohlc;
-		if (!ohlc_list || ohlc_list.length === 0) return;
-
-		// Rebuild chart completely (handles indicator pane count change)
-		initChart();
-
-		// ── OHLC candlestick data ──
-		var candleData = ohlc_list.map(function(d) {
-			return { time: d.time, open: d.open, high: d.high, low: d.low, close: d.close };
-		});
-		g_candle_series.setData(candleData);
-
-		// ── Volume data ──
-		var volData = ohlc_list.map(function(d) {
-			return {
-				time: d.time,
-				value: d.volume,
-				color: d.close >= d.open ? 'rgba(0,170,0,0.55)' : 'rgba(255,0,0,0.55)'
-			};
-		});
-		g_volume_series.setData(volData);
-
-		// ── Overlay lines (MA, EMA, etc.) ──
-		g_big_data.indicator_lines.forEach(function(key, idx) {
-			var rawData = g_big_data.indicators[key];
-			if (!rawData || rawData.length === 0) return;
-
-			// Skip pivotps (support/resistance) — different structure
-			if (key.toLowerCase() === 'pivotps') return;
-
-			var series = g_lw_chart.addLineSeries({
-				color: LINE_COLORS[idx % LINE_COLORS.length],
-				lineWidth: 1,
-				priceLineVisible: false,
-				lastValueVisible: true,
-				title: key
-			});
-			var lineData = rawData
-				.filter(function(d) { return d.value !== null && d.value !== undefined && !isNaN(+d.value); })
-				.map(function(d) { return { time: d.time, value: +d.value }; });
-			if (lineData.length > 0) series.setData(lineData);
-			g_line_series[key] = series;
-		});
-
-		// ── Trade markers ──
-		applyTradeMarkers();
-
-		// ── Sub-pane indicators ──
-		var container = document.getElementById('chart');
-		var indicatorKeys = Object.keys(g_big_data.indicator_plots);
-		indicatorKeys.forEach(function(key) {
-			var rawData = g_big_data.indicators[key];
-			if (!rawData || rawData.length === 0) return;
-
-			var paneDiv = document.createElement('div');
-			paneDiv.style.cssText = 'width:100%;border-top:1px solid #1e2530;';
-			container.appendChild(paneDiv);
-
-			var pc = createPaneChart(paneDiv, 120);
-			g_pane_charts[key] = pc;
-
-			var color = getIndicatorColor(key);
-			var ps = pc.addLineSeries({
-				color: color,
-				lineWidth: 1,
-				priceLineVisible: false,
-				title: key
-			});
-			var paneData = rawData
-				.filter(function(d) { return d.value !== null && d.value !== undefined && !isNaN(+d.value); })
-				.map(function(d) { return { time: d.time, value: +d.value }; });
-			if (paneData.length > 0) ps.setData(paneData);
-			g_pane_series[key] = ps;
-		});
-
-		resizeCharts();
-	}
-
-	// ── Apply trade buy/sell markers to candle series ───────────
-	function applyTradeMarkers() {
-		if (!g_candle_series || !g_big_data.positions.length) return;
-		var ohlc = g_big_data.indicators.ohlc;
-		var t0 = ohlc.length > 0 ? ohlc[0].time : 0;
-		var t1 = ohlc.length > 0 ? ohlc[ohlc.length-1].time : Infinity;
-
-		var markers = [];
-		g_big_data.positions.forEach(function(p) {
-			var ts = Math.floor(p.date.getTime() / 1000);
-			if (ts < t0 || ts > t1) return;
-			markers.push({
-				time: ts,
-				position: p.type === 'buy' ? 'belowBar' : 'aboveBar',
-				color: p.type === 'buy' ? '#4488ff' : '#c2f23d',
-				shape: p.type === 'buy' ? 'arrowUp' : 'arrowDown',
-				text: p.type === 'buy' ? 'B' : 'S'
-			});
-		});
-		markers.sort(function(a, b) { return a.time - b.time; });
-		g_candle_series.setMarkers(markers);
-	}
-
-	var ONE_DAY_IN_SEC = 24*60*60;
-	var g_chart_period = 1;
-	var g_cur_display_date = 0;
-	var g_chart_start_time = 0;
-
-    function getDate() {
-        var datePicker = document.getElementById("datePicker");
-        var selectedDate = new Date((new Date(datePicker.value)).toISOString().split('T')[0]);
-		var curDate = (new Date()).toISOString().split('T')[0];
-		g_chart_start_time = -Math.floor(((new Date(curDate) - selectedDate)/(ONE_DAY_IN_SEC*1000)));
-        console.log("Selected Date: " + selectedDate, g_chart_start_time);
-		loadCandles();
-		loadPositions();
-    }
-
-    function setDate() {
-        var datePicker = document.getElementById("datePicker");
-        var desiredDate = new Date(g_cur_display_date);
-        datePicker.value = desiredDate.toISOString().split('T')[0];
-    }
-
-	function btn_onclick(id) {
-		document.getElementById("btn" + g_chart_period).classList.remove("active");
-		switch (id) {
-		case "btn1":  g_chart_period = 1;  g_chart_start_time = 0; break;
-		case "btn3":  g_chart_period = 3;  g_chart_start_time = 0; break;
-		case "btn7":  g_chart_period = 7;  g_chart_start_time = 0; break;
-		case "btn30": g_chart_period = 30; g_chart_start_time = 0; break;
-		case "btn_prev":
-			g_chart_start_time -= 1;
-			console.log("load prev candles starting " + g_chart_start_time);
-			break;
-		case "btn_next":
-			g_chart_start_time += 1;
-			if (g_chart_start_time > 0) g_chart_start_time = 0;
-			console.log("load next candles starting " + g_chart_start_time);
-			break;
-		default:
-			console.log("Unknown button");
-			break;
+			renderChart();
 		}
-		document.getElementById("btn" + g_chart_period).classList.add("active");
-		console.log("btn clicked: " + id + " new period:" + g_chart_period);
-		loadCandles();
-		loadPositions();
-	}
-</script>
+
+		// ── Render chart with current g_big_data ───────────────────
+		function renderChart() {
+			var ohlc_list = g_big_data.indicators.ohlc;
+			if (!ohlc_list || ohlc_list.length === 0) return;
+
+			// Rebuild chart completely (handles indicator pane count change)
+			initChart();
+
+			// ── OHLC candlestick data ──
+			var candleData = ohlc_list.map(function (d) {
+				return { time: d.time, open: d.open, high: d.high, low: d.low, close: d.close };
+			});
+			g_candle_series.setData(candleData);
+
+			// ── Volume data ──
+			var volData = ohlc_list.map(function (d) {
+				return {
+					time: d.time,
+					value: d.volume,
+					color: d.close >= d.open ? 'rgba(0,170,0,0.55)' : 'rgba(255,0,0,0.55)'
+				};
+			});
+			g_volume_series.setData(volData);
+
+			// ── Overlay lines (MA, EMA, etc.) ──
+			g_big_data.indicator_lines.forEach(function (key, idx) {
+				var rawData = g_big_data.indicators[key];
+				if (!rawData || rawData.length === 0) return;
+
+				// Skip pivotps (support/resistance) — different structure
+				if (key.toLowerCase() === 'pivotps') return;
+
+				var series = g_lw_chart.addLineSeries({
+					color: LINE_COLORS[idx % LINE_COLORS.length],
+					lineWidth: 1,
+					priceLineVisible: false,
+					lastValueVisible: true,
+					title: key
+				});
+				var lineData = rawData
+					.filter(function (d) { return d.value !== null && d.value !== undefined && !isNaN(+d.value); })
+					.map(function (d) { return { time: d.time, value: +d.value }; });
+				if (lineData.length > 0) series.setData(lineData);
+				g_line_series[key] = series;
+			});
+
+			// ── Trade markers ──
+			applyTradeMarkers();
+
+			// ── Sub-pane indicators ──
+			var container = document.getElementById('chart');
+			var indicatorKeys = Object.keys(g_big_data.indicator_plots);
+			indicatorKeys.forEach(function (key) {
+				var rawData = g_big_data.indicators[key];
+				if (!rawData || rawData.length === 0) return;
+
+				var paneDiv = document.createElement('div');
+				paneDiv.style.cssText = 'width:100%;border-top:1px solid #1e2530;';
+				container.appendChild(paneDiv);
+
+				var pc = createPaneChart(paneDiv, 120);
+				g_pane_charts[key] = pc;
+
+				var color = getIndicatorColor(key);
+				var ps = pc.addLineSeries({
+					color: color,
+					lineWidth: 1,
+					priceLineVisible: false,
+					title: key
+				});
+				var paneData = rawData
+					.filter(function (d) { return d.value !== null && d.value !== undefined && !isNaN(+d.value); })
+					.map(function (d) { return { time: d.time, value: +d.value }; });
+				if (paneData.length > 0) ps.setData(paneData);
+				g_pane_series[key] = ps;
+			});
+
+			resizeCharts();
+		}
+
+		// ── Apply trade buy/sell markers to candle series ───────────
+		function applyTradeMarkers() {
+			if (!g_candle_series || !g_big_data.positions.length) return;
+			var ohlc = g_big_data.indicators.ohlc;
+			var t0 = ohlc.length > 0 ? ohlc[0].time : 0;
+			var t1 = ohlc.length > 0 ? ohlc[ohlc.length - 1].time : Infinity;
+
+			var markers = [];
+			g_big_data.positions.forEach(function (p) {
+				var ts = Math.floor(p.date.getTime() / 1000);
+				if (ts < t0 || ts > t1) return;
+				markers.push({
+					time: ts,
+					position: p.type === 'buy' ? 'belowBar' : 'aboveBar',
+					color: p.type === 'buy' ? '#4488ff' : '#c2f23d',
+					shape: p.type === 'buy' ? 'arrowUp' : 'arrowDown',
+					text: p.type === 'buy' ? 'B' : 'S'
+				});
+			});
+			markers.sort(function (a, b) { return a.time - b.time; });
+			g_candle_series.setMarkers(markers);
+		}
+
+		var ONE_DAY_IN_SEC = 24 * 60 * 60;
+		var g_chart_period = 1;
+		var g_cur_display_date = 0;
+		var g_chart_start_time = 0;
+
+		function getDate() {
+			var datePicker = document.getElementById("datePicker");
+			var selectedDate = new Date((new Date(datePicker.value)).toISOString().split('T')[0]);
+			var curDate = (new Date()).toISOString().split('T')[0];
+			g_chart_start_time = -Math.floor(((new Date(curDate) - selectedDate) / (ONE_DAY_IN_SEC * 1000)));
+			console.log("Selected Date: " + selectedDate, g_chart_start_time);
+			loadCandles();
+			loadPositions();
+		}
+
+		function setDate() {
+			var datePicker = document.getElementById("datePicker");
+			var desiredDate = new Date(g_cur_display_date);
+			datePicker.value = desiredDate.toISOString().split('T')[0];
+		}
+
+		function btn_onclick(id) {
+			document.getElementById("btn" + g_chart_period).classList.remove("active");
+			switch (id) {
+				case "btn1": g_chart_period = 1; g_chart_start_time = 0; break;
+				case "btn3": g_chart_period = 3; g_chart_start_time = 0; break;
+				case "btn7": g_chart_period = 7; g_chart_start_time = 0; break;
+				case "btn30": g_chart_period = 30; g_chart_start_time = 0; break;
+				case "btn_prev":
+					g_chart_start_time -= 1;
+					console.log("load prev candles starting " + g_chart_start_time);
+					break;
+				case "btn_next":
+					g_chart_start_time += 1;
+					if (g_chart_start_time > 0) g_chart_start_time = 0;
+					console.log("load next candles starting " + g_chart_start_time);
+					break;
+				default:
+					console.log("Unknown button");
+					break;
+			}
+			document.getElementById("btn" + g_chart_period).classList.add("active");
+			console.log("btn clicked: " + id + " new period:" + g_chart_period);
+			loadCandles();
+			loadPositions();
+		}
+	</script>
 </head>
 
 <body>
 
 	<!-- ── Top Nav ── -->
 	<nav class="top-nav">
-		<a class="brand-link" href="/wolfinch"><svg class="brand-icon-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M100,100 L20,160 Q10,100 40,50 Z" fill="#22c55e" opacity="0.9"/><path d="M100,100 L15,175 L35,140 Z" fill="#1a9e4a" opacity="0.85"/><circle cx="115" cy="105" r="72" fill="#4f8ef7" opacity="0.22"/><circle cx="115" cy="105" r="54" fill="#4f8ef7" opacity="0.28"/><circle cx="115" cy="110" r="38" fill="#2563b8" opacity="0.85"/><circle cx="138" cy="88" r="32" fill="#0d1117"/><circle cx="138" cy="88" r="24" fill="#4f8ef7"/><circle cx="143" cy="82" r="8" fill="#ffffff"/><circle cx="145" cy="83" r="4.5" fill="#0d1117"/><circle cx="143" cy="80" r="1.8" fill="#ffffff"/><polygon points="162,92 178,98 162,104" fill="#f59e0b"/></svg> Wolfinch</a>
+		<a class="brand-link" href="/wolfinch"><svg class="brand-icon-img" xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 200 200">
+				<path d="M100,100 L20,160 Q10,100 40,50 Z" fill="#22c55e" opacity="0.9" />
+				<path d="M100,100 L15,175 L35,140 Z" fill="#1a9e4a" opacity="0.85" />
+				<circle cx="115" cy="105" r="72" fill="#4f8ef7" opacity="0.22" />
+				<circle cx="115" cy="105" r="54" fill="#4f8ef7" opacity="0.28" />
+				<circle cx="115" cy="110" r="38" fill="#2563b8" opacity="0.85" />
+				<circle cx="138" cy="88" r="32" fill="#0d1117" />
+				<circle cx="138" cy="88" r="24" fill="#4f8ef7" />
+				<circle cx="143" cy="82" r="8" fill="#ffffff" />
+				<circle cx="145" cy="83" r="4.5" fill="#0d1117" />
+				<circle cx="143" cy="80" r="1.8" fill="#ffffff" />
+				<polygon points="162,92 178,98 162,104" fill="#f59e0b" />
+			</svg> Wolfinch</a>
 
 		<div class="pill-pair">
 			<span class="nav-label">Exchange</span>
@@ -633,10 +648,10 @@
 	<!-- ── Chart Controls ── -->
 	<div class="chart-toolbar">
 		<div class="filter-tabs">
-			<button id="btn1"     class="filter-tab active" onclick="btn_onclick(this.id)">1D</button>
-			<button id="btn3"     class="filter-tab"        onclick="btn_onclick(this.id)">3D</button>
-			<button id="btn7"     class="filter-tab"        onclick="btn_onclick(this.id)">7D</button>
-			<button id="btn30"    class="filter-tab"        onclick="btn_onclick(this.id)">30D</button>
+			<button id="btn1" class="filter-tab active" onclick="btn_onclick(this.id)">1D</button>
+			<button id="btn3" class="filter-tab" onclick="btn_onclick(this.id)">3D</button>
+			<button id="btn7" class="filter-tab" onclick="btn_onclick(this.id)">7D</button>
+			<button id="btn30" class="filter-tab" onclick="btn_onclick(this.id)">30D</button>
 		</div>
 		<div class="chart-nav-btns">
 			<button id="btn_prev" class="btn btn--ghost btn--sm" onclick="btn_onclick(this.id)">&#8249;</button>
@@ -650,6 +665,7 @@
 		<div class="chartcontainer" id="chart"></div>
 	</div>
 
-	<footer class="footer">© 2017-2025 Wolfinch Bot</footer>
+	<footer class="footer">© 2017-2026 Wolfinch Bot</footer>
 </body>
+
 </html>
