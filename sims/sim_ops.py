@@ -26,8 +26,6 @@
 import sys
 
 from utils import getLogger
-from market import feed_deQ, feed_Q_process_msg, get_market_list, flush_all_stats, get_all_market_stats, \
-                             market_init, market_setup
 # import db
 import exchanges
 from . import sim_exchange
@@ -55,6 +53,7 @@ def finish_backtesting(market):
     return True
     
 def do_backtesting (simulator_on=False):
+    from market import feed_deQ, feed_Q_process_msg, get_market_list
     # don't sleep for backtesting    
     sleep_time = 0
     done = False
@@ -99,6 +98,7 @@ def do_backtesting (simulator_on=False):
                        
     #end While(true)
 def show_stats ():
+    from market import flush_all_stats
     flush_all_stats()
 
 def sim_ga_init (decisionConfig, tradingConfig):
@@ -125,6 +125,7 @@ def sim_ga_init (decisionConfig, tradingConfig):
     #2. Init Exchanges
     exchanges.init_exchanges(gConfig)
     
+    from market import market_init, market_setup
     #3. Init markets
     market_init (exchanges.exchange_list, get_prod_cfg)
     
@@ -170,6 +171,7 @@ def market_backtesting_ga_hook (decisionConfig, tradingConfig=None):
     log.info ("backtesting complete. ")
     
     
+    from market import get_all_market_stats
     stats = get_all_market_stats ()
     log.info ("Finalizing Wolfinch")
     exchanges.close_exchanges ()

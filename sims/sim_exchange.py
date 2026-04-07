@@ -29,7 +29,6 @@ import copy
 from utils import getLogger
 import exchanges
 
-from market import feed_enQ, TradeRequest, Order
 
 __name__ = "EXCH-SIMS"
 log = getLogger (__name__)
@@ -76,6 +75,7 @@ order_struct = {'created_at': '2018-01-10T09:49:02.639681Z',
 
 ####### Private #########
 def do_trade (market, backtesting_on):
+    from market import feed_enQ
     open_orders_pvt = open_orders.get(market.product_id) or []
     traded_orders_pvt = traded_orders.get(market.product_id)
     if not backtesting_on:
@@ -295,6 +295,7 @@ class SIM_EXCH (exchanges.Exchange):
             
         log.debug ("price: %g fund: %g req_size: %g filled_size: %g remaining_size: %g fees: %g"%(
             price, funds, request_size, filled_size, remaining_size, fees))
+        from market import Order
         norm_order = Order (order_id, product_id, status_type, order_type=order_type,
                             side=side, request_size=request_size, filled_size=filled_size, remaining_size=remaining_size,
                              price=price, funds=funds, fees=fees, create_time=create_time, update_time=update_time)
@@ -331,7 +332,7 @@ class SIM_EXCH (exchanges.Exchange):
                           
     def buy (self, trade_req) :
     #     return None
-        
+        from market import TradeRequest, Order
         if not isinstance( trade_req, TradeRequest):
             return None
         log.info ("BUY - Placing Order on SIM exchange --" )
@@ -350,6 +351,7 @@ class SIM_EXCH (exchanges.Exchange):
         return buy_order
         
     def sell (self, trade_req) :
+        from market import TradeRequest, Order
         if not isinstance(trade_req, TradeRequest):
             return None
         log.info ("SELL - Placing Order on SIM exchange --" )
