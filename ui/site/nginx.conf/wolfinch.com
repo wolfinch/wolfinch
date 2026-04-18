@@ -1,7 +1,13 @@
 server {
-        server_name www.wolfinch.com;
+        server_name wolfinch.com www.wolfinch.com;
         root /home/jork/www;
         index index.html;
+
+            location = /favicon.ico {
+              alias /home/jork/www/wolfinch-icon.svg;
+              access_log off;
+              log_not_found off;
+            }
 
             # Media: images, icons, video, audio, HTC
             location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|mp4|ogg|ogv|webm|htc)$ {
