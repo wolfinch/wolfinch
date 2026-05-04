@@ -19,6 +19,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Wolfinch.  If not, see <https://www.gnu.org/licenses/>.
 # '''
+import os
 import pprint
 from datetime import datetime, timedelta
 from time import sleep
@@ -197,9 +198,79 @@ class Robinhood (Exchange):
         resp = r.login(username=self.user, password=self.password, mfa_code=self.mfa_key)
         if resp:
             log.info("login success")
+            self._login_time = time.time()
         else:
              log.critical("Unable to Authenticate with robinhood exchange. Abort!!")
              raise Exception("login failed")
+
+    # ── OAuth refresh_token flow (no 2FA) ──────────
+    PICKLE_DIR = os.path.join(os.path.expanduser("~"), ".tokens")
+    PICKLE_FILE = os.path.join(PICKLE_DIR, "robinhood.pickle")
+    TOKEN_LIFETIME = 86400        # 24 h  (default expiresIn)
+    REFRESH_BEFORE  = 3600        # refresh 1 h before expiry
+
+    def _refresh_session(self):
+        """Use the OAuth refresh_token to get a new access_token.
+        This avoids a full login and does NOT trigger 2FA."""
+        import pickle, requests as _req
+        try:
+            with open(self.PICKLE_FILE, 'rb') as f:
+                pkl = pickle.load(f)
+            refresh_token = pkl.get('refresh_token')
+            device_token  = pkl.get('device_token')
+            if not refresh_token:
+                log.warning("no refresh_token in pickle – falling back to full login")
+                return self._login()
+
+            payload = {
+                'grant_type'   : 'refresh_token',
+                'refresh_token': refresh_token,
+                'client_id'    : 'c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS',
+                'device_token' : device_token or '',
+                'scope'        : 'internal',
+                'expires_in'   : self.TOKEN_LIFETIME,
+            }
+            resp = _req.post('https://api.robinhood.com/oauth2/token/',
+                             data=payload, timeout=16)
+            data = resp.json()
+            new_access  = data.get('access_token')
+            new_refresh = data.get('refresh_token')
+            token_type  = data.get('token_type', 'Bearer')
+
+            if not new_access:
+                log.warning("refresh_token grant failed (%s) – falling back to full login",
+                            data.get('detail', data))
+                return self._login()
+
+            # update robin_stocks internal session
+            r.helper.update_session('Authorization',
+                                    '{0} {1}'.format(token_type, new_access))
+            r.helper.set_login_state(True)
+
+            # persist new tokens to pickle
+            pkl['access_token']  = new_access
+            pkl['token_type']    = token_type
+            if new_refresh:
+                pkl['refresh_token'] = new_refresh
+            with open(self.PICKLE_FILE, 'wb') as f:
+                pickle.dump(pkl, f)
+
+            self._login_time = time.time()
+            log.info("session refreshed via refresh_token (no 2FA)")
+        except Exception as e:
+            log.warning("refresh_session failed (%s) – falling back to full login", e)
+            self._login()
+
+    def ensure_session(self):
+        """Call periodically from the main loop.
+        Refreshes the token silently before it expires."""
+        if not hasattr(self, '_login_time'):
+            self._login_time = time.time()
+        age = time.time() - self._login_time
+        if age >= (self.TOKEN_LIFETIME - self.REFRESH_BEFORE):
+            log.info("token age %.0f s – proactively refreshing session", age)
+            self._refresh_session()
+
     def __str__ (self):
         return "{Message: Robinhood Exchange }"
 
